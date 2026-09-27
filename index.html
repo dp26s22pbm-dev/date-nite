@@ -111,14 +111,29 @@
       border-top: 1px solid rgba(255,255,255,0.12);
       border-radius: 20px 20px 0 0;
       padding: 12px 18px calc(16px + env(safe-area-inset-bottom, 12px));
-      transform: translateY(110%);
+      transform: translateY(115%);
       transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
       box-shadow: 0 -8px 30px rgba(0,0,0,0.5);
       max-width: 520px;
       margin: 0 auto;
+      pointer-events: none; /* Allows taps to hit map when closed */
+      visibility: hidden;
     }
-    .bottom-sheet.open { transform: translateY(0); }
-    .sheet-handle { width: 36px; height: 4px; background: #484f58; border-radius: 2px; margin: 0 auto 10px; cursor: pointer; }
+    .bottom-sheet.open { 
+      transform: translateY(0); 
+      pointer-events: auto; /* Re-enable clicks when open */
+      visibility: visible;
+    }
+    .sheet-handle { 
+      width: 44px; 
+      height: 6px; 
+      background: #484f58; 
+      border-radius: 3px; 
+      margin: 0 auto 12px; 
+      cursor: pointer; 
+      padding: 6px 0;
+      background-clip: content-box;
+    }
     .sheet-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 10px; }
     .sheet-title { font-size: 18px; font-weight: 700; margin: 0 0 2px; }
     .sheet-category { font-size: 13px; color: #8b949e; }
@@ -246,7 +261,6 @@
   <script>
     let rawVenues = [];
 
-    // State: Defaults to 1 App, 2 Casual Mains, 0 Prime Mains, 2 Drinks, 1 Dessert
     const state = {
       apps: 1,
       casual: 2,
@@ -257,9 +271,7 @@
       activeRestaurant: null
     };
 
-    // Dynamic cost calculation supporting dual-entree pricing
     function calculateTotal(v) {
-      // Tapas multiplier: 2 plates per entree count
       const cMult = v.isTapas ? (state.casual * 2) : state.casual;
       const pMult = v.isTapas ? (state.prime * 2) : state.prime;
 
@@ -270,7 +282,7 @@
         (state.drinks * v.drink) + 
         (state.dessert * v.dessert);
 
-      return Math.round(subtotal * 1.30); // ~10% tax + 20% tip
+      return Math.round(subtotal * 1.30);
     }
 
     function buildGeoJSON() {
@@ -313,7 +325,6 @@
     });
 
     map.on('load', () => {
-      // Fetch dynamic JSON data
       fetch('venues.json')
         .then(res => res.json())
         .then(data => {
@@ -325,42 +336,61 @@
     function initLayers() {
       map.addSource('restaurants', { type: 'geojson', data: buildGeoJSON() });
 
+      // Ambient Glow
       map.addLayer({
         id: 'restaurants-glow',
         type: 'circle',
         source: 'restaurants',
         paint: {
-          'circle-radius': 18,
+          'circle-radius': 22,
           'circle-color': ['get', 'color'],
-          'circle-opacity': ['*', ['get', 'opacity'], 0.3],
+          'circle-opacity': ['*', ['get', 'opacity'], 0.35],
           'circle-blur': 0.8
         }
       });
 
+      // Interactive Pin
       map.addLayer({
         id: 'restaurants-point',
         type: 'circle',
         source: 'restaurants',
         paint: {
-          'circle-radius': 8,
+          'circle-radius': 10,
           'circle-color': ['get', 'color'],
           'circle-opacity': ['get', 'opacity'],
-          'circle-stroke-width': 2,
+          'circle-stroke-width': 2.5,
           'circle-stroke-color': '#ffffff',
           'circle-stroke-opacity': ['get', 'opacity']
         }
       });
 
+      // Click on Pin
       map.on('click', 'restaurants-point', (e) => {
+        if (!e.features || !e.features.length) return;
         const p = e.features[0].properties;
         if (!p.visible) return;
         state.activeRestaurant = p;
         openSheet(p);
       });
 
+      // Cursor hover feedback
+      map.on('mouseenter', 'restaurants-point', () => {
+        map.getCanvas().style.cursor = 'pointer';
+      });
+      map.on('mouseleave', 'restaurants-point', () => {
+        map.getCanvas().style.cursor = '';
+      });
+
+      // Click elsewhere on map closes sheet
       map.on('click', (e) => {
-        const features = map.queryRenderedFeatures(e.point, { layers: ['restaurants-point'] });
-        if (!features.length) closeSheet();
+        const bbox = [
+          [e.point.x - 5, e.point.y - 5],
+          [e.point.x + 5, e.point.y + 5]
+        ];
+        const features = map.queryRenderedFeatures(bbox, { layers: ['restaurants-point'] });
+        if (!features.length) {
+          closeSheet();
+        }
       });
     }
 
