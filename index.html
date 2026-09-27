@@ -102,7 +102,7 @@
 
     /* MapLibre Popup Custom Styling */
     .maplibregl-popup {
-      z-index: 25; /* Always floats above control panel (z-index: 10) */
+      z-index: 25;
     }
     .maplibregl-popup-content {
       background: rgba(22, 27, 34, 0.98) !important;
@@ -279,7 +279,6 @@
       pitch: 30
     });
 
-    // Suppress missing sprite warnings from OpenFreeMap style
     map.on('styleimagemissing', (e) => {
       const id = e.id;
       if (!map.hasImage(id)) {
@@ -333,6 +332,13 @@
 
         if (features && features.length > 0) {
           const venueId = Number(features[0].properties.id);
+
+          // If the currently open restaurant dot is clicked again, close it
+          if (selectedVenueId === venueId) {
+            closePopup();
+            return;
+          }
+
           const venue = rawVenues.find(v => v.id === venueId);
           if (venue) {
             selectedVenueId = venueId;
@@ -350,6 +356,14 @@
         map.getCanvas().style.cursor = (features && features.length > 0) ? 'pointer' : '';
       });
     });
+
+    function closePopup() {
+      if (currentPopup) {
+        currentPopup.remove();
+        currentPopup = null;
+      }
+      selectedVenueId = null;
+    }
 
     function renderPopup(venue) {
       const total = calculateTotal(venue);
@@ -399,20 +413,11 @@
       if (!map.getSource('restaurants')) return;
       map.getSource('restaurants').setData(buildGeoJSON());
 
+      // Keeps the popup open and updates numbers dynamically as you change items
       if (selectedVenueId) {
         const venue = rawVenues.find(v => v.id === selectedVenueId);
         if (venue) {
-          const total = calculateTotal(venue);
-          // Dismiss popup if adjustments push the selected venue over budget
-          if (total > state.maxBudget) {
-            if (currentPopup) {
-              currentPopup.remove();
-              currentPopup = null;
-            }
-            selectedVenueId = null;
-          } else {
-            renderPopup(venue);
-          }
+          renderPopup(venue);
         }
       }
     }
