@@ -237,11 +237,11 @@
       const pMult = v.isTapas ? (state.prime * 2) : state.prime;
 
       const subtotal = 
-        (state.apps * v.app) + 
-        (cMult * v.casualMain) + 
-        (pMult * v.premiumMain) + 
-        (state.drinks * v.drink) + 
-        (state.dessert * v.dessert);
+        (state.apps * (v.app || 0)) + 
+        (cMult * (v.casualMain || 0)) + 
+        (pMult * (v.premiumMain || 0)) + 
+        (state.drinks * (v.drink || 0)) + 
+        (state.dessert * (v.dessert || 0));
 
       return Math.round(subtotal * 1.30);
     }
@@ -260,8 +260,8 @@
               name: v.name,
               category: v.category,
               total: total,
-              color: v.tierColor,
-              opacity: isUnderBudget ? 1.0 : 0.12
+              color: v.tierColor || "#38bdf8",
+              opacity: isUnderBudget ? 1.0 : 0.15
             }
           };
         })
@@ -274,6 +274,14 @@
       center: [-88.165, 41.745],
       zoom: 12.2,
       pitch: 30
+    });
+
+    // Suppress missing sprite warnings from OpenFreeMap style
+    map.on('styleimagemissing', (e) => {
+      const id = e.id;
+      if (!map.hasImage(id)) {
+        map.addImage(id, { width: 1, height: 1, data: new Uint8Array(4) });
+      }
     });
 
     map.on('load', async () => {
@@ -303,7 +311,7 @@
         type: 'circle',
         source: 'restaurants',
         paint: {
-          'circle-radius': 11,
+          'circle-radius': 12,
           'circle-color': ['get', 'color'],
           'circle-opacity': ['get', 'opacity'],
           'circle-stroke-width': 2.5,
@@ -312,22 +320,31 @@
         }
       });
 
-      // Pin Click Event
-      map.on('click', 'restaurants-point', (e) => {
-        if (!e.features || !e.features.length) return;
-        const venueId = Number(e.features[0].properties.id);
-        const venue = rawVenues.find(v => v.id === venueId);
-        if (!venue) return;
+      // Global click handler: searches 20px around click point for responsive hit-testing
+      map.on('click', (e) => {
+        const bbox = [
+          [e.point.x - 15, e.point.y - 15],
+          [e.point.x + 15, e.point.y + 15]
+        ];
+        const features = map.queryRenderedFeatures(bbox, { layers: ['restaurants-point'] });
 
-        selectedVenueId = venueId;
-        renderPopup(venue);
+        if (features && features.length > 0) {
+          const venueId = Number(features[0].properties.id);
+          const venue = rawVenues.find(v => v.id === venueId);
+          if (venue) {
+            selectedVenueId = venueId;
+            renderPopup(venue);
+          }
+        }
       });
 
-      map.on('mouseenter', 'restaurants-point', () => {
-        map.getCanvas().style.cursor = 'pointer';
-      });
-      map.on('mouseleave', 'restaurants-point', () => {
-        map.getCanvas().style.cursor = '';
+      map.on('mousemove', (e) => {
+        const bbox = [
+          [e.point.x - 10, e.point.y - 10],
+          [e.point.x + 10, e.point.y + 10]
+        ];
+        const features = map.queryRenderedFeatures(bbox, { layers: ['restaurants-point'] });
+        map.getCanvas().style.cursor = (features && features.length > 0) ? 'pointer' : '';
       });
     });
 
@@ -338,11 +355,11 @@
       const cMult = venue.isTapas ? (state.casual * 2) : state.casual;
       const pMult = venue.isTapas ? (state.prime * 2) : state.prime;
 
-      const appCost = Math.round(state.apps * venue.app);
-      const casCost = Math.round(cMult * venue.casualMain);
-      const prmCost = Math.round(pMult * venue.premiumMain);
-      const drkCost = Math.round(state.drinks * venue.drink);
-      const dstCost = Math.round(state.dessert * venue.dessert);
+      const appCost = Math.round(state.apps * (venue.app || 0));
+      const casCost = Math.round(cMult * (venue.casualMain || 0));
+      const prmCost = Math.round(pMult * (venue.premiumMain || 0));
+      const drkCost = Math.round(state.drinks * (venue.drink || 0));
+      const dstCost = Math.round(state.dessert * (venue.dessert || 0));
 
       const html = `
         <div class="pop-header">
@@ -362,7 +379,7 @@
         </div>
       `;
 
-      currentPopup = new maplibregl.Popup({ closeButton: true, closeOnClick: false, offset: 12 })
+      currentPopup = new maplibregl.Popup({ closeButton: true, closeOnClick: false, offset: 14 })
         .setLngLat(venue.coords)
         .setHTML(html)
         .addTo(map);
@@ -376,7 +393,6 @@
       if (!map.getSource('restaurants')) return;
       map.getSource('restaurants').setData(buildGeoJSON());
 
-      // If a popup is currently open, dynamically update its pricing card too
       if (selectedVenueId) {
         const venue = rawVenues.find(v => v.id === selectedVenueId);
         if (venue) renderPopup(venue);
