@@ -1,0 +1,376 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+  <title>Dinner for Two - Interactive Cost Map</title>
+  
+  <link href="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.css" rel="stylesheet" />
+
+  <style>
+    * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+    body, html {
+      margin: 0; padding: 0;
+      width: 100%; height: 100%;
+      overflow: hidden;
+      font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Segoe UI", Roboto, sans-serif;
+      background: #0d1117;
+      color: #f0f6fc;
+    }
+
+    #map { width: 100%; height: 100%; }
+
+    /* Floating Control Panel */
+    .control-panel {
+      position: absolute;
+      top: env(safe-area-inset-top, 16px);
+      left: 16px; right: 16px;
+      z-index: 10;
+      background: rgba(22, 27, 34, 0.92);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border-radius: 16px;
+      border: 1px solid rgba(255,255,255,0.1);
+      box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+      padding: 12px 16px;
+      max-width: 480px;
+      margin: 0 auto;
+    }
+
+    .meal-builder-row {
+      display: flex;
+      justify-content: space-between;
+      gap: 6px;
+      margin-bottom: 12px;
+    }
+
+    .counter-pill {
+      background: #161b22;
+      border: 1px solid #30363d;
+      border-radius: 10px;
+      padding: 4px 8px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      flex: 1;
+    }
+    .counter-label { font-size: 10px; color: #8b949e; text-transform: uppercase; margin-bottom: 4px; font-weight: 600; }
+    .counter-actions { display: flex; align-items: center; gap: 8px; }
+    .counter-btn {
+      background: #21262d;
+      border: 1px solid #30363d;
+      color: #fff;
+      border-radius: 6px;
+      width: 22px; height: 22px;
+      font-size: 14px;
+      line-height: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+    }
+    .counter-value { font-size: 13px; font-weight: 700; width: 12px; text-align: center; }
+
+    /* Budget Range Slider */
+    .budget-row {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      border-top: 1px solid rgba(255,255,255,0.08);
+      padding-top: 10px;
+    }
+    .budget-header {
+      display: flex;
+      justify-content: space-between;
+      font-size: 12px;
+      font-weight: 600;
+    }
+    .budget-slider {
+      width: 100%;
+      accent-color: #38bdf8;
+      cursor: pointer;
+    }
+
+    /* iOS Bottom Sheet */
+    .bottom-sheet {
+      position: absolute;
+      left: 0; right: 0; bottom: 0;
+      z-index: 20;
+      background: rgba(22, 27, 34, 0.95);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      border-top: 1px solid rgba(255,255,255,0.12);
+      border-radius: 20px 20px 0 0;
+      padding: 12px 20px calc(16px + env(safe-area-inset-bottom, 12px));
+      transform: translateY(110%);
+      transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+      box-shadow: 0 -8px 30px rgba(0,0,0,0.5);
+      max-width: 480px;
+      margin: 0 auto;
+    }
+    .bottom-sheet.open { transform: translateY(0); }
+    .sheet-handle { width: 36px; height: 4px; background: #484f58; border-radius: 2px; margin: 0 auto 12px; cursor: pointer; }
+    .sheet-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 12px; }
+    .sheet-title { font-size: 18px; font-weight: 700; margin: 0 0 2px; }
+    .sheet-category { font-size: 13px; color: #8b949e; }
+    .price-badge { text-align: right; background: rgba(255,255,255,0.05); padding: 6px 12px; border-radius: 10px; border: 1px solid rgba(255,255,255,0.1); }
+    .price-badge .amount { font-size: 20px; font-weight: 700; }
+    .price-badge .caption { font-size: 10px; color: #8b949e; text-transform: uppercase; }
+
+    .breakdown-list {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 6px;
+      margin: 12px 0;
+      padding: 10px;
+      background: #0d1117;
+      border-radius: 12px;
+      border: 1px solid #30363d;
+    }
+    .breakdown-item { text-align: center; }
+    .breakdown-label { font-size: 10px; color: #8b949e; margin-bottom: 2px; }
+    .breakdown-val { font-size: 13px; font-weight: 600; color: #e6edf3; }
+    .sheet-footer { font-size: 11px; color: #6e7681; text-align: center; margin-top: 8px; }
+  </style>
+</head>
+<body>
+
+  <!-- Dynamic Controls -->
+  <div class="control-panel">
+    <div class="meal-builder-row">
+      <div class="counter-pill">
+        <span class="counter-label">Apps</span>
+        <div class="counter-actions">
+          <button class="counter-btn" onclick="updateQty('apps', -1)">-</button>
+          <span class="counter-value" id="qty-apps">0</span>
+          <button class="counter-btn" onclick="updateQty('apps', 1)">+</button>
+        </div>
+      </div>
+      <div class="counter-pill">
+        <span class="counter-label">Mains</span>
+        <div class="counter-actions">
+          <button class="counter-btn" onclick="updateQty('mains', -1)">-</button>
+          <span class="counter-value" id="qty-mains">2</span>
+          <button class="counter-btn" onclick="updateQty('mains', 1)">+</button>
+        </div>
+      </div>
+      <div class="counter-pill">
+        <span class="counter-label">Drinks</span>
+        <div class="counter-actions">
+          <button class="counter-btn" onclick="updateQty('drinks', -1)">-</button>
+          <span class="counter-value" id="qty-drinks">2</span>
+          <button class="counter-btn" onclick="updateQty('drinks', 1)">+</button>
+        </div>
+      </div>
+      <div class="counter-pill">
+        <span class="counter-label">Dessert</span>
+        <div class="counter-actions">
+          <button class="counter-btn" onclick="updateQty('dessert', -1)">-</button>
+          <span class="counter-value" id="qty-dessert">1</span>
+          <button class="counter-btn" onclick="updateQty('dessert', 1)">+</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="budget-row">
+      <div class="budget-header">
+        <span>Max Target Budget</span>
+        <span id="budget-display" style="color: #38bdf8;">$250</span>
+      </div>
+      <input type="range" class="budget-slider" id="budget-slider" min="60" max="300" step="10" value="250" oninput="onBudgetChange(this.value)" />
+    </div>
+  </div>
+
+  <div id="map"></div>
+
+  <!-- Detail Sheet -->
+  <div class="bottom-sheet" id="sheet">
+    <div class="sheet-handle" onclick="closeSheet()"></div>
+    <div class="sheet-header">
+      <div>
+        <div class="sheet-title" id="sheet-name">Restaurant</div>
+        <div class="sheet-category" id="sheet-category">Cuisine</div>
+      </div>
+      <div class="price-badge">
+        <div class="amount" id="sheet-total">$0</div>
+        <div class="caption">Total Out-of-Pocket</div>
+      </div>
+    </div>
+
+    <div class="breakdown-list">
+      <div class="breakdown-item">
+        <div class="breakdown-label">Apps</div>
+        <div class="breakdown-val" id="sheet-apps-val">$0</div>
+      </div>
+      <div class="breakdown-item">
+        <div class="breakdown-label">Mains</div>
+        <div class="breakdown-val" id="sheet-mains-val">$0</div>
+      </div>
+      <div class="breakdown-item">
+        <div class="breakdown-label">Drinks</div>
+        <div class="breakdown-val" id="sheet-drinks-val">$0</div>
+      </div>
+      <div class="breakdown-item">
+        <div class="breakdown-label">Dessert</div>
+        <div class="breakdown-val" id="sheet-dessert-val">$0</div>
+      </div>
+    </div>
+    
+    <div class="sheet-footer">
+      Calculated from median menu pricing • ~10% local dining tax + 20% gratuity
+    </div>
+  </div>
+
+  <script src="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.js"></script>
+  <script>
+    // State
+    const state = {
+      apps: 0,
+      mains: 2,
+      drinks: 2,
+      dessert: 1,
+      maxBudget: 250,
+      activeRestaurant: null
+    };
+
+    // Database with explicit, locked tier colors
+    let rawVenues = [];
+
+// Load dynamic data on startup
+fetch('venues.json')
+  .then(res => res.json())
+  .then(data => {
+    rawVenues = data;
+    refreshMap();
+  });
+
+    // Dynamic cost calculator based on user's current counter quantities
+    function calculateTotal(v) {
+      const mainMultiplier = v.isTapas ? (state.mains * 2) : state.mains;
+      const subtotal = (state.apps * v.app) + (mainMultiplier * v.main) + (state.drinks * v.drink) + (state.dessert * v.dessert);
+      return Math.round(subtotal * 1.30); // ~10% local dining tax + 20% tip
+    }
+
+    // Build the dynamic GeoJSON payload
+    function buildGeoJSON() {
+      return {
+        type: "FeatureCollection",
+        features: rawVenues.map(v => {
+          const total = calculateTotal(v);
+          const visible = total <= state.maxBudget;
+          return {
+            type: "Feature",
+            geometry: { type: "Point", coordinates: v.coords },
+            properties: {
+              id: v.id,
+              name: v.name,
+              category: v.category,
+              total: total,
+              color: v.tierColor,
+              opacity: visible ? 1.0 : 0.08,
+              visible: visible,
+              appTotal: (state.apps * v.app),
+              mainTotal: ((v.isTapas ? state.mains * 2 : state.mains) * v.main),
+              drinkTotal: (state.drinks * v.drink),
+              dessertTotal: (state.dessert * v.dessert)
+            }
+          };
+        })
+      };
+    }
+
+    const map = new maplibregl.Map({
+      container: 'map',
+      style: 'https://tiles.openfreemap.org/styles/dark',
+      center: [-88.165, 41.745],
+      zoom: 12.2,
+      pitch: 30
+    });
+
+    map.on('load', () => {
+      map.addSource('restaurants', { type: 'geojson', data: buildGeoJSON() });
+
+      map.addLayer({
+        id: 'restaurants-glow',
+        type: 'circle',
+        source: 'restaurants',
+        paint: {
+          'circle-radius': 18,
+          'circle-color': ['get', 'color'],
+          'circle-opacity': ['*', ['get', 'opacity'], 0.3],
+          'circle-blur': 0.8
+        }
+      });
+
+      map.addLayer({
+        id: 'restaurants-point',
+        type: 'circle',
+        source: 'restaurants',
+        paint: {
+          'circle-radius': 8,
+          'circle-color': ['get', 'color'],
+          'circle-opacity': ['get', 'opacity'],
+          'circle-stroke-width': 2,
+          'circle-stroke-color': '#ffffff',
+          'circle-stroke-opacity': ['get', 'opacity']
+        }
+      });
+
+      map.on('click', 'restaurants-point', (e) => {
+        const p = e.features[0].properties;
+        if (!p.visible) return;
+        state.activeRestaurant = p;
+        openSheet(p);
+      });
+
+      map.on('click', (e) => {
+        const features = map.queryRenderedFeatures(e.point, { layers: ['restaurants-point'] });
+        if (!features.length) closeSheet();
+      });
+    });
+
+    function refreshMap() {
+      const geojson = buildGeoJSON();
+      if (map.getSource('restaurants')) {
+        map.getSource('restaurants').setData(geojson);
+      }
+      if (state.activeRestaurant) {
+        const updated = geojson.features.find(f => f.properties.id === state.activeRestaurant.id);
+        if (updated) openSheet(updated.properties);
+      }
+    }
+
+    function updateQty(key, delta) {
+      state[key] = Math.max(0, state[key] + delta);
+      document.getElementById(`qty-${key}`).innerText = state[key];
+      refreshMap();
+    }
+
+    function onBudgetChange(val) {
+      state.maxBudget = Number(val);
+      document.getElementById('budget-display').innerText = `$${val}`;
+      refreshMap();
+    }
+
+    const sheet = document.getElementById('sheet');
+    function openSheet(p) {
+      document.getElementById('sheet-name').innerText = p.name;
+      document.getElementById('sheet-category').innerText = p.category;
+      document.getElementById('sheet-total').innerText = `$${p.total}`;
+      document.getElementById('sheet-total').style.color = p.color;
+
+      document.getElementById('sheet-apps-val').innerText = `$${Number(p.appTotal).toFixed(0)}`;
+      document.getElementById('sheet-mains-val').innerText = `$${Number(p.mainTotal).toFixed(0)}`;
+      document.getElementById('sheet-drinks-val').innerText = `$${Number(p.drinkTotal).toFixed(0)}`;
+      document.getElementById('sheet-dessert-val').innerText = `$${Number(p.dessertTotal).toFixed(0)}`;
+
+      sheet.classList.add('open');
+    }
+
+    function closeSheet() {
+      sheet.classList.remove('open');
+      state.activeRestaurant = null;
+    }
+  </script>
+</body>
+</html>
