@@ -26,11 +26,11 @@
       top: env(safe-area-inset-top, 16px);
       left: 12px; right: 12px;
       z-index: 10;
-      background: rgba(22, 27, 34, 0.92);
+      background: rgba(22, 27, 34, 0.94);
       backdrop-filter: blur(16px);
       -webkit-backdrop-filter: blur(16px);
       border-radius: 16px;
-      border: 1px solid rgba(255,255,255,0.1);
+      border: 1px solid rgba(255,255,255,0.12);
       box-shadow: 0 10px 30px rgba(0,0,0,0.5);
       padding: 10px 12px;
       max-width: 520px;
@@ -100,66 +100,87 @@
       cursor: pointer;
     }
 
-    /* iOS Bottom Sheet */
+    /* Bottom Sheet Modal */
     .bottom-sheet {
+      display: none; /* Clean native show/hide */
       position: absolute;
-      left: 0; right: 0; bottom: 0;
-      z-index: 20;
-      background: rgba(22, 27, 34, 0.95);
-      backdrop-filter: blur(20px);
-      -webkit-backdrop-filter: blur(20px);
-      border-top: 1px solid rgba(255,255,255,0.12);
-      border-radius: 20px 20px 0 0;
-      padding: 12px 18px calc(16px + env(safe-area-inset-bottom, 12px));
-      transform: translateY(115%);
-      transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
-      box-shadow: 0 -8px 30px rgba(0,0,0,0.5);
-      max-width: 520px;
+      left: 12px; right: 12px; 
+      bottom: calc(12px + env(safe-area-inset-bottom, 12px));
+      z-index: 30;
+      background: rgba(22, 27, 34, 0.98);
+      backdrop-filter: blur(24px);
+      -webkit-backdrop-filter: blur(24px);
+      border: 1px solid rgba(255,255,255,0.16);
+      border-radius: 20px;
+      padding: 16px;
+      box-shadow: 0 10px 40px rgba(0,0,0,0.7);
+      max-width: 480px;
       margin: 0 auto;
-      pointer-events: none; /* Allows taps to hit map when closed */
-      visibility: hidden;
     }
-    .bottom-sheet.open { 
-      transform: translateY(0); 
-      pointer-events: auto; /* Re-enable clicks when open */
-      visibility: visible;
+    .bottom-sheet.open {
+      display: block;
+      animation: popIn 0.2s cubic-bezier(0.16, 1, 0.3, 1);
     }
-    .sheet-handle { 
-      width: 44px; 
-      height: 6px; 
-      background: #484f58; 
-      border-radius: 3px; 
-      margin: 0 auto 12px; 
-      cursor: pointer; 
-      padding: 6px 0;
-      background-clip: content-box;
+    @keyframes popIn {
+      from { opacity: 0; transform: translateY(12px); }
+      to { opacity: 1; transform: translateY(0); }
     }
-    .sheet-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 10px; }
-    .sheet-title { font-size: 18px; font-weight: 700; margin: 0 0 2px; }
-    .sheet-category { font-size: 13px; color: #8b949e; }
-    .price-badge { text-align: right; background: rgba(255,255,255,0.05); padding: 6px 12px; border-radius: 10px; border: 1px solid rgba(255,255,255,0.1); }
-    .price-badge .amount { font-size: 20px; font-weight: 700; }
-    .price-badge .caption { font-size: 10px; color: #8b949e; text-transform: uppercase; }
+
+    .sheet-top-bar {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      margin-bottom: 12px;
+    }
+    .sheet-title { font-size: 19px; font-weight: 700; margin: 0; }
+    .sheet-category { font-size: 13px; color: #8b949e; margin-top: 2px; }
+    
+    .sheet-close-btn {
+      background: #21262d;
+      border: 1px solid #30363d;
+      color: #8b949e;
+      border-radius: 50%;
+      width: 28px; height: 28px;
+      font-size: 15px;
+      font-weight: 700;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .price-badge-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background: #161b22;
+      border: 1px solid #30363d;
+      border-radius: 12px;
+      padding: 8px 14px;
+      margin-bottom: 12px;
+    }
+    .price-badge-row .caption { font-size: 11px; color: #8b949e; text-transform: uppercase; font-weight: 600; }
+    .price-badge-row .amount { font-size: 24px; font-weight: 800; }
 
     .breakdown-list {
       display: grid;
       grid-template-columns: repeat(5, 1fr);
-      gap: 5px;
-      margin: 10px 0;
-      padding: 10px;
+      gap: 6px;
+      margin-bottom: 10px;
       background: #0d1117;
       border-radius: 12px;
       border: 1px solid #30363d;
+      padding: 8px 4px;
     }
     .breakdown-item { text-align: center; }
     .breakdown-label { font-size: 9px; color: #8b949e; margin-bottom: 2px; text-transform: uppercase; font-weight: 600; }
-    .breakdown-val { font-size: 13px; font-weight: 600; color: #e6edf3; }
-    .sheet-footer { font-size: 11px; color: #6e7681; text-align: center; margin-top: 6px; }
+    .breakdown-val { font-size: 13px; font-weight: 700; color: #e6edf3; }
+    .sheet-footer { font-size: 11px; color: #6e7681; text-align: center; }
   </style>
 </head>
 <body>
 
-  <!-- Dynamic Controls -->
+  <!-- Top Controls -->
   <div class="control-panel">
     <div class="meal-builder-row">
       <div class="counter-pill">
@@ -217,16 +238,17 @@
 
   <!-- Detail Sheet -->
   <div class="bottom-sheet" id="sheet">
-    <div class="sheet-handle" onclick="closeSheet()"></div>
-    <div class="sheet-header">
+    <div class="sheet-top-bar">
       <div>
-        <div class="sheet-title" id="sheet-name">Restaurant</div>
+        <h3 class="sheet-title" id="sheet-name">Restaurant</h3>
         <div class="sheet-category" id="sheet-category">Cuisine</div>
       </div>
-      <div class="price-badge">
-        <div class="amount" id="sheet-total">$0</div>
-        <div class="caption">Total Out-of-Pocket</div>
-      </div>
+      <button class="sheet-close-btn" onclick="closeSheet()">✕</button>
+    </div>
+
+    <div class="price-badge-row">
+      <span class="caption">Estimated Out-of-Pocket</span>
+      <span class="amount" id="sheet-total">$0</span>
     </div>
 
     <div class="breakdown-list">
@@ -253,7 +275,7 @@
     </div>
     
     <div class="sheet-footer">
-      Calculated from median menu pricing • ~10% local dining tax + 20% gratuity
+      Median menu item costs • ~10% local dining tax + 20% gratuity
     </div>
   </div>
 
@@ -324,19 +346,17 @@
       pitch: 30
     });
 
-    map.on('load', () => {
-      fetch('venues.json')
-        .then(res => res.json())
-        .then(data => {
-          rawVenues = data;
-          initLayers();
-        });
-    });
+    // Ensure map and data are both loaded before setting up layers
+    map.on('load', async () => {
+      try {
+        const res = await fetch('venues.json?v=' + Date.now()); // Date.now bypasses stale browser caching
+        rawVenues = await res.json();
+      } catch (err) {
+        console.error("Could not fetch venues.json", err);
+      }
 
-    function initLayers() {
       map.addSource('restaurants', { type: 'geojson', data: buildGeoJSON() });
 
-      // Ambient Glow
       map.addLayer({
         id: 'restaurants-glow',
         type: 'circle',
@@ -349,13 +369,12 @@
         }
       });
 
-      // Interactive Pin
       map.addLayer({
         id: 'restaurants-point',
         type: 'circle',
         source: 'restaurants',
         paint: {
-          'circle-radius': 10,
+          'circle-radius': 11,
           'circle-color': ['get', 'color'],
           'circle-opacity': ['get', 'opacity'],
           'circle-stroke-width': 2.5,
@@ -364,7 +383,6 @@
         }
       });
 
-      // Click on Pin
       map.on('click', 'restaurants-point', (e) => {
         if (!e.features || !e.features.length) return;
         const p = e.features[0].properties;
@@ -373,26 +391,13 @@
         openSheet(p);
       });
 
-      // Cursor hover feedback
       map.on('mouseenter', 'restaurants-point', () => {
         map.getCanvas().style.cursor = 'pointer';
       });
       map.on('mouseleave', 'restaurants-point', () => {
         map.getCanvas().style.cursor = '';
       });
-
-      // Click elsewhere on map closes sheet
-      map.on('click', (e) => {
-        const bbox = [
-          [e.point.x - 5, e.point.y - 5],
-          [e.point.x + 5, e.point.y + 5]
-        ];
-        const features = map.queryRenderedFeatures(bbox, { layers: ['restaurants-point'] });
-        if (!features.length) {
-          closeSheet();
-        }
-      });
-    }
+    });
 
     function refreshMap() {
       if (!map.getSource('restaurants')) return;
