@@ -3,44 +3,56 @@
     "id": 1,
     "name": "Lazy Dog",
     "category": "Casual American",
-    "coords": [-88.2031, 41.7588],
-    "app": 12.00,
-    "main": 21.50,
+    "coords": [
+      -88.2031,
+      41.7588
+    ],
+    "app": 12.0,
+    "main": 21.5,
     "drink": 9.25,
-    "dessert": 9.50,
+    "dessert": 9.5,
     "tierColor": "#22c55e"
   },
   {
     "id": 2,
     "name": "Hacienda Real",
     "category": "Elevated Mexican",
-    "coords": [-88.0712, 41.6984],
-    "app": 11.50,
-    "main": 23.00,
-    "drink": 12.50,
-    "dessert": 11.00,
+    "coords": [
+      -88.0712,
+      41.6984
+    ],
+    "app": 11.5,
+    "main": 23.0,
+    "drink": 12.5,
+    "dessert": 11.0,
     "tierColor": "#22c55e"
   },
   {
     "id": 3,
     "name": "VAI's Italian",
     "category": "Modern Italian",
-    "coords": [-88.2040, 41.7531],
-    "app": 14.50,
-    "main": 26.00,
-    "drink": 14.00,
-    "dessert": 10.00,
+    "coords": [
+      -88.204,
+      41.7531
+    ],
+    "app": 14.5,
+    "main": 26.0,
+    "drink": 14.0,
+    "dessert": 10.0,
     "tierColor": "#eab308"
   },
   {
     "id": 4,
-    "name": "Mesón Sabika",
+    "name": "Mes\u00f3n Sabika",
     "category": "Spanish Tapas",
-    "coords": [-88.1561, 41.7822],
-    "app": 9.50,
-    "main": 9.00,
-    "drink": 13.50,
-    "dessert": 10.50,
+    "coords": [
+      -88.1561,
+      41.7822
+    ],
+    "app": 9.5,
+    "main": 9.0,
+    "drink": 13.5,
+    "dessert": 10.5,
     "isTapas": true,
     "tierColor": "#22c55e"
   },
@@ -48,55 +60,70 @@
     "id": 5,
     "name": "Santo Cielo",
     "category": "Latin Bistro",
-    "coords": [-88.1481, 41.7714],
-    "app": 16.00,
-    "main": 32.00,
-    "drink": 16.00,
-    "dessert": 12.00,
+    "coords": [
+      -88.1481,
+      41.7714
+    ],
+    "app": 16.0,
+    "main": 32.0,
+    "drink": 16.0,
+    "dessert": 12.0,
     "tierColor": "#f97316"
   },
   {
     "id": 6,
     "name": "Vasili's",
     "category": "Mediterranean Bistro",
-    "coords": [-88.1485, 41.7725],
-    "app": 15.50,
-    "main": 34.00,
-    "drink": 15.00,
-    "dessert": 13.50,
+    "coords": [
+      -88.1485,
+      41.7725
+    ],
+    "app": 15.5,
+    "main": 34.0,
+    "drink": 15.0,
+    "dessert": 13.5,
     "tierColor": "#f97316"
   },
   {
     "id": 7,
     "name": "Ramsay's Kitchen",
     "category": "Modern American Bistro",
-    "coords": [-88.1478, 41.7719],
-    "app": 18.00,
-    "main": 47.00,
-    "drink": 17.00,
-    "dessert": 15.00,
+    "coords": [
+      -88.1478,
+      41.7719
+    ],
+    "app": 18.0,
+    "main": 47.0,
+    "drink": 17.0,
+    "dessert": 15.0,
     "tierColor": "#ef4444"
   },
   {
     "id": 8,
     "name": "Entourage",
     "category": "Steakhouse",
-    "coords": [-88.2045, 41.7612],
-    "app": 18.00,
-    "main": 53.00,
-    "drink": 17.50,
-    "dessert": 13.00,
+    "coords": [
+      -88.2045,
+      41.7612
+    ],
+    "app": 18.0,
+    "main": 53.0,
+    "drink": 17.5,
+    "dessert": 13.0,
     "tierColor": "#ef4444"
   },
   {
     "id": 9,
     "name": "Hugo's Frog Bar",
     "category": "Prime Steak & Seafood",
-    "coords": [-88.1488, 41.7711],
-    "app": 21.00,
-    "main": 58.00,
-    "drink": 18.50,
-    "dessert": 16.00,
+    "coords": [
+      -88.1488,
+      41.7711
+    ],
+    "app": 21.0,
+    "main": 58.0,
+    "drink": 18.5,
+    "dessert": 16.0,
     "tierColor": "#a855f7"
   }
 ]
