@@ -24,7 +24,7 @@
     .control-panel {
       position: absolute;
       top: env(safe-area-inset-top, 16px);
-      left: 16px; right: 16px;
+      left: 12px; right: 12px;
       z-index: 10;
       background: rgba(22, 27, 34, 0.92);
       backdrop-filter: blur(16px);
@@ -32,52 +32,61 @@
       border-radius: 16px;
       border: 1px solid rgba(255,255,255,0.1);
       box-shadow: 0 10px 30px rgba(0,0,0,0.5);
-      padding: 12px 16px;
-      max-width: 480px;
+      padding: 10px 12px;
+      max-width: 520px;
       margin: 0 auto;
     }
 
     .meal-builder-row {
       display: flex;
       justify-content: space-between;
-      gap: 6px;
-      margin-bottom: 12px;
+      gap: 5px;
+      margin-bottom: 10px;
     }
 
     .counter-pill {
       background: #161b22;
       border: 1px solid #30363d;
       border-radius: 10px;
-      padding: 4px 8px;
+      padding: 4px 6px;
       display: flex;
       flex-direction: column;
       align-items: center;
       flex: 1;
+      min-width: 0;
     }
-    .counter-label { font-size: 10px; color: #8b949e; text-transform: uppercase; margin-bottom: 4px; font-weight: 600; }
-    .counter-actions { display: flex; align-items: center; gap: 8px; }
+    .counter-label { 
+      font-size: 9px; 
+      color: #8b949e; 
+      text-transform: uppercase; 
+      margin-bottom: 4px; 
+      font-weight: 700;
+      letter-spacing: 0.5px;
+      white-space: nowrap;
+    }
+    .counter-actions { display: flex; align-items: center; gap: 4px; }
     .counter-btn {
       background: #21262d;
       border: 1px solid #30363d;
       color: #fff;
       border-radius: 6px;
-      width: 22px; height: 22px;
-      font-size: 14px;
+      width: 20px; height: 20px;
+      font-size: 13px;
       line-height: 1;
       display: flex;
       align-items: center;
       justify-content: center;
       cursor: pointer;
     }
-    .counter-value { font-size: 13px; font-weight: 700; width: 12px; text-align: center; }
+    .counter-value { font-size: 12px; font-weight: 700; width: 12px; text-align: center; }
 
     /* Budget Range Slider */
     .budget-row {
       display: flex;
       flex-direction: column;
-      gap: 4px;
+      gap: 3px;
       border-top: 1px solid rgba(255,255,255,0.08);
-      padding-top: 10px;
+      padding-top: 8px;
     }
     .budget-header {
       display: flex;
@@ -101,16 +110,16 @@
       -webkit-backdrop-filter: blur(20px);
       border-top: 1px solid rgba(255,255,255,0.12);
       border-radius: 20px 20px 0 0;
-      padding: 12px 20px calc(16px + env(safe-area-inset-bottom, 12px));
+      padding: 12px 18px calc(16px + env(safe-area-inset-bottom, 12px));
       transform: translateY(110%);
       transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
       box-shadow: 0 -8px 30px rgba(0,0,0,0.5);
-      max-width: 480px;
+      max-width: 520px;
       margin: 0 auto;
     }
     .bottom-sheet.open { transform: translateY(0); }
-    .sheet-handle { width: 36px; height: 4px; background: #484f58; border-radius: 2px; margin: 0 auto 12px; cursor: pointer; }
-    .sheet-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 12px; }
+    .sheet-handle { width: 36px; height: 4px; background: #484f58; border-radius: 2px; margin: 0 auto 10px; cursor: pointer; }
+    .sheet-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 10px; }
     .sheet-title { font-size: 18px; font-weight: 700; margin: 0 0 2px; }
     .sheet-category { font-size: 13px; color: #8b949e; }
     .price-badge { text-align: right; background: rgba(255,255,255,0.05); padding: 6px 12px; border-radius: 10px; border: 1px solid rgba(255,255,255,0.1); }
@@ -119,18 +128,18 @@
 
     .breakdown-list {
       display: grid;
-      grid-template-columns: repeat(4, 1fr);
-      gap: 6px;
-      margin: 12px 0;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 5px;
+      margin: 10px 0;
       padding: 10px;
       background: #0d1117;
       border-radius: 12px;
       border: 1px solid #30363d;
     }
     .breakdown-item { text-align: center; }
-    .breakdown-label { font-size: 10px; color: #8b949e; margin-bottom: 2px; }
+    .breakdown-label { font-size: 9px; color: #8b949e; margin-bottom: 2px; text-transform: uppercase; font-weight: 600; }
     .breakdown-val { font-size: 13px; font-weight: 600; color: #e6edf3; }
-    .sheet-footer { font-size: 11px; color: #6e7681; text-align: center; margin-top: 8px; }
+    .sheet-footer { font-size: 11px; color: #6e7681; text-align: center; margin-top: 6px; }
   </style>
 </head>
 <body>
@@ -142,16 +151,24 @@
         <span class="counter-label">Apps</span>
         <div class="counter-actions">
           <button class="counter-btn" onclick="updateQty('apps', -1)">-</button>
-          <span class="counter-value" id="qty-apps">0</span>
+          <span class="counter-value" id="qty-apps">1</span>
           <button class="counter-btn" onclick="updateQty('apps', 1)">+</button>
         </div>
       </div>
       <div class="counter-pill">
-        <span class="counter-label">Mains</span>
+        <span class="counter-label">Casual</span>
         <div class="counter-actions">
-          <button class="counter-btn" onclick="updateQty('mains', -1)">-</button>
-          <span class="counter-value" id="qty-mains">2</span>
-          <button class="counter-btn" onclick="updateQty('mains', 1)">+</button>
+          <button class="counter-btn" onclick="updateQty('casual', -1)">-</button>
+          <span class="counter-value" id="qty-casual">2</span>
+          <button class="counter-btn" onclick="updateQty('casual', 1)">+</button>
+        </div>
+      </div>
+      <div class="counter-pill">
+        <span class="counter-label">Prime</span>
+        <div class="counter-actions">
+          <button class="counter-btn" onclick="updateQty('prime', -1)">-</button>
+          <span class="counter-value" id="qty-prime">0</span>
+          <button class="counter-btn" onclick="updateQty('prime', 1)">+</button>
         </div>
       </div>
       <div class="counter-pill">
@@ -177,7 +194,7 @@
         <span>Max Target Budget</span>
         <span id="budget-display" style="color: #38bdf8;">$250</span>
       </div>
-      <input type="range" class="budget-slider" id="budget-slider" min="60" max="300" step="10" value="250" oninput="onBudgetChange(this.value)" />
+      <input type="range" class="budget-slider" id="budget-slider" min="60" max="350" step="10" value="250" oninput="onBudgetChange(this.value)" />
     </div>
   </div>
 
@@ -203,8 +220,12 @@
         <div class="breakdown-val" id="sheet-apps-val">$0</div>
       </div>
       <div class="breakdown-item">
-        <div class="breakdown-label">Mains</div>
-        <div class="breakdown-val" id="sheet-mains-val">$0</div>
+        <div class="breakdown-label">Casual</div>
+        <div class="breakdown-val" id="sheet-casual-val">$0</div>
+      </div>
+      <div class="breakdown-item">
+        <div class="breakdown-label">Prime</div>
+        <div class="breakdown-val" id="sheet-prime-val">$0</div>
       </div>
       <div class="breakdown-item">
         <div class="breakdown-label">Drinks</div>
@@ -223,41 +244,44 @@
 
   <script src="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.js"></script>
   <script>
-    // State
+    let rawVenues = [];
+
+    // State: Defaults to 1 App, 2 Casual Mains, 0 Prime Mains, 2 Drinks, 1 Dessert
     const state = {
-      apps: 0,
-      mains: 2,
+      apps: 1,
+      casual: 2,
+      prime: 0,
       drinks: 2,
       dessert: 1,
       maxBudget: 250,
       activeRestaurant: null
     };
 
-    // Database with explicit, locked tier colors
-    let rawVenues = [];
-
-// Load dynamic data on startup
-fetch('venues.json')
-  .then(res => res.json())
-  .then(data => {
-    rawVenues = data;
-    refreshMap();
-  });
-
-    // Dynamic cost calculator based on user's current counter quantities
+    // Dynamic cost calculation supporting dual-entree pricing
     function calculateTotal(v) {
-      const mainMultiplier = v.isTapas ? (state.mains * 2) : state.mains;
-      const subtotal = (state.apps * v.app) + (mainMultiplier * v.main) + (state.drinks * v.drink) + (state.dessert * v.dessert);
-      return Math.round(subtotal * 1.30); // ~10% local dining tax + 20% tip
+      // Tapas multiplier: 2 plates per entree count
+      const cMult = v.isTapas ? (state.casual * 2) : state.casual;
+      const pMult = v.isTapas ? (state.prime * 2) : state.prime;
+
+      const subtotal = 
+        (state.apps * v.app) + 
+        (cMult * v.casualMain) + 
+        (pMult * v.premiumMain) + 
+        (state.drinks * v.drink) + 
+        (state.dessert * v.dessert);
+
+      return Math.round(subtotal * 1.30); // ~10% tax + 20% tip
     }
 
-    // Build the dynamic GeoJSON payload
     function buildGeoJSON() {
       return {
         type: "FeatureCollection",
         features: rawVenues.map(v => {
           const total = calculateTotal(v);
           const visible = total <= state.maxBudget;
+          const cMult = v.isTapas ? (state.casual * 2) : state.casual;
+          const pMult = v.isTapas ? (state.prime * 2) : state.prime;
+
           return {
             type: "Feature",
             geometry: { type: "Point", coordinates: v.coords },
@@ -270,7 +294,8 @@ fetch('venues.json')
               opacity: visible ? 1.0 : 0.08,
               visible: visible,
               appTotal: (state.apps * v.app),
-              mainTotal: ((v.isTapas ? state.mains * 2 : state.mains) * v.main),
+              casualTotal: (cMult * v.casualMain),
+              primeTotal: (pMult * v.premiumMain),
               drinkTotal: (state.drinks * v.drink),
               dessertTotal: (state.dessert * v.dessert)
             }
@@ -288,6 +313,16 @@ fetch('venues.json')
     });
 
     map.on('load', () => {
+      // Fetch dynamic JSON data
+      fetch('venues.json')
+        .then(res => res.json())
+        .then(data => {
+          rawVenues = data;
+          initLayers();
+        });
+    });
+
+    function initLayers() {
       map.addSource('restaurants', { type: 'geojson', data: buildGeoJSON() });
 
       map.addLayer({
@@ -327,13 +362,13 @@ fetch('venues.json')
         const features = map.queryRenderedFeatures(e.point, { layers: ['restaurants-point'] });
         if (!features.length) closeSheet();
       });
-    });
+    }
 
     function refreshMap() {
+      if (!map.getSource('restaurants')) return;
       const geojson = buildGeoJSON();
-      if (map.getSource('restaurants')) {
-        map.getSource('restaurants').setData(geojson);
-      }
+      map.getSource('restaurants').setData(geojson);
+
       if (state.activeRestaurant) {
         const updated = geojson.features.find(f => f.properties.id === state.activeRestaurant.id);
         if (updated) openSheet(updated.properties);
@@ -360,7 +395,8 @@ fetch('venues.json')
       document.getElementById('sheet-total').style.color = p.color;
 
       document.getElementById('sheet-apps-val').innerText = `$${Number(p.appTotal).toFixed(0)}`;
-      document.getElementById('sheet-mains-val').innerText = `$${Number(p.mainTotal).toFixed(0)}`;
+      document.getElementById('sheet-casual-val').innerText = `$${Number(p.casualTotal).toFixed(0)}`;
+      document.getElementById('sheet-prime-val').innerText = `$${Number(p.primeTotal).toFixed(0)}`;
       document.getElementById('sheet-drinks-val').innerText = `$${Number(p.drinkTotal).toFixed(0)}`;
       document.getElementById('sheet-dessert-val').innerText = `$${Number(p.dessertTotal).toFixed(0)}`;
 
