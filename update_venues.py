@@ -5,11 +5,9 @@ import asyncio
 from playwright.async_api import async_playwright
 import google.generativeai as genai
 
-# Setup Gemini API (reads from environment variables)
 genai.configure(api_key=os.environ["GEMINI_API_KEY"])
 model = genai.GenerativeModel("gemini-1.5-flash")
 
-# Map venue IDs to their menu URLs
 TARGET_URLS = {
     1: "https://order.lazydogrestaurants.com/menu/naperville",
     2: "https://haciendarealbolingbrook.toast.site/menu",
@@ -26,15 +24,17 @@ PROMPT = """
 You are a menu parsing engine. Return strictly valid JSON containing float price arrays:
 {
   "apps": [float, ...],
-  "mains": [float, ...],
+  "casualMains": [float, ...],
+  "premiumMains": [float, ...],
   "drinks": [float, ...],
   "desserts": [float, ...]
 }
 Rules:
 - "apps": Appetizers/starters/small plates.
-- "mains": Main entrees/dinner dishes (or savory tapas plates). Exclude side orders, kids menu.
-- "drinks": Alcoholic beverages (cocktails, wine, beer). Exclude sodas/coffee.
-- "desserts": Sweet desserts.
+- "casualMains": Handhelds, burgers, entree salads, and pastas (typically under $30).
+- "premiumMains": Center-of-plate steaks, chops, prime seafood, or signature cuts (typically $35+). If a venue doesn't have luxury cuts, copy casual entrees here.
+- "drinks": Cocktails, beers, and wines by the glass.
+- "desserts": Standard desserts.
 Output pure JSON, no markdown formatting.
 """
 
@@ -75,14 +75,16 @@ async def update_all():
 
                 if data.get("apps"):
                     venue["app"] = round(statistics.median(data["apps"]), 2)
-                if data.get("mains"):
-                    venue["main"] = round(statistics.median(data["mains"]), 2)
+                if data.get("casualMains"):
+                    venue["casualMain"] = round(statistics.median(data["casualMains"]), 2)
+                if data.get("premiumMains"):
+                    venue["premiumMain"] = round(statistics.median(data["premiumMains"]), 2)
                 if data.get("drinks"):
                     venue["drink"] = round(statistics.median(data["drinks"]), 2)
                 if data.get("desserts"):
                     venue["dessert"] = round(statistics.median(data["desserts"]), 2)
 
-                print(f"✓ Updated {venue['name']}: App ${venue['app']} | Main ${venue['main']} | Drink ${venue['drink']} | Dessert ${venue['dessert']}")
+                print(f"✓ Updated {venue['name']}")
             except Exception as err:
                 print(f"Parsing skipped for {venue['name']}: {err}")
 
