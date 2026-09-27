@@ -349,8 +349,6 @@
     });
 
     function renderPopup(venue) {
-      if (currentPopup) currentPopup.remove();
-
       const total = calculateTotal(venue);
       const cMult = venue.isTapas ? (state.casual * 2) : state.casual;
       const pMult = venue.isTapas ? (state.prime * 2) : state.prime;
@@ -379,14 +377,21 @@
         </div>
       `;
 
-      currentPopup = new maplibregl.Popup({ closeButton: true, closeOnClick: false, offset: 14 })
-        .setLngLat(venue.coords)
-        .setHTML(html)
-        .addTo(map);
+      // If a popup is already open on the map, update its contents in place
+      if (currentPopup && currentPopup.isOpen()) {
+        currentPopup.setLngLat(venue.coords).setHTML(html);
+      } else {
+        // Otherwise create a fresh popup
+        currentPopup = new maplibregl.Popup({ closeButton: true, closeOnClick: false, offset: 14 })
+          .setLngLat(venue.coords)
+          .setHTML(html)
+          .addTo(map);
 
-      currentPopup.on('close', () => {
-        selectedVenueId = null;
-      });
+        currentPopup.on('close', () => {
+          selectedVenueId = null;
+          currentPopup = null;
+        });
+      }
     }
 
     function refreshMap() {
