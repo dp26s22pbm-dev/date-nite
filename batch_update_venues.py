@@ -63,19 +63,25 @@ async def scrape_site_or_pdf(url):
         context = await browser.new_context(user_agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36")
         page = await context.new_page()
         try:
-            await page.goto(url, wait_until="domcontentloaded", timeout=35000)
+            await page.goto(url, wait_until="domcontentloaded", timeout=25000)
             await asyncio.sleep(2)
 
-            pdf_link = await page.locator('a[href$=".pdf"], a:has-text("Dinner Menu"), a:has-text("Full Menu")').first.get_attribute("href")
-            if pdf_link:
-                full_pdf_url = urllib.parse.urljoin(url, pdf_link)
-                if full_pdf_url.lower().endswith(".pdf"):
-                    req = urllib.request.Request(full_pdf_url, headers={"User-Agent": "Mozilla/5.0"})
-                    with urllib.request.urlopen(req, timeout=15) as res:
-                        pdf_data = res.read()
-                        await browser.close()
-                        return None, pdf_data
+            # Check for PDF links without blocking the run if not present
+            try:
+                pdf_elem = page.locator('a[href$=".pdf"]').first
+                if await pdf_elem.count() > 0:
+                    pdf_link = await pdf_elem.get_attribute("href", timeout=2000)
+                    if pdf_link:
+                        full_pdf_url = urllib.parse.urljoin(url, pdf_link)
+                        req = urllib.request.Request(full_pdf_url, headers={"User-Agent": "Mozilla/5.0"})
+                        with urllib.request.urlopen(req, timeout=15) as res:
+                            pdf_data = res.read()
+                            await browser.close()
+                            return None, pdf_data
+            except Exception:
+                pass
 
+            # Scroll to trigger any lazy-loaded menu elements
             for _ in range(3):
                 await page.mouse.wheel(0, 1200)
                 await asyncio.sleep(0.4)
