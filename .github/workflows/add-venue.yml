@@ -6,7 +6,7 @@ on:
 
 jobs:
   add-venue:
-    if: contains(github.event.issue.labels.*.name, 'add-venue')
+    if: startsWith(github.event.issue.title, '[New Venue]')
     runs-on: ubuntu-latest
     permissions:
       contents: write
