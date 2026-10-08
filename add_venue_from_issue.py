@@ -203,6 +203,22 @@ async def main():
     with open("venues.json", "w") as f:
         json.dump(venues, f, indent=2)
 
+ # Register URL into urls.py so future batch runs can refresh it
+    if menu_url:
+        try:
+            with open("urls.py", "r") as f:
+                urls_content = f.read()
+
+            # Find the last closing brace and insert the new key-value pair right before it
+            last_brace_idx = urls_content.rfind("}")
+            if last_brace_idx != -1:
+                new_entry_line = f'    {entry["id"]}: "{menu_url}",\n'
+                updated_urls = urls_content[:last_brace_idx] + new_entry_line + urls_content[last_brace_idx:]
+                with open("urls.py", "w") as f:
+                    f.write(updated_urls)
+        except Exception as e:
+            print(f"Warning: Could not append URL to urls.py: {e}")
+
     print(f"Added {name} (ID: {entry['id']}): Casual ${casual_main}, Prime ${premium_main}, Color: {tier_color}")
 
 if __name__ == "__main__":
