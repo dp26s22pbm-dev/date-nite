@@ -209,5 +209,20 @@
     "drink": 8.5,
     "dessert": 8.0,
     "tierColor": "#eab308"
+  },
+  {
+    "id": 15,
+    "name": "Biaggi's Ristorante Italiano",
+    "category": "Italian",
+    "coords": [
+      -88.207112,
+      41.713996
+    ],
+    "app": 5.5,
+    "casualMain": 19.0,
+    "premiumMain": 27.38,
+    "drink": 13.75,
+    "dessert": 5.75,
+    "tierColor": "#eab308"
   }
 ]
