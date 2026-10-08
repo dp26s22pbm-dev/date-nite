@@ -3,7 +3,7 @@ import json
 import statistics
 import asyncio
 from playwright.async_api import async_playwright
-import google.generativeai as genai
+from google import genai
 
 genai.configure(api_key=os.environ["GEMINI_API_KEY"])
 model = genai.GenerativeModel("gemini-1.5-flash")
