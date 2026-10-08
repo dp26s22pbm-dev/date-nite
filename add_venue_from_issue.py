@@ -17,7 +17,7 @@ You are a restaurant menu pricing extraction engine. Analyze the raw menu text a
   "apps": [float, ...],
   "casualMains": [float, ...],
   "premiumMains": [float, ...],
-  "drinks": [float, ...],
+  "drinks": [float, ...]
   "desserts": [float, ...]
 }
 Rules:
@@ -59,6 +59,18 @@ def geocode_address(query):
         print(f"Geocoding error: {e}")
     return None
 
+def calculate_tier_color(main_price):
+    if main_price < 16.00:
+        return "#22c55e"  # Green: Casual / Value
+    elif main_price < 23.00:
+        return "#eab308"  # Yellow: Moderate
+    elif main_price < 33.00:
+        return "#f97316"  # Orange: Elevated Bistro
+    elif main_price < 50.00:
+        return "#ef4444"  # Red: Premium / Steakhouse
+    else:
+        return "#a855f7"  # Purple: High-End Luxury
+
 async def fetch_dynamic_menu(page, url):
     try:
         await page.goto(url, wait_until="domcontentloaded", timeout=40000)
@@ -86,11 +98,10 @@ async def main():
     category = extract_field(issue_body, "Cuisine Category")
     address = extract_field(issue_body, "Street Address or City")
     coords_raw = extract_field(issue_body, "Coordinates (Optional)")
-    tier_raw = extract_field(issue_body, "Map Glow / Pin Tier Color")
     menu_url = extract_field(issue_body, "Online Menu / Ordering URL")
     manual_raw = extract_field(issue_body, "Manual Pricing Overrides (Optional)")
 
-    # 1. Resolve Coordinates: Check Manual Coords -> Check Address Geocoding -> Fallback
+    # 1. Resolve Coordinates: Coordinates -> Address -> Fallback
     coords = None
     if coords_raw:
         parts = [p.strip() for p in coords_raw.replace(";", ",").split(",") if p.strip()]
@@ -109,11 +120,7 @@ async def main():
     if not coords:
         coords = [-88.150000, 41.770000]
 
-    # 2. Color Parsing
-    color_match = re.search(r"#[0-9a-fA-F]{6}", tier_raw)
-    tier_color = color_match.group(0) if color_match else "#22c55e"
-
-    # Base pricing defaults
+    # 2. Check for manual user price inputs
     app = None
     casual_main = None
     premium_main = None
@@ -127,6 +134,7 @@ async def main():
     if manuals.get("drink") is not None: drink = manuals["drink"]
     if manuals.get("dessert") is not None: dessert = manuals["dessert"]
 
+    # 3. Dynamic scrape if needed
     missing_fields = any(v is None for v in [app, casual_main, premium_main, drink, dessert])
     if missing_fields and menu_url:
         print(f"Scraping dynamic menu content from: {menu_url}")
@@ -155,12 +163,17 @@ async def main():
                 except Exception as e:
                     print(f"Gemini processing error: {e}")
 
+    # Fallbacks if scrape fails
     if app is None: app = 8.00
     if casual_main is None: casual_main = 14.00
     if premium_main is None: premium_main = casual_main
     if drink is None: drink = 4.00
     if dessert is None: dessert = 6.00
 
+    # 4. Automatically assign tier color based on final casualMain
+    tier_color = calculate_tier_color(casual_main)
+
+    # 5. Commit to venues.json
     with open("venues.json", "r") as f:
         venues = json.load(f)
 
@@ -194,7 +207,7 @@ async def main():
         with open("update_venues.py", "w") as f:
             f.write(script_content)
 
-    print(f"Successfully processed {name} (ID: {next_id}) at {coords}")
+    print(f"Successfully processed {name} (ID: {next_id}) with color {tier_color} based on ${casual_main} casualMain")
 
 if __name__ == "__main__":
     asyncio.run(main())
