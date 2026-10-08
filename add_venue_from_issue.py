@@ -3,6 +3,8 @@ import re
 import json
 import statistics
 import asyncio
+import urllib.request
+import urllib.parse
 from playwright.async_api import async_playwright
 import google.generativeai as genai
 
@@ -45,11 +47,21 @@ def parse_manual_overrides(raw_text):
                 overrides[key] = float(num_match.group(0))
     return overrides
 
+def geocode_address(query):
+    try:
+        url = f"https://nominatim.openstreetmap.org/search?q={urllib.parse.quote(query)}&format=json&limit=1"
+        req = urllib.request.Request(url, headers={"User-Agent": "MenuMapBot/1.0"})
+        with urllib.request.urlopen(req, timeout=10) as response:
+            data = json.loads(response.read().decode())
+            if data:
+                return [round(float(data[0]["lon"]), 6), round(float(data[0]["lat"]), 6)]
+    except Exception as e:
+        print(f"Geocoding error: {e}")
+    return None
+
 async def fetch_dynamic_menu(page, url):
     try:
         await page.goto(url, wait_until="domcontentloaded", timeout=40000)
-        
-        # Wait for dynamic menu elements to render
         try:
             await page.wait_for_selector(
                 '[class*="item"], [class*="product"], [class*="menu"], [data-testid*="item"], [class*="card"]',
@@ -58,7 +70,6 @@ async def fetch_dynamic_menu(page, url):
         except Exception:
             pass
 
-        # Scroll in increments to trigger lazy-loaded menu cards
         for _ in range(4):
             await page.mouse.wheel(0, 1500)
             await asyncio.sleep(0.5)
@@ -73,21 +84,29 @@ async def main():
     
     name = extract_field(issue_body, "Restaurant Name")
     category = extract_field(issue_body, "Cuisine Category")
-    coords_raw = extract_field(issue_body, "Coordinates (Latitude, Longitude)")
+    address = extract_field(issue_body, "Street Address or City")
+    coords_raw = extract_field(issue_body, "Coordinates (Optional)")
     tier_raw = extract_field(issue_body, "Map Glow / Pin Tier Color")
     menu_url = extract_field(issue_body, "Online Menu / Ordering URL")
     manual_raw = extract_field(issue_body, "Manual Pricing Overrides (Optional)")
 
-    # 1. Coordinate Parsing with full precision: MapLibre uses [lng, lat]
-    parts = [p.strip() for p in coords_raw.replace(";", ",").split(",") if p.strip()]
-    if len(parts) >= 2:
-        try:
-            lat = float(parts[0])
-            lng = float(parts[1])
-            coords = [round(lng, 6), round(lat, 6)]
-        except ValueError:
-            coords = [-88.150000, 41.770000]
-    else:
+    # 1. Resolve Coordinates: Check Manual Coords -> Check Address Geocoding -> Fallback
+    coords = None
+    if coords_raw:
+        parts = [p.strip() for p in coords_raw.replace(";", ",").split(",") if p.strip()]
+        if len(parts) >= 2:
+            try:
+                coords = [round(float(parts[1]), 6), round(float(parts[0]), 6)]
+            except ValueError:
+                pass
+
+    if not coords and address:
+        print(f"Geocoding address: {address}")
+        coords = geocode_address(f"{name}, {address}")
+        if not coords:
+            coords = geocode_address(address)
+
+    if not coords:
         coords = [-88.150000, 41.770000]
 
     # 2. Color Parsing
@@ -101,7 +120,6 @@ async def main():
     drink = None
     dessert = None
 
-    # Check for manual user inputs first
     manuals = parse_manual_overrides(manual_raw)
     if manuals.get("app") is not None: app = manuals["app"]
     if manuals.get("casualMain") is not None: casual_main = manuals["casualMain"]
@@ -109,7 +127,6 @@ async def main():
     if manuals.get("drink") is not None: drink = manuals["drink"]
     if manuals.get("dessert") is not None: dessert = manuals["dessert"]
 
-    # Scrape if any pricing elements remain missing and a URL is provided
     missing_fields = any(v is None for v in [app, casual_main, premium_main, drink, dessert])
     if missing_fields and menu_url:
         print(f"Scraping dynamic menu content from: {menu_url}")
@@ -138,14 +155,12 @@ async def main():
                 except Exception as e:
                     print(f"Gemini processing error: {e}")
 
-    # Fallbacks only if scraping and manual overrides both fail
     if app is None: app = 8.00
     if casual_main is None: casual_main = 14.00
     if premium_main is None: premium_main = casual_main
     if drink is None: drink = 4.00
     if dessert is None: dessert = 6.00
 
-    # Write to venues.json
     with open("venues.json", "r") as f:
         venues = json.load(f)
 
@@ -179,7 +194,7 @@ async def main():
         with open("update_venues.py", "w") as f:
             f.write(script_content)
 
-    print(f"Successfully processed {name} (ID: {next_id}) with prices: Casual={casual_main}, Prime={premium_main}")
+    print(f"Successfully processed {name} (ID: {next_id}) at {coords}")
 
 if __name__ == "__main__":
     asyncio.run(main())
