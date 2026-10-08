@@ -143,7 +143,7 @@ async def main():
         text, pdf_bytes = await scrape_site_or_pdf(url)
         pricing = parse_pricing_with_gemini(text, pdf_bytes) if (text or pdf_bytes) else None
 
-       if pricing and pricing.get("casualMains"):
+        if pricing and pricing.get("casualMains"):
             casual_list = pricing.get("casualMains") or [19.00]
             casual_val = round(statistics.median(casual_list), 2)
             v["casualMain"] = casual_val
