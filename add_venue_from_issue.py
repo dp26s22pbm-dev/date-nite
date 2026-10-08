@@ -12,40 +12,27 @@ genai.configure(api_key=os.environ.get("GEMINI_API_KEY", ""))
 model = genai.GenerativeModel("gemini-1.5-flash")
 
 PROMPT = """
-You are a restaurant menu pricing extraction engine. Analyze the raw menu text and return strictly valid JSON containing float price arrays:
+You are a restaurant menu pricing extraction engine. Analyze the provided menu content (text or PDF document) and extract typical menu prices into this JSON structure:
 {
   "apps": [float, ...],
   "casualMains": [float, ...],
   "premiumMains": [float, ...],
-  "drinks": [float, ...]
+  "drinks": [float, ...],
   "desserts": [float, ...]
 }
 Rules:
-- "apps": Starters, sides, appetizers, chips & dip.
-- "casualMains": Handhelds, tacos, burritos, sandwiches, burgers, pizzas, pastas, salads.
-- "premiumMains": Ribeyes, filets, prime seafood platters, or the highest-tier specialty combos. If there are no premium luxury cuts, duplicate the upper-half of casual mains.
-- "drinks": Soft drinks, sodas, beers, wines, or cocktails.
-- "desserts": Churros, cakes, sweets, or shakes.
-Output pure JSON with no markdown backticks.
+- "apps": Starters, sides, appetizers, soups, salads.
+- "casualMains": Standard pastas, pizzas, handhelds, burgers, chicken entrees, or basic sandwiches.
+- "premiumMains": Steaks (ribeye, strip, filet), veal chops, prime seafood (salmon, lobster, sea bass), or specialty combo platters. If there are no premium luxury cuts, use the top 25% highest priced entrees.
+- "drinks": House wine, draft beer, specialty cocktails, or soft drinks.
+- "desserts": Tiramisu, cannoli, cakes, gelato.
+Return strictly valid JSON with no markdown formatting.
 """
 
 def extract_field(body, header):
     pattern = rf"### {re.escape(header)}\s*\n\s*(.*?)(?=\n###|\Z)"
     match = re.search(pattern, body, re.DOTALL)
     return match.group(1).strip() if match else ""
-
-def parse_manual_overrides(raw_text):
-    overrides = {}
-    if not raw_text:
-        return overrides
-    for line in raw_text.splitlines():
-        if ":" in line:
-            key, val = line.split(":", 1)
-            key = key.strip()
-            num_match = re.search(r"[-+]?\d*\.\d+|\d+", val)
-            if num_match:
-                overrides[key] = float(num_match.group(0))
-    return overrides
 
 def geocode_address(query):
     try:
@@ -61,35 +48,76 @@ def geocode_address(query):
 
 def calculate_tier_color(main_price):
     if main_price < 16.00:
-        return "#22c55e"  # Green: Casual / Value
+        return "#22c55e"
     elif main_price < 23.00:
-        return "#eab308"  # Yellow: Moderate
+        return "#eab308"
     elif main_price < 33.00:
-        return "#f97316"  # Orange: Elevated Bistro
+        return "#f97316"
     elif main_price < 50.00:
-        return "#ef4444"  # Red: Premium / Steakhouse
+        return "#ef4444"
     else:
-        return "#a855f7"  # Purple: High-End Luxury
+        return "#a855f7"
 
-async def fetch_dynamic_menu(page, url):
-    try:
-        await page.goto(url, wait_until="domcontentloaded", timeout=40000)
+async def scrape_site_or_pdf(url):
+    """Navigates site, finds text or embedded PDF menus, and extracts raw data."""
+    pdf_bytes = None
+    extracted_text = ""
+
+    # Check if direct link is a PDF
+    if url.lower().endswith(".pdf"):
+        req = urllib.request.Request(url, headers={"User-Agent": "Mozilla/5.0"})
+        with urllib.request.urlopen(req, timeout=15) as res:
+            return None, res.read()
+
+    async with async_playwright() as p:
+        browser = await p.chromium.launch(headless=True)
+        context = await browser.new_context(user_agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36")
+        page = await context.new_page()
+
         try:
-            await page.wait_for_selector(
-                '[class*="item"], [class*="product"], [class*="menu"], [data-testid*="item"], [class*="card"]',
-                timeout=12000
-            )
-        except Exception:
-            pass
+            await page.goto(url, wait_until="domcontentloaded", timeout=35000)
+            await asyncio.sleep(2)
 
-        for _ in range(4):
-            await page.mouse.wheel(0, 1500)
-            await asyncio.sleep(0.5)
+            # Look for direct menu links or PDF links on the page
+            pdf_link = await page.locator('a[href$=".pdf"], a:has-text("Dinner Menu"), a:has-text("Full Menu")').first.get_attribute("href")
+            if pdf_link:
+                full_pdf_url = urllib.parse.urljoin(url, pdf_link)
+                if full_pdf_url.lower().endswith(".pdf"):
+                    print(f"Found embedded PDF menu: {full_pdf_url}")
+                    req = urllib.request.Request(full_pdf_url, headers={"User-Agent": "Mozilla/5.0"})
+                    with urllib.request.urlopen(req, timeout=15) as res:
+                        pdf_bytes = res.read()
+                        await browser.close()
+                        return None, pdf_bytes
 
-        return await page.inner_text("body")
+            # Otherwise extract DOM text
+            for _ in range(3):
+                await page.mouse.wheel(0, 1200)
+                await asyncio.sleep(0.4)
+
+            extracted_text = await page.inner_text("body")
+        except Exception as e:
+            print(f"Playwright navigation warning: {e}")
+        finally:
+            await browser.close()
+
+    return extracted_text, None
+
+def parse_pricing_with_gemini(text, pdf_data):
+    try:
+        if pdf_data:
+            response = model.generate_content([
+                PROMPT,
+                {"mime_type": "application/pdf", "data": pdf_data}
+            ])
+        else:
+            response = model.generate_content(f"{PROMPT}\n\nMENU TEXT:\n{text[:25000]}")
+
+        clean = response.text.strip().replace("```json", "").replace("```", "")
+        return json.loads(clean)
     except Exception as e:
-        print(f"Playwright navigation failed for {url}: {e}")
-        return ""
+        print(f"Gemini pricing extraction error: {e}")
+        return None
 
 async def main():
     issue_body = os.environ.get("ISSUE_BODY", "")
@@ -97,90 +125,45 @@ async def main():
     name = extract_field(issue_body, "Restaurant Name")
     category = extract_field(issue_body, "Cuisine Category")
     address = extract_field(issue_body, "Street Address or City")
-    coords_raw = extract_field(issue_body, "Coordinates (Optional)")
     menu_url = extract_field(issue_body, "Online Menu / Ordering URL")
-    manual_raw = extract_field(issue_body, "Manual Pricing Overrides (Optional)")
 
-    # 1. Resolve Coordinates: Coordinates -> Address -> Fallback
-    coords = None
-    if coords_raw:
-        parts = [p.strip() for p in coords_raw.replace(";", ",").split(",") if p.strip()]
-        if len(parts) >= 2:
-            try:
-                coords = [round(float(parts[1]), 6), round(float(parts[0]), 6)]
-            except ValueError:
-                pass
-
+    # Geocode Address
+    coords = geocode_address(f"{name}, {address}") if address else None
     if not coords and address:
-        print(f"Geocoding address: {address}")
-        coords = geocode_address(f"{name}, {address}")
-        if not coords:
-            coords = geocode_address(address)
-
+        coords = geocode_address(address)
     if not coords:
         coords = [-88.150000, 41.770000]
 
-    # 2. Check for manual user price inputs
-    app = None
-    casual_main = None
-    premium_main = None
-    drink = None
-    dessert = None
+    # Scrape dynamic site or native PDF
+    text, pdf_bytes = await scrape_site_or_pdf(menu_url) if menu_url else ("", None)
+    pricing = parse_pricing_with_gemini(text, pdf_bytes) if (text or pdf_bytes) else None
 
-    manuals = parse_manual_overrides(manual_raw)
-    if manuals.get("app") is not None: app = manuals["app"]
-    if manuals.get("casualMain") is not None: casual_main = manuals["casualMain"]
-    if manuals.get("premiumMain") is not None: premium_main = manuals["premiumMain"]
-    if manuals.get("drink") is not None: drink = manuals["drink"]
-    if manuals.get("dessert") is not None: dessert = manuals["dessert"]
+    # Calculate medians from real data
+    if pricing and pricing.get("casualMains"):
+        casual_main = round(statistics.median(pricing["casualMains"]), 2)
+        premium_main = round(statistics.median(pricing.get("premiumMains", [casual_main * 1.5])), 2)
+        app = round(statistics.median(pricing.get("apps", [casual_main * 0.55])), 2)
+        drink = round(statistics.median(pricing.get("drinks", [7.0])), 2)
+        dessert = round(statistics.median(pricing.get("desserts", [casual_main * 0.4])), 2)
+    else:
+        # Fallback to realistic Naperville full-service medians if completely blocked
+        casual_main = 19.00
+        premium_main = 34.00
+        app = 12.00
+        drink = 8.50
+        dessert = 8.00
 
-    # 3. Dynamic scrape if needed
-    missing_fields = any(v is None for v in [app, casual_main, premium_main, drink, dessert])
-    if missing_fields and menu_url:
-        print(f"Scraping dynamic menu content from: {menu_url}")
-        async with async_playwright() as p:
-            browser = await p.chromium.launch(headless=True)
-            page = await browser.new_page()
-            raw_text = await fetch_dynamic_menu(page, menu_url)
-            await browser.close()
-
-            if raw_text and len(raw_text.strip()) > 100:
-                try:
-                    res = model.generate_content(f"{PROMPT}\n\nMENU TEXT:\n{raw_text[:20000]}")
-                    clean_json = res.text.strip().replace("```json", "").replace("```", "")
-                    data = json.loads(clean_json)
-
-                    if app is None and data.get("apps"):
-                        app = round(statistics.median(data["apps"]), 2)
-                    if casual_main is None and data.get("casualMains"):
-                        casual_main = round(statistics.median(data["casualMains"]), 2)
-                    if premium_main is None and data.get("premiumMains"):
-                        premium_main = round(statistics.median(data["premiumMains"]), 2)
-                    if drink is None and data.get("drinks"):
-                        drink = round(statistics.median(data["drinks"]), 2)
-                    if dessert is None and data.get("desserts"):
-                        dessert = round(statistics.median(data["desserts"]), 2)
-                except Exception as e:
-                    print(f"Gemini processing error: {e}")
-
-    # Fallbacks if scrape fails
-    if app is None: app = 8.00
-    if casual_main is None: casual_main = 14.00
-    if premium_main is None: premium_main = casual_main
-    if drink is None: drink = 4.00
-    if dessert is None: dessert = 6.00
-
-    # 4. Automatically assign tier color based on final casualMain
     tier_color = calculate_tier_color(casual_main)
 
-    # 5. Commit to venues.json
     with open("venues.json", "r") as f:
         venues = json.load(f)
 
     next_id = max([v.get("id", 0) for v in venues], default=0) + 1
 
-    new_venue = {
-        "id": next_id,
+    # Overwrite if restaurant already exists, else append
+    existing_idx = next((i for i, v in enumerate(venues) if v["name"].lower() == name.lower()), None)
+    entry = {
+        "id": existing_idx + 1 if existing_idx is not None else next_id,
         "name": name,
         "category": category,
         "coords": coords,
@@ -192,22 +175,15 @@ async def main():
         "tierColor": tier_color
     }
 
-    venues.append(new_venue)
+    if existing_idx is not None:
+        venues[existing_idx] = entry
+    else:
+        venues.append(entry)
 
     with open("venues.json", "w") as f:
         json.dump(venues, f, indent=2)
 
-    if os.path.exists("update_venues.py") and menu_url:
-        with open("update_venues.py", "r") as f:
-            script_content = f.read()
-
-        target_insert = f'    {next_id}: "{menu_url}",\n}}'
-        script_content = script_content.replace("}", target_insert, 1)
-
-        with open("update_venues.py", "w") as f:
-            f.write(script_content)
-
-    print(f"Successfully processed {name} (ID: {next_id}) with color {tier_color} based on ${casual_main} casualMain")
+    print(f"Added {name} (ID: {entry['id']}): Casual ${casual_main}, Prime ${premium_main}, Color: {tier_color}")
 
 if __name__ == "__main__":
     asyncio.run(main())
