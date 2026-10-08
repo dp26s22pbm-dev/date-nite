@@ -143,14 +143,25 @@ async def main():
         text, pdf_bytes = await scrape_site_or_pdf(url)
         pricing = parse_pricing_with_gemini(text, pdf_bytes) if (text or pdf_bytes) else None
 
-        if pricing and pricing.get("casualMains"):
-            v["casualMain"] = round(statistics.median(pricing["casualMains"]), 2)
-            v["premiumMain"] = round(statistics.median(pricing.get("premiumMains", [v["casualMain"] * 1.5])), 2)
-            v["app"] = round(statistics.median(pricing.get("apps", [v["casualMain"] * 0.55])), 2)
-            v["drink"] = round(statistics.median(pricing.get("drinks", [7.5])), 2)
-            v["dessert"] = round(statistics.median(pricing.get("desserts", [v["casualMain"] * 0.4])), 2)
+       if pricing and pricing.get("casualMains"):
+            casual_list = pricing.get("casualMains") or [19.00]
+            casual_val = round(statistics.median(casual_list), 2)
+            v["casualMain"] = casual_val
+
+            prem_list = pricing.get("premiumMains") or [round(casual_val * 1.6, 2)]
+            v["premiumMain"] = round(statistics.median(prem_list), 2)
+
+            apps_list = pricing.get("apps") or [round(casual_val * 0.55, 2)]
+            v["app"] = round(statistics.median(apps_list), 2)
+
+            drinks_list = pricing.get("drinks") or [8.00]
+            v["drink"] = round(statistics.median(drinks_list), 2)
+
+            desserts_list = pricing.get("desserts") or [8.00]
+            v["dessert"] = round(statistics.median(desserts_list), 2)
+
             v["tierColor"] = calculate_tier_color(v["casualMain"])
-            print(f"Updated {name}: Casual ${v['casualMain']}, Prime ${v['premiumMain']}, Color {v['tierColor']}")
+            print(f"Updated {name}: Casual ${v['casualMain']}, Prime ${v['premiumMain']}, Drinks ${v['drink']}, App ${v['app']}, Color {v['tierColor']}")
             updated_count += 1
         else:
             print(f"Could not parse new prices for {name}; keeping existing data.")
