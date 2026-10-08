@@ -10,5 +10,6 @@ TARGET_URLS = {
     9: "https://order.online/store/hugo%27s-frog-bar-&-fish-house-naperville-69736",
     10: "https://order.tacopros.com",
     11: "https://traversosrestaurant.com/menu",
+    12: "https://www.anchoandagave.com/menus/",
 }
  
