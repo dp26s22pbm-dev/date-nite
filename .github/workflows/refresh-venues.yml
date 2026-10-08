@@ -1,0 +1,44 @@
+name: Refresh Venue Pricing
+
+on:
+  workflow_dispatch:
+    inputs:
+      target:
+        description: 'Target restaurant name (leave blank to refresh ALL venues)'
+        required: false
+        default: ''
+
+jobs:
+  refresh:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install Dependencies
+        run: |
+          pip install playwright google-generativeai
+          playwright install --with-deps chromium
+
+      - name: Run Batch Price Updater
+        env:
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          TARGET_VENUE: ${{ github.event.inputs.target }}
+        run: |
+          python batch_update_venues.py
+
+      - name: Commit and Push Changes
+        run: |
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+          git add venues.json
+          git commit -m "Refresh venue pricing [skip ci]" || exit 0
+          git push
