@@ -13,11 +13,9 @@ client = genai.Client(api_key=os.environ.get("GEMINI_API_KEY", ""))
 
 # Import menu URL mapping
 try:
-    from update_venues import TARGET_URLS
-    # Convert list to an ID -> URL dictionary (1-indexed matching venues.json IDs)
-    VENUE_URLS = {i + 1: url for i, url in enumerate(TARGET_URLS)}
+    from urls import TARGET_URLS as VENUE_URLS
 except Exception as e:
-    print(f"Failed to import TARGET_URLS: {e}")
+    print(f"Failed to import TARGET_URLS from urls.py: {e}")
     VENUE_URLS = {}
 
 PROMPT = """
