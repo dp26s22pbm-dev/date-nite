@@ -5,7 +5,7 @@ import urllib.request
 # Verified Google Maps share links or exact [longitude, latitude] arrays
 # Ancho & Agave verified at 95th & 59: [-88.205216, 41.712331]
 VENUE_LOCATION_MAP = {
-    "Ancho & Agave": [-88.205216, 41.712331],
+    "Ancho & Agave": [-88.197584, 41.714968],
     # Add your other existing venues here:
     # "Allegory": "https://maps.app.goo.gl/...",
     # "Santo Cielo": "https://maps.app.goo.gl/...",
