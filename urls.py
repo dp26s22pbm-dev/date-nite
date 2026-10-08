@@ -12,4 +12,4 @@ TARGET_URLS = {
     11: "https://traversosrestaurant.com/menu",
     12: "https://www.anchoandagave.com/menus/",
 }
- 
+  
