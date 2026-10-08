@@ -179,5 +179,20 @@
     "drink": 8.5,
     "dessert": 8.0,
     "tierColor": "#eab308"
+  },
+  {
+    "id": 13,
+    "name": "Bar Louie",
+    "category": "American Modern",
+    "coords": [
+      -88.1478,
+      41.7725
+    ],
+    "app": 12.0,
+    "casualMain": 19.0,
+    "premiumMain": 34.0,
+    "drink": 8.5,
+    "dessert": 8.0,
+    "tierColor": "#eab308"
   }
 ]

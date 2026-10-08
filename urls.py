@@ -11,5 +11,6 @@ TARGET_URLS = {
     10: "https://order.tacopros.com",
     11: "https://traversosrestaurant.com/menu",
     12: "https://www.anchoandagave.com/menus/",
+    13: "https://barlouie.com/menu/",
 }
   
