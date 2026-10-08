@@ -134,5 +134,20 @@
     "drink": 18.5,
     "dessert": 16.0,
     "tierColor": "#a855f7"
+  },
+  {
+    "id": 10,
+    "name": "Taco Pros",
+    "category": "Mexican Fast Casual",
+    "coords": [
+      -88.15,
+      41.77
+    ],
+    "app": 15.0,
+    "casualMain": 22.0,
+    "premiumMain": 38.0,
+    "drink": 14.0,
+    "dessert": 11.0,
+    "tierColor": "#22c55e"
   }
 ]
