@@ -194,5 +194,20 @@
     "drink": 8.5,
     "dessert": 8.0,
     "tierColor": "#eab308"
+  },
+  {
+    "id": 14,
+    "name": "The White Chocolate Grill",
+    "category": "American Modern",
+    "coords": [
+      -88.126748,
+      41.803763
+    ],
+    "app": 12.0,
+    "casualMain": 19.0,
+    "premiumMain": 34.0,
+    "drink": 8.5,
+    "dessert": 8.0,
+    "tierColor": "#eab308"
   }
 ]
