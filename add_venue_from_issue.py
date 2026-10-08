@@ -33,16 +33,32 @@ def extract_field(body, header):
     match = re.search(pattern, body, re.DOTALL)
     return match.group(1).strip() if match else ""
 
-def geocode_address(query):
-    try:
-        url = f"https://nominatim.openstreetmap.org/search?q={urllib.parse.quote(query)}&format=json&limit=1"
-        req = urllib.request.Request(url, headers={"User-Agent": "MenuMapBot/1.0"})
-        with urllib.request.urlopen(req, timeout=10) as response:
-            data = json.loads(response.read().decode())
-            if data:
-                return [round(float(data[0]["lon"]), 6), round(float(data[0]["lat"]), 6)]
-    except Exception as e:
-        print(f"Geocoding error: {e}")
+def geocode_address(name, address):
+    # Try querying the full address first (most accurate for exact pin placement)
+    queries = []
+    if address:
+        if "naperville" not in address.lower() and "il" not in address.lower():
+            queries.append(f"{address}, Naperville, IL")
+        queries.append(address)
+        queries.append(f"{name}, {address}")
+    queries.append(f"{name}, Naperville, IL")
+
+    for q in queries:
+        try:
+            url = f"https://nominatim.openstreetmap.org/search?q={urllib.parse.quote(q)}&format=json&limit=1&countrycodes=us"
+            req = urllib.request.Request(url, headers={"User-Agent": "NapervilleMenuMapBot/1.0 (contact@example.com)"})
+            with urllib.request.urlopen(req, timeout=10) as response:
+                data = json.loads(response.read().decode())
+                if data and len(data) > 0:
+                    lon = round(float(data[0]["lon"]), 6)
+                    lat = round(float(data[0]["lat"]), 6)
+                    # Sanity check: must be in Illinois / Chicago western suburbs bounding box
+                    if -88.5 <= lon <= -87.5 and 41.5 <= lat <= 42.1:
+                        return [lon, lat]
+        except Exception as e:
+            print(f"Geocoding attempt failed for '{q}': {e}")
+            continue
+
     return None
 
 def calculate_tier_color(main_price):
