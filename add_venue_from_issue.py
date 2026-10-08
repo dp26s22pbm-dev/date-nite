@@ -6,10 +6,9 @@ import asyncio
 import urllib.request
 import urllib.parse
 from playwright.async_api import async_playwright
-import google.generativeai as genai
+from google import genai
 
-genai.configure(api_key=os.environ.get("GEMINI_API_KEY", ""))
-model = genai.GenerativeModel("gemini-1.5-flash")
+client = genai.Client(api_key=os.environ.get("GEMINI_API_KEY", ""))
 
 PROMPT = """
 You are a restaurant menu pricing extraction engine. Analyze the provided menu content (text or PDF document) and extract typical menu prices into this JSON structure:
@@ -60,14 +59,14 @@ def calculate_tier_color(main_price):
 
 async def scrape_site_or_pdf(url):
     """Navigates site, finds text or embedded PDF menus, and extracts raw data."""
-    pdf_bytes = None
-    extracted_text = ""
-
-    # Check if direct link is a PDF
     if url.lower().endswith(".pdf"):
-        req = urllib.request.Request(url, headers={"User-Agent": "Mozilla/5.0"})
-        with urllib.request.urlopen(req, timeout=15) as res:
-            return None, res.read()
+        try:
+            req = urllib.request.Request(url, headers={"User-Agent": "Mozilla/5.0"})
+            with urllib.request.urlopen(req, timeout=15) as res:
+                return None, res.read()
+        except Exception as e:
+            print(f"Error fetching PDF {url}: {e}")
+            return "", None
 
     async with async_playwright() as p:
         browser = await p.chromium.launch(headless=True)
@@ -75,43 +74,55 @@ async def scrape_site_or_pdf(url):
         page = await context.new_page()
 
         try:
-            await page.goto(url, wait_until="domcontentloaded", timeout=35000)
+            await page.goto(url, wait_until="domcontentloaded", timeout=25000)
             await asyncio.sleep(2)
 
-            # Look for direct menu links or PDF links on the page
-            pdf_link = await page.locator('a[href$=".pdf"], a:has-text("Dinner Menu"), a:has-text("Full Menu")').first.get_attribute("href")
-            if pdf_link:
-                full_pdf_url = urllib.parse.urljoin(url, pdf_link)
-                if full_pdf_url.lower().endswith(".pdf"):
-                    print(f"Found embedded PDF menu: {full_pdf_url}")
-                    req = urllib.request.Request(full_pdf_url, headers={"User-Agent": "Mozilla/5.0"})
-                    with urllib.request.urlopen(req, timeout=15) as res:
-                        pdf_bytes = res.read()
-                        await browser.close()
-                        return None, pdf_bytes
+            # Probe for PDF link without blocking execution
+            try:
+                pdf_elem = page.locator('a[href$=".pdf"]').first
+                if await pdf_elem.count() > 0:
+                    pdf_link = await pdf_elem.get_attribute("href", timeout=2000)
+                    if pdf_link:
+                        full_pdf_url = urllib.parse.urljoin(url, pdf_link)
+                        req = urllib.request.Request(full_pdf_url, headers={"User-Agent": "Mozilla/5.0"})
+                        with urllib.request.urlopen(req, timeout=15) as res:
+                            pdf_data = res.read()
+                            await browser.close()
+                            return None, pdf_data
+            except Exception:
+                pass
 
-            # Otherwise extract DOM text
+            # Scroll to trigger dynamic elements
             for _ in range(3):
                 await page.mouse.wheel(0, 1200)
                 await asyncio.sleep(0.4)
 
-            extracted_text = await page.inner_text("body")
+            text = await page.inner_text("body")
+            await browser.close()
+            return text, None
         except Exception as e:
             print(f"Playwright navigation warning: {e}")
-        finally:
             await browser.close()
-
-    return extracted_text, None
+            return "", None
 
 def parse_pricing_with_gemini(text, pdf_data):
     try:
         if pdf_data:
-            response = model.generate_content([
-                PROMPT,
-                {"mime_type": "application/pdf", "data": pdf_data}
-            ])
+            response = client.models.generate_content(
+                model="gemini-3.8-flash",
+                contents=[
+                    PROMPT,
+                    genai.types.Part.from_bytes(
+                        data=pdf_data,
+                        mime_type="application/pdf"
+                    )
+                ]
+            )
         else:
-            response = model.generate_content(f"{PROMPT}\n\nMENU TEXT:\n{text[:25000]}")
+            response = client.models.generate_content(
+                model="gemini-3.8-flash",
+                contents=f"{PROMPT}\n\nMENU TEXT:\n{text[:25000]}"
+            )
 
         clean = response.text.strip().replace("```json", "").replace("```", "")
         return json.loads(clean)
@@ -138,13 +149,22 @@ async def main():
     text, pdf_bytes = await scrape_site_or_pdf(menu_url) if menu_url else ("", None)
     pricing = parse_pricing_with_gemini(text, pdf_bytes) if (text or pdf_bytes) else None
 
-    # Calculate medians from real data
+    # Calculate medians with guarded fallbacks
     if pricing and pricing.get("casualMains"):
-        casual_main = round(statistics.median(pricing["casualMains"]), 2)
-        premium_main = round(statistics.median(pricing.get("premiumMains", [casual_main * 1.5])), 2)
-        app = round(statistics.median(pricing.get("apps", [casual_main * 0.55])), 2)
-        drink = round(statistics.median(pricing.get("drinks", [7.0])), 2)
-        dessert = round(statistics.median(pricing.get("desserts", [casual_main * 0.4])), 2)
+        casual_list = pricing.get("casualMains") or [19.00]
+        casual_main = round(statistics.median(casual_list), 2)
+
+        prem_list = pricing.get("premiumMains") or [round(casual_main * 1.6, 2)]
+        premium_main = round(statistics.median(prem_list), 2)
+
+        apps_list = pricing.get("apps") or [round(casual_main * 0.55, 2)]
+        app = round(statistics.median(apps_list), 2)
+
+        drinks_list = pricing.get("drinks") or [8.00]
+        drink = round(statistics.median(drinks_list), 2)
+
+        desserts_list = pricing.get("desserts") or [8.00]
+        dessert = round(statistics.median(desserts_list), 2)
     else:
         # Fallback to realistic Naperville full-service medians if completely blocked
         casual_main = 19.00
@@ -163,7 +183,7 @@ async def main():
     # Overwrite if restaurant already exists, else append
     existing_idx = next((i for i, v in enumerate(venues) if v["name"].lower() == name.lower()), None)
     entry = {
-        "id": existing_idx + 1 if existing_idx is not None else next_id,
+        "id": (existing_idx + 1) if existing_idx is not None else next_id,
         "name": name,
         "category": category,
         "coords": coords,
