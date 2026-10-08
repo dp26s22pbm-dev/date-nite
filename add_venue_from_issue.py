@@ -155,11 +155,10 @@ async def main():
     menu_url = extract_field(issue_body, "Online Menu / Ordering URL")
 
     # Geocode Address
-    coords = geocode_address(f"{name}, {address}") if address else None
-    if not coords and address:
-        coords = geocode_address(address)
+    coords = geocode_address(name, address)
     if not coords:
-        coords = [-88.150000, 41.770000]
+        # Default center of Naperville if lookup fails
+        coords = [-88.1478, 41.7725]
 
     # Scrape dynamic site or native PDF
     text, pdf_bytes = await scrape_site_or_pdf(menu_url) if menu_url else ("", None)
