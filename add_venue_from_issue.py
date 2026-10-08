@@ -52,13 +52,17 @@ async def main():
     tier_raw = extract_field(issue_body, "Map Glow / Pin Tier Color")
     menu_url = extract_field(issue_body, "Online Menu / Ordering URL")
 
-    # Parse coordinates: MapLibre uses [lng, lat]
-    lat_match = re.findall(r"[-+]?\d*\.\d+|\d+", coords_raw)
-    if len(lat_match) >= 2:
-        lat, lng = float(lat_match[0]), float(lat_match[1])
-        coords = [lng, lat]
+   # Parse coordinates: handles "lat, lng" strings with full decimal precision
+    parts = [p.strip() for p in coords_raw.replace(";", ",").split(",") if p.strip()]
+    if len(parts) >= 2:
+        try:
+            lat = float(parts[0])
+            lng = float(parts[1])
+            coords = [round(lng, 6), round(lat, 6)]
+        except ValueError:
+            coords = [-88.150000, 41.770000]
     else:
-        coords = [-88.1500, 41.7700]
+        coords = [-88.150000, 41.770000]
 
     # Parse color hex code
     color_match = re.search(r"#[0-9a-fA-F]{6}", tier_raw)
