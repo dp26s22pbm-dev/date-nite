@@ -152,11 +152,11 @@ async def main():
     address = extract_field(issue_body, "Street Address or City")
     menu_url = extract_field(issue_body, "Online Menu / Ordering URL")
 
-    # Geocode Address
-    coords = geocode_address(name, address)
+    # Extract exact coordinates (no guessing, no OSM)
+    coords = extract_coords_from_google_maps_url(address)
     if not coords:
-        # Default center of Naperville if lookup fails
-        coords = [-88.1478, 41.7725]
+        print(f"ABORT: Could not parse exact coordinates from input: '{address}'.")
+        return
 
     # Scrape dynamic site or native PDF
     text, pdf_bytes = await scrape_site_or_pdf(menu_url) if menu_url else ("", None)
