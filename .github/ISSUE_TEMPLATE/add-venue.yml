@@ -37,19 +37,6 @@ body:
     validations:
       required: false
 
-  - type: dropdown
-    id: tier_color
-    attributes:
-      label: Map Glow / Pin Tier Color
-      options:
-        - "Green (#22c55e) - Casual / Value"
-        - "Yellow (#eab308) - Moderate"
-        - "Orange (#f97316) - Elevated Bistro"
-        - "Red (#ef4444) - Premium / Steakhouse"
-        - "Purple (#a855f7) - High-End Luxury"
-    validations:
-      required: true
-
   - type: input
     id: menu_url
     attributes:
