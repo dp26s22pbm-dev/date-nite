@@ -7,7 +7,7 @@ body:
     id: venue_name
     attributes:
       label: Restaurant Name
-      placeholder: "e.g., Allegory"
+      placeholder: "e.g., Taco Pros"
     validations:
       required: true
 
@@ -15,7 +15,7 @@ body:
     id: category
     attributes:
       label: Cuisine Category
-      placeholder: "e.g., Farm-to-Table American"
+      placeholder: "e.g., Mexican Fast Casual"
     validations:
       required: true
 
@@ -23,8 +23,8 @@ body:
     id: coordinates
     attributes:
       label: Coordinates (Latitude, Longitude)
-      description: "Right-click the restaurant on Google Maps and copy the numbers (e.g. 41.7731, -88.1492)"
-      placeholder: "41.7731, -88.1492"
+      description: "Paste exact Google Maps coordinates (e.g., 41.711649, -88.205830)"
+      placeholder: "41.711649, -88.205830"
     validations:
       required: true
 
@@ -45,7 +45,21 @@ body:
     id: menu_url
     attributes:
       label: Online Menu / Ordering URL
-      description: ToastTab, DoorDash Storefront, or direct menu web page.
-      placeholder: "https://www.allegorynaperville.com/menu"
+      description: "Direct ordering link, ToastTab, or online menu."
+      placeholder: "https://order.tacopros.com"
     validations:
-      required: true
+      required: false
+
+  - type: textarea
+    id: manual_pricing
+    attributes:
+      label: Manual Pricing Overrides (Optional)
+      description: "If the site uses complex ordering widgets, define custom values here (leave blank to let Gemini auto-parse)."
+      placeholder: |
+        app: 5.50
+        casualMain: 10.50
+        premiumMain: 14.69
+        drink: 3.50
+        dessert: 5.00
+    validations:
+      required: false
