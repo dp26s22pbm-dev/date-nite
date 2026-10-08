@@ -90,12 +90,21 @@ async def scrape_site_or_pdf(url):
 def parse_pricing_with_gemini(text, pdf_data):
     try:
         if pdf_data:
-            response = model.generate_content([
-                PROMPT,
-                {"mime_type": "application/pdf", "data": pdf_data}
-            ])
+            response = client.models.generate_content(
+                model="gemini-2.5-flash",
+                contents=[
+                    PROMPT,
+                    genai.types.Part.from_bytes(
+                        data=pdf_data,
+                        mime_type="application/pdf"
+                    )
+                ]
+            )
         else:
-            response = model.generate_content(f"{PROMPT}\n\nMENU TEXT:\n{text[:25000]}")
+            response = client.models.generate_content(
+                model="gemini-2.5-flash",
+                contents=f"{PROMPT}\n\nMENU TEXT:\n{text[:25000]}"
+            )
 
         clean = response.text.strip().replace("```json", "").replace("```", "")
         return json.loads(clean)
