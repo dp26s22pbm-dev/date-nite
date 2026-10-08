@@ -1,0 +1,51 @@
+name: Add New Venue
+description: Submit a restaurant to parse pricing and add to the map
+title: "[New Venue]: "
+labels: ["add-venue"]
+body:
+  - type: input
+    id: venue_name
+    attributes:
+      label: Restaurant Name
+      placeholder: "e.g., Allegory"
+    validations:
+      required: true
+
+  - type: input
+    id: category
+    attributes:
+      label: Cuisine Category
+      placeholder: "e.g., Farm-to-Table American"
+    validations:
+      required: true
+
+  - type: input
+    id: coordinates
+    attributes:
+      label: Coordinates (Latitude, Longitude)
+      description: "Right-click the restaurant on Google Maps and copy the numbers (e.g. 41.7731, -88.1492)"
+      placeholder: "41.7731, -88.1492"
+    validations:
+      required: true
+
+  - type: dropdown
+    id: tier_color
+    attributes:
+      label: Map Glow / Pin Tier Color
+      options:
+        - "Green (#22c55e) - Casual / Value"
+        - "Yellow (#eab308) - Moderate"
+        - "Orange (#f97316) - Elevated Bistro"
+        - "Red (#ef4444) - Premium / Steakhouse"
+        - "Purple (#a855f7) - High-End Luxury"
+    validations:
+      required: true
+
+  - type: input
+    id: menu_url
+    attributes:
+      label: Online Menu / Ordering URL
+      description: ToastTab, DoorDash Storefront, or direct menu web page.
+      placeholder: "https://www.allegorynaperville.com/menu"
+    validations:
+      required: true
