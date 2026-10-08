@@ -14,5 +14,6 @@ TARGET_URLS = {
     13: "https://barlouie.com/menu/",
     14: "https://www.whitechocolategrill.com/menu",
     15: "https://biaggis.com/locations/illinois-naperville/#menu-divider",
+    16: "https://plainfield-2.freedombrotherspizza.com/food-menu",
 }
   

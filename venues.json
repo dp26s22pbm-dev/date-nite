@@ -224,5 +224,20 @@
     "drink": 13.75,
     "dessert": 5.75,
     "tierColor": "#eab308"
+  },
+  {
+    "id": 16,
+    "name": "Freedom Brothers Pizzeria and Alehouse",
+    "category": "American / Pizza",
+    "coords": [
+      -88.204126,
+      41.670404
+    ],
+    "app": 12.5,
+    "casualMain": 17.0,
+    "premiumMain": 24.0,
+    "drink": 8.0,
+    "dessert": 3.0,
+    "tierColor": "#eab308"
   }
 ]
