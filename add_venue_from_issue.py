@@ -34,31 +34,29 @@ def extract_field(body, header):
     return match.group(1).strip() if match else ""
 
 def geocode_address(name, address):
-    # Try querying the full address first (most accurate for exact pin placement)
     queries = []
+    # 1. Exact street address + Naperville, IL is easiest for Nominatim to pin to a building
     if address:
-        if "naperville" not in address.lower() and "il" not in address.lower():
-            queries.append(f"{address}, Naperville, IL")
-        queries.append(address)
+        clean_addr = address.replace("Naperville", "").replace("IL", "").strip(" ,")
+        queries.append(f"{clean_addr}, Naperville, IL")
         queries.append(f"{name}, {address}")
+    # 2. Fallback to name + city
     queries.append(f"{name}, Naperville, IL")
 
     for q in queries:
         try:
             url = f"https://nominatim.openstreetmap.org/search?q={urllib.parse.quote(q)}&format=json&limit=1&countrycodes=us"
-            req = urllib.request.Request(url, headers={"User-Agent": "NapervilleMenuMapBot/1.0 (contact@example.com)"})
+            req = urllib.request.Request(url, headers={"User-Agent": "NapervilleMenuMapBot/1.0"})
             with urllib.request.urlopen(req, timeout=10) as response:
                 data = json.loads(response.read().decode())
                 if data and len(data) > 0:
                     lon = round(float(data[0]["lon"]), 6)
                     lat = round(float(data[0]["lat"]), 6)
-                    # Sanity check: must be in Illinois / Chicago western suburbs bounding box
-                    if -88.5 <= lon <= -87.5 and 41.5 <= lat <= 42.1:
+                    # Verify coordinates lie strictly in the Naperville geographic box
+                    if -88.30 <= lon <= -88.05 and 41.65 <= lat <= 41.85:
                         return [lon, lat]
         except Exception as e:
-            print(f"Geocoding attempt failed for '{q}': {e}")
             continue
-
     return None
 
 def calculate_tier_color(main_price):
