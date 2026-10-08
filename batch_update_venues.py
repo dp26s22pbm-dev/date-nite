@@ -6,16 +6,16 @@ import asyncio
 import urllib.request
 import urllib.parse
 from playwright.async_api import async_playwright
-import google.generativeai as genai
+# New SDK
+from google import genai
+
+client = genai.Client(api_key=os.environ.get("GEMINI_API_KEY", ""))
 
 # Import menu URL mapping
 try:
     from update_venues import VENUE_URLS
 except ImportError:
     VENUE_URLS = {}
-
-genai.configure(api_key=os.environ.get("GEMINI_API_KEY", ""))
-model = genai.GenerativeModel("gemini-1.5-flash")
 
 PROMPT = """
 You are a restaurant menu pricing extraction engine. Analyze the provided menu content (text or PDF document) and extract typical menu prices into this JSON structure:
