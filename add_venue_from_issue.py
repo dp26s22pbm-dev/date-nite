@@ -33,30 +33,46 @@ def extract_field(body, header):
     match = re.search(pattern, body, re.DOTALL)
     return match.group(1).strip() if match else ""
 
-def geocode_address(name, address):
-    queries = []
-    # 1. Exact street address + Naperville, IL is easiest for Nominatim to pin to a building
-    if address:
-        clean_addr = address.replace("Naperville", "").replace("IL", "").strip(" ,")
-        queries.append(f"{clean_addr}, Naperville, IL")
-        queries.append(f"{name}, {address}")
-    # 2. Fallback to name + city
-    queries.append(f"{name}, Naperville, IL")
+def extract_coords_from_google_maps_url(input_str):
+    if not input_str:
+        return None
 
-    for q in queries:
+    # 1. Check for raw numeric coordinates: "41.712331, -88.205216"
+    raw_nums = re.findall(r'[-+]?\d+\.\d+', input_str)
+    if len(raw_nums) >= 2:
+        val1, val2 = float(raw_nums[0]), float(raw_nums[1])
+        lat = val1 if val1 > 0 else val2
+        lon = val2 if val2 < 0 else val1
+        return [round(lon, 6), round(lat, 6)]
+
+    # 2. Expand Google Maps short links or resolve share URLs
+    final_url = input_str.strip()
+    if "maps" in final_url or "goo.gl" in final_url:
         try:
-            url = f"https://nominatim.openstreetmap.org/search?q={urllib.parse.quote(q)}&format=json&limit=1&countrycodes=us"
-            req = urllib.request.Request(url, headers={"User-Agent": "NapervilleMenuMapBot/1.0"})
-            with urllib.request.urlopen(req, timeout=10) as response:
-                data = json.loads(response.read().decode())
-                if data and len(data) > 0:
-                    lon = round(float(data[0]["lon"]), 6)
-                    lat = round(float(data[0]["lat"]), 6)
-                    # Verify coordinates lie strictly in the Naperville geographic box
-                    if -88.30 <= lon <= -88.05 and 41.65 <= lat <= 41.85:
-                        return [lon, lat]
+            req = urllib.request.Request(
+                final_url,
+                headers={"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64)"}
+            )
+            with urllib.request.urlopen(req, timeout=15) as resp:
+                final_url = resp.geturl()
         except Exception as e:
-            continue
+            print(f"Failed expanding map link: {e}")
+
+    # 3. Match @lat,lon or ?q=lat,lon in expanded URL
+    match = re.search(r'[@\?q=]([-+]?\d+\.\d+),([-+]?\d+\.\d+)', final_url)
+    if match:
+        val1, val2 = float(match.group(1)), float(match.group(2))
+        lat = val1 if val1 > 0 else val2
+        lon = val2 if val2 < 0 else val1
+        return [round(lon, 6), round(lat, 6)]
+
+    # 4. Match Google's protobuf data strings: !3d41.712331!4d-88.205216
+    match_proto = re.search(r'!3d([-+]?\d+\.\d+)!4d([-+]?\d+\.\d+)', final_url)
+    if match_proto:
+        lat = float(match_proto.group(1))
+        lon = float(match_proto.group(2))
+        return [round(lon, 6), round(lat, 6)]
+
     return None
 
 def calculate_tier_color(main_price):
