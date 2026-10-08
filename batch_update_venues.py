@@ -98,7 +98,7 @@ def parse_pricing_with_gemini(text, pdf_data):
     try:
         if pdf_data:
             response = client.models.generate_content(
-                model="gemini-2.5-flash",
+                model="gemini-3.8-flash",
                 contents=[
                     PROMPT,
                     genai.types.Part.from_bytes(
@@ -109,7 +109,7 @@ def parse_pricing_with_gemini(text, pdf_data):
             )
         else:
             response = client.models.generate_content(
-                model="gemini-2.5-flash",
+                model="gemini-3.8-flash",
                 contents=f"{PROMPT}\n\nMENU TEXT:\n{text[:25000]}"
             )
 
