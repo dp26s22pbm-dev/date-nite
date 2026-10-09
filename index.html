@@ -200,24 +200,25 @@
     .pop-grid-val { font-size: 11px; font-weight: 700; color: #e6edf3; }
 
 /* Floating Audio Toggle Button */
+    /* Floating Audio Toggle Button */
     .audio-btn {
-      position: absolute;
-      right: 14px;
+      position: fixed;
+      right: 16px;
       bottom: calc(18px + env(safe-area-inset-bottom, 12px));
-      z-index: 20;
-      background: rgba(22, 27, 34, 0.9);
+      z-index: 9999;
+      background: rgba(22, 27, 34, 0.95);
       backdrop-filter: blur(12px);
       -webkit-backdrop-filter: blur(12px);
       border: 1px solid rgba(255, 255, 255, 0.15);
       color: #8b949e;
       border-radius: 50%;
-      width: 40px;
-      height: 40px;
+      width: 42px;
+      height: 42px;
       display: flex;
       align-items: center;
       justify-content: center;
       cursor: pointer;
-      box-shadow: 0 4px 16px rgba(0,0,0,0.5);
+      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.5);
       transition: all 0.2s ease;
     }
     .audio-btn.playing {
