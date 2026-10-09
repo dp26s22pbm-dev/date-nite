@@ -50,17 +50,17 @@ Rules:
 Return strictly valid JSON with no markdown formatting.
 """
 
-def calculate_tier_color(main_price):
-    if main_price < 16.00:
+def calculate_tier_color(total_cost):
+    if total_cost < 50:
+        return "#38bdf8"
+    elif total_cost < 100:
         return "#22c55e"
-    elif main_price < 23.00:
+    elif total_cost < 150:
         return "#eab308"
-    elif main_price < 33.00:
+    elif total_cost < 200:
         return "#f97316"
-    elif main_price < 50.00:
-        return "#ef4444"
     else:
-        return "#a855f7"
+        return "#ef4444"
 
 def fetch_pricing_via_gemini_search(venue_name, city="Naperville, IL"):
     """Query Gemini with Google Search Grounding to find live menu pricing."""
@@ -118,7 +118,8 @@ def apply_pricing_to_venue(v, pricing):
     desserts_list = pricing.get("desserts") or [8.00]
     v["dessert"] = round(statistics.median(desserts_list), 2)
 
-    v["tierColor"] = calculate_tier_color(v["casualMain"])
+    total_cost = round((v["app"] + (2 * v["casualMain"]) + (0 * v["premiumMain"]) + (2 * v["drink"]) + v["dessert"]) * 1.30)
+    v["tierColor"] = calculate_tier_color(total_cost)
     return True
 
 def main():

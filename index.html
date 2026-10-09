@@ -370,6 +370,14 @@
       return Math.round(subtotal * 1.30);
     }
 
+    function getTierColor(total) {
+      if (total < 50) return '#38bdf8';
+      if (total < 100) return '#22c55e';
+      if (total < 150) return '#eab308';
+      if (total < 200) return '#f97316';
+      return '#ef4444';
+    }
+
     function buildGeoJSON() {
       return {
         type: "FeatureCollection",
@@ -384,7 +392,7 @@
               name: v.name,
               category: v.category,
               total: total,
-              color: v.tierColor || "#38bdf8",
+              color: getTierColor(total),
               opacity: isUnderBudget ? 1.0 : 0.15
             }
           };
@@ -511,7 +519,7 @@
         </div>
         <div class="pop-badge">
           <span class="pop-badge-label">Est. TOTAL (incl. tip and tax)</span>
-          <span class="pop-badge-val" style="color: ${venue.tierColor}">$${total}</span>
+          <span class="pop-badge-val" style="color: ${getTierColor(total)}">$${total}</span>
         </div>
         <div class="pop-grid">
           <div><div class="pop-grid-lbl">Apps</div><div class="pop-grid-val">$${appCost}</div></div>

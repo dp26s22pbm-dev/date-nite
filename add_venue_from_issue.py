@@ -103,17 +103,17 @@ def extract_coords_from_google_maps_url(input_str):
 
     return None
 
-def calculate_tier_color(main_price):
-    if main_price < 16.00:
+def calculate_tier_color(total_cost):
+    if total_cost < 50:
+        return "#38bdf8"
+    elif total_cost < 100:
         return "#22c55e"
-    elif main_price < 23.00:
+    elif total_cost < 150:
         return "#eab308"
-    elif main_price < 33.00:
+    elif total_cost < 200:
         return "#f97316"
-    elif main_price < 50.00:
-        return "#ef4444"
     else:
-        return "#a855f7"
+        return "#ef4444"
 
 def fetch_coords_via_gemini(address_or_url):
     """Use Gemini with Google Search Grounding to geocode an address or Maps URL."""
@@ -272,7 +272,8 @@ def main():
         if "drink" in overrides: drink = overrides["drink"]
         if "dessert" in overrides: dessert = overrides["dessert"]
 
-    tier_color = calculate_tier_color(casual_main)
+    total_cost = round((app + (2 * casual_main) + (0 * premium_main) + (2 * drink) + dessert) * 1.30)
+    tier_color = calculate_tier_color(total_cost)
 
     with open("venues.json", "r") as f:
         venues = json.load(f)

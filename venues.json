@@ -58,7 +58,7 @@
     "drink": 12.0,
     "dessert": 11.47,
     "isTapas": true,
-    "tierColor": "#f97316"
+    "tierColor": "#eab308"
   },
   {
     "id": 5,
@@ -118,7 +118,7 @@
     "premiumMain": 42.0,
     "drink": 14.0,
     "dessert": 9.5,
-    "tierColor": "#f97316"
+    "tierColor": "#eab308"
   },
   {
     "id": 9,
@@ -283,6 +283,6 @@
     "premiumMain": 77.55,
     "drink": 15.5,
     "dessert": 15.95,
-    "tierColor": "#ef4444"
+    "tierColor": "#f97316"
   }
 ]
