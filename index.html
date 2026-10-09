@@ -212,36 +212,36 @@
     .pop-grid-lbl { font-size: 8px; text-transform: uppercase; color: #8b949e; margin-bottom: 2px; }
     .pop-grid-val { font-size: 11px; font-weight: 700; color: #e6edf3; }
 
-    /* Audio Toggle Button in Bottom Right */
+    /* Floating Audio Toggle Button */
     .audio-btn {
-      position: fixed;
-      right: 20px;
-      bottom: 20px;
-      z-index: 1000;
-      background: rgba(22, 27, 34, 0.95);
-      backdrop-filter: blur(12px);
-      -webkit-backdrop-filter: blur(12px);
-      border: 1px solid rgba(255, 255, 255, 0.2);
-      color: #8b949e;
-      border-radius: 50%;
-      width: 44px;
-      height: 44px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      cursor: pointer;
-      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.6);
-      transition: all 0.2s ease;
+      position: fixed !important;
+      right: 20px !important;
+      bottom: 20px !important;
+      width: 44px !important;
+      height: 44px !important;
+      border-radius: 50% !important;
+      background: #161b22 !important;
+      border: 1px solid rgba(255, 255, 255, 0.25) !important;
+      color: #8b949e !important;
+      display: flex !important;
+      align-items: center !important;
+      justify-content: center !important;
+      cursor: pointer !important;
+      box-shadow: 0 4px 18px rgba(0, 0, 0, 0.7) !important;
+      z-index: 1000 !important;
+      pointer-events: auto !important;
+      transition: all 0.2s ease !important;
     }
     .audio-btn.playing {
-      color: #38bdf8;
-      border-color: #38bdf8;
-      box-shadow: 0 0 14px rgba(56, 189, 248, 0.35);
+      color: #38bdf8 !important;
+      border-color: #38bdf8 !important;
+      box-shadow: 0 0 14px rgba(56, 189, 248, 0.4) !important;
     }
     .audio-btn svg {
-      width: 20px;
-      height: 20px;
-      fill: currentColor;
+      width: 20px !important;
+      height: 20px !important;
+      fill: currentColor !important;
+      pointer-events: none !important;
     }
   </style>
 </head>
@@ -401,12 +401,16 @@
     });
 
     map.on('load', async () => {
+      // 1. Mount the audio toggle into MapLibre's native overlay layer so it never gets occluded
+      document.querySelector('.maplibregl-control-container')?.appendChild(audioBtn);
+
       try {
         const res = await fetch('venues.json?v=' + Date.now());
         rawVenues = await res.json();
       } catch (err) {
         console.error("Could not fetch venues.json", err);
       }
+      // ... rest of map.on('load') code
 
       map.addSource('restaurants', { type: 'geojson', data: buildGeoJSON() });
 
