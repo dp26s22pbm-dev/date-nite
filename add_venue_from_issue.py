@@ -121,8 +121,8 @@ def fetch_coords_via_gemini(address_or_url):
         prompt = (
             f'Find the exact GPS coordinates (latitude and longitude) for this location: '
             f'"{address_or_url}". '
-            f'Return ONLY a valid JSON object: {{"lat": float, "lng": float}}. '
-            f'No markdown, no explanation.'
+            f'Return ONLY a valid JSON object with numeric values: {{"lat": <number>, "lng": <number>}}. '
+            f'No markdown, no explanation, no code blocks.'
         )
         response = client.models.generate_content(
             model="gemini-3.8-flash",
@@ -132,12 +132,30 @@ def fetch_coords_via_gemini(address_or_url):
                 temperature=0.0
             ),
         )
-        raw_text = response.text.strip()
+        raw_text = response.text
+        if not raw_text:
+            print("Gemini geocoding: response.text was None, checking candidates")
+            if response.candidates:
+                for cand in response.candidates:
+                    if cand.content and cand.content.parts:
+                        raw_text = "".join(p.text for p in cand.content.parts if hasattr(p, "text"))
+                        break
+            if not raw_text:
+                print("Gemini geocoding: no text in any candidate")
+                return None
+        raw_text = raw_text.strip()
         if raw_text.startswith("```"):
             raw_text = raw_text.strip("`").removeprefix("json").strip()
+        # Extract JSON from the response even if surrounded by other text
+        json_match = re.search(r'\{[^}]+\}', raw_text)
+        if json_match:
+            raw_text = json_match.group(0)
         result = json.loads(raw_text)
         lat = float(result["lat"])
         lng = float(result["lng"])
+        if not (-90 <= lat <= 90 and -180 <= lng <= 180):
+            print(f"Gemini geocoding: invalid coords lat={lat}, lng={lng}")
+            return None
         return [round(lng, 6), round(lat, 6)]
     except Exception as e:
         print(f"Gemini geocoding error: {e}")
@@ -196,7 +214,8 @@ def main():
     coords = extract_coords_from_google_maps_url(coordinates_input) or extract_coords_from_google_maps_url(address)
     if not coords:
         # Fallback: use Gemini with Google Search to geocode the address or short link
-        geocode_input = coordinates_input or address
+        # Prefer the street address for geocoding since Maps short links can confuse search
+        geocode_input = address or coordinates_input
         if geocode_input:
             print(f"URL parsing failed; falling back to Gemini geocoding for: {geocode_input}")
             coords = fetch_coords_via_gemini(geocode_input)
