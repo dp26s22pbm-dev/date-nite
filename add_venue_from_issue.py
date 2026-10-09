@@ -106,6 +106,34 @@ def calculate_tier_color(main_price):
     else:
         return "#a855f7"
 
+def fetch_coords_via_gemini(address_or_url):
+    """Use Gemini with Google Search Grounding to geocode an address or Maps URL."""
+    try:
+        prompt = (
+            f'Find the exact GPS coordinates (latitude and longitude) for this location: '
+            f'"{address_or_url}". '
+            f'Return ONLY a valid JSON object: {{"lat": float, "lng": float}}. '
+            f'No markdown, no explanation.'
+        )
+        response = client.models.generate_content(
+            model="gemini-3.8-flash",
+            contents=prompt,
+            config=types.GenerateContentConfig(
+                tools=[types.Tool(google_search=types.GoogleSearch())],
+                temperature=0.0
+            ),
+        )
+        raw_text = response.text.strip()
+        if raw_text.startswith("```"):
+            raw_text = raw_text.strip("`").removeprefix("json").strip()
+        result = json.loads(raw_text)
+        lat = float(result["lat"])
+        lng = float(result["lng"])
+        return [round(lng, 6), round(lat, 6)]
+    except Exception as e:
+        print(f"Gemini geocoding error: {e}")
+        return None
+
 def fetch_pricing_via_gemini_search(venue_name, city="Naperville, IL"):
     """Query Gemini with Google Search Grounding to find live menu pricing."""
     try:
@@ -157,6 +185,12 @@ def main():
 
     # Extract exact coordinates: try the Coordinates field first, then the address field
     coords = extract_coords_from_google_maps_url(coordinates_input) or extract_coords_from_google_maps_url(address)
+    if not coords:
+        # Fallback: use Gemini with Google Search to geocode the address or short link
+        geocode_input = coordinates_input or address
+        if geocode_input:
+            print(f"URL parsing failed; falling back to Gemini geocoding for: {geocode_input}")
+            coords = fetch_coords_via_gemini(geocode_input)
     if not coords:
         print(f"ABORT: Could not parse exact coordinates from either the Coordinates field ('{coordinates_input}') or the address field ('{address}').")
         return
