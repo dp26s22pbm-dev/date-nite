@@ -166,17 +166,27 @@ async def main():
     name = extract_field(issue_body, "Restaurant Name")
     category = extract_field(issue_body, "Cuisine Category")
     address = extract_field(issue_body, "Street Address or City")
+    coordinates_input = extract_field(issue_body, "Coordinates (Optional)")
     menu_url = extract_field(issue_body, "Online Menu / Ordering URL")
+    manual_pricing_text = extract_field(issue_body, "Manual Pricing Overrides (Optional)")
 
-    # Extract exact coordinates (no guessing, no OSM)
-    coords = extract_coords_from_google_maps_url(address)
+    # Extract exact coordinates: try the Coordinates field first, then the address field
+    coords = extract_coords_from_google_maps_url(coordinates_input) or extract_coords_from_google_maps_url(address)
     if not coords:
-        print(f"ABORT: Could not parse exact coordinates from input: '{address}'.")
+        print(f"ABORT: Could not parse exact coordinates from either the Coordinates field ('{coordinates_input}') or the address field ('{address}').")
         return
 
     # Scrape dynamic site or native PDF
     text, pdf_bytes = await scrape_site_or_pdf(menu_url) if menu_url else ("", None)
     pricing = parse_pricing_with_gemini(text, pdf_bytes) if (text or pdf_bytes) else None
+
+    # Parse manual pricing overrides (e.g. "app: 10.00\ncasualMain: 18.00")
+    overrides = {}
+    if manual_pricing_text:
+        for line in manual_pricing_text.strip().splitlines():
+            m = re.match(r'\s*(\w+)\s*:\s*\$?\s*([\d.]+)\s*', line)
+            if m:
+                overrides[m.group(1)] = float(m.group(2))
 
     # Calculate medians with guarded fallbacks
     if pricing and pricing.get("casualMains"):
@@ -201,6 +211,14 @@ async def main():
         app = 12.00
         drink = 8.50
         dessert = 8.00
+
+    # Apply manual pricing overrides if provided
+    if overrides:
+        if "app" in overrides: app = overrides["app"]
+        if "casualMain" in overrides: casual_main = overrides["casualMain"]
+        if "premiumMain" in overrides: premium_main = overrides["premiumMain"]
+        if "drink" in overrides: drink = overrides["drink"]
+        if "dessert" in overrides: dessert = overrides["dessert"]
 
     tier_color = calculate_tier_color(casual_main)
 
