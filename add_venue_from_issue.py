@@ -111,7 +111,7 @@ def fetch_pricing_via_gemini_search(venue_name, city="Naperville, IL"):
     try:
         prompt = SEARCH_PRICING_PROMPT.format(venue_name=venue_name, city=city)
         response = client.models.generate_content(
-            model="gemini-2.5-flash",
+            model="gemini-3.8-flash",
             contents=prompt,
             config=types.GenerateContentConfig(
                 tools=[types.Tool(google_search=types.GoogleSearch())],
@@ -133,7 +133,7 @@ def fetch_pdf_pricing(url):
         with urllib.request.urlopen(req, timeout=15) as res:
             pdf_bytes = res.read()
         response = client.models.generate_content(
-            model="gemini-2.5-flash",
+            model="gemini-3.8-flash",
             contents=[
                 PDF_PROMPT,
                 types.Part.from_bytes(data=pdf_bytes, mime_type="application/pdf")
