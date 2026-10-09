@@ -388,9 +388,11 @@
     const map = new maplibregl.Map({
       container: 'map',
       style: 'https://tiles.openfreemap.org/styles/dark',
-      center: [-88.165, 41.745],
+      center: [-88.16632, 41.74594],
       zoom: 12.2,
-      pitch: 30
+      pitch: 60,
+      bearing: 0,
+      maxPitch: 85
     });
 
     map.on('styleimagemissing', (e) => {
