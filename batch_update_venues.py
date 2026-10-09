@@ -1,24 +1,38 @@
 import os
-import re
 import json
 import statistics
-import asyncio
-import urllib.request
-import urllib.parse
-from playwright.async_api import async_playwright
-# New SDK
 from google import genai
+from google.genai import types
 
 client = genai.Client(api_key=os.environ.get("GEMINI_API_KEY", ""))
 
-# Import menu URL mapping
 try:
     from urls import TARGET_URLS as VENUE_URLS
 except Exception as e:
     print(f"Failed to import TARGET_URLS from urls.py: {e}")
     VENUE_URLS = {}
 
-PROMPT = """
+SEARCH_PRICING_PROMPT = """
+Search for current menu pricing for "{venue_name}" in {city}.
+Find real-world pricing for these categories:
+1. apps: typical appetizer / starter item price (in USD, number only)
+2. casualMains: standard, lower-cost main entree or sandwich prices (in USD, number only)
+3. premiumMains: top-tier entree or steak/seafood/specialty main prices (in USD, number only)
+4. drinks: standard cocktail or craft beverage prices (in USD, number only)
+5. desserts: typical dessert prices (in USD, number only)
+
+Return ONLY a valid JSON object matching this schema:
+{{
+  "apps": [float, ...],
+  "casualMains": [float, ...],
+  "premiumMains": [float, ...],
+  "drinks": [float, ...],
+  "desserts": [float, ...]
+}}
+Do not include markdown code block formatting or explanations. Output pure JSON.
+"""
+
+PDF_PROMPT = """
 You are a restaurant menu pricing extraction engine. Analyze the provided menu content (text or PDF document) and extract typical menu prices into this JSON structure:
 {
   "apps": [float, ...],
@@ -48,78 +62,66 @@ def calculate_tier_color(main_price):
     else:
         return "#a855f7"
 
-async def scrape_site_or_pdf(url):
-    if url.lower().endswith(".pdf"):
-        try:
-            req = urllib.request.Request(url, headers={"User-Agent": "Mozilla/5.0"})
-            with urllib.request.urlopen(req, timeout=15) as res:
-                return None, res.read()
-        except Exception as e:
-            print(f"Error fetching PDF {url}: {e}")
-            return "", None
-
-    async with async_playwright() as p:
-        browser = await p.chromium.launch(headless=True)
-        context = await browser.new_context(user_agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36")
-        page = await context.new_page()
-        try:
-            await page.goto(url, wait_until="domcontentloaded", timeout=25000)
-            await asyncio.sleep(2)
-
-            # Check for PDF links without blocking the run if not present
-            try:
-                pdf_elem = page.locator('a[href$=".pdf"]').first
-                if await pdf_elem.count() > 0:
-                    pdf_link = await pdf_elem.get_attribute("href", timeout=2000)
-                    if pdf_link:
-                        full_pdf_url = urllib.parse.urljoin(url, pdf_link)
-                        req = urllib.request.Request(full_pdf_url, headers={"User-Agent": "Mozilla/5.0"})
-                        with urllib.request.urlopen(req, timeout=15) as res:
-                            pdf_data = res.read()
-                            await browser.close()
-                            return None, pdf_data
-            except Exception:
-                pass
-
-            # Scroll to trigger any lazy-loaded menu elements
-            for _ in range(3):
-                await page.mouse.wheel(0, 1200)
-                await asyncio.sleep(0.4)
-
-            text = await page.inner_text("body")
-            await browser.close()
-            return text, None
-        except Exception as e:
-            print(f"Playwright scrape error for {url}: {e}")
-            await browser.close()
-            return "", None
-
-def parse_pricing_with_gemini(text, pdf_data):
+def fetch_pricing_via_gemini_search(venue_name, city="Naperville, IL"):
+    """Query Gemini with Google Search Grounding to find live menu pricing."""
     try:
-        if pdf_data:
-            response = client.models.generate_content(
-                model="gemini-3.8-flash",
-                contents=[
-                    PROMPT,
-                    genai.types.Part.from_bytes(
-                        data=pdf_data,
-                        mime_type="application/pdf"
-                    )
-                ]
-            )
-        else:
-            response = client.models.generate_content(
-                model="gemini-3.8-flash",
-                contents=f"{PROMPT}\n\nMENU TEXT:\n{text[:25000]}"
-            )
+        prompt = SEARCH_PRICING_PROMPT.format(venue_name=venue_name, city=city)
+        response = client.models.generate_content(
+            model="gemini-2.5-flash",
+            contents=prompt,
+            config=types.GenerateContentConfig(
+                tools=[types.Tool(google_search=types.GoogleSearch())],
+                temperature=0.1
+            ),
+        )
+        raw_text = response.text.strip()
+        if raw_text.startswith("```"):
+            raw_text = raw_text.strip("`").removeprefix("json").strip()
+        return json.loads(raw_text)
+    except Exception as e:
+        print(f"Gemini Search Grounding error for {venue_name}: {e}")
+        return None
 
+def parse_pricing_from_pdf(pdf_bytes):
+    """Parse pricing from a PDF using Gemini (no search grounding needed)."""
+    try:
+        response = client.models.generate_content(
+            model="gemini-2.5-flash",
+            contents=[
+                PDF_PROMPT,
+                types.Part.from_bytes(data=pdf_bytes, mime_type="application/pdf")
+            ]
+        )
         clean = response.text.strip().replace("```json", "").replace("```", "")
         return json.loads(clean)
     except Exception as e:
-        print(f"Gemini error: {e}")
+        print(f"Gemini PDF parsing error: {e}")
         return None
 
-async def main():
+def apply_pricing_to_venue(v, pricing):
+    """Update venue dict with median values from pricing data. Returns True if updated."""
+    if not pricing or not pricing.get("casualMains"):
+        return False
+
+    casual_list = pricing.get("casualMains") or [19.00]
+    v["casualMain"] = round(statistics.median(casual_list), 2)
+
+    prem_list = pricing.get("premiumMains") or [round(v["casualMain"] * 1.6, 2)]
+    v["premiumMain"] = round(statistics.median(prem_list), 2)
+
+    apps_list = pricing.get("apps") or [round(v["casualMain"] * 0.55, 2)]
+    v["app"] = round(statistics.median(apps_list), 2)
+
+    drinks_list = pricing.get("drinks") or [8.00]
+    v["drink"] = round(statistics.median(drinks_list), 2)
+
+    desserts_list = pricing.get("desserts") or [8.00]
+    v["dessert"] = round(statistics.median(desserts_list), 2)
+
+    v["tierColor"] = calculate_tier_color(v["casualMain"])
+    return True
+
+def main():
     target_venue = os.environ.get("TARGET_VENUE", "").strip().lower()
 
     with open("venues.json", "r") as f:
@@ -130,41 +132,37 @@ async def main():
         venue_id = v.get("id")
         name = v.get("name", "")
 
-        # If TARGET_VENUE is specified (e.g. "traverso"), skip everyone else
         if target_venue and target_venue not in name.lower():
             continue
 
+        print(f"Refreshing pricing for: {name} (ID: {venue_id})")
+
+        # Step 1: Try direct PDF download if the registered URL is a PDF
+        pdf_pricing = None
         url = VENUE_URLS.get(venue_id)
-        if not url:
-            print(f"Skipping {name} (ID: {venue_id}) - no menu URL registered in update_venues.py")
+        if url and url.lower().endswith(".pdf"):
+            import urllib.request
+            try:
+                req = urllib.request.Request(url, headers={"User-Agent": "Mozilla/5.0"})
+                with urllib.request.urlopen(req, timeout=15) as res:
+                    pdf_pricing = parse_pricing_from_pdf(res.read())
+            except Exception as e:
+                print(f"  PDF fetch failed: {e}")
+
+        if pdf_pricing and apply_pricing_to_venue(v, pdf_pricing):
+            print(f"  Updated {name} from PDF: Casual ${v['casualMain']}, Prime ${v['premiumMain']}")
+            updated_count += 1
             continue
 
-        print(f"Refreshing pricing for: {name} ({url})")
-        text, pdf_bytes = await scrape_site_or_pdf(url)
-        pricing = parse_pricing_with_gemini(text, pdf_bytes) if (text or pdf_bytes) else None
+        # Step 2: Use Gemini Google Search Grounding as the primary method
+        city = "Naperville, IL"
+        pricing = fetch_pricing_via_gemini_search(name, city)
 
-        if pricing and pricing.get("casualMains"):
-            casual_list = pricing.get("casualMains") or [19.00]
-            casual_val = round(statistics.median(casual_list), 2)
-            v["casualMain"] = casual_val
-
-            prem_list = pricing.get("premiumMains") or [round(casual_val * 1.6, 2)]
-            v["premiumMain"] = round(statistics.median(prem_list), 2)
-
-            apps_list = pricing.get("apps") or [round(casual_val * 0.55, 2)]
-            v["app"] = round(statistics.median(apps_list), 2)
-
-            drinks_list = pricing.get("drinks") or [8.00]
-            v["drink"] = round(statistics.median(drinks_list), 2)
-
-            desserts_list = pricing.get("desserts") or [8.00]
-            v["dessert"] = round(statistics.median(desserts_list), 2)
-
-            v["tierColor"] = calculate_tier_color(v["casualMain"])
-            print(f"Updated {name}: Casual ${v['casualMain']}, Prime ${v['premiumMain']}, Drinks ${v['drink']}, App ${v['app']}, Color {v['tierColor']}")
+        if pricing and apply_pricing_to_venue(v, pricing):
+            print(f"  Updated {name} via Gemini Search: Casual ${v['casualMain']}, Prime ${v['premiumMain']}, Drinks ${v['drink']}, App ${v['app']}, Color {v['tierColor']}")
             updated_count += 1
         else:
-            print(f"Could not parse new prices for {name}; keeping existing data.")
+            print(f"  Could not retrieve new prices for {name}; keeping existing data.")
 
     if updated_count > 0:
         with open("venues.json", "w") as f:
@@ -172,4 +170,4 @@ async def main():
         print(f"Saved {updated_count} updated venue(s) to venues.json.")
 
 if __name__ == "__main__":
-    asyncio.run(main())
+    main()
