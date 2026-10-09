@@ -269,5 +269,20 @@
     "drink": 8.22,
     "dessert": 11.95,
     "tierColor": "#eab308"
+  },
+  {
+    "id": 19,
+    "name": "Morton's The Steakhouse",
+    "category": "Steakhouse",
+    "coords": [
+      -88.126779,
+      41.803025
+    ],
+    "app": 26.95,
+    "casualMain": 35.2,
+    "premiumMain": 77.55,
+    "drink": 15.5,
+    "dessert": 15.95,
+    "tierColor": "#ef4444"
   }
 ]

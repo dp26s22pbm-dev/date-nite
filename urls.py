@@ -17,5 +17,6 @@ TARGET_URLS = {
     16: "https://plainfield-2.freedombrotherspizza.com/food-menu",
     17: "https://toast.app/r/little-pops-ny-pizzeria-naperville/order",
     18: "https://menu.thecheesecakefactory.com/il/naperville-228",
+    19: "https://www.mortons.com/location/mortons-the-steakhouse-naperville-il/#dinner-mtnp",
 }
   
