@@ -9,18 +9,31 @@
 
   <style>
     * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
-    body, html {
-      margin: 0; padding: 0;
-      width: 100%; height: 100%;
+    html, body {
+      margin: 0;
+      padding: 0;
+      width: 100%;
+      height: 100%;
       overflow: hidden;
       font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Segoe UI", Roboto, sans-serif;
       background: #0d1117;
       color: #f0f6fc;
+      position: relative;
     }
 
-    #map { width: 100%; height: 100%; position: absolute; top: 0; left: 0; z-index: 1; }
+    /* Map canvas fills the screen */
+    #map {
+      position: absolute;
+      top: 0;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      width: 100%;
+      height: 100%;
+      z-index: 1;
+    }
 
-    /* Main floating left drawer */
+    /* Floating Left Controls Drawer */
     .control-panel {
       position: fixed;
       top: 16px;
@@ -41,10 +54,10 @@
       border: 1px solid rgba(255, 255, 255, 0.15);
       border-radius: 14px;
       box-shadow: 0 12px 35px rgba(0, 0, 0, 0.65);
-      z-index: 9999;
+      z-index: 1000;
     }
 
-    /* Course items stacked vertically */
+    /* Vertical Steppers */
     .meal-builder-row {
       position: relative;
       display: flex;
@@ -56,7 +69,6 @@
       gap: 6px;
     }
 
-    /* Compact counter card */
     .counter-pill {
       width: 100%;
       padding: 4px 6px;
@@ -108,7 +120,7 @@
       text-align: center;
     }
 
-    /* Budget section pinned along bottom */
+    /* Horizontal Budget Row across Bottom of Card */
     .budget-row {
       position: relative;
       display: flex;
@@ -141,7 +153,7 @@
 
     /* MapLibre Popup Custom Styling */
     .maplibregl-popup {
-      z-index: 25;
+      z-index: 50;
     }
     .maplibregl-popup-content {
       background: rgba(22, 27, 34, 0.98) !important;
@@ -200,45 +212,45 @@
     .pop-grid-lbl { font-size: 8px; text-transform: uppercase; color: #8b949e; margin-bottom: 2px; }
     .pop-grid-val { font-size: 11px; font-weight: 700; color: #e6edf3; }
 
-    /* Floating Audio Toggle Button */
+    /* Audio Toggle Button in Bottom Right */
     .audio-btn {
-      position: fixed !important;
-      right: 18px !important;
-      bottom: calc(18px + env(safe-area-inset-bottom, 12px)) !important;
-      top: auto !important;
-      left: auto !important;
-      z-index: 10000 !important;
-      background: rgba(22, 27, 34, 0.95) !important;
+      position: fixed;
+      right: 20px;
+      bottom: 20px;
+      z-index: 1000;
+      background: rgba(22, 27, 34, 0.95);
       backdrop-filter: blur(12px);
       -webkit-backdrop-filter: blur(12px);
-      border: 1px solid rgba(255, 255, 255, 0.2) !important;
-      color: #8b949e !important;
-      border-radius: 50% !important;
-      width: 44px !important;
-      height: 44px !important;
-      display: flex !important;
-      align-items: center !important;
-      justify-content: center !important;
-      cursor: pointer !important;
-      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.6) !important;
-      pointer-events: auto !important;
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      color: #8b949e;
+      border-radius: 50%;
+      width: 44px;
+      height: 44px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.6);
       transition: all 0.2s ease;
     }
     .audio-btn.playing {
-      color: #38bdf8 !important;
-      border-color: #38bdf8 !important;
-      box-shadow: 0 0 14px rgba(56, 189, 248, 0.35) !important;
+      color: #38bdf8;
+      border-color: #38bdf8;
+      box-shadow: 0 0 14px rgba(56, 189, 248, 0.35);
     }
     .audio-btn svg {
-      width: 18px;
-      height: 18px;
+      width: 20px;
+      height: 20px;
       fill: currentColor;
     }
   </style>
 </head>
 <body>
 
-  <!-- Controls Drawer -->
+  <!-- Map Base Container -->
+  <div id="map"></div>
+
+  <!-- Left Side Controls Rail -->
   <div class="control-panel">
     <div class="meal-builder-row">
       <div class="counter-pill">
@@ -292,13 +304,8 @@
     </div>
   </div>
 
-  <!-- Map Base Container -->
-  <div id="map"></div>
-
-  <!-- Hidden Audio Element -->
+  <!-- Audio Controls -->
   <audio id="bg-audio" src="bgm.mp3" loop preload="auto"></audio>
-
-  <!-- Audio Toggle Button -->
   <button id="audio-toggle" class="audio-btn" onclick="toggleAudio()" aria-label="Toggle background music">
     <svg viewBox="0 0 24 24" id="audio-icon">
       <path d="M16.5 12c0-1.77-1.02-3.29-2.5-4.03v2.21l2.45 2.45c.03-.2.05-.41.05-.63zm2.5 0c0 .94-.2 1.82-.54 2.64l1.51 1.51C20.63 14.91 21 13.5 21 12c0-4.28-2.99-7.86-7-8.77v2.06c2.89.86 5 3.54 5 6.71zM4.27 3L3 4.27l4.73 4.73H3v6h4l5 5v-6.73l4.25 4.25c-.67.52-1.42.93-2.25 1.18v2.06c1.38-.31 2.63-.95 3.69-1.81L19.73 21 21 19.73l-9-9L4.27 3zM12 4L9.91 6.09 12 8.18V4z"/>
@@ -371,4 +378,175 @@
               category: v.category,
               total: total,
               color: v.tierColor || "#38bdf8",
-              opacity: is
+              opacity: isUnderBudget ? 1.0 : 0.15
+            }
+          };
+        })
+      };
+    }
+
+    const map = new maplibregl.Map({
+      container: 'map',
+      style: 'https://tiles.openfreemap.org/styles/dark',
+      center: [-88.165, 41.745],
+      zoom: 12.2,
+      pitch: 30
+    });
+
+    map.on('styleimagemissing', (e) => {
+      const id = e.id;
+      if (!map.hasImage(id)) {
+        map.addImage(id, { width: 1, height: 1, data: new Uint8Array(4) });
+      }
+    });
+
+    map.on('load', async () => {
+      try {
+        const res = await fetch('venues.json?v=' + Date.now());
+        rawVenues = await res.json();
+      } catch (err) {
+        console.error("Could not fetch venues.json", err);
+      }
+
+      map.addSource('restaurants', { type: 'geojson', data: buildGeoJSON() });
+
+      map.addLayer({
+        id: 'restaurants-glow',
+        type: 'circle',
+        source: 'restaurants',
+        paint: {
+          'circle-radius': 22,
+          'circle-color': ['get', 'color'],
+          'circle-opacity': ['*', ['get', 'opacity'], 0.35],
+          'circle-blur': 0.8
+        }
+      });
+
+      map.addLayer({
+        id: 'restaurants-point',
+        type: 'circle',
+        source: 'restaurants',
+        paint: {
+          'circle-radius': 12,
+          'circle-color': ['get', 'color'],
+          'circle-opacity': ['get', 'opacity'],
+          'circle-stroke-width': 2.5,
+          'circle-stroke-color': '#ffffff',
+          'circle-stroke-opacity': ['get', 'opacity']
+        }
+      });
+
+      map.on('click', (e) => {
+        const bbox = [
+          [e.point.x - 15, e.point.y - 15],
+          [e.point.x + 15, e.point.y + 15]
+        ];
+        const features = map.queryRenderedFeatures(bbox, { layers: ['restaurants-point'] });
+
+        if (features && features.length > 0) {
+          const venueId = Number(features[0].properties.id);
+
+          if (selectedVenueId === venueId) {
+            closePopup();
+            return;
+          }
+
+          const venue = rawVenues.find(v => v.id === venueId);
+          if (venue) {
+            selectedVenueId = venueId;
+            renderPopup(venue);
+          }
+        }
+      });
+
+      map.on('mousemove', (e) => {
+        const bbox = [
+          [e.point.x - 10, e.point.y - 10],
+          [e.point.x + 10, e.point.y + 10]
+        ];
+        const features = map.queryRenderedFeatures(bbox, { layers: ['restaurants-point'] });
+        map.getCanvas().style.cursor = (features && features.length > 0) ? 'pointer' : '';
+      });
+
+      // Ensure viewport dimensions calculate cleanly on load
+      map.resize();
+    });
+
+    function closePopup() {
+      if (currentPopup) {
+        currentPopup.remove();
+        currentPopup = null;
+      }
+      selectedVenueId = null;
+    }
+
+    function renderPopup(venue) {
+      const total = calculateTotal(venue);
+      const cMult = venue.isTapas ? (state.casual * 2) : state.casual;
+      const pMult = venue.isTapas ? (state.prime * 2) : state.prime;
+
+      const appCost = Math.round(state.apps * (venue.app || 0));
+      const casCost = Math.round(cMult * (venue.casualMain || 0));
+      const prmCost = Math.round(pMult * (venue.premiumMain || 0));
+      const drkCost = Math.round(state.drinks * (venue.drink || 0));
+      const dstCost = Math.round(state.dessert * (venue.dessert || 0));
+
+      const html = `
+        <div class="pop-header">
+          <div class="pop-name">${venue.name}</div>
+          <div class="pop-cat">${venue.category}</div>
+        </div>
+        <div class="pop-badge">
+          <span class="pop-badge-label">Out of Pocket</span>
+          <span class="pop-badge-val" style="color: ${venue.tierColor}">$${total}</span>
+        </div>
+        <div class="pop-grid">
+          <div><div class="pop-grid-lbl">Apps</div><div class="pop-grid-val">$${appCost}</div></div>
+          <div><div class="pop-grid-lbl">Cas</div><div class="pop-grid-val">$${casCost}</div></div>
+          <div><div class="pop-grid-lbl">Prm</div><div class="pop-grid-val">$${prmCost}</div></div>
+          <div><div class="pop-grid-lbl">Drk</div><div class="pop-grid-val">$${drkCost}</div></div>
+          <div><div class="pop-grid-lbl">Dst</div><div class="pop-grid-val">$${dstCost}</div></div>
+        </div>
+      `;
+
+      if (currentPopup && currentPopup.isOpen()) {
+        currentPopup.setLngLat(venue.coords).setHTML(html);
+      } else {
+        currentPopup = new maplibregl.Popup({ closeButton: true, closeOnClick: false, offset: 14 })
+          .setLngLat(venue.coords)
+          .setHTML(html)
+          .addTo(map);
+
+        currentPopup.on('close', () => {
+          selectedVenueId = null;
+          currentPopup = null;
+        });
+      }
+    }
+
+    function refreshMap() {
+      if (!map.getSource('restaurants')) return;
+      map.getSource('restaurants').setData(buildGeoJSON());
+
+      if (selectedVenueId) {
+        const venue = rawVenues.find(v => v.id === selectedVenueId);
+        if (venue) {
+          renderPopup(venue);
+        }
+      }
+    }
+
+    function updateQty(key, delta) {
+      state[key] = Math.max(0, state[key] + delta);
+      document.getElementById(`qty-${key}`).innerText = state[key];
+      refreshMap();
+    }
+
+    function onBudgetChange(val) {
+      state.maxBudget = Number(val);
+      document.getElementById('budget-display').innerText = `$${val}`;
+      refreshMap();
+    }
+  </script>
+</body>
+</html>
