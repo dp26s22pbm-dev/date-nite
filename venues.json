@@ -65,8 +65,8 @@
     "name": "Santo Cielo",
     "category": "Latin Bistro",
     "coords": [
-      -88.1481,
-      41.7714
+      -88.15061940422304,
+      41.7713795929344 
     ],
     "app": 16.0,
     "casualMain": 24.0,
@@ -80,8 +80,8 @@
     "name": "Vasili's",
     "category": "Mediterranean Bistro",
     "coords": [
-      -88.1485,
-      41.7725
+      -88.15090767538716,
+      41.77149169607413 
     ],
     "app": 15.5,
     "casualMain": 26.0,
@@ -95,8 +95,8 @@
     "name": "Ramsay's Kitchen",
     "category": "Modern American Bistro",
     "coords": [
-      -88.1478,
-      41.7719
+      -88.14926916189474,
+      41.77327109562595 
     ],
     "app": 18.0,
     "casualMain": 32.0,
@@ -125,8 +125,8 @@
     "name": "Hugo's Frog Bar",
     "category": "Prime Steak & Seafood",
     "coords": [
-      -88.1488,
-      41.7711
+      -88.15026380422286,
+      41.774403001046814 
     ],
     "app": 21.0,
     "casualMain": 26.0,
