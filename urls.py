@@ -15,5 +15,7 @@ TARGET_URLS = {
     14: "https://www.whitechocolategrill.com/menu",
     15: "https://biaggis.com/locations/illinois-naperville/#menu-divider",
     16: "https://plainfield-2.freedombrotherspizza.com/food-menu",
+    17: "https://toast.app/r/little-pops-ny-pizzeria-naperville/order",
+    18: "https://menu.thecheesecakefactory.com/il/naperville-228",
 }
   

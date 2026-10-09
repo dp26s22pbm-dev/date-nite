@@ -239,5 +239,35 @@
     "drink": 8.0,
     "dessert": 3.0,
     "tierColor": "#eab308"
+  },
+  {
+    "id": 17,
+    "name": "Little Pops NY Pizzeria",
+    "category": "Italian / Pizza",
+    "coords": [
+      -88.099682,
+      41.735556
+    ],
+    "app": 9.0,
+    "casualMain": 16.0,
+    "premiumMain": 22.0,
+    "drink": 5.0,
+    "dessert": 6.0,
+    "tierColor": "#22c55e"
+  },
+  {
+    "id": 18,
+    "name": "The Cheesecake Factory",
+    "category": "American / International",
+    "coords": [
+      -88.203585,
+      41.76441
+    ],
+    "app": 14.0,
+    "casualMain": 22.0,
+    "premiumMain": 38.0,
+    "drink": 12.0,
+    "dessert": 11.0,
+    "tierColor": "#eab308"
   }
 ]
