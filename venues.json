@@ -42,7 +42,7 @@
     "premiumMain": 43.0,
     "drink": 13.0,
     "dessert": 10.0,
-    "tierColor": "#eab308"
+    "tierColor": "#f97316"
   },
   {
     "id": 4,
@@ -58,7 +58,7 @@
     "drink": 12.0,
     "dessert": 11.47,
     "isTapas": true,
-    "tierColor": "#eab308"
+    "tierColor": "#f97316"
   },
   {
     "id": 5,
@@ -118,7 +118,7 @@
     "premiumMain": 42.0,
     "drink": 14.0,
     "dessert": 9.5,
-    "tierColor": "#eab308"
+    "tierColor": "#f97316"
   },
   {
     "id": 9,
@@ -133,7 +133,7 @@
     "premiumMain": 67.0,
     "drink": 16.5,
     "dessert": 19.0,
-    "tierColor": "#f97316"
+    "tierColor": "#ef4444"
   },
   {
     "id": 10,
@@ -253,7 +253,7 @@
     "premiumMain": 36.95,
     "drink": 7.0,
     "dessert": 8.0,
-    "tierColor": "#22c55e"
+    "tierColor": "#eab308"
   },
   {
     "id": 18,
@@ -283,6 +283,6 @@
     "premiumMain": 77.55,
     "drink": 15.5,
     "dessert": 15.95,
-    "tierColor": "#f97316"
+    "tierColor": "#ef4444"
   }
 ]

@@ -118,7 +118,7 @@ def apply_pricing_to_venue(v, pricing):
     desserts_list = pricing.get("desserts") or [8.00]
     v["dessert"] = round(statistics.median(desserts_list), 2)
 
-    total_cost = round((v["app"] + (2 * v["casualMain"]) + (0 * v["premiumMain"]) + (2 * v["drink"]) + v["dessert"]) * 1.30)
+    total_cost = round((v["app"] + (1 * v["casualMain"]) + (1 * v["premiumMain"]) + (2 * v["drink"]) + v["dessert"]) * 1.30)
     v["tierColor"] = calculate_tier_color(total_cost)
     return True
 

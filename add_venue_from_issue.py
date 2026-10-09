@@ -272,7 +272,7 @@ def main():
         if "drink" in overrides: drink = overrides["drink"]
         if "dessert" in overrides: dessert = overrides["dessert"]
 
-    total_cost = round((app + (2 * casual_main) + (0 * premium_main) + (2 * drink) + dessert) * 1.30)
+    total_cost = round((app + (1 * casual_main) + (1 * premium_main) + (2 * drink) + dessert) * 1.30)
     tier_color = calculate_tier_color(total_cost)
 
     with open("venues.json", "r") as f:
