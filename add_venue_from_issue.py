@@ -92,6 +92,15 @@ def extract_coords_from_google_maps_url(input_str):
         lon = float(match_proto.group(2))
         return [round(lon, 6), round(lat, 6)]
 
+    # 5. Match coordinates in expanded URL path segments: /41.712331,-88.205216
+    match_path = re.search(r'/(-?\d+\.\d+),(-?\d+\.\d+)', final_url)
+    if match_path:
+        val1, val2 = float(match_path.group(1)), float(match_path.group(2))
+        lat = val1 if abs(val1) <= 90 else val2
+        lon = val2 if abs(val2) <= 180 else val1
+        if abs(lat) <= 90 and abs(lon) <= 180:
+            return [round(lon, 6), round(lat, 6)]
+
     return None
 
 def calculate_tier_color(main_price):
