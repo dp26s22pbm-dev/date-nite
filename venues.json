@@ -284,5 +284,20 @@
     "drink": 15.5,
     "dessert": 15.95,
     "tierColor": "#ef4444"
+  },
+  {
+    "id": 20,
+    "name": "JoJo's Shake Bar",
+    "category": "American",
+    "coords": [
+      -88.14831,
+      41.77252
+    ],
+    "app": 13.95,
+    "casualMain": 15.45,
+    "premiumMain": 18.45,
+    "drink": 15.0,
+    "dessert": 10.95,
+    "tierColor": "#eab308"
   }
 ]
