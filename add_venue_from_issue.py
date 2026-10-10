@@ -52,47 +52,59 @@ def extract_field(body, header):
     match = re.search(pattern, body, re.DOTALL)
     return match.group(1).strip() if match else ""
 
+_expand_cache = {}
+
+def is_maps_link(s):
+    return bool(s) and ("maps" in s or "goo.gl" in s) and s.strip().lower().startswith("http")
+
+def expand_maps_url(url):
+    """Follow redirects on a Google Maps share link and return the final URL."""
+    url = url.strip()
+    if url in _expand_cache:
+        return _expand_cache[url]
+    final_url = url
+    try:
+        req = urllib.request.Request(
+            url,
+            headers={"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64)"}
+        )
+        with urllib.request.urlopen(req, timeout=15) as resp:
+            final_url = resp.geturl()
+    except Exception as e:
+        print(f"Failed expanding map link: {e}")
+    _expand_cache[url] = final_url
+    return final_url
+
+def _to_lonlat(val1, val2):
+    lat = val1 if val1 > 0 else val2
+    lon = val2 if val2 < 0 else val1
+    return [round(lon, 6), round(lat, 6)]
+
 def extract_coords_from_google_maps_url(input_str):
     if not input_str:
         return None
+    input_str = input_str.strip()
 
-    # 1. Check for raw numeric coordinates: "41.712331, -88.205216"
-    raw_nums = re.findall(r'[-+]?\d+\.\d+', input_str)
-    if len(raw_nums) >= 2:
-        val1, val2 = float(raw_nums[0]), float(raw_nums[1])
-        lat = val1 if val1 > 0 else val2
-        lon = val2 if val2 < 0 else val1
-        return [round(lon, 6), round(lat, 6)]
+    # 1. Plain "lat, lon" pair only. A full URL is handled below, because the first
+    # decimals in a URL are the map viewport center, not the venue pin.
+    pair = re.fullmatch(r'([-+]?\d+\.\d+)\s*[,\s]\s*([-+]?\d+\.\d+)', input_str)
+    if pair:
+        return _to_lonlat(float(pair.group(1)), float(pair.group(2)))
 
     # 2. Expand Google Maps short links or resolve share URLs
-    final_url = input_str.strip()
-    if "maps" in final_url or "goo.gl" in final_url:
-        try:
-            req = urllib.request.Request(
-                final_url,
-                headers={"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64)"}
-            )
-            with urllib.request.urlopen(req, timeout=15) as resp:
-                final_url = resp.geturl()
-        except Exception as e:
-            print(f"Failed expanding map link: {e}")
+    final_url = expand_maps_url(input_str) if is_maps_link(input_str) else input_str
 
-    # 3. Match @lat,lon or ?q=lat,lon in expanded URL
-    match = re.search(r'[@\?q=]([-+]?\d+\.\d+),([-+]?\d+\.\d+)', final_url)
-    if match:
-        val1, val2 = float(match.group(1)), float(match.group(2))
-        lat = val1 if val1 > 0 else val2
-        lon = val2 if val2 < 0 else val1
-        return [round(lon, 6), round(lat, 6)]
-
-    # 4. Match Google's protobuf data strings: !3d41.712331!4d-88.205216
+    # 3. Google's protobuf data strings (!3d<lat>!4d<lon>) are the actual place pin
     match_proto = re.search(r'!3d([-+]?\d+\.\d+)!4d([-+]?\d+\.\d+)', final_url)
     if match_proto:
-        lat = float(match_proto.group(1))
-        lon = float(match_proto.group(2))
-        return [round(lon, 6), round(lat, 6)]
+        return [round(float(match_proto.group(2)), 6), round(float(match_proto.group(1)), 6)]
 
-    # 5. Match coordinates in expanded URL path segments: /41.712331,-88.205216
+    # 4. @lat,lon (viewport center, usually close to the pin) or ?q=lat,lon / query=lat,lon
+    match = re.search(r'(?:@|[?&]q=|[?&]query=)([-+]?\d+\.\d+),([-+]?\d+\.\d+)', final_url)
+    if match:
+        return _to_lonlat(float(match.group(1)), float(match.group(2)))
+
+    # 5. Coordinates in expanded URL path segments: /41.712331,-88.205216
     match_path = re.search(r'/(-?\d+\.\d+),(-?\d+\.\d+)', final_url)
     if match_path:
         val1, val2 = float(match_path.group(1)), float(match_path.group(2))
@@ -101,6 +113,21 @@ def extract_coords_from_google_maps_url(input_str):
         if abs(lat) <= 90 and abs(lon) <= 180:
             return [round(lon, 6), round(lat, 6)]
 
+    return None
+
+def place_text_from_maps_url(input_str):
+    """Pull the place name/address Google embeds in /maps/place/<text>/ share URLs."""
+    if not is_maps_link(input_str):
+        return None
+    final_url = expand_maps_url(input_str)
+    m = re.search(r'/maps/place/([^/@?]+)', final_url)
+    if m:
+        return urllib.parse.unquote_plus(m.group(1)).strip()
+    m = re.search(r'[?&](?:q|query)=([^&]+)', final_url)
+    if m:
+        text = urllib.parse.unquote_plus(m.group(1)).strip()
+        if not re.fullmatch(r'[-+\d.,\s]+', text):
+            return text
     return None
 
 def calculate_tier_color(total_cost):
@@ -115,51 +142,47 @@ def calculate_tier_color(total_cost):
     else:
         return "#ef4444"
 
-def fetch_coords_via_gemini(address_or_url):
-    """Use Gemini with Google Search Grounding to geocode an address or Maps URL."""
+def normalize_address(address):
+    """Make a street address friendlier to OpenStreetMap: drop suite numbers and spell out route names."""
+    text = address.strip()
+    text = re.sub(r'\s*(?:#\s*\w+|\b(?:suite|ste|unit|apt|bldg)\.?\s*\w+)', '', text, flags=re.IGNORECASE)
+    text = re.sub(r'\b(?:(?:Illinois|IL)\s+)?(?:Rte|Rt|Route)\.?\s+(\d{1,3})\b', r'Illinois Route \1', text, flags=re.IGNORECASE)
+    text = re.sub(r'\b(?:IL|Illinois)[\s-]+(\d{1,3})\b', r'Illinois Route \1', text, flags=re.IGNORECASE)
+    text = re.sub(r'\b[NSEW]\.?\s+(?=Illinois Route)', '', text)
+    return re.sub(r'\s+', ' ', text).strip(' ,')
+
+def strip_business_name(text):
+    """'Shahirizada Restaurant, 3124 IL-59, Naperville' -> '3124 IL-59, Naperville'."""
+    m = re.match(r'^[^,\d]*,\s*(\d.*)$', text)
+    return m.group(1) if m else text
+
+# OSM classes that mean a specific building/business/address, not a road or area
+POINT_CLASSES = {"place", "amenity", "shop", "building", "office", "tourism", "leisure", "craft", "healthcare"}
+# Loose bounding box around Naperville / DuPage / Will counties, to reject far-off matches
+BBOX = {"lat": (41.55, 41.95), "lon": (-88.45, -87.95)}
+
+def geocode_via_nominatim(address):
+    """Geocode with OpenStreetMap Nominatim. Returns [lon, lat] for an address/business point, else None."""
+    query = normalize_address(address)
+    params = urllib.parse.urlencode({"q": query, "format": "json", "limit": 10, "countrycodes": "us"})
+    req = urllib.request.Request(
+        f"https://nominatim.openstreetmap.org/search?{params}",
+        headers={"User-Agent": "date-nite-venue-importer (github.com/dp26s22pbm-dev/date-nite)"}
+    )
     try:
-        prompt = (
-            f'Find the exact GPS coordinates (latitude and longitude) for this location: '
-            f'"{address_or_url}". '
-            f'Return ONLY a valid JSON object with numeric values: {{"lat": <number>, "lng": <number>}}. '
-            f'No markdown, no explanation, no code blocks.'
-        )
-        response = client.models.generate_content(
-            model="gemini-3.6-flash",
-            contents=prompt,
-            config=types.GenerateContentConfig(
-                tools=[types.Tool(google_search=types.GoogleSearch())],
-                temperature=0.0
-            ),
-        )
-        raw_text = response.text
-        if not raw_text:
-            print("Gemini geocoding: response.text was None, checking candidates")
-            if response.candidates:
-                for cand in response.candidates:
-                    if cand.content and cand.content.parts:
-                        raw_text = "".join(p.text for p in cand.content.parts if hasattr(p, "text"))
-                        break
-            if not raw_text:
-                print("Gemini geocoding: no text in any candidate")
-                return None
-        raw_text = raw_text.strip()
-        if raw_text.startswith("```"):
-            raw_text = raw_text.strip("`").removeprefix("json").strip()
-        # Extract JSON from the response even if surrounded by other text
-        json_match = re.search(r'\{[^}]+\}', raw_text)
-        if json_match:
-            raw_text = json_match.group(0)
-        result = json.loads(raw_text)
-        lat = float(result["lat"])
-        lng = float(result["lng"])
-        if not (-90 <= lat <= 90 and -180 <= lng <= 180):
-            print(f"Gemini geocoding: invalid coords lat={lat}, lng={lng}")
-            return None
-        return [round(lng, 6), round(lat, 6)]
+        with urllib.request.urlopen(req, timeout=20) as resp:
+            results = json.load(resp)
     except Exception as e:
-        print(f"Gemini geocoding error: {e}")
+        print(f"Nominatim geocoding error: {e}")
         return None
+    for r in results:
+        lat, lon = float(r["lat"]), float(r["lon"])
+        in_box = BBOX["lat"][0] <= lat <= BBOX["lat"][1] and BBOX["lon"][0] <= lon <= BBOX["lon"][1]
+        if r.get("class") in POINT_CLASSES and in_box:
+            print(f"Nominatim matched '{query}' -> {r.get('display_name')}")
+            return [round(lon, 6), round(lat, 6)]
+    print(f"Nominatim: no building/address-level match for '{query}' (road-only and out-of-area results are rejected)")
+    return None
 
 def fetch_pricing_via_gemini_search(venue_name, city="Naperville, IL"):
     """Query Gemini with Google Search Grounding to find live menu pricing."""
@@ -206,21 +229,32 @@ def main():
     name = extract_field(issue_body, "Restaurant Name")
     category = extract_field(issue_body, "Cuisine Category")
     address = extract_field(issue_body, "Street Address or City")
-    coordinates_input = extract_field(issue_body, "Coordinates (Optional)")
+    coordinates_input = extract_field(issue_body, "Coordinates or Google Maps Link (Optional)")
     menu_url = extract_field(issue_body, "Online Menu / Ordering URL")
     manual_pricing_text = extract_field(issue_body, "Manual Pricing Overrides (Optional)")
 
     # Extract exact coordinates: try the Coordinates field first, then the address field
     coords = extract_coords_from_google_maps_url(coordinates_input) or extract_coords_from_google_maps_url(address)
     if not coords:
-        # Fallback: use Gemini with Google Search to geocode the address or short link
-        # Prefer the street address for geocoding since Maps short links can confuse search
-        geocode_input = address or coordinates_input
-        if geocode_input:
-            print(f"URL parsing failed; falling back to Gemini geocoding for: {geocode_input}")
-            coords = fetch_coords_via_gemini(geocode_input)
+        # Fallback: geocode text. A pasted Maps share link carries a place name/address;
+        # try that first, then the street address.
+        candidates = []
+        for field in (coordinates_input, address):
+            text = place_text_from_maps_url(field)
+            if text:
+                candidates.extend(dict.fromkeys([strip_business_name(text), text]))
+        if address and not is_maps_link(address):
+            candidates.append(address)
+        for text in candidates:
+            print(f"No exact coordinates in input; geocoding text via Nominatim: {text}")
+            coords = geocode_via_nominatim(text)
+            if coords:
+                print("WARNING: coordinates are address-level and approximate. "
+                      "Paste a Google Maps share link or exact coordinates for storefront precision.")
+                break
     if not coords:
-        print(f"ABORT: Could not parse exact coordinates from either the Coordinates field ('{coordinates_input}') or the address field ('{address}').")
+        print(f"ABORT: Could not determine coordinates from the Coordinates field ('{coordinates_input}') or the address field ('{address}'). "
+              "Paste a Google Maps share link or 'lat, lon' coordinates.")
         return
 
     # Step 1: Try direct PDF download if the menu URL is a PDF

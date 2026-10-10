@@ -31,9 +31,9 @@ body:
   - type: input
     id: coordinates
     attributes:
-      label: Coordinates (Optional)
-      description: "Leave blank if you provided an address above."
-      placeholder: "41.724623, -88.196342"
+      label: Coordinates or Google Maps Link (Optional)
+      description: "Most precise option. On iPhone: open the restaurant in Google Maps, tap Share, Copy link, and paste it here. On a computer: right-click the pin and click the coordinates to copy them. Leave blank to use the address above (approximate)."
+      placeholder: "https://maps.app.goo.gl/... or 41.724623, -88.196342"
     validations:
       required: false
 
