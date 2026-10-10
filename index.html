@@ -216,6 +216,58 @@
     .pop-grid-lbl { font-size: 8px; text-transform: uppercase; color: #8b949e; margin-bottom: 2px; }
     .pop-grid-val { font-size: 11px; font-weight: 700; color: #e6edf3; }
 
+    /* Right Side Legend Panel */
+    .legend-panel {
+      position: fixed;
+      top: 16px;
+      right: 16px;
+      width: 140px;
+      display: flex;
+      flex-direction: column;
+      align-items: stretch;
+      box-sizing: border-box;
+      padding: 12px 10px;
+      gap: 10px;
+      background: rgba(22, 27, 34, 0.95);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      border-radius: 14px;
+      box-shadow: 0 12px 35px rgba(0, 0, 0, 0.65);
+      z-index: 1000;
+    }
+
+    .legend-title {
+      font-size: 9px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      color: #8b949e;
+      text-align: center;
+      padding-bottom: 6px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.12);
+    }
+
+    .legend-item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .legend-swatch {
+      width: 18px;
+      height: 18px;
+      border-radius: 50%;
+      flex-shrink: 0;
+      border: 2px solid rgba(255, 255, 255, 0.8);
+    }
+
+    .legend-label {
+      font-size: 10px;
+      font-weight: 600;
+      color: #e6edf3;
+      line-height: 1.3;
+    }
+
     /* Floating Audio Toggle Button */
     .audio-btn {
       position: fixed !important;
@@ -308,6 +360,31 @@
         <span id="budget-display" style="color: #38bdf8;">$250</span>
       </div>
       <input type="range" class="budget-slider" id="budget-slider" min="10" max="250" step="10" value="250" oninput="onBudgetChange(this.value)" />
+    </div>
+  </div>
+
+  <!-- Right Side Legend Panel -->
+  <div class="legend-panel">
+    <div class="legend-title">Cost Tier</div>
+    <div class="legend-item">
+      <div class="legend-swatch" style="background: #38bdf8;"></div>
+      <span class="legend-label">Under $50</span>
+    </div>
+    <div class="legend-item">
+      <div class="legend-swatch" style="background: #22c55e;"></div>
+      <span class="legend-label">$50 – $99</span>
+    </div>
+    <div class="legend-item">
+      <div class="legend-swatch" style="background: #eab308;"></div>
+      <span class="legend-label">$100 – $149</span>
+    </div>
+    <div class="legend-item">
+      <div class="legend-swatch" style="background: #f97316;"></div>
+      <span class="legend-label">$150 – $199</span>
+    </div>
+    <div class="legend-item">
+      <div class="legend-swatch" style="background: #ef4444;"></div>
+      <span class="legend-label">$200+</span>
     </div>
   </div>
 
