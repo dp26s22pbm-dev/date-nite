@@ -314,5 +314,20 @@
     "drink": 12.5,
     "dessert": 12.0,
     "tierColor": "#eab308"
+  },
+  {
+    "id": 22,
+    "name": "Spartan Ale House",
+    "category": "American",
+    "coords": [
+      -88.205853,
+      41.691982
+    ],
+    "app": 14.0,
+    "casualMain": 16.5,
+    "premiumMain": 23.0,
+    "drink": 7.0,
+    "dessert": 6.5,
+    "tierColor": "#22c55e"
   }
 ]
