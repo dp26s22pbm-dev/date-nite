@@ -299,5 +299,20 @@
     "drink": 15.0,
     "dessert": 10.95,
     "tierColor": "#eab308"
+  },
+  {
+    "id": 21,
+    "name": "Chop'd",
+    "category": "Steakhouse",
+    "coords": [
+      -88.202364,
+      41.657699
+    ],
+    "app": 13.5,
+    "casualMain": 16.25,
+    "premiumMain": 41.5,
+    "drink": 12.5,
+    "dessert": 12.0,
+    "tierColor": "#eab308"
   }
 ]

@@ -19,5 +19,6 @@ TARGET_URLS = {
     18: "https://menu.thecheesecakefactory.com/il/naperville-228",
     19: "https://www.mortons.com/location/mortons-the-steakhouse-naperville-il/#dinner-mtnp",
     20: "https://www.jojosshakebar.com/popmenu-order",
+    21: "https://www.thechopdlife.com/menus/",
 }
   
