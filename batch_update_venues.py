@@ -67,7 +67,7 @@ def fetch_pricing_via_gemini_search(venue_name, city="Naperville, IL"):
     try:
         prompt = SEARCH_PRICING_PROMPT.format(venue_name=venue_name, city=city)
         response = client.models.generate_content(
-            model="gemini-3.8-flash",
+            model="gemini-3.6-flash",
             contents=prompt,
             config=types.GenerateContentConfig(
                 tools=[types.Tool(google_search=types.GoogleSearch())],
@@ -86,7 +86,7 @@ def parse_pricing_from_pdf(pdf_bytes):
     """Parse pricing from a PDF using Gemini (no search grounding needed)."""
     try:
         response = client.models.generate_content(
-            model="gemini-3.8-flash",
+            model="gemini-3.6-flash",
             contents=[
                 PDF_PROMPT,
                 types.Part.from_bytes(data=pdf_bytes, mime_type="application/pdf")
