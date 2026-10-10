@@ -373,34 +373,6 @@
       transition: opacity 0.25s ease;
     }
     .car-toast.show { opacity: 1; }
-
-    /* Running car marker (top-down, faces up = north; rotated by MapLibre) */
-    .car { position: relative; width: 22px; height: 40px; pointer-events: none; }
-    .car-body { width: 22px; height: 40px; animation: car-idle 0.09s linear infinite alternate; }
-    .car-body svg { width: 100%; height: 100%; display: block; overflow: visible; }
-    .car-beam { animation: car-beam 1.6s ease-in-out infinite; transform-origin: center bottom; }
-    .car-puff {
-      position: absolute;
-      left: 50%;
-      top: 38px;
-      width: 7px;
-      height: 7px;
-      margin-left: -3.5px;
-      border-radius: 50%;
-      background: rgba(200, 205, 215, 0.55);
-      opacity: 0;
-      animation: car-puff 1.4s ease-out infinite;
-    }
-    .car-puff.p2 { animation-delay: 0.7s; margin-left: -1px; }
-    @keyframes car-idle { from { transform: translate(-0.4px, 0); } to { transform: translate(0.4px, 0.5px); } }
-    @keyframes car-beam { 0%, 100% { opacity: 0.55; } 50% { opacity: 0.9; } }
-    @keyframes car-puff {
-      0% { transform: translateY(0) scale(0.5); opacity: 0.6; }
-      100% { transform: translateY(18px) scale(1.8); opacity: 0; }
-    }
-    @media (prefers-reduced-motion: reduce) {
-      .car-body, .car-beam, .car-puff { animation: none; }
-    }
   </style>
   <meta property="og:image" content="https://bolt.new/static/og_default.png">
     <meta name="twitter:card" content="summary_large_image">
@@ -692,7 +664,9 @@
     const carToast = document.getElementById('car-toast');
     const MAP_CENTER = [-88.16632, 41.74594];
     const MAX_DISTANCE_FROM_MAP_M = 60000;
-    let carMarker = null;
+    let carPos = null; // [lng, lat] of the car, or null until located
+    let carLoopRaf = null;
+    let lastCarRender = 0;
     let carHeading = 0;
     let carRaf = null;
     let driveToken = 0;
@@ -720,43 +694,130 @@
       return (Math.atan2(y, x) / rad + 360) % 360;
     }
 
-    function createCarElement() {
-      const el = document.createElement('div');
-      el.className = 'car';
-      el.innerHTML = `
-        <div class="car-body">
-          <svg viewBox="0 0 22 40" aria-hidden="true">
-            <polygon class="car-beam" points="4,6 -3,-16 9,-16 8,6" fill="rgba(255,244,190,0.45)"/>
-            <polygon class="car-beam" points="18,6 13,-16 25,-16 14,6" fill="rgba(255,244,190,0.45)"/>
-            <rect x="1" y="2" width="20" height="36" rx="7" fill="#a78bfa" stroke="#ffffff" stroke-width="1.5"/>
-            <rect x="4" y="11" width="14" height="7" rx="2" fill="#1f2433"/>
-            <rect x="4" y="24" width="14" height="6" rx="2" fill="#1f2433"/>
-            <rect x="5" y="3" width="3.5" height="2.5" rx="1" fill="#fff4be"/>
-            <rect x="13.5" y="3" width="3.5" height="2.5" rx="1" fill="#fff4be"/>
-            <rect x="5" y="34.5" width="3.5" height="2" rx="1" fill="#ff5d5d"/>
-            <rect x="13.5" y="34.5" width="3.5" height="2" rx="1" fill="#ff5d5d"/>
-          </svg>
-        </div>
-        <span class="car-puff"></span><span class="car-puff p2"></span>`;
-      return el;
+    // ---- 3-D car: real fill-extrusion geometry, so it tilts and rotates with the map ----
+    const CAR_PX_LENGTH = 34; // on-screen length; the car scales with zoom so it stays visible
+    const rect = (x1, x2, y1, y2) => [[x1, y1], [x2, y1], [x2, y2], [x1, y2]];
+    const chamfered = (hw, hl, c) => [
+      [-hw + c, -hl], [hw - c, -hl], [hw, -hl + c], [hw, hl - c],
+      [hw - c, hl], [-hw + c, hl], [-hw, hl - c], [-hw, -hl + c]
+    ];
+    // Local coordinates are in car lengths: x = right, y = forward; base/top are heights.
+    const CAR_PARTS = [
+      { color: '#a78bfa', base: 0.07, top: 0.20, ring: chamfered(0.23, 0.50, 0.10) },          // body
+      { color: '#1f2433', base: 0.20, top: 0.31, ring: rect(-0.20, 0.20, -0.27, 0.12) },       // glass cabin
+      { color: '#c4b5fd', base: 0.31, top: 0.34, ring: rect(-0.19, 0.19, -0.24, 0.08) },       // roof
+      { color: '#0d1017', base: 0, top: 0.12, wheel: true, ring: rect(-0.265, -0.20, 0.27, 0.40) },
+      { color: '#0d1017', base: 0, top: 0.12, wheel: true, ring: rect(0.20, 0.265, 0.27, 0.40) },
+      { color: '#0d1017', base: 0, top: 0.12, wheel: true, ring: rect(-0.265, -0.20, -0.40, -0.27) },
+      { color: '#0d1017', base: 0, top: 0.12, wheel: true, ring: rect(0.20, 0.265, -0.40, -0.27) },
+      { color: '#fff4be', base: 0.12, top: 0.165, ring: rect(-0.20, -0.12, 0.495, 0.52) },     // headlights
+      { color: '#fff4be', base: 0.12, top: 0.165, ring: rect(0.12, 0.20, 0.495, 0.52) },
+      { color: '#ff5d5d', base: 0.12, top: 0.16, ring: rect(-0.20, -0.12, -0.52, -0.495) },    // taillights
+      { color: '#ff5d5d', base: 0.12, top: 0.16, ring: rect(0.12, 0.20, -0.52, -0.495) }
+    ];
+    const CAR_BEAMS = [
+      [[-0.17, 0.50], [-0.30, 1.35], [-0.04, 1.35], [-0.08, 0.50]],
+      [[0.17, 0.50], [0.30, 1.35], [0.04, 1.35], [0.08, 0.50]]
+    ];
+    const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
+    const emptyFC = { type: 'FeatureCollection', features: [] };
+
+    function ensureCarLayers() {
+      if (map.getSource('car-3d')) return;
+      ['car-3d', 'car-beam', 'car-puff'].forEach((id) => map.addSource(id, { type: 'geojson', data: emptyFC }));
+      map.addLayer({
+        id: 'car-beam-fill', type: 'fill', source: 'car-beam',
+        paint: { 'fill-color': '#fff4be', 'fill-opacity': 0.25 }
+      });
+      map.addLayer({
+        id: 'car-puff-dot', type: 'circle', source: 'car-puff',
+        paint: {
+          'circle-radius': ['get', 'r'], 'circle-color': '#c8cdd7', 'circle-opacity': ['get', 'o'],
+          'circle-blur': 0.6, 'circle-pitch-alignment': 'map'
+        }
+      });
+      map.addLayer({
+        id: 'car-3d-body', type: 'fill-extrusion', source: 'car-3d',
+        paint: {
+          'fill-extrusion-color': ['get', 'color'],
+          'fill-extrusion-height': ['get', 'top'],
+          'fill-extrusion-base': ['get', 'base'],
+          'fill-extrusion-opacity': 1,
+          'fill-extrusion-vertical-gradient': true
+        }
+      });
+    }
+
+    function renderCar(t) {
+      if (!carPos) return;
+      const rad = Math.PI / 180;
+      const calm = reducedMotion.matches;
+      const mpp = 78271.517 * Math.cos(carPos[1] * rad) / Math.pow(2, map.getZoom()); // meters per screen pixel
+      const L = CAR_PX_LENGTH * mpp;
+      const s = Math.sin(carHeading * rad), c = Math.cos(carHeading * rad);
+      const mLat = 111320, mLon = 111320 * Math.cos(carPos[1] * rad);
+      const toLL = (x, y) => [
+        carPos[0] + (x * L * c + y * L * s) / mLon,
+        carPos[1] + (-x * L * s + y * L * c) / mLat
+      ];
+      const ring = (pts) => { const r = pts.map(([x, y]) => toLL(x, y)); r.push(r[0]); return r; };
+
+      // Idling engine: the body shudders and bobs a little; the wheels stay planted
+      const bob = calm ? 0 : 0.006 * (0.5 + 0.5 * Math.sin(t / 55));
+      const shake = calm ? 0 : 0.008 * Math.sin(t / 41);
+
+      map.getSource('car-3d').setData({
+        type: 'FeatureCollection',
+        features: CAR_PARTS.map((p) => ({
+          type: 'Feature',
+          properties: {
+            color: p.color,
+            base: (p.base + (p.wheel ? 0 : bob)) * L,
+            top: (p.top + (p.wheel ? 0 : bob)) * L
+          },
+          geometry: { type: 'Polygon', coordinates: [ring(p.ring.map(([x, y]) => [x + (p.wheel ? 0 : shake), y]))] }
+        }))
+      });
+
+      map.getSource('car-beam').setData({
+        type: 'FeatureCollection',
+        features: CAR_BEAMS.map((b) => ({
+          type: 'Feature', properties: {}, geometry: { type: 'Polygon', coordinates: [ring(b)] }
+        }))
+      });
+      map.setPaintProperty('car-beam-fill', 'fill-opacity', calm ? 0.25 : 0.2 + 0.1 * Math.sin(t / 260));
+
+      // Exhaust puffs drift back and fade
+      map.getSource('car-puff').setData(calm ? emptyFC : {
+        type: 'FeatureCollection',
+        features: [0, 0.5].map((offset, i) => {
+          const p = ((t / 1400) + offset) % 1;
+          return {
+            type: 'Feature',
+            properties: { r: 2 + p * 7, o: (1 - p) * 0.5 },
+            geometry: { type: 'Point', coordinates: toLL((i ? 0.07 : -0.07) + p * 0.04, -0.54 - p * 0.45) }
+          };
+        })
+      });
+    }
+
+    function carLoop(t) {
+      if (t - lastCarRender >= 33) { // about 30 fps is plenty for a small sprite
+        lastCarRender = t;
+        renderCar(t);
+      }
+      carLoopRaf = requestAnimationFrame(carLoop);
     }
 
     function placeCar(lngLat) {
+      if (!map.isStyleLoaded()) { map.once('idle', () => placeCar(lngLat)); return; }
       cancelAnimationFrame(carRaf);
       driveToken++;
       clearCarRoute();
-      if (!carMarker) {
-        carMarker = new maplibregl.Marker({
-          element: createCarElement(),
-          rotationAlignment: 'map',
-          pitchAlignment: 'map',
-          anchor: 'center'
-        }).setLngLat(lngLat).addTo(map);
-      } else {
-        carMarker.setLngLat(lngLat);
-      }
-      carMarker.setRotation(carHeading);
+      ensureCarLayers();
+      carPos = lngLat.slice();
       carBtn.classList.add('active');
+      if (!carLoopRaf) carLoopRaf = requestAnimationFrame(carLoop);
     }
 
     function locateUser() {
@@ -836,14 +897,14 @@
     }
 
     async function driveCarTo(dest) {
-      if (!carMarker) return;
+      if (!carPos) return;
       const token = ++driveToken;
-      const requestedFrom = carMarker.getLngLat().toArray();
+      const requestedFrom = carPos.slice();
       const road = await fetchDrivingRoute(requestedFrom, dest);
       if (token !== driveToken) return; // a newer click or a re-locate superseded this drive
 
       cancelAnimationFrame(carRaf);
-      const start = carMarker.getLngLat().toArray(); // wherever the car is now (it may still be mid-drive)
+      const start = carPos.slice(); // wherever the car is now (it may still be mid-drive)
       const path = [start, ...(road || []), dest];
       const cum = [0];
       for (let i = 1; i < path.length; i++) cum.push(cum[i - 1] + haversineM(path[i - 1], path[i]));
@@ -860,14 +921,13 @@
         const eased = 0.5 - Math.cos(Math.PI * t) / 2; // ease in and out
         const d = eased * total;
         const pos = pointAtDistance(path, cum, d);
-        carMarker.setLngLat(pos);
+        carPos = pos;
 
         const ahead = pointAtDistance(path, cum, Math.min(total, d + 25));
         if (haversineM(pos, ahead) > 1) {
           const target = bearingDeg(pos, ahead);
           const diff = ((target - carHeading + 540) % 360) - 180; // shortest turn
           carHeading = (carHeading + diff * 0.18 + 360) % 360;
-          carMarker.setRotation(carHeading);
         }
 
         if (t < 1) {
