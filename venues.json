@@ -344,5 +344,20 @@
     "drink": 4.87,
     "dessert": 8.99,
     "tierColor": "#22c55e"
+  },
+  {
+    "id": 24,
+    "name": "Wu's House",
+    "category": "Japanese Steakhouse",
+    "coords": [
+      -88.200728,
+      41.745307
+    ],
+    "app": 7.99,
+    "casualMain": 15.99,
+    "premiumMain": 69.0,
+    "drink": 9.51,
+    "dessert": 6.99,
+    "tierColor": "#f97316"
   }
 ]
