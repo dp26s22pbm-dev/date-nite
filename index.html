@@ -153,33 +153,49 @@
 
     /* MapLibre Popup Custom Styling */
     .maplibregl-popup {
-      z-index: 50;
-      filter: drop-shadow(0 0 1px #30363d) \r
-              drop-shadow(0 1px 1px #30363d) \r
-              drop-shadow(-1px 0 1px #30363d) \r
-              drop-shadow(0 -1px 1px #30363d) \r
-              drop-shadow(0 12px 24px rgba(0, 0, 0, 0.6)) !important;
+      z-index: 1000 !important;
     }
     .maplibregl-popup-content {
       background: #161b22 !important;
-      border: none !important;
+      border: 1px solid #30363d !important;
       border-radius: 14px !important;
       padding: 16px !important;
       color: #f0f6fc !important;
-      box-shadow: none !important;
+      box-shadow: 0 16px 36px rgba(0, 0, 0, 0.7) !important;
+      position: relative !important;
       min-width: 255px;
     }
+    .maplibregl-popup-tip {
+      display: block !important;
+      width: 14px !important;
+      height: 14px !important;
+      border: none !important;
+      background: #161b22 !important;
+      transform: rotate(45deg) !important;
+      z-index: 10 !important;
+      position: relative !important;
+    }
     .maplibregl-popup-anchor-top .maplibregl-popup-tip {
-      border-bottom-color: #161b22 !important;
+      border-left: 1px solid #30363d !important;
+      border-top: 1px solid #30363d !important;
+      margin-bottom: -7px !important;
+      margin-top: 0 !important;
     }
     .maplibregl-popup-anchor-bottom .maplibregl-popup-tip {
-      border-top-color: #161b22 !important;
+      border-right: 1px solid #30363d !important;
+      border-bottom: 1px solid #30363d !important;
+      margin-top: -7px !important;
+      margin-bottom: 0 !important;
     }
     .maplibregl-popup-anchor-left .maplibregl-popup-tip {
-      border-right-color: #161b22 !important;
+      border-left: 1px solid #30363d !important;
+      border-bottom: 1px solid #30363d !important;
+      margin-right: -7px !important;
     }
     .maplibregl-popup-anchor-right .maplibregl-popup-tip {
-      border-left-color: #161b22 !important;
+      border-right: 1px solid #30363d !important;
+      border-top: 1px solid #30363d !important;
+      margin-left: -7px !important;
     }
     .maplibregl-popup-close-button {
       color: #8b949e !important;
