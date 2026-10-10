@@ -21,5 +21,6 @@ TARGET_URLS = {
     20: "https://www.jojosshakebar.com/popmenu-order",
     21: "https://www.thechopdlife.com/menus/",
     22: "https://spartanalehouse.toast.site/order/spartan-ale-house-naperville",
+    23: "https://order.online/store/-30159157/?pickup=true&hideModal=true&utm_source=gfo&rwg_token=AE37R_jukztorr4TuzQa0Qvkc3FZMfu_DOdrZcwh4TQ2Kaa_RPCpuR8wkbHqQkhb9N7hEnTKBiMQC3JLTMUIbqkqYXn4XPfu_VzPhG__SJ0cKGlpesZ0m38%3D",
 }
   

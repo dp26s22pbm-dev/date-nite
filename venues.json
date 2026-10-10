@@ -329,5 +329,20 @@
     "drink": 7.0,
     "dessert": 6.5,
     "tierColor": "#22c55e"
+  },
+  {
+    "id": 23,
+    "name": "Shahirizada Restaurant",
+    "category": "Uzbek Cuisine",
+    "coords": [
+      -88.201424,
+      41.681479
+    ],
+    "app": 10.05,
+    "casualMain": 14.45,
+    "premiumMain": 17.9,
+    "drink": 4.87,
+    "dessert": 8.99,
+    "tierColor": "#22c55e"
   }
 ]
