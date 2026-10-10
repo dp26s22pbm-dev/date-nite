@@ -634,6 +634,12 @@
             selectedVenueId = venueId;
             renderPopup(venue);
             driveCarTo(venue.coords);
+            // Glide the venue to the center of the map, keeping the current zoom and tilt
+            map.easeTo({
+              center: venue.coords,
+              duration: reducedMotion.matches ? 0 : 900,
+              easing: (x) => 0.5 - Math.cos(Math.PI * x) / 2
+            });
           }
         }
       });
