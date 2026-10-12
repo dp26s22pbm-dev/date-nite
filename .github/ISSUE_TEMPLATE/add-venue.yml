@@ -38,6 +38,15 @@ body:
       required: false
 
   - type: input
+    id: website
+    attributes:
+      label: Website URL
+      description: "The restaurant's own website. The venue name in the map popup links here and opens in a new tab."
+      placeholder: "https://traversosrestaurant.com"
+    validations:
+      required: false
+
+  - type: input
     id: menu_url
     attributes:
       label: Online Menu / Ordering URL

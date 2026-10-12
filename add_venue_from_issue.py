@@ -80,6 +80,20 @@ def _to_lonlat(val1, val2):
     lon = val2 if val2 < 0 else val1
     return [round(lon, 6), round(lat, 6)]
 
+def normalize_website(value):
+    """Return a clean http(s) URL, or "" if the field is blank or not a usable web address."""
+    value = (value or "").strip()
+    if not value or value.lower() in ("_no response_", "no response"):
+        return ""
+    value = value.split()[0]
+    if "://" not in value:
+        value = "https://" + value
+    parsed = urllib.parse.urlparse(value)
+    if parsed.scheme not in ("http", "https") or "." not in parsed.netloc:
+        print(f"Warning: ignoring website that is not a valid web address: {value}")
+        return ""
+    return value
+
 def extract_coords_from_google_maps_url(input_str):
     if not input_str:
         return None
@@ -230,6 +244,7 @@ def main():
     category = extract_field(issue_body, "Cuisine Category")
     address = extract_field(issue_body, "Street Address or City")
     coordinates_input = extract_field(issue_body, "Coordinates or Google Maps Link (Optional)")
+    website = normalize_website(extract_field(issue_body, "Website URL"))
     menu_url = extract_field(issue_body, "Online Menu / Ordering URL")
     manual_pricing_text = extract_field(issue_body, "Manual Pricing Overrides (Optional)")
 
@@ -320,6 +335,7 @@ def main():
         "id": (existing_idx + 1) if existing_idx is not None else next_id,
         "name": name,
         "category": category,
+        **({"website": website} if website else {}),
         "coords": coords,
         "app": app,
         "casualMain": casual_main,
@@ -330,6 +346,9 @@ def main():
     }
 
     if existing_idx is not None:
+        previous_site = venues[existing_idx].get("website")
+        if previous_site and "website" not in entry:
+            entry["website"] = previous_site  # keep the saved site when the form leaves it blank
         venues[existing_idx] = entry
     else:
         venues.append(entry)

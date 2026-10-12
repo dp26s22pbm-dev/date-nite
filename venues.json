@@ -3,6 +3,7 @@
     "id": 1,
     "name": "Lazy Dog",
     "category": "Casual American",
+    "website": "https://lazydogrestaurants.com/pages/naperville-il",
     "coords": [
       -88.2031,
       41.7588
@@ -33,6 +34,7 @@
     "id": 3,
     "name": "VAI's Italian",
     "category": "Modern Italian",
+    "website": "https://vaisnaperville.com",
     "coords": [
       -88.204,
       41.7531
@@ -48,6 +50,7 @@
     "id": 4,
     "name": "Mes\u00f3n Sabika",
     "category": "Spanish Tapas",
+    "website": "https://www.mesonsabika.com",
     "coords": [
       -88.16480217723856,
       41.76875789518576
@@ -64,6 +67,7 @@
     "id": 5,
     "name": "Santo Cielo",
     "category": "Latin Bistro",
+    "website": "https://www.stcielo.com",
     "coords": [
       -88.15061940422304,
       41.7713795929344
@@ -79,6 +83,7 @@
     "id": 6,
     "name": "Vasili's",
     "category": "Mediterranean Bistro",
+    "website": "https://vasiliskitchen.com",
     "coords": [
       -88.15090767538716,
       41.77149169607413
@@ -94,6 +99,7 @@
     "id": 7,
     "name": "Ramsay's Kitchen",
     "category": "Modern American Bistro",
+    "website": "https://www.gordonramsayrestaurants.com/en/us/ramsays-kitchen",
     "coords": [
       -88.14926916189474,
       41.77327109562595
@@ -124,6 +130,7 @@
     "id": 9,
     "name": "Hugo's Frog Bar",
     "category": "Prime Steak & Seafood",
+    "website": "https://hugosfrogbar.com/naperville/",
     "coords": [
       -88.15026380422286,
       41.774403001046814
@@ -139,6 +146,7 @@
     "id": 10,
     "name": "Taco Pros",
     "category": "Mexican Fast Casual",
+    "website": "https://www.tacopros.com",
     "coords": [
       -88.20680666004706,
       41.711688953512166
@@ -154,6 +162,7 @@
     "id": 11,
     "name": "Traverso\u2019s",
     "category": "Italian",
+    "website": "https://traversosrestaurant.com",
     "coords": [
       -88.167041,
       41.713476
@@ -169,6 +178,7 @@
     "id": 12,
     "name": "Ancho & Agave",
     "category": "Mexican Upscale",
+    "website": "https://www.anchoandagave.com",
     "coords": [
       -88.206962,
       41.712322
@@ -184,6 +194,7 @@
     "id": 13,
     "name": "Bar Louie",
     "category": "American Modern",
+    "website": "https://barlouie.com",
     "coords": [
       -88.20770230422656,
       41.71232936095906
@@ -199,6 +210,7 @@
     "id": 14,
     "name": "The White Chocolate Grill",
     "category": "American Modern",
+    "website": "https://www.whitechocolategrill.com",
     "coords": [
       -88.126748,
       41.803763
@@ -214,6 +226,7 @@
     "id": 15,
     "name": "Biaggi's Ristorante Italiano",
     "category": "Italian",
+    "website": "https://biaggis.com/locations/illinois-naperville/",
     "coords": [
       -88.207112,
       41.713996
@@ -229,6 +242,7 @@
     "id": 16,
     "name": "Freedom Brothers Pizzeria and Alehouse",
     "category": "American / Pizza",
+    "website": "https://freedombrotherspizza.com",
     "coords": [
       -88.20573714645731,
       41.6654823862632
@@ -259,6 +273,7 @@
     "id": 18,
     "name": "The Cheesecake Factory",
     "category": "American / International",
+    "website": "https://www.thecheesecakefactory.com",
     "coords": [
       -88.203585,
       41.76441
@@ -274,6 +289,7 @@
     "id": 19,
     "name": "Morton's The Steakhouse",
     "category": "Steakhouse",
+    "website": "https://www.mortons.com/location/mortons-the-steakhouse-naperville-il/",
     "coords": [
       -88.126779,
       41.803025
@@ -289,6 +305,7 @@
     "id": 20,
     "name": "JoJo's Shake Bar",
     "category": "American",
+    "website": "https://www.jojosshakebar.com",
     "coords": [
       -88.14831,
       41.77252
@@ -304,6 +321,7 @@
     "id": 21,
     "name": "Chop'd",
     "category": "Steakhouse",
+    "website": "https://www.thechopdlife.com",
     "coords": [
       -88.202364,
       41.657699
@@ -319,6 +337,7 @@
     "id": 22,
     "name": "Spartan Ale House",
     "category": "American",
+    "website": "https://spartanalehouse.com",
     "coords": [
       -88.205853,
       41.691982
@@ -346,6 +365,7 @@
     "id": 24,
     "name": "Wu's House",
     "category": "Japanese Steakhouse",
+    "website": "https://www.wushouse.com",
     "coords": [
       -88.200728,
       41.745307

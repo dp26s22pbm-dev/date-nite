@@ -30,7 +30,6 @@
       right: 0;
       width: 100%;
       height: 100%;
-      z-index: 1;
     }
 
     /* Floating Left Controls Drawer */
@@ -153,7 +152,7 @@
 
     /* MapLibre Popup Custom Styling */
     .maplibregl-popup {
-      z-index: 1000 !important;
+      z-index: 1100 !important; /* above the side panels so the venue name and link are always clickable */
     }
     .maplibregl-popup-content {
       background: #161b22 !important;
@@ -211,6 +210,8 @@
 
     .pop-header { margin-bottom: 8px; padding-right: 18px; }
     .pop-name { font-size: 16px; font-weight: 700; margin: 0; }
+    .pop-name a { color: inherit; text-decoration: none; border-bottom: 1px dotted rgba(255, 255, 255, 0.45); }
+    .pop-name a:hover { color: #38bdf8; border-bottom-color: #38bdf8; }
     .pop-cat { font-size: 11px; color: #8b949e; margin-top: 1px; }
 
     .pop-badge {
@@ -1071,6 +1072,7 @@
     // Clicking empty space in the popup closes it. Text and numbers stay put so they can be selected and copied.
     function onPopupClick(e) {
       if (e.target.closest('.maplibregl-popup-close-button')) return; // the X handles itself
+      if (e.target.closest('a')) return; // the venue link opens its own tab
       // A press-drag-release is the user selecting text, even if it ends on empty space
       if (popupMouseDown && Math.hypot(e.clientX - popupMouseDown[0], e.clientY - popupMouseDown[1]) > 4) return;
       if (isPointOnText(e.currentTarget, e.clientX, e.clientY)) return;
@@ -1078,8 +1080,23 @@
     }
 
     function onPopupHover(e) {
-      if (e.target.closest('.maplibregl-popup-close-button')) { e.currentTarget.style.cursor = ''; return; }
+      if (e.target.closest('.maplibregl-popup-close-button') || e.target.closest('a')) { e.currentTarget.style.cursor = ''; return; }
       e.currentTarget.style.cursor = isPointOnText(e.currentTarget, e.clientX, e.clientY) ? 'text' : 'pointer';
+    }
+
+    function escapeHtml(text) {
+      return String(text).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+    }
+
+    // Only plain web addresses become links (never javascript: or other schemes)
+    function safeWebsiteUrl(value) {
+      if (!value) return null;
+      try {
+        const url = new URL(value);
+        return (url.protocol === 'https:' || url.protocol === 'http:') ? url.href : null;
+      } catch (e) {
+        return null;
+      }
     }
 
     function renderPopup(venue) {
@@ -1093,9 +1110,14 @@
       const drkCost = Math.round(state.drinks * (venue.drink || 0));
       const dstCost = Math.round(state.dessert * (venue.dessert || 0));
 
+      const siteUrl = safeWebsiteUrl(venue.website);
+      const nameHtml = siteUrl
+        ? `<a href="${escapeHtml(siteUrl)}" target="_blank" rel="noopener noreferrer" title="Open ${escapeHtml(venue.name)} website in a new tab">${escapeHtml(venue.name)}</a>`
+        : escapeHtml(venue.name);
+
       const html = `
         <div class="pop-header">
-          <div class="pop-name">${venue.name}</div>
+          <div class="pop-name">${nameHtml}</div>
           <div class="pop-cat">${venue.category}</div>
         </div>
         <div class="pop-badge">
