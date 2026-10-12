@@ -675,6 +675,11 @@
     // When parked at a venue the car sits just short of the dot. The offset is kept in screen
     // pixels, so the gap stays the same size as the user zooms.
     const PARK_GAP_PX = 33;
+    // Driving speed is set in screen pixels, so the car looks the same speed at any zoom.
+    // Far from the view (where nobody can see it) it speeds up so the wait stays short.
+    const DRIVE_PX_PER_SEC = 130;
+    const OFFSCREEN_BOOST = 20;
+    const BRAKE_PX = 60;
     let carParkDest = null;
     let carParkOffsetPx = null;
     let lastCarRender = 0;
@@ -948,25 +953,41 @@
       while (driveTotal > total * 0.5 && haversineM(pointAtDistance(path, cum, driveTotal), dest) < gapM) {
         driveTotal -= backStep;
       }
-      const duration = Math.min(12000, Math.max(2500, driveTotal * 0.6));
+      let d = 0;
       const t0 = performance.now();
+      let last = t0;
 
       const step = (now) => {
         if (token !== driveToken) return;
-        const t = Math.min(1, (now - t0) / duration);
-        const eased = 0.5 - Math.cos(Math.PI * t) / 2; // ease in and out
-        const d = eased * driveTotal;
+        const dt = Math.min(0.1, (now - last) / 1000); // cap so a background tab does not teleport the car
+        last = now;
+
+        // Speed in meters per second that equals a steady on-screen pixel speed at the current zoom
+        const mpp = metersPerPixel(carPos[1]);
+        const center = map.getCenter();
+        const canvas = map.getCanvas();
+        const nearPx = Math.max(canvas.clientWidth, canvas.clientHeight) * 0.75;
+        const pxFromView = haversineM(carPos, [center.lng, center.lat]) / mpp;
+        // 1x while near the view, easing up to OFFSCREEN_BOOST once it is well outside it
+        const boost = 1 + (OFFSCREEN_BOOST - 1) * Math.min(1, Math.max(0, (pxFromView - nearPx) / nearPx));
+        let speed = DRIVE_PX_PER_SEC * mpp * boost;
+        const brakeM = BRAKE_PX * mpp;
+        const remaining = driveTotal - d;
+        if (remaining < brakeM) speed *= Math.max(0.2, remaining / brakeM); // ease out into the parking spot
+        speed *= Math.min(1, 0.25 + (now - t0) / 800); // ease in from a standstill
+        d = Math.min(driveTotal, d + speed * dt);
+
         const pos = pointAtDistance(path, cum, d);
         carPos = pos;
 
-        const ahead = pointAtDistance(path, cum, Math.min(total, d + 25));
+        const ahead = pointAtDistance(path, cum, Math.min(total, d + Math.min(25, Math.max(5, 14 * mpp))));
         if (haversineM(pos, ahead) > 1) {
           const target = bearingDeg(pos, ahead);
           const diff = ((target - carHeading + 540) % 360) - 180; // shortest turn
           carHeading = (carHeading + diff * 0.18 + 360) % 360;
         }
 
-        if (t < 1) {
+        if (d < driveTotal) {
           carRaf = requestAnimationFrame(step);
         } else {
           clearCarRoute(); // arrived: the car stays just short of the dot, still idling
