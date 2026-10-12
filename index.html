@@ -1051,6 +1051,37 @@
       selectedVenueId = null;
     }
 
+    let popupMouseDown = null;
+
+    // True when a screen point falls on actual text (a label, name, or number) inside the popup
+    function isPointOnText(root, x, y) {
+      const pad = 2;
+      const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT);
+      const range = document.createRange();
+      for (let node = walker.nextNode(); node; node = walker.nextNode()) {
+        if (!node.nodeValue.trim()) continue;
+        range.selectNodeContents(node);
+        for (const r of range.getClientRects()) {
+          if (x >= r.left - pad && x <= r.right + pad && y >= r.top - pad && y <= r.bottom + pad) return true;
+        }
+      }
+      return false;
+    }
+
+    // Clicking empty space in the popup closes it. Text and numbers stay put so they can be selected and copied.
+    function onPopupClick(e) {
+      if (e.target.closest('.maplibregl-popup-close-button')) return; // the X handles itself
+      // A press-drag-release is the user selecting text, even if it ends on empty space
+      if (popupMouseDown && Math.hypot(e.clientX - popupMouseDown[0], e.clientY - popupMouseDown[1]) > 4) return;
+      if (isPointOnText(e.currentTarget, e.clientX, e.clientY)) return;
+      closePopup();
+    }
+
+    function onPopupHover(e) {
+      if (e.target.closest('.maplibregl-popup-close-button')) { e.currentTarget.style.cursor = ''; return; }
+      e.currentTarget.style.cursor = isPointOnText(e.currentTarget, e.clientX, e.clientY) ? 'text' : 'pointer';
+    }
+
     function renderPopup(venue) {
       const total = calculateTotal(venue);
       const cMult = venue.isTapas ? (state.casual * 2) : state.casual;
@@ -1092,6 +1123,11 @@
           selectedVenueId = null;
           currentPopup = null;
         });
+
+        const popupEl = currentPopup.getElement();
+        popupEl.addEventListener('mousedown', (e) => { popupMouseDown = [e.clientX, e.clientY]; });
+        popupEl.addEventListener('click', onPopupClick);
+        popupEl.addEventListener('mousemove', onPopupHover);
       }
     }
 
