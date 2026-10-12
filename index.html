@@ -390,6 +390,11 @@
       border-color: #a78bfa !important;
       box-shadow: 0 0 14px rgba(167, 139, 250, 0.45) !important;
     }
+    .zoom-btn.active {
+      color: #ffffff !important;
+      border-color: #ffffff !important;
+      box-shadow: 0 0 14px rgba(255, 255, 255, 0.4) !important;
+    }
     .car-btn.busy { opacity: 0.6; }
     .car-btn svg, .zoom-btn svg { width: 22px !important; height: 22px !important; fill: currentColor !important; pointer-events: none !important; }
 
@@ -608,6 +613,13 @@
       bearing: 0,
       maxPitch: 85
     });
+
+    // The cloud button lights up white whenever the map is at the starting height
+    function updateZoomButton() {
+      document.getElementById('zoom-reset').classList.toggle('active', Math.abs(map.getZoom() - DEFAULT_ZOOM) < 0.1);
+    }
+    map.on('zoom', updateZoomButton);
+    updateZoomButton();
 
     map.on('styleimagemissing', (e) => {
       const id = e.id;
