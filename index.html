@@ -1173,22 +1173,24 @@
       refreshMap();
     }
 
-    // Budget color: the pure tier color sits at the middle of each tier ($25, $75, $125, $175, $225)
-    // and blends smoothly between them, so the slider and the number shift color as the budget moves
-    const BUDGET_COLOR_STOPS = [
-      [25, '#38bdf8'], [75, '#22c55e'], [125, '#eab308'], [175, '#f97316'], [225, '#ef4444']
-    ];
+    // Budget color: each tier's pure color begins where the tier begins ($50 green, $100 yellow,
+    // $150 orange, $200 red, matching the legend). Over the last BUDGET_BLEND dollars before the next
+    // tier the color blends into that tier's color, so moving the budget shifts color smoothly.
+    const BUDGET_TIER_STARTS = [0, 50, 100, 150, 200];
+    const BUDGET_BLEND = 25;
 
     function budgetColor(value) {
-      const stops = BUDGET_COLOR_STOPS;
-      if (value <= stops[0][0]) return stops[0][1];
-      if (value >= stops[stops.length - 1][0]) return stops[stops.length - 1][1];
-      let i = 0;
-      while (value > stops[i + 1][0]) i++;
-      const [v0, c0] = stops[i], [v1, c1] = stops[i + 1];
-      const t = (value - v0) / (v1 - v0);
+      const starts = BUDGET_TIER_STARTS;
+      let i = starts.length - 1;
+      while (i > 0 && value < starts[i]) i--;
+      const from = getTierColor(starts[i]);
+      if (i === starts.length - 1) return from;
+      const blendStart = starts[i + 1] - BUDGET_BLEND;
+      if (value <= blendStart) return from;
+      const t = (value - blendStart) / BUDGET_BLEND;
+      const to = getTierColor(starts[i + 1]);
       const channel = (hex, k) => parseInt(hex.slice(1 + 2 * k, 3 + 2 * k), 16);
-      const mix = [0, 1, 2].map((k) => Math.round(channel(c0, k) + (channel(c1, k) - channel(c0, k)) * t));
+      const mix = [0, 1, 2].map((k) => Math.round(channel(from, k) + (channel(to, k) - channel(from, k)) * t));
       return `rgb(${mix[0]}, ${mix[1]}, ${mix[2]})`;
     }
 
