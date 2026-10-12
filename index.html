@@ -352,10 +352,35 @@
       pointer-events: auto !important;
       transition: all 0.2s ease !important;
     }
+    /* While music plays the button pulses through the five cost-tier colors in order (blue, green, yellow,
+       orange, red). The color and glow size are registered custom properties so the browser can animate them
+       smoothly; the !important rules below read them, which is what lets an animation drive them. */
+    @property --music-c { syntax: '<color>'; inherits: false; initial-value: #38bdf8; }
+    @property --music-blur { syntax: '<length>'; inherits: false; initial-value: 14px; }
     .audio-btn.playing {
-      color: #38bdf8 !important;
-      border-color: #38bdf8 !important;
-      box-shadow: 0 0 14px rgba(56, 189, 248, 0.4) !important;
+      color: var(--music-c) !important;
+      border-color: var(--music-c) !important;
+      box-shadow: 0 0 14px rgba(56, 189, 248, 0.4) !important; /* fallback for browsers without color-mix */
+      box-shadow: 0 0 var(--music-blur) color-mix(in srgb, var(--music-c) 60%, transparent) !important;
+      transition: none !important; /* the animation does the smoothing */
+      animation: music-tier-pulse 6s linear infinite;
+    }
+    /* One swell and ebb of the glow per color, 1.2 s each; the color slides to the next tier as the glow ebbs */
+    @keyframes music-tier-pulse {
+      0%   { --music-c: #38bdf8; --music-blur: 5px; }
+      10%  { --music-c: #38bdf8; --music-blur: 20px; }
+      20%  { --music-c: #22c55e; --music-blur: 5px; }
+      30%  { --music-c: #22c55e; --music-blur: 20px; }
+      40%  { --music-c: #eab308; --music-blur: 5px; }
+      50%  { --music-c: #eab308; --music-blur: 20px; }
+      60%  { --music-c: #f97316; --music-blur: 5px; }
+      70%  { --music-c: #f97316; --music-blur: 20px; }
+      80%  { --music-c: #ef4444; --music-blur: 5px; }
+      90%  { --music-c: #ef4444; --music-blur: 20px; }
+      100% { --music-c: #38bdf8; --music-blur: 5px; }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      .audio-btn.playing { animation: none; }
     }
     .audio-btn svg {
       width: 20px !important;
