@@ -142,13 +142,47 @@
       font-weight: 600;
     }
 
+    /* The track and thumb are drawn here, not left to the browser's accent-color, because Chrome turns the
+       unfilled part of the track white for some accent colors (red). The script sets --c and --fill. */
     .budget-slider {
+      --c: #eab308;
+      --fill: 50%;
+      -webkit-appearance: none;
+      appearance: none;
       width: 100%;
-      height: 6px;
+      height: 16px;
       margin: 2px 0 0 0;
+      background: transparent;
       cursor: pointer;
-      accent-color: #eab308; /* the script keeps this in step with the budget tier */
-      transition: accent-color 0.2s ease;
+    }
+    .budget-slider::-webkit-slider-runnable-track {
+      height: 6px;
+      border-radius: 3px;
+      background: linear-gradient(to right, var(--c) var(--fill), #30363d var(--fill));
+    }
+    .budget-slider::-moz-range-track {
+      height: 6px;
+      border-radius: 3px;
+      background: linear-gradient(to right, var(--c) var(--fill), #30363d var(--fill));
+    }
+    .budget-slider::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      appearance: none;
+      width: 16px;
+      height: 16px;
+      margin-top: -5px;
+      border: none;
+      border-radius: 50%;
+      background: var(--c);
+      box-shadow: 0 1px 4px rgba(0, 0, 0, 0.6);
+    }
+    .budget-slider::-moz-range-thumb {
+      width: 16px;
+      height: 16px;
+      border: none;
+      border-radius: 50%;
+      background: var(--c);
+      box-shadow: 0 1px 4px rgba(0, 0, 0, 0.6);
     }
     #budget-display { transition: color 0.2s ease; }
 
@@ -1197,7 +1231,11 @@
     function applyBudgetColor(value) {
       const color = budgetColor(Number(value));
       document.getElementById('budget-display').style.color = color;
-      document.getElementById('budget-slider').style.accentColor = color;
+      const slider = document.getElementById('budget-slider');
+      const ratio = (Number(value) - Number(slider.min)) / (Number(slider.max) - Number(slider.min));
+      slider.style.setProperty('--c', color);
+      // The filled part ends at the center of the 16px thumb
+      slider.style.setProperty('--fill', `calc(8px + (100% - 16px) * ${ratio})`);
     }
 
     function onBudgetChange(val) {
