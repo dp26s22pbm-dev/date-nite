@@ -50,7 +50,9 @@ Return strictly valid JSON with no markdown formatting.
 def extract_field(body, header):
     pattern = rf"### {re.escape(header)}\s*\n\s*(.*?)(?=\n###|\Z)"
     match = re.search(pattern, body, re.DOTALL)
-    return match.group(1).strip() if match else ""
+    value = match.group(1).strip() if match else ""
+    # GitHub issue forms put this placeholder in every optional field the user leaves blank
+    return "" if value.lower() == "_no response_" else value
 
 _expand_cache = {}
 
@@ -83,7 +85,7 @@ def _to_lonlat(val1, val2):
 def normalize_website(value):
     """Return a clean http(s) URL, or "" if the field is blank or not a usable web address."""
     value = (value or "").strip()
-    if not value or value.lower() in ("_no response_", "no response"):
+    if not value:
         return ""
     value = value.split()[0]
     if "://" not in value:
