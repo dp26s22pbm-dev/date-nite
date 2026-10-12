@@ -615,14 +615,17 @@
       });
 
       map.on('click', (e) => {
-        const bbox = [
-          [e.point.x - 15, e.point.y - 15],
-          [e.point.x + 15, e.point.y + 15]
-        ];
-        const features = map.queryRenderedFeatures(bbox, { layers: ['restaurants-point'] });
+        const hits = venuesUnderPoint(e.point);
 
-        if (features && features.length > 0) {
-          const venueId = Number(features[0].properties.id);
+        if (hits.length > 1 && map.getZoom() < CROWD_MAX_ZOOM - 0.5) {
+          // Several dots overlap here: zoom in until they separate instead of guessing which one was meant
+          closePopup();
+          zoomToSeparate(hits);
+          return;
+        }
+
+        if (hits.length > 0) {
+          const venueId = hits[0].venue.id; // nearest dot to the click
 
           if (selectedVenueId === venueId) {
             closePopup();
@@ -645,12 +648,9 @@
       });
 
       map.on('mousemove', (e) => {
-        const bbox = [
-          [e.point.x - 10, e.point.y - 10],
-          [e.point.x + 10, e.point.y + 10]
-        ];
-        const features = map.queryRenderedFeatures(bbox, { layers: ['restaurants-point'] });
-        map.getCanvas().style.cursor = (features && features.length > 0) ? 'pointer' : '';
+        const hits = venuesUnderPoint(e.point);
+        const crowded = hits.length > 1 && map.getZoom() < CROWD_MAX_ZOOM - 0.5;
+        map.getCanvas().style.cursor = crowded ? 'zoom-in' : (hits.length > 0 ? 'pointer' : '');
       });
 
       // If location permission was already granted on an earlier visit, show the car without a tap
@@ -979,6 +979,47 @@
         }
       };
       carRaf = requestAnimationFrame(step);
+    }
+
+    // ---- Crowded dots: clicking where several overlap zooms in to separate them ----
+    const DOT_HIT_RADIUS_PX = 13; // dot radius (12) plus its outline
+    const CROWD_MAX_ZOOM = 17;
+
+    // Venues whose dots sit under a screen point, nearest first
+    function venuesUnderPoint(point) {
+      const box = [[point.x - 20, point.y - 20], [point.x + 20, point.y + 20]];
+      const features = map.queryRenderedFeatures(box, { layers: ['restaurants-point'] });
+      const seen = new Set();
+      const hits = [];
+      for (const f of features || []) {
+        const id = Number(f.properties.id);
+        if (seen.has(id)) continue;
+        seen.add(id);
+        const venue = rawVenues.find(v => v.id === id);
+        if (!venue) continue;
+        const px = map.project(venue.coords);
+        const dist = Math.hypot(px.x - point.x, px.y - point.y);
+        if (dist <= DOT_HIT_RADIUS_PX) hits.push({ venue, dist });
+      }
+      return hits.sort((a, b) => a.dist - b.dist);
+    }
+
+    function zoomToSeparate(hits) {
+      const bounds = new maplibregl.LngLatBounds();
+      hits.forEach(h => bounds.extend(h.venue.coords));
+      const cam = map.cameraForBounds(bounds, {
+        padding: { top: 140, bottom: 140, left: 80, right: 80 },
+        maxZoom: CROWD_MAX_ZOOM
+      });
+      // Always zoom in a meaningful amount, even when the dots share almost the same spot
+      const zoom = Math.min(CROWD_MAX_ZOOM, Math.max(cam ? cam.zoom : 0, map.getZoom() + 1.5));
+      const center = cam ? cam.center : bounds.getCenter();
+      map.easeTo({
+        center,
+        zoom,
+        duration: reducedMotion.matches ? 0 : 900,
+        easing: (x) => 0.5 - Math.cos(Math.PI * x) / 2
+      });
     }
 
     function closePopup() {
