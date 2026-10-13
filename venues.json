@@ -353,7 +353,10 @@
     "id": 23,
     "name": "Shahirizada Restaurant",
     "category": "Uzbek Cuisine",
-    "coords": [-88.20418700422687, 41.70654157610284],
+    "coords": [
+      -88.20418700422687,
+      41.70654157610284
+    ],
     "app": 10.05,
     "casualMain": 14.45,
     "premiumMain": 17.9,
@@ -376,5 +379,21 @@
     "drink": 9.51,
     "dessert": 6.99,
     "tierColor": "#f97316"
+  },
+  {
+    "id": 25,
+    "name": "Shawarma Express",
+    "category": "Mediterranean",
+    "website": "https://order.toasttab.com/online/shawarma-express-naperville",
+    "coords": [
+      -88.167421,
+      41.695981
+    ],
+    "app": 5.49,
+    "casualMain": 10.49,
+    "premiumMain": 17.99,
+    "drink": 2.0,
+    "dessert": 5.5,
+    "tierColor": "#22c55e"
   }
 ]
