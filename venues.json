@@ -395,5 +395,21 @@
     "drink": 2.0,
     "dessert": 5.5,
     "tierColor": "#22c55e"
+  },
+  {
+    "id": 26,
+    "name": "Old Town Pour House",
+    "category": "American",
+    "website": "https://www.oldtownpourhouse.com/locations/naperville/",
+    "coords": [
+      -88.126915,
+      41.801888
+    ],
+    "app": 12.45,
+    "casualMain": 17.45,
+    "premiumMain": 26.95,
+    "drink": 11.75,
+    "dessert": 10.2,
+    "tierColor": "#eab308"
   }
 ]

@@ -24,5 +24,6 @@ TARGET_URLS = {
     23: "https://order.online/store/-30159157/?pickup=true&hideModal=true&utm_source=gfo&rwg_token=AE37R_jukztorr4TuzQa0Qvkc3FZMfu_DOdrZcwh4TQ2Kaa_RPCpuR8wkbHqQkhb9N7hEnTKBiMQC3JLTMUIbqkqYXn4XPfu_VzPhG__SJ0cKGlpesZ0m38%3D",
     24: "https://www.wushouse.com/menu.html",
     25: "https://order.toasttab.com/online/shawarma-express-naperville",
+    26: "https://www.oldtownpourhouse.com/locations/naperville/food-menu/",
 }
   
