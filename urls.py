@@ -25,5 +25,6 @@ TARGET_URLS = {
     24: "https://www.wushouse.com/menu.html",
     25: "https://order.toasttab.com/online/shawarma-express-naperville",
     26: "https://www.oldtownpourhouse.com/locations/naperville/food-menu/",
+    27: "https://places.singleplatform.com/red-arrow-eatery--self-pour---naperville/menu?ref=google",
 }
   

@@ -411,5 +411,21 @@
     "drink": 11.75,
     "dessert": 10.2,
     "tierColor": "#eab308"
+  },
+  {
+    "id": 27,
+    "name": "Tapville Social",
+    "category": "American",
+    "website": "https://www.tapvillesocial.com/naperville",
+    "coords": [
+      -88.147673,
+      41.772687
+    ],
+    "app": 14.5,
+    "casualMain": 17.0,
+    "premiumMain": 25.0,
+    "drink": 14.5,
+    "dessert": 12.5,
+    "tierColor": "#eab308"
   }
 ]
