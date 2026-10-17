@@ -871,6 +871,47 @@
         c.classList.toggle('selected', Number(c.dataset.id) === selectedVenueId));
     }
 
+    // With a mouse, hovering near either end of the strip (or past it, level with the cards) scrolls the
+    // list that way, faster the closer the pointer is to the edge. Touch screens just swipe.
+    const EDGE_ZONE_PX = 80;
+    const EDGE_MAX_PX_PER_SEC = 700;
+    const EDGE_VERTICAL_SLACK_PX = 20;
+    let edgePointer = null;
+    let edgeRaf = null;
+    let edgeLast = 0;
+
+    function edgeVelocity() {
+      if (!edgePointer || listEl.classList.contains('hidden')) return 0;
+      const r = listCards.getBoundingClientRect();
+      if (edgePointer.y < r.top - EDGE_VERTICAL_SLACK_PX || edgePointer.y > r.bottom + EDGE_VERTICAL_SLACK_PX) return 0;
+      if (edgePointer.x < r.left + EDGE_ZONE_PX) return -Math.min(1, (r.left + EDGE_ZONE_PX - edgePointer.x) / EDGE_ZONE_PX) * EDGE_MAX_PX_PER_SEC;
+      if (edgePointer.x > r.right - EDGE_ZONE_PX) return Math.min(1, (edgePointer.x - (r.right - EDGE_ZONE_PX)) / EDGE_ZONE_PX) * EDGE_MAX_PX_PER_SEC;
+      return 0;
+    }
+
+    function edgeScrollStep(now) {
+      const dt = Math.min(0.1, (now - edgeLast) / 1000);
+      edgeLast = now;
+      const v = edgeVelocity();
+      if (v === 0) { edgeRaf = null; return; }
+      listCards.scrollLeft += v * dt;
+      edgeRaf = requestAnimationFrame(edgeScrollStep);
+    }
+
+    window.addEventListener('pointermove', (e) => {
+      // Ignore touch and pen, a held button (dragging the map), and the round buttons that sit past the right end
+      if (e.pointerType !== 'mouse' || e.buttons !== 0 || (e.target.closest && e.target.closest('button:not(.venue-card)'))) {
+        edgePointer = null;
+        return;
+      }
+      edgePointer = { x: e.clientX, y: e.clientY };
+      if (!edgeRaf && edgeVelocity() !== 0) {
+        edgeLast = performance.now();
+        edgeRaf = requestAnimationFrame(edgeScrollStep);
+      }
+    });
+    document.addEventListener('pointerleave', () => { edgePointer = null; });
+
     // Clicking a card does what clicking its dot does. Scrolling the list never moves the map.
     listCards.addEventListener('click', (e) => {
       const card = e.target.closest('.venue-card');
