@@ -390,7 +390,7 @@
     }
 
     /* Round map buttons stacked above the audio toggle: the car first, then the zoom-out cloud */
-    .car-btn, .zoom-btn {
+    .car-btn, .zoom-btn, .list-btn {
       position: fixed !important;
       right: 20px !important;
       bottom: 74px !important;
@@ -410,6 +410,7 @@
       transition: all 0.2s ease !important;
     }
     .zoom-btn { bottom: 128px !important; }
+    .list-btn { bottom: 182px !important; }
     .car-btn.active {
       color: #a78bfa !important;
       border-color: #a78bfa !important;
@@ -421,7 +422,70 @@
       box-shadow: 0 0 14px rgba(255, 255, 255, 0.4) !important;
     }
     .car-btn.busy { opacity: 0.6; }
-    .car-btn svg, .zoom-btn svg { width: 22px !important; height: 22px !important; fill: currentColor !important; pointer-events: none !important; }
+    .list-btn.active {
+      color: #38bdf8 !important;
+      border-color: #38bdf8 !important;
+      box-shadow: 0 0 14px rgba(56, 189, 248, 0.4) !important;
+    }
+    .car-btn svg, .zoom-btn svg, .list-btn svg { width: 22px !important; height: 22px !important; fill: currentColor !important; pointer-events: none !important; }
+
+    /* Venue list along the bottom: a row of cards that scrolls sideways, clear of the round buttons on the right */
+    .venue-list {
+      position: fixed;
+      left: 16px;
+      right: 84px;
+      bottom: 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      z-index: 1000;
+      pointer-events: none; /* only the chips and cards take clicks, so the map stays draggable around them */
+    }
+    .venue-list.hidden { display: none; }
+    .list-head { display: flex; align-items: center; gap: 6px; }
+    .sort-chip {
+      pointer-events: auto;
+      background: rgba(22, 27, 34, 0.95);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      color: #8b949e;
+      border-radius: 999px;
+      padding: 4px 10px;
+      font-size: 11px;
+      font-weight: 600;
+      cursor: pointer;
+    }
+    .sort-chip.active { color: #f0f6fc; border-color: #f0f6fc; }
+    .list-count { font-size: 11px; color: #8b949e; text-shadow: 0 1px 3px #000; }
+    .list-cards {
+      display: flex;
+      gap: 8px;
+      overflow-x: auto;
+      padding: 2px 2px 6px;
+      pointer-events: auto;
+      scrollbar-width: thin;
+    }
+    .venue-card {
+      flex: 0 0 150px;
+      text-align: left;
+      font: inherit;
+      color: #f0f6fc;
+      background: rgba(22, 27, 34, 0.95);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      border-top: 3px solid var(--tier);
+      border-radius: 12px;
+      padding: 8px 10px;
+      cursor: pointer;
+      box-shadow: 0 6px 18px rgba(0, 0, 0, 0.6);
+    }
+    .venue-card.over { opacity: 0.45; } /* over budget, matching the dimmed dot */
+    .venue-card.selected { border-color: var(--tier); box-shadow: 0 0 14px var(--tier); }
+    .card-name { font-size: 13px; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .card-cat { font-size: 10px; color: #8b949e; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-top: 1px; }
+    .card-foot { display: flex; justify-content: space-between; align-items: baseline; margin-top: 6px; }
+    .card-cost { font-size: 16px; font-weight: 800; color: var(--tier); }
+    .card-dist { font-size: 11px; color: #8b949e; }
 
     .car-toast {
       position: fixed;
@@ -537,7 +601,20 @@
   <button id="zoom-reset" class="zoom-btn" onclick="resetZoom()" aria-label="Zoom out to the starting view" title="Zoom out to the starting view">
     <svg viewBox="0 0 24 24"><path d="M19.35 10.04C18.67 6.59 15.64 4 12 4 9.11 4 6.6 5.64 5.35 8.04 2.34 8.36 0 10.91 0 14c0 3.31 2.69 6 6 6h13c2.76 0 5-2.24 5-5 0-2.64-2.05-4.78-4.65-4.96z"/></svg>
   </button>
+  <button id="list-toggle" class="list-btn active" onclick="toggleList()" aria-label="Show or hide the venue list" title="Show or hide the venue list">
+    <svg viewBox="0 0 24 24"><path d="M3 5h4v4H3V5zm6 0h12v4H9V5zM3 11h4v4H3v-4zm6 0h12v4H9v-4zM3 17h4v4H3v-4zm6 0h12v4H9v-4z" transform="translate(0 -1)"/></svg>
+  </button>
   <div id="car-toast" class="car-toast" role="status"></div>
+
+  <!-- Venue list along the bottom -->
+  <div id="venue-list" class="venue-list">
+    <div class="list-head">
+      <button class="sort-chip active" id="sort-near" onclick="setListSort('near')">Nearest</button>
+      <button class="sort-chip" id="sort-cost" onclick="setListSort('cost')">Cost</button>
+      <span class="list-count" id="list-count"></span>
+    </div>
+    <div class="list-cards" id="list-cards"></div>
+  </div>
 
   <!-- Audio Controls -->
   <audio id="bg-audio" src="bgm.mp3" loop preload="auto"></audio>
@@ -666,6 +743,7 @@
       // ... rest of map.on('load') code
 
       map.addSource('restaurants', { type: 'geojson', data: buildGeoJSON() });
+      renderList();
 
       map.addLayer({
         id: 'restaurants-glow',
@@ -705,24 +783,11 @@
 
         if (hits.length > 0) {
           const venueId = hits[0].venue.id; // nearest dot to the click
-
           if (selectedVenueId === venueId) {
             closePopup();
             return;
           }
-
-          const venue = rawVenues.find(v => v.id === venueId);
-          if (venue) {
-            selectedVenueId = venueId;
-            renderPopup(venue);
-            driveCarTo(venue.coords);
-            // Glide the venue to the center of the map, keeping the current zoom and tilt
-            map.easeTo({
-              center: venue.coords,
-              duration: reducedMotion.matches ? 0 : 900,
-              easing: (x) => 0.5 - Math.cos(Math.PI * x) / 2
-            });
-          }
+          selectVenue(venueId);
         }
       });
 
@@ -743,6 +808,71 @@
       map.resize();
     });
 
+
+    // Open a venue's popup, send the car, and glide the venue to the center of the map, keeping the current zoom and tilt
+    function selectVenue(venueId) {
+      const venue = rawVenues.find(v => v.id === venueId);
+      if (!venue) return;
+      selectedVenueId = venueId;
+      renderPopup(venue);
+      driveCarTo(venue.coords);
+      map.easeTo({
+        center: venue.coords,
+        duration: reducedMotion.matches ? 0 : 900,
+        easing: (x) => 0.5 - Math.cos(Math.PI * x) / 2
+      });
+      updateListSelection();
+    }
+
+    // ---------- Venue list: cards along the bottom, nearest or cheapest first ----------
+    const LIST_RADIUS_M = 25 * 1609.344; // 25 miles
+    const listEl = document.getElementById('venue-list');
+    const listCards = document.getElementById('list-cards');
+    let listSort = 'near';
+    let listOrigin = null; // where distances are measured from: the car once placed, otherwise the map's starting center
+
+    function toggleList() {
+      const on = listEl.classList.toggle('hidden') === false;
+      document.getElementById('list-toggle').classList.toggle('active', on);
+    }
+
+    function setListSort(mode) {
+      listSort = mode;
+      document.getElementById('sort-near').classList.toggle('active', mode === 'near');
+      document.getElementById('sort-cost').classList.toggle('active', mode === 'cost');
+      renderList();
+      listCards.scrollLeft = 0;
+    }
+
+    function renderList() {
+      const origin = listOrigin || MAP_CENTER;
+      const items = rawVenues
+        .map(v => ({ v, total: calculateTotal(v), miles: haversineM(origin, v.coords) / 1609.344 }))
+        .filter(i => i.miles * 1609.344 <= LIST_RADIUS_M)
+        .sort(listSort === 'cost'
+          ? (a, b) => a.total - b.total || a.miles - b.miles
+          : (a, b) => a.miles - b.miles || a.total - b.total);
+
+      document.getElementById('list-count').textContent = items.length ? '' : 'No venues within 25 miles';
+      listCards.innerHTML = items.map(({ v, total, miles }) => `
+        <button class="venue-card${total > state.maxBudget ? ' over' : ''}${v.id === selectedVenueId ? ' selected' : ''}"
+                data-id="${v.id}" style="--tier: ${getTierColor(total)}">
+          <div class="card-name">${escapeHtml(v.name)}</div>
+          <div class="card-cat">${escapeHtml(v.category || '')}</div>
+          <div class="card-foot"><span class="card-cost">$${total}</span><span class="card-dist">${miles.toFixed(1)} mi</span></div>
+        </button>`).join('');
+    }
+
+    function updateListSelection() {
+      listCards.querySelectorAll('.venue-card').forEach(c =>
+        c.classList.toggle('selected', Number(c.dataset.id) === selectedVenueId));
+    }
+
+    // Clicking a card does what clicking its dot does. Scrolling the list never moves the map.
+    listCards.addEventListener('click', (e) => {
+      const card = e.target.closest('.venue-card');
+      if (card) selectVenue(Number(card.dataset.id));
+    });
 
     // ---------- Running car: shows the user's location and drives to clicked venues ----------
     const carBtn = document.getElementById('car-toggle');
@@ -925,6 +1055,8 @@
       ensureCarLayers();
       carPos = lngLat.slice();
       carParkDest = null;
+      listOrigin = lngLat.slice();
+      renderList();
       carBtn.classList.add('active');
       if (!carLoopRaf) carLoopRaf = requestAnimationFrame(carLoop);
     }
@@ -1138,6 +1270,7 @@
         currentPopup = null;
       }
       selectedVenueId = null;
+      updateListSelection();
     }
 
     let popupMouseDown = null;
@@ -1232,6 +1365,7 @@
         currentPopup.on('close', () => {
           selectedVenueId = null;
           currentPopup = null;
+          updateListSelection();
         });
 
         const popupEl = currentPopup.getElement();
@@ -1244,6 +1378,7 @@
     function refreshMap() {
       if (!map.getSource('restaurants')) return;
       map.getSource('restaurants').setData(buildGeoJSON());
+      renderList();
 
       if (selectedVenueId) {
         const venue = rawVenues.find(v => v.id === selectedVenueId);
