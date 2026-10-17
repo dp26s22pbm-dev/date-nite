@@ -621,8 +621,8 @@
   <!-- Venue list along the bottom -->
   <div id="venue-list" class="venue-list">
     <div class="list-head">
-      <button class="sort-chip active" id="sort-near" onclick="setListSort('near')">Nearest</button>
-      <button class="sort-chip" id="sort-cost" onclick="setListSort('cost')">Cost</button>
+      <button class="sort-chip active" id="sort-cost" onclick="setListSort('cost')">Cost</button>
+      <button class="sort-chip" id="sort-near" onclick="setListSort('near')">Proximity</button>
       <span class="list-count" id="list-count"></span>
     </div>
     <div class="list-cards" id="list-cards"></div>
@@ -840,7 +840,7 @@
     const LIST_RADIUS_M = 25 * 1609.344; // 25 miles
     const listEl = document.getElementById('venue-list');
     const listCards = document.getElementById('list-cards');
-    let listSort = 'near';
+    let listSort = 'cost';
     let listOrigin = null; // where distances are measured from: the car once placed, otherwise the map's starting center
 
     function toggleList() {
