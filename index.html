@@ -849,10 +849,11 @@
       updateButtonLift();
     }
 
-    // The round buttons sit a little above the list, and drop back to the corner when the list is hidden
+    // The round buttons sit a little above the list and stay put when the list is hidden
     const BUTTON_GAP_PX = 12;
     function updateButtonLift() {
-      const lift = listEl.classList.contains('hidden') ? 20 : 34 + listEl.offsetHeight + BUTTON_GAP_PX;
+      if (listEl.classList.contains('hidden')) return; // hidden has no height to measure; keep the last position
+      const lift = 34 + listEl.offsetHeight + BUTTON_GAP_PX;
       document.documentElement.style.setProperty('--btn-base', lift + 'px');
     }
     if (window.ResizeObserver) new ResizeObserver(updateButtonLift).observe(listEl);
