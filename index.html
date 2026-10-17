@@ -9,6 +9,8 @@
 
   <style>
     * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+    /* Where the bottom-right button stack starts. The script raises it to sit above the venue list. */
+    :root { --btn-base: 20px; }
     html, body {
       margin: 0;
       padding: 0;
@@ -336,7 +338,7 @@
     .audio-btn {
       position: fixed !important;
       right: 20px !important;
-      bottom: 20px !important;
+      bottom: var(--btn-base) !important;
       width: 44px !important;
       height: 44px !important;
       border-radius: 50% !important;
@@ -393,7 +395,7 @@
     .car-btn, .zoom-btn, .list-btn {
       position: fixed !important;
       right: 20px !important;
-      bottom: 74px !important;
+      bottom: calc(var(--btn-base) + 54px) !important;
       width: 44px !important;
       height: 44px !important;
       border-radius: 50% !important;
@@ -409,8 +411,8 @@
       pointer-events: auto !important;
       transition: all 0.2s ease !important;
     }
-    .zoom-btn { bottom: 128px !important; }
-    .list-btn { bottom: 182px !important; }
+    .zoom-btn { bottom: calc(var(--btn-base) + 108px) !important; }
+    .list-btn { bottom: calc(var(--btn-base) + 162px) !important; }
     .car-btn.active {
       color: #a78bfa !important;
       border-color: #a78bfa !important;
@@ -429,12 +431,12 @@
     }
     .car-btn svg, .zoom-btn svg, .list-btn svg { width: 22px !important; height: 22px !important; fill: currentColor !important; pointer-events: none !important; }
 
-    /* Venue list along the bottom: a row of cards that scrolls sideways, clear of the round buttons on the right */
+    /* Venue list along the bottom: a row of cards that scrolls sideways, full width under the round buttons */
     .venue-list {
       position: fixed;
       left: 16px;
-      right: 84px;
-      bottom: 16px;
+      right: 16px;
+      bottom: 34px; /* clears the map attribution strip */
       display: flex;
       flex-direction: column;
       gap: 6px;
@@ -462,8 +464,15 @@
       overflow-x: auto;
       padding: 2px 2px 6px;
       pointer-events: auto;
-      scrollbar-width: thin;
+      scrollbar-width: none; /* no bar: the edge hover and swipe do the scrolling */
+      /* Cards fade out at an edge instead of being cut off. The script sets --fade-l / --fade-r to 1 only on
+         a side that has more cards hidden, so the first and last cards are never dimmed when fully in view. */
+      --fade-l: 0;
+      --fade-r: 0;
+      -webkit-mask-image: linear-gradient(to right, rgba(0, 0, 0, calc(1 - var(--fade-l))) 0, #000 56px, #000 calc(100% - 56px), rgba(0, 0, 0, calc(1 - var(--fade-r))) 100%);
+      mask-image: linear-gradient(to right, rgba(0, 0, 0, calc(1 - var(--fade-l))) 0, #000 56px, #000 calc(100% - 56px), rgba(0, 0, 0, calc(1 - var(--fade-r))) 100%);
     }
+    .list-cards::-webkit-scrollbar { display: none; }
     .venue-card {
       flex: 0 0 150px;
       width: 150px;
@@ -493,7 +502,7 @@
     .car-toast {
       position: fixed;
       right: 74px;
-      bottom: 80px;
+      bottom: calc(var(--btn-base) + 60px);
       max-width: 260px;
       padding: 10px 12px;
       border-radius: 10px;
@@ -837,7 +846,18 @@
     function toggleList() {
       const on = listEl.classList.toggle('hidden') === false;
       document.getElementById('list-toggle').classList.toggle('active', on);
+      updateButtonLift();
     }
+
+    // The round buttons sit a little above the list and stay put when the list is hidden
+    const BUTTON_GAP_PX = 12;
+    function updateButtonLift() {
+      if (listEl.classList.contains('hidden')) return; // hidden has no height to measure; keep the last position
+      const lift = 34 + listEl.offsetHeight + BUTTON_GAP_PX;
+      document.documentElement.style.setProperty('--btn-base', lift + 'px');
+    }
+    if (window.ResizeObserver) new ResizeObserver(updateButtonLift).observe(listEl);
+    updateButtonLift();
 
     function setListSort(mode) {
       listSort = mode;
@@ -864,7 +884,17 @@
           <div class="card-cat">${escapeHtml(v.category || '')}</div>
           <div class="card-foot"><span class="card-cost">$${total}</span><span class="card-dist">${miles.toFixed(1)} mi</span></div>
         </button>`).join('');
+      updateListFade();
     }
+
+    // Fade the edge on each side that still has cards hidden past it
+    function updateListFade() {
+      const max = listCards.scrollWidth - listCards.clientWidth;
+      listCards.style.setProperty('--fade-l', listCards.scrollLeft > 1 ? 1 : 0);
+      listCards.style.setProperty('--fade-r', listCards.scrollLeft < max - 1 ? 1 : 0);
+    }
+    listCards.addEventListener('scroll', updateListFade, { passive: true });
+    window.addEventListener('resize', updateListFade);
 
     function updateListSelection() {
       listCards.querySelectorAll('.venue-card').forEach(c =>
