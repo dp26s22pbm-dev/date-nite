@@ -427,5 +427,21 @@
     "drink": 14.5,
     "dessert": 12.5,
     "tierColor": "#eab308"
+  },
+  {
+    "id": 28,
+    "name": "Kai Modern Japanese Kitchen",
+    "category": "Modern Japanese",
+    "website": "https://www.kaijapanesekitchen.com/",
+    "coords": [
+      -88.317275,
+      41.763518
+    ],
+    "app": 12.0,
+    "casualMain": 12.75,
+    "premiumMain": 19.0,
+    "drink": 7.0,
+    "dessert": 11.5,
+    "tierColor": "#22c55e"
   }
 ]
