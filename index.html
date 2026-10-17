@@ -34,12 +34,22 @@
       height: 100%;
     }
 
-    /* Floating Left Controls Drawer */
-    .control-panel {
+    /* Left rail: the menu panel with the budget button under it */
+    .left-rail {
       position: fixed;
       top: 16px;
       left: 16px;
       width: 140px;
+      display: flex;
+      flex-direction: column;
+      align-items: stretch;
+      gap: 8px;
+      z-index: 1000;
+    }
+
+    /* Floating Left Controls Drawer */
+    .control-panel {
+      width: 100%;
       height: auto;
       max-height: calc(100vh - 32px);
       display: flex;
@@ -55,7 +65,6 @@
       border: 1px solid rgba(255, 255, 255, 0.15);
       border-radius: 14px;
       box-shadow: 0 12px 35px rgba(0, 0, 0, 0.65);
-      z-index: 1000;
     }
 
     /* Vertical Steppers */
@@ -121,16 +130,54 @@
       text-align: center;
     }
 
-    /* Horizontal Budget Row across Bottom of Card */
+    /* Budget button under the menu; the slider slides out to its right when the budget is on */
+    .budget-slot { position: relative; }
+    .budget-btn {
+      width: 100%;
+      padding: 8px 10px;
+      font: inherit;
+      font-size: 12px;
+      font-weight: 600;
+      color: #8b949e;
+      background: rgba(22, 27, 34, 0.95);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      border-radius: 14px;
+      box-shadow: 0 12px 35px rgba(0, 0, 0, 0.65);
+      cursor: pointer;
+      transition: color 0.2s ease, border-color 0.2s ease;
+    }
+    .budget-btn.active { color: #f0f6fc; border-color: rgba(255, 255, 255, 0.6); }
     .budget-row {
-      position: relative;
+      position: absolute;
+      top: 0;
+      left: calc(100% + 8px);
+      width: 190px;
       display: flex;
       flex-direction: column;
       align-items: stretch;
-      width: 100%;
-      margin-top: 2px;
-      padding-top: 8px;
-      border-top: 1px solid rgba(255, 255, 255, 0.12);
+      padding: 10px 12px;
+      background: rgba(22, 27, 34, 0.95);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      border-radius: 14px;
+      box-shadow: 0 12px 35px rgba(0, 0, 0, 0.65);
+      /* Tucked back toward the button until opened */
+      opacity: 0;
+      visibility: hidden;
+      transform: translateX(-24px);
+      transition: transform 0.25s ease, opacity 0.25s ease, visibility 0s linear 0.25s;
+    }
+    .budget-row.open {
+      opacity: 1;
+      visibility: visible;
+      transform: none;
+      transition: transform 0.25s ease, opacity 0.25s ease;
+    }
+    @media (prefers-reduced-motion: reduce) {
+      .budget-row, .budget-row.open { transition: none; }
     }
 
     .budget-header {
@@ -528,6 +575,7 @@
   <div id="map"></div>
 
   <!-- Left Side Controls Rail -->
+  <div class="left-rail">
   <div class="control-panel">
     <div class="meal-builder-row">
       <div class="counter-pill">
@@ -572,13 +620,18 @@
       </div>
     </div>
 
-    <div class="budget-row">
+  </div>
+
+  <div class="budget-slot">
+    <button id="budget-toggle" class="budget-btn" onclick="toggleBudget()" aria-expanded="false" aria-controls="budget-row">Budget</button>
+    <div class="budget-row" id="budget-row">
       <div class="budget-header">
         <span>Max Target Budget</span>
         <span id="budget-display">$130</span>
       </div>
       <input type="range" class="budget-slider" id="budget-slider" min="10" max="250" step="10" value="130" oninput="onBudgetChange(this.value)" />
     </div>
+  </div>
   </div>
 
   <!-- Right Side Legend Panel -->
@@ -670,7 +723,8 @@
       prime: 1,
       drinks: 2,
       dessert: 1,
-      maxBudget: 130
+      maxBudget: 130,
+      budgetOn: false // the slider is tucked away until the Budget button is pressed, and then no budget applies
     };
 
     function calculateTotal(v) {
@@ -687,6 +741,10 @@
       return Math.round(subtotal * 1.30);
     }
 
+    function isOverBudget(total) {
+      return state.budgetOn && total > state.maxBudget;
+    }
+
     function getTierColor(total) {
       if (total < 50) return '#38bdf8';
       if (total < 100) return '#22c55e';
@@ -700,7 +758,7 @@
         type: "FeatureCollection",
         features: rawVenues.map(v => {
           const total = calculateTotal(v);
-          const isUnderBudget = total <= state.maxBudget;
+          const isUnderBudget = !isOverBudget(total);
           return {
             type: "Feature",
             geometry: { type: "Point", coordinates: v.coords },
@@ -878,7 +936,7 @@
 
       document.getElementById('list-count').textContent = items.length ? '' : 'No venues within 25 miles';
       listCards.innerHTML = items.map(({ v, total, miles }) => `
-        <button class="venue-card${total > state.maxBudget ? ' over' : ''}${v.id === selectedVenueId ? ' selected' : ''}"
+        <button class="venue-card${isOverBudget(total) ? ' over' : ''}${v.id === selectedVenueId ? ' selected' : ''}"
                 data-id="${v.id}" style="--tier: ${getTierColor(total)}">
           <div class="card-name">${escapeHtml(v.name)}</div>
           <div class="card-cat">${escapeHtml(v.category || '')}</div>
@@ -1503,7 +1561,23 @@
       state.maxBudget = Number(val);
       document.getElementById('budget-display').innerText = `$${val}`;
       applyBudgetColor(val);
+      updateBudgetButton();
       refreshMap();
+    }
+
+    // Slide the budget slider out (budget applies) or back in (no budget)
+    function toggleBudget() {
+      state.budgetOn = !state.budgetOn;
+      document.getElementById('budget-row').classList.toggle('open', state.budgetOn);
+      updateBudgetButton();
+      refreshMap();
+    }
+
+    function updateBudgetButton() {
+      const btn = document.getElementById('budget-toggle');
+      btn.classList.toggle('active', state.budgetOn);
+      btn.setAttribute('aria-expanded', String(state.budgetOn));
+      btn.textContent = state.budgetOn ? `Budget $${state.maxBudget}` : 'Budget';
     }
 
     applyBudgetColor(state.maxBudget);
