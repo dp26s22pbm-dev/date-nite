@@ -462,8 +462,15 @@
       overflow-x: auto;
       padding: 2px 2px 6px;
       pointer-events: auto;
-      scrollbar-width: thin;
+      scrollbar-width: none; /* no bar: the edge hover and swipe do the scrolling */
+      /* Cards fade out at an edge instead of being cut off. The script sets --fade-l / --fade-r to 1 only on
+         a side that has more cards hidden, so the first and last cards are never dimmed when fully in view. */
+      --fade-l: 0;
+      --fade-r: 0;
+      -webkit-mask-image: linear-gradient(to right, rgba(0, 0, 0, calc(1 - var(--fade-l))) 0, #000 56px, #000 calc(100% - 56px), rgba(0, 0, 0, calc(1 - var(--fade-r))) 100%);
+      mask-image: linear-gradient(to right, rgba(0, 0, 0, calc(1 - var(--fade-l))) 0, #000 56px, #000 calc(100% - 56px), rgba(0, 0, 0, calc(1 - var(--fade-r))) 100%);
     }
+    .list-cards::-webkit-scrollbar { display: none; }
     .venue-card {
       flex: 0 0 150px;
       width: 150px;
@@ -864,7 +871,17 @@
           <div class="card-cat">${escapeHtml(v.category || '')}</div>
           <div class="card-foot"><span class="card-cost">$${total}</span><span class="card-dist">${miles.toFixed(1)} mi</span></div>
         </button>`).join('');
+      updateListFade();
     }
+
+    // Fade the edge on each side that still has cards hidden past it
+    function updateListFade() {
+      const max = listCards.scrollWidth - listCards.clientWidth;
+      listCards.style.setProperty('--fade-l', listCards.scrollLeft > 1 ? 1 : 0);
+      listCards.style.setProperty('--fade-r', listCards.scrollLeft < max - 1 ? 1 : 0);
+    }
+    listCards.addEventListener('scroll', updateListFade, { passive: true });
+    window.addEventListener('resize', updateListFade);
 
     function updateListSelection() {
       listCards.querySelectorAll('.venue-card').forEach(c =>
