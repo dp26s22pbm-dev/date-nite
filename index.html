@@ -466,6 +466,9 @@
     }
     .venue-card {
       flex: 0 0 150px;
+      width: 150px;
+      min-width: 0; /* a flex item defaults to its content's width, which let long names stretch the card */
+      overflow: hidden;
       text-align: left;
       font: inherit;
       color: #f0f6fc;
