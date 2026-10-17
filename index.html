@@ -9,6 +9,8 @@
 
   <style>
     * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+    /* Where the bottom-right button stack starts. The script raises it to sit above the venue list. */
+    :root { --btn-base: 20px; }
     html, body {
       margin: 0;
       padding: 0;
@@ -336,7 +338,7 @@
     .audio-btn {
       position: fixed !important;
       right: 20px !important;
-      bottom: 20px !important;
+      bottom: var(--btn-base) !important;
       width: 44px !important;
       height: 44px !important;
       border-radius: 50% !important;
@@ -393,7 +395,7 @@
     .car-btn, .zoom-btn, .list-btn {
       position: fixed !important;
       right: 20px !important;
-      bottom: 74px !important;
+      bottom: calc(var(--btn-base) + 54px) !important;
       width: 44px !important;
       height: 44px !important;
       border-radius: 50% !important;
@@ -409,8 +411,8 @@
       pointer-events: auto !important;
       transition: all 0.2s ease !important;
     }
-    .zoom-btn { bottom: 128px !important; }
-    .list-btn { bottom: 182px !important; }
+    .zoom-btn { bottom: calc(var(--btn-base) + 108px) !important; }
+    .list-btn { bottom: calc(var(--btn-base) + 162px) !important; }
     .car-btn.active {
       color: #a78bfa !important;
       border-color: #a78bfa !important;
@@ -429,12 +431,12 @@
     }
     .car-btn svg, .zoom-btn svg, .list-btn svg { width: 22px !important; height: 22px !important; fill: currentColor !important; pointer-events: none !important; }
 
-    /* Venue list along the bottom: a row of cards that scrolls sideways, clear of the round buttons on the right */
+    /* Venue list along the bottom: a row of cards that scrolls sideways, full width under the round buttons */
     .venue-list {
       position: fixed;
       left: 16px;
-      right: 84px;
-      bottom: 16px;
+      right: 16px;
+      bottom: 34px; /* clears the map attribution strip */
       display: flex;
       flex-direction: column;
       gap: 6px;
@@ -500,7 +502,7 @@
     .car-toast {
       position: fixed;
       right: 74px;
-      bottom: 80px;
+      bottom: calc(var(--btn-base) + 60px);
       max-width: 260px;
       padding: 10px 12px;
       border-radius: 10px;
@@ -844,7 +846,17 @@
     function toggleList() {
       const on = listEl.classList.toggle('hidden') === false;
       document.getElementById('list-toggle').classList.toggle('active', on);
+      updateButtonLift();
     }
+
+    // The round buttons sit a little above the list, and drop back to the corner when the list is hidden
+    const BUTTON_GAP_PX = 12;
+    function updateButtonLift() {
+      const lift = listEl.classList.contains('hidden') ? 20 : 34 + listEl.offsetHeight + BUTTON_GAP_PX;
+      document.documentElement.style.setProperty('--btn-base', lift + 'px');
+    }
+    if (window.ResizeObserver) new ResizeObserver(updateButtonLift).observe(listEl);
+    updateButtonLift();
 
     function setListSort(mode) {
       listSort = mode;
