@@ -1248,6 +1248,7 @@
 
     function setCarRoute(coords) {
       ensureCarRouteLayer();
+      cancelRouteFade(); // a new route starts fully visible, even if the last one was still fading
       map.getSource('car-route').setData({
         type: 'Feature', properties: {}, geometry: { type: 'LineString', coordinates: coords }
       });
@@ -1256,6 +1257,34 @@
     function clearCarRoute() {
       const src = map.getSource && map.getSource('car-route');
       if (src) src.setData({ type: 'FeatureCollection', features: [] });
+      cancelRouteFade();
+    }
+
+    // On arrival the dotted trail fades out instead of blinking off
+    const ROUTE_OPACITY = 0.75; // matches the line layer's paint
+    const ROUTE_FADE_MS = 450;
+    let routeFadeRaf = null;
+
+    function cancelRouteFade() {
+      if (routeFadeRaf) { cancelAnimationFrame(routeFadeRaf); routeFadeRaf = null; }
+      if (map.getLayer && map.getLayer('car-route-line')) map.setPaintProperty('car-route-line', 'line-opacity', ROUTE_OPACITY);
+    }
+
+    function fadeCarRoute() {
+      if (!map.getLayer('car-route-line') || reducedMotion.matches) { clearCarRoute(); return; }
+      cancelRouteFade();
+      const t0 = performance.now();
+      const step = (now) => {
+        const k = Math.min(1, (now - t0) / ROUTE_FADE_MS);
+        map.setPaintProperty('car-route-line', 'line-opacity', ROUTE_OPACITY * (1 - k));
+        if (k < 1) {
+          routeFadeRaf = requestAnimationFrame(step);
+        } else {
+          routeFadeRaf = null;
+          clearCarRoute(); // removes the line and restores the opacity for the next route
+        }
+      };
+      routeFadeRaf = requestAnimationFrame(step);
     }
 
     async function fetchDrivingRoute(from, to) {
@@ -1348,7 +1377,7 @@
         if (d < driveTotal) {
           carRaf = requestAnimationFrame(step);
         } else {
-          clearCarRoute(); // arrived: the car stays just short of the dot, still idling
+          fadeCarRoute(); // arrived: the trail fades out; the car stays just short of the dot, still idling
           const mLonD = 111320 * Math.cos(dest[1] * Math.PI / 180);
           carParkOffsetPx = [
             (pos[0] - dest[0]) * mLonD / mppStart,
