@@ -469,6 +469,11 @@
       border-color: #38bdf8 !important;
       box-shadow: 0 0 14px rgba(56, 189, 248, 0.4) !important;
     }
+    /* While the list is on, its three rows take the cost-tier colors (green, yellow, red); the outline stays blue.
+       Off, the rows stay grey with the rest of the button. */
+    .list-btn.active .row-1 { fill: #22c55e; }
+    .list-btn.active .row-2 { fill: #eab308; }
+    .list-btn.active .row-3 { fill: #ef4444; }
     .car-btn svg, .zoom-btn svg, .list-btn svg { width: 22px !important; height: 22px !important; fill: currentColor !important; pointer-events: none !important; }
 
     /* Venue list along the bottom: a row of cards that scrolls sideways, full width under the round buttons */
@@ -662,7 +667,11 @@
     <svg viewBox="0 0 24 24"><path d="M19.35 10.04C18.67 6.59 15.64 4 12 4 9.11 4 6.6 5.64 5.35 8.04 2.34 8.36 0 10.91 0 14c0 3.31 2.69 6 6 6h13c2.76 0 5-2.24 5-5 0-2.64-2.05-4.78-4.65-4.96z"/></svg>
   </button>
   <button id="list-toggle" class="list-btn active" onclick="toggleList()" aria-label="Show or hide the venue list" title="Show or hide the venue list">
-    <svg viewBox="0 0 24 24"><path d="M3 5h4v4H3V5zm6 0h12v4H9V5zM3 11h4v4H3v-4zm6 0h12v4H9v-4zM3 17h4v4H3v-4zm6 0h12v4H9v-4z" transform="translate(0 -1)"/></svg>
+    <svg viewBox="0 0 24 24"><g transform="translate(0 -1)">
+      <path class="row-1" d="M3 5h4v4H3V5zm6 0h12v4H9V5z"/>
+      <path class="row-2" d="M3 11h4v4H3v-4zm6 0h12v4H9v-4z"/>
+      <path class="row-3" d="M3 17h4v4H3v-4zm6 0h12v4H9v-4z"/>
+    </g></svg>
   </button>
   <div id="car-toast" class="car-toast" role="status"></div>
 
