@@ -1391,6 +1391,13 @@
 
     // ---- Crowded dots: clicking where several overlap zooms in to separate them ----
     const DOT_HIT_RADIUS_PX = 13; // dot radius (12) plus its outline
+    // How far the popup sits from the dot's center. The popup's tip is a 14px square turned 45 degrees and pulled
+    // 7px into the card, so its point reaches 7 * (sqrt(2) - 1) px past the offset. The offset has to clear the
+    // dot's outer edge (radius 12 plus half the 2.5px outline) plus that overshoot, with a small gap left over.
+    const DOT_OUTER_RADIUS_PX = 12 + 2.5 / 2;
+    const POPUP_TIP_OVERSHOOT_PX = 7 * (Math.SQRT2 - 1);
+    const POPUP_TIP_GAP_PX = 4;
+    const POPUP_OFFSET_PX = DOT_OUTER_RADIUS_PX + POPUP_TIP_OVERSHOOT_PX + POPUP_TIP_GAP_PX;
     const CROWD_MAX_ZOOM = 17;
 
     // Venues whose dots sit under a screen point, nearest first
@@ -1532,7 +1539,7 @@
       if (currentPopup && currentPopup.isOpen()) {
         currentPopup.setLngLat(venue.coords).setHTML(html);
       } else {
-        currentPopup = new maplibregl.Popup({ closeButton: true, closeOnClick: false, offset: 14 })
+        currentPopup = new maplibregl.Popup({ closeButton: true, closeOnClick: false, offset: POPUP_OFFSET_PX })
           .setLngLat(venue.coords)
           .setHTML(html)
           .addTo(map);
