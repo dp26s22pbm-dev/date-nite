@@ -130,65 +130,54 @@
       text-align: center;
     }
 
-    /* Budget button under the menu; the slider slides out to its right when the budget is on */
-    .budget-slot { position: relative; }
+    /* Budget card under the menu: the Budget button is its header, and the slider unrolls downward beneath it */
+    .budget-card {
+      background: rgba(22, 27, 34, 0.95);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      border-radius: 14px;
+      box-shadow: 0 12px 35px rgba(0, 0, 0, 0.65);
+      overflow: hidden;
+      transition: border-color 0.2s ease;
+    }
+    .budget-card.open { border-color: rgba(255, 255, 255, 0.6); }
     .budget-btn {
       width: 100%;
+      display: flex;
+      align-items: baseline;
+      justify-content: center;
+      gap: 8px;
       padding: 8px 10px;
       font: inherit;
       font-size: 12px;
       font-weight: 600;
       color: #8b949e;
-      background: rgba(22, 27, 34, 0.95);
-      backdrop-filter: blur(16px);
-      -webkit-backdrop-filter: blur(16px);
-      border: 1px solid rgba(255, 255, 255, 0.15);
-      border-radius: 14px;
-      box-shadow: 0 12px 35px rgba(0, 0, 0, 0.65);
+      background: transparent;
+      border: none;
       cursor: pointer;
-      transition: color 0.2s ease, border-color 0.2s ease;
+      transition: color 0.2s ease;
     }
-    .budget-btn.active { color: #f0f6fc; border-color: rgba(255, 255, 255, 0.6); }
-    .budget-row {
-      position: absolute;
-      top: 0;
-      left: calc(100% + 8px);
-      width: 190px;
-      display: flex;
-      flex-direction: column;
-      align-items: stretch;
-      padding: 10px 12px;
-      background: rgba(22, 27, 34, 0.95);
-      backdrop-filter: blur(16px);
-      -webkit-backdrop-filter: blur(16px);
-      border: 1px solid rgba(255, 255, 255, 0.15);
-      border-radius: 14px;
-      box-shadow: 0 12px 35px rgba(0, 0, 0, 0.65);
-      /* Tucked back toward the button until opened */
-      opacity: 0;
-      visibility: hidden;
-      transform: translateX(-24px);
-      transition: transform 0.25s ease, opacity 0.25s ease, visibility 0s linear 0.25s;
+    .budget-card.open .budget-btn { color: #f0f6fc; }
+    .budget-amount { display: none; }
+    .budget-card.open .budget-amount { display: inline; }
+    /* 0fr to 1fr animates the body's height without knowing it */
+    .budget-body {
+      display: grid;
+      grid-template-rows: 0fr;
+      transition: grid-template-rows 0.25s ease;
     }
-    .budget-row.open {
-      opacity: 1;
-      visibility: visible;
-      transform: none;
-      transition: transform 0.25s ease, opacity 0.25s ease;
+    .budget-card.open .budget-body { grid-template-rows: 1fr; }
+    .budget-body-inner {
+      min-height: 0;
+      overflow: hidden;
+      visibility: hidden; /* keeps the tucked-away slider out of the tab order */
+      transition: visibility 0s linear 0.25s;
     }
+    .budget-card.open .budget-body-inner { visibility: visible; transition: none; }
+    .budget-slider-wrap { padding: 0 12px 10px; }
     @media (prefers-reduced-motion: reduce) {
-      .budget-row, .budget-row.open { transition: none; }
-    }
-
-    .budget-header {
-      display: flex;
-      flex-direction: row;
-      justify-content: space-between;
-      align-items: center;
-      width: 100%;
-      margin-bottom: 6px;
-      font-size: 10px;
-      font-weight: 600;
+      .budget-body, .budget-body-inner { transition: none; }
     }
 
     /* The track and thumb are drawn here, not left to the browser's accent-color, because Chrome turns the
@@ -622,14 +611,16 @@
 
   </div>
 
-  <div class="budget-slot">
-    <button id="budget-toggle" class="budget-btn" onclick="toggleBudget()" aria-expanded="false" aria-controls="budget-row">Budget</button>
-    <div class="budget-row" id="budget-row">
-      <div class="budget-header">
-        <span>Max Target Budget</span>
-        <span id="budget-display">$130</span>
+  <div class="budget-card" id="budget-card">
+    <button id="budget-toggle" class="budget-btn" onclick="toggleBudget()" aria-expanded="false" aria-controls="budget-body">
+      <span>Budget</span><span class="budget-amount" id="budget-display">$130</span>
+    </button>
+    <div class="budget-body" id="budget-body">
+      <div class="budget-body-inner">
+        <div class="budget-slider-wrap">
+          <input type="range" class="budget-slider" id="budget-slider" min="10" max="250" step="10" value="130" oninput="onBudgetChange(this.value)" aria-label="Maximum budget" />
+        </div>
       </div>
-      <input type="range" class="budget-slider" id="budget-slider" min="10" max="250" step="10" value="130" oninput="onBudgetChange(this.value)" />
     </div>
   </div>
   </div>
@@ -700,18 +691,37 @@
     const iconMuted = `<path d="M16.5 12c0-1.77-1.02-3.29-2.5-4.03v2.21l2.45 2.45c.03-.2.05-.41.05-.63zm2.5 0c0 .94-.2 1.82-.54 2.64l1.51 1.51C20.63 14.91 21 13.5 21 12c0-4.28-2.99-7.86-7-8.77v2.06c2.89.86 5 3.54 5 6.71zM4.27 3L3 4.27l4.73 4.73H3v6h4l5 5v-6.73l4.25 4.25c-.67.52-1.42.93-2.25 1.18v2.06c1.38-.31 2.63-.95 3.69-1.81L19.73 21 21 19.73l-9-9L4.27 3zM12 4L9.91 6.09 12 8.18V4z"/>`;
     const iconPlaying = `<path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/>`;
 
+    function startAudio() {
+      return audio.play().then(() => {
+        audioBtn.classList.add('playing');
+        audioIcon.innerHTML = iconPlaying;
+        stopWaitingForGesture();
+      });
+    }
+
     function toggleAudio() {
       if (audio.paused) {
-        audio.play().then(() => {
-          audioBtn.classList.add('playing');
-          audioIcon.innerHTML = iconPlaying;
-        }).catch(err => console.log("Audio playback blocked:", err));
+        startAudio().catch(err => console.log("Audio playback blocked:", err));
       } else {
         audio.pause();
         audioBtn.classList.remove('playing');
         audioIcon.innerHTML = iconMuted;
       }
     }
+
+    // Music starts on its own. Browsers refuse to play sound before the visitor has interacted with the page,
+    // so when the first attempt is blocked, the music starts on the first click, tap, or key press instead.
+    const GESTURE_EVENTS = ['pointerup', 'click', 'touchend', 'keydown'];
+    function onFirstGesture(e) {
+      if (e.target.closest && e.target.closest('#audio-toggle')) return; // the music button handles itself
+      startAudio().catch(() => {}); // still blocked: keep waiting for the next gesture
+    }
+    function stopWaitingForGesture() {
+      GESTURE_EVENTS.forEach(ev => window.removeEventListener(ev, onFirstGesture, true));
+    }
+    startAudio().catch(() => {
+      GESTURE_EVENTS.forEach(ev => window.addEventListener(ev, onFirstGesture, true));
+    });
     
     let rawVenues = [];
     let currentPopup = null;
@@ -724,7 +734,7 @@
       drinks: 2,
       dessert: 1,
       maxBudget: 130,
-      budgetOn: false // the slider is tucked away until the Budget button is pressed, and then no budget applies
+      budgetOn: false // the slider stays rolled up until the Budget button is pressed, and then no budget applies
     };
 
     function calculateTotal(v) {
@@ -1561,23 +1571,15 @@
       state.maxBudget = Number(val);
       document.getElementById('budget-display').innerText = `$${val}`;
       applyBudgetColor(val);
-      updateBudgetButton();
       refreshMap();
     }
 
-    // Slide the budget slider out (budget applies) or back in (no budget)
+    // Unroll the budget slider (budget applies) or roll it back up (no budget)
     function toggleBudget() {
       state.budgetOn = !state.budgetOn;
-      document.getElementById('budget-row').classList.toggle('open', state.budgetOn);
-      updateBudgetButton();
+      document.getElementById('budget-card').classList.toggle('open', state.budgetOn);
+      document.getElementById('budget-toggle').setAttribute('aria-expanded', String(state.budgetOn));
       refreshMap();
-    }
-
-    function updateBudgetButton() {
-      const btn = document.getElementById('budget-toggle');
-      btn.classList.toggle('active', state.budgetOn);
-      btn.setAttribute('aria-expanded', String(state.budgetOn));
-      btn.textContent = state.budgetOn ? `Budget $${state.maxBudget}` : 'Budget';
     }
 
     applyBudgetColor(state.maxBudget);
