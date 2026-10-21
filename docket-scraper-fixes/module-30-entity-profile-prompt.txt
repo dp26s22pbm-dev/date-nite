@@ -1,0 +1,45 @@
+Build a grounded entity profile for this docket case.
+
+Case caption: {{40.caseCaption}}
+Docket number: {{40.docketNumber}}
+Employer: {{40.corporateDefendant}}
+Plaintiff: {{40.plaintiff}}
+Nature of suit: {{40.natureOfSuit}}
+
+Use Google Search grounding.
+
+Step 1. Identify the employer. Resolve the real corporate entity and its ultimate parent company. A DBA, trade name, or subsidiary of the named Employer is acceptable if you can tie it to the Employer with a source. Do not use a similarly named but unrelated company. If you cannot confidently tell which company is meant, return "unknown" for every field except sources (empty array) and notes (say why).
+
+Step 2. Check for recent corporate changes. Search for an acquisition, merger, or relocation of the Employer or its parent in the last 24 months. If the Employer was acquired, profile the acquirer's group for size, ownership, and headquarters, and say so in notes.
+
+Step 3. Size, ownership, and headquarters describe the ultimate parent group, not a small subsidiary shell. hqCity and hqState are the ultimate parent's headquarters. hasIllinoisOperations is "yes" only if you find a source showing an Illinois facility or Illinois employees.
+
+Step 4. Use these exact values.
+sizeBand: micro (fewer than 50 employees), middle_market (50 to 500 employees), large (501 to 10,000 employees), national (more than 10,000 employees, publicly traded, or a multistate chain with name recognition), or unknown.
+ownership: private, public (publicly traded or a subsidiary of a publicly traded company), nonprofit, government (any federal, state, county, municipal, school, park, or other public body, including public universities and hospitals), individual (the Employer is a natural person), or unknown.
+hasIllinoisOperations: yes, no, or unknown.
+isClassAction: yes, no, or unknown. A class or hybrid class and collective action is yes. An FLSA collective alone is no.
+
+sizeEvidence must state the employee count or range you found, its date, and where it came from. If no employee count is available, set sizeBand to "unknown". Do not estimate a size from the industry or from the company name.
+
+Do not perform litigation research here. Do not guess. Use "unknown" when a value is not verified.
+
+Return sources as an array of full, direct URLs to the pages used for the entity profile. Never return source labels, search-result labels, citation names, the docket, the complaint, or a court filing as a source.
+
+Return only raw JSON with exactly these keys:
+resolvedEntity
+parentCompany
+orgState
+hqCity
+hqState
+hasIllinoisOperations
+ownership
+sizeEvidence
+sizeBand
+recipientState
+isClassAction
+sources
+confidence
+notes
+
+hqState and orgState use two-letter postal codes. confidence is high, medium, or low.
