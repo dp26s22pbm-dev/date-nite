@@ -43,6 +43,10 @@ Module 54 input `existingFlags` is `{{23.`22`}}` (with backticks) and module 27 
 
 At the top of module 38: `REQUIRE_IL_HQ`, `ALLOWED_SIZES`, `MIN_SCORE`, `RESEARCH_LIMIT`, `OUTREACH_LIMIT`. The size bands (middle_market is 50 to 500 employees) are in the module 30 prompt and match the ranges already in your old code. Module 45 repeats `MIN_SCORE` and `OUTREACH_LIMIT`, so change both together.
 
-## Not verified
+## Verified in Make (replay of one weekly docket email)
 
-I tested the two code modules against sample inputs in Node. I did not run the scenario in Make or call Gemini, so the prompt changes are untested. All four Gemini modules use `gemini-3.5-flash-lite`. A lighter model with search grounding is the likeliest reason counsel and size lookups come back thin. Moving modules 30 and 43 to a stronger model is worth trying, but I can't confirm which model names your Make connection offers.
+- The full scenario ran in about 5 minutes with no errors. Of 32 cases, 1 passed every gate and was recommended.
+- Module 39 and module 46 expose case fields at the top level. The original `{{39.value.xxx}}` paths were empty, so the counsel search never received an employer name. They are now `{{39.xxx}}`.
+- Module 43 should not have a filter. With no matching bundles, modules 47 and 45 and the sheet writes do not run.
+- Module 30 and module 43 now use Gemini 3.5 Flash. In a side-by-side test, Flash found more counsel matters than Flash Lite (American College of Surgeons: Jackson Lewis on a federal case as well as the NLRB matter). Neither model found Ohagan Meyer for Albany Care, so the search is a screen and not proof. Check each recommended employer by hand before outreach.
+- Each replay writes its cases to the tracker again. Delete duplicate test rows.
