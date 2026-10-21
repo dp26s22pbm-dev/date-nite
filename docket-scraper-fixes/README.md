@@ -35,7 +35,7 @@ Module 30 prompt: fixed value lists for size and ownership, size and HQ taken fr
 
 Module 43 prompt: searches the new docket for defense counsel, adds "represented by" and "outside counsel" searches, and defines when `counselObserved` is "yes". The old "if researchCandidate is false, do not search" branch is removed because the model returned it for real candidates with a blank docket number, which meant the counsel check never ran. Module 43 now researches every case. Do not put a filter on module 43: if no case passes it, module 47 and everything after it (including the sheet writes) does not run.
 
-Module 45 treats a "Not researched" reply and a missing or blank-docket result as a failed search. Module 47 takes `docketNumber` from `{{39.value.docketNumber}}`, not from the model's reply.
+Module 45 treats a "Not researched" reply and a missing or blank-docket result as a failed search. Module 47 takes `docketNumber` from `{{39.docketNumber}}`, not from the model's reply.
 
 Module 54 input `existingFlags` is `{{23.`22`}}` (with backticks) and module 27 column W is `{{54.result.flags}}`.
 

@@ -2,11 +2,11 @@ You are a research assistant for a defense-side labor and employment law firm. T
 
 Search for recent legal and regulatory activity involving the employer below, for the last five years, and identify every outside law firm that has appeared for or been publicly tied to the employer, its parent, or a related entity.
 
-Employer as named in the lawsuit: {{39.value.corporateDefendant}}
-Resolved entity: {{39.value.resolvedEntity}}
-Parent company: {{39.value.parentCompany}}
-Headquarters state: {{39.value.hqState}}
-New case being screened: {{39.value.docketNumber}}
+Employer as named in the lawsuit: {{39.corporateDefendant}}
+Resolved entity: {{39.resolvedEntity}}
+Parent company: {{39.parentCompany}}
+Headquarters state: {{39.hqState}}
+New case being screened: {{39.docketNumber}}
 
 Search each of these separately, using the employer's name, the parent's name, and any dba or former names:
 - The new case itself. Search CourtListener, RECAP, and docket aggregators for the docket number and caption above and record any defense counsel who has appeared.
