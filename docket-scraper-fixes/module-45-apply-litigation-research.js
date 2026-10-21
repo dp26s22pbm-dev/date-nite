@@ -71,6 +71,8 @@ const enrichedResearch = researchCases.map(base => {
   const researchFailed =
     !hasMatchingResearch ||
     String(research.summary || '').toLowerCase() === 'research failed' ||
+    // A "not researched" reply for a selected candidate means the search never ran.
+    /^not researched/i.test(String(research.summary || '').trim()) ||
     String(research.confidence || '').toLowerCase() === 'research failed';
 
   // Firms tied to the employer or a related entity in any matter found.
