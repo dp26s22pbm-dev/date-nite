@@ -443,5 +443,20 @@
     "drink": 7.0,
     "dessert": 11.5,
     "tierColor": "#22c55e"
+  },
+  {
+    "id": 29,
+    "name": "Burrito Parrilla Mexicana - Naperville South",
+    "category": "Mexican Fast Casual",
+    "coords": [
+      -88.205072,
+      41.678486
+    ],
+    "app": 10.99,
+    "casualMain": 13.99,
+    "premiumMain": 26.99,
+    "drink": 3.12,
+    "dessert": 6.79,
+    "tierColor": "#22c55e"
   }
 ]
