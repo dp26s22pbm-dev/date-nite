@@ -287,8 +287,9 @@ def set_output(key, value):
     """Hand a one-line result to the GitHub Actions workflow (used for the issue comment)."""
     path = os.environ.get("GITHUB_OUTPUT")
     if path:
+        one_line = re.sub(r"[\r\n]+", " ", str(value))  # computed outside the f-string: Python 3.11 forbids backslashes inside one
         with open(path, "a") as f:
-            f.write(f"{key}={re.sub(r'[\r\n]+', ' ', str(value))}\n")
+            f.write(f"{key}={one_line}\n")
 
 def abort(message):
     print(f"ABORT: {message}")
