@@ -7,9 +7,10 @@ body:
     id: venue_name
     attributes:
       label: Restaurant Name
+      description: "Optional if you paste a Google Maps link of the restaurant's page below; the name is read from the link."
       placeholder: "e.g., Traverso's"
     validations:
-      required: true
+      required: false
 
   - type: input
     id: category

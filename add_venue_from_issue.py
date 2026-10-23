@@ -240,6 +240,20 @@ def fetch_pdf_pricing(url):
         print(f"PDF fetch/parse error: {e}")
         return None
 
+def normalize_maps_url(value):
+    """Return the link if it is a Google Maps address, else "". Used for the fallback link on the popup."""
+    value = (value or "").strip().split()[0] if (value or "").strip() else ""
+    parsed = urllib.parse.urlparse(value)
+    host = (parsed.hostname or "").lower()
+    if parsed.scheme not in ("http", "https"):
+        return ""
+    is_maps = (
+        host in ("maps.app.goo.gl", "maps.google.com", "g.page")
+        or (host == "goo.gl" and parsed.path.startswith("/maps"))
+        or (host in ("google.com", "www.google.com") and parsed.path.startswith("/maps"))
+    )
+    return value if is_maps else ""
+
 def derive_name_from_place_text(text):
     """'Shahirizada Restaurant, 3124 IL-59, Naperville, IL' -> 'Shahirizada Restaurant'.
     Returns None when the link only holds an address (the name would start with a house number)."""
@@ -375,8 +389,11 @@ def main():
         if name:
             print(f"Restaurant name taken from the Maps link: {name}")
     if not name:
-        abort("Could not find a restaurant name in that Google Maps link. Open the restaurant's page in Google Maps "
-              "(not just a dropped pin) before sharing, or use the full 'Add New Venue' form.")
+        abort("Could not find a restaurant name. Type it into the Restaurant Name field, or share the restaurant's page "
+              "from Google Maps (not just a dropped pin) and paste that link.")
+
+    # The Google Maps link that was provided (if any) is kept so the popup can link to it when no website is found
+    maps_url = next((u for u in (normalize_maps_url(f) for f in (maps_link, coordinates_input, address)) if u), "")
 
     # Extract exact coordinates: try the Coordinates field first, then the address field
     coords = extract_coords_from_google_maps_url(coordinates_input) or extract_coords_from_google_maps_url(address)
@@ -493,6 +510,7 @@ def main():
         "name": name,
         "category": category,
         **({"website": website} if website else {}),
+        **({"mapsUrl": maps_url} if maps_url else {}),
         "coords": coords,
         "app": app,
         "casualMain": casual_main,
@@ -538,7 +556,10 @@ def main():
     if website_found:
         notes.append(f"website {website} (found automatically and checked)")
     elif not (website or saved_site):
-        notes.append("no website found (add one with the full form's Website URL field)")
+        if maps_url:
+            notes.append("no website found, so the venue name links to your Google Maps link (add a website with the full form's Website URL field)")
+        else:
+            notes.append("no website found (add one with the full form's Website URL field)")
     if not (pricing and pricing.get("casualMains")):
         notes.append("prices could not be found, so typical defaults were used")
     set_output("summary", f"✓ Added {name}. " + "; ".join(notes) + f". Estimated total ${total_cost}.")

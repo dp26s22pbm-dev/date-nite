@@ -1522,9 +1522,12 @@
       const drkCost = Math.round(state.drinks * (venue.drink || 0));
       const dstCost = Math.round(state.dessert * (venue.dessert || 0));
 
-      const siteUrl = safeWebsiteUrl(venue.website);
+      // The name links to the venue's website; when none is saved it links to the Google Maps link instead
+      const websiteUrl = safeWebsiteUrl(venue.website);
+      const siteUrl = websiteUrl || safeWebsiteUrl(venue.mapsUrl);
+      const linkTitle = websiteUrl ? `Open ${venue.name} website in a new tab` : `Open ${venue.name} in Google Maps in a new tab`;
       const nameHtml = siteUrl
-        ? `<a href="${escapeHtml(siteUrl)}" target="_blank" rel="noopener noreferrer" title="Open ${escapeHtml(venue.name)} website in a new tab">${escapeHtml(venue.name)}</a>`
+        ? `<a href="${escapeHtml(siteUrl)}" target="_blank" rel="noopener noreferrer" title="${escapeHtml(linkTitle)}">${escapeHtml(venue.name)}</a>`
         : escapeHtml(venue.name);
 
       const html = `
