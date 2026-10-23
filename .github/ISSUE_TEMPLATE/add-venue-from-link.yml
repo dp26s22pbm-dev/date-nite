@@ -1,5 +1,6 @@
 name: Add New Venue (from a Google Maps link)
 description: Paste a Google Maps link and the venue is added automatically
+title: "[New Venue]"
 labels: ["add-venue"]
 body:
   - type: input
