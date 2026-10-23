@@ -240,6 +240,20 @@ def fetch_pdf_pricing(url):
         print(f"PDF fetch/parse error: {e}")
         return None
 
+def normalize_maps_url(value):
+    """Return the link if it is a Google Maps address, else "". Used for the fallback link on the popup."""
+    value = (value or "").strip().split()[0] if (value or "").strip() else ""
+    parsed = urllib.parse.urlparse(value)
+    host = (parsed.hostname or "").lower()
+    if parsed.scheme not in ("http", "https"):
+        return ""
+    is_maps = (
+        host in ("maps.app.goo.gl", "maps.google.com", "g.page")
+        or (host == "goo.gl" and parsed.path.startswith("/maps"))
+        or (host in ("google.com", "www.google.com") and parsed.path.startswith("/maps"))
+    )
+    return value if is_maps else ""
+
 def derive_name_from_place_text(text):
     """'Shahirizada Restaurant, 3124 IL-59, Naperville, IL' -> 'Shahirizada Restaurant'.
     Returns None when the link only holds an address (the name would start with a house number)."""
@@ -283,6 +297,66 @@ def guess_cuisine_via_gemini(name, where, known_categories):
         print(f"Gemini cuisine guess error for {name}: {e}")
         return None
 
+# Pages that are about a restaurant but are not its own website
+NOT_A_WEBSITE = (
+    "facebook.", "instagram.", "yelp.", "tripadvisor.", "opentable.", "doordash.", "ubereats.", "grubhub.",
+    "postmates.", "seamless.", "google.", "goo.gl", "mapquest.", "yellowpages.", "restaurantji.", "wanderlog.",
+    "toasttab.", "order.online", "chownow.", "tiktok.", "twitter.", "x.com", "youtube.", "yahoo.", "bing.",
+    "wikipedia.", "reddit.", "nextdoor.", "patch.com", "atly.com", "frankiapp.",
+)
+NAME_STOPWORDS = {"the", "and", "of", "restaurant", "naperville", "il", "illinois", "south", "north", "east", "west"}
+
+def find_website_via_gemini(name, where):
+    """Ask Gemini (with web search) for the restaurant's own website. Returns a URL or None. Always verify it."""
+    try:
+        prompt = (
+            f'What is the official website of the restaurant "{name}"'
+            + (f' ({where})' if where else '')
+            + ' in the Naperville, IL area? If the chain has a page for this specific location, give that page. '
+            'Do not give Facebook, Instagram, Yelp, TripAdvisor, OpenTable, delivery-app, map or directory pages. '
+            'Return only the URL, or the single word NONE if you are not sure.'
+        )
+        response = client.models.generate_content(
+            model="gemini-3.6-flash",
+            contents=prompt,
+            config=types.GenerateContentConfig(
+                tools=[types.Tool(google_search=types.GoogleSearch())],
+                temperature=0.0
+            ),
+        )
+        match = re.search(r"https?://[^\s<>\"')\]]+", response.text or "")
+        return match.group(0).rstrip(".,;:") if match else None
+    except Exception as e:
+        print(f"Gemini website lookup error for {name}: {e}")
+        return None
+
+def verify_website(url, name, where):
+    """Accept a website only if it loads, is not a directory or delivery page, and its text shows both the
+    restaurant's name and its Naperville location (so a same-named business elsewhere is rejected)."""
+    parsed = urllib.parse.urlparse(url or "")
+    if parsed.scheme not in ("http", "https") or "." not in parsed.netloc:
+        return False
+    if any(bad in parsed.netloc.lower() for bad in NOT_A_WEBSITE):
+        print(f"Website rejected (directory or delivery page): {url}")
+        return False
+    try:
+        req = urllib.request.Request(url, headers={"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64)"})
+        with urllib.request.urlopen(req, timeout=12) as resp:
+            if resp.status != 200:
+                return False
+            text = resp.read(400000).decode("utf-8", "ignore").lower()
+    except Exception as e:
+        print(f"Website could not be checked ({url}): {e}")
+        return False
+    tokens = [t for t in re.findall(r"[a-z0-9]+", name.lower()) if t not in NAME_STOPWORDS]
+    named = bool(tokens) and sum(t in text for t in tokens) >= max(1, round(0.6 * len(tokens)))
+    zips = re.findall(r"\b\d{5}\b", where or "")
+    local = "naperville" in text or any(z in text for z in zips)
+    if not (named and local):
+        print(f"Website rejected (name found: {named}, Naperville/zip found: {local}): {url}")
+        return False
+    return True
+
 def set_output(key, value):
     """Hand a one-line result to the GitHub Actions workflow (used for the issue comment)."""
     path = os.environ.get("GITHUB_OUTPUT")
@@ -315,8 +389,11 @@ def main():
         if name:
             print(f"Restaurant name taken from the Maps link: {name}")
     if not name:
-        abort("Could not find a restaurant name in that Google Maps link. Open the restaurant's page in Google Maps "
-              "(not just a dropped pin) before sharing, or use the full 'Add New Venue' form.")
+        abort("Could not find a restaurant name. Type it into the Restaurant Name field, or share the restaurant's page "
+              "from Google Maps (not just a dropped pin) and paste that link.")
+
+    # The Google Maps link that was provided (if any) is kept so the popup can link to it when no website is found
+    maps_url = next((u for u in (normalize_maps_url(f) for f in (maps_link, coordinates_input, address)) if u), "")
 
     # Extract exact coordinates: try the Coordinates field first, then the address field
     coords = extract_coords_from_google_maps_url(coordinates_input) or extract_coords_from_google_maps_url(address)
@@ -357,6 +434,15 @@ def main():
             if not category:
                 category = "Restaurant"
                 print("Could not guess a cuisine label; using 'Restaurant'. Edit venues.json to change it.")
+
+    # Website: look one up only when none was given and none is saved; it is kept only if it passes verification
+    website_found = False
+    saved_site = existing_idx is not None and venues[existing_idx].get("website")
+    if not website and not saved_site:
+        guess = find_website_via_gemini(name, place_text or address)
+        if guess and verify_website(guess, name, place_text or address):
+            website, website_found = guess, True
+            print(f"Website found and verified: {website}")
 
     # Step 1: Try direct PDF download if the menu URL is a PDF
     pricing = None
@@ -424,6 +510,7 @@ def main():
         "name": name,
         "category": category,
         **({"website": website} if website else {}),
+        **({"mapsUrl": maps_url} if maps_url else {}),
         "coords": coords,
         "app": app,
         "casualMain": casual_main,
@@ -466,6 +553,13 @@ def main():
 
     notes = [f"Cuisine: {category}" + (" (best guess, edit venues.json if it is off)" if category_guessed else "")]
     notes.append("location exact" if coords_exact else "location approximate (from the address; send a share link of the place's page or exact coordinates to fix it)")
+    if website_found:
+        notes.append(f"website {website} (found automatically and checked)")
+    elif not (website or saved_site):
+        if maps_url:
+            notes.append("no website found, so the venue name links to your Google Maps link (add a website with the full form's Website URL field)")
+        else:
+            notes.append("no website found (add one with the full form's Website URL field)")
     if not (pricing and pricing.get("casualMains")):
         notes.append("prices could not be found, so typical defaults were used")
     set_output("summary", f"✓ Added {name}. " + "; ".join(notes) + f". Estimated total ${total_cost}.")
