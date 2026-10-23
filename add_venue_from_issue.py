@@ -254,6 +254,10 @@ def normalize_maps_url(value):
     )
     return value if is_maps else ""
 
+def name_from_title(title):
+    """The issue title as a venue name, ignoring the '[New Venue]:' prefix the full form pre-fills."""
+    return re.sub(r"^\s*\[new venue\]\s*:?\s*", "", title or "", flags=re.IGNORECASE).strip() or None
+
 def derive_name_from_place_text(text):
     """'Shahirizada Restaurant, 3124 IL-59, Naperville, IL' -> 'Shahirizada Restaurant'.
     Returns None when the link only holds an address (the name would start with a house number)."""
@@ -376,7 +380,8 @@ def main():
     name = extract_field(issue_body, "Restaurant Name")
     category = extract_field(issue_body, "Cuisine Category")
     address = extract_field(issue_body, "Street Address or City")
-    maps_link = extract_field(issue_body, "Google Maps Link")  # the one-field "from a Maps link" form
+    # The one-field "from a Maps link" form (its label was "Google Maps Link" before it became "(required)")
+    maps_link = extract_field(issue_body, "Google Maps link (required)") or extract_field(issue_body, "Google Maps Link")
     coordinates_input = extract_field(issue_body, "Coordinates or Google Maps Link (Optional)") or maps_link
     website = normalize_website(extract_field(issue_body, "Website URL"))
     menu_url = extract_field(issue_body, "Online Menu / Ordering URL")
@@ -389,8 +394,12 @@ def main():
         if name:
             print(f"Restaurant name taken from the Maps link: {name}")
     if not name:
-        abort("Could not find a restaurant name. Type it into the Restaurant Name field, or share the restaurant's page "
-              "from Google Maps (not just a dropped pin) and paste that link.")
+        name = name_from_title(os.environ.get("ISSUE_TITLE", ""))
+        if name:
+            print(f"Restaurant name taken from the issue title: {name}")
+    if not name:
+        abort("Could not find a restaurant name. Type it in the issue title (or the Restaurant Name field), or share the "
+              "restaurant's page from Google Maps (not just a dropped pin) and paste that link.")
 
     # The Google Maps link that was provided (if any) is kept so the popup can link to it when no website is found
     maps_url = next((u for u in (normalize_maps_url(f) for f in (maps_link, coordinates_input, address)) if u), "")
