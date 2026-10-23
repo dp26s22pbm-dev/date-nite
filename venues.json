@@ -459,5 +459,22 @@
     "drink": 3.12,
     "dessert": 6.79,
     "tierColor": "#22c55e"
+  },
+  {
+    "id": 30,
+    "name": "Chai Ho Jai - The Tea Room.",
+    "category": "South Asian Tea Room",
+    "website": "https://chaihojai.com/",
+    "mapsUrl": "https://maps.app.goo.gl/EhsCgzXBZVhFwVyv7",
+    "coords": [
+      -88.205795,
+      41.69271
+    ],
+    "app": 9.99,
+    "casualMain": 12.49,
+    "premiumMain": 14.99,
+    "drink": 5.94,
+    "dessert": 8.25,
+    "tierColor": "#22c55e"
   }
 ]
