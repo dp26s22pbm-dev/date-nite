@@ -477,5 +477,22 @@
     "drink": 5.94,
     "dessert": 8.25,
     "tierColor": "#22c55e"
+  },
+  {
+    "id": 31,
+    "name": "GIA MIA Naperville",
+    "category": "Italian / Pizza",
+    "website": "https://www.giamiapizzabar.com",
+    "mapsUrl": "https://maps.app.goo.gl/BN99tG9oAJT3MTkr5",
+    "coords": [
+      -88.147334,
+      41.773674
+    ],
+    "app": 15.0,
+    "casualMain": 21.0,
+    "premiumMain": 27.0,
+    "drink": 12.0,
+    "dessert": 13.0,
+    "tierColor": "#eab308"
   }
 ]
