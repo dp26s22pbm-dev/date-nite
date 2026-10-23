@@ -1,5 +1,6 @@
 import os
 import re
+import sys
 import json
 import statistics
 import urllib.request
@@ -239,19 +240,86 @@ def fetch_pdf_pricing(url):
         print(f"PDF fetch/parse error: {e}")
         return None
 
+def derive_name_from_place_text(text):
+    """'Shahirizada Restaurant, 3124 IL-59, Naperville, IL' -> 'Shahirizada Restaurant'.
+    Returns None when the link only holds an address (the name would start with a house number)."""
+    first = (text or "").split(",")[0].strip()
+    if not first or re.match(r"^\d", first):
+        return None
+    return first
+
+def name_key(name):
+    """Compare restaurant names ignoring case, punctuation and curly-versus-straight quotes."""
+    return re.sub(r"[^a-z0-9]", "", (name or "").lower())
+
+def clean_label(text, limit=40):
+    """Make a short, plain label: one line, no markup characters, no surrounding punctuation."""
+    text = re.sub(r"[\r\n]+", " ", text or "")
+    text = re.sub(r"[<>\"`{}\[\]*_]", "", text)
+    return text.strip(" .'-")[:limit].strip()
+
+def guess_cuisine_via_gemini(name, where, known_categories):
+    """Best-guess cuisine label for a restaurant, in the style of the labels already on the map."""
+    try:
+        examples = ", ".join(sorted({c for c in known_categories if c})[:30])
+        prompt = (
+            f'What cuisine category best describes the restaurant "{name}"'
+            + (f' ({where})' if where else '')
+            + ' in the Naperville, IL area? Answer with a short label of two to four words in the style of '
+            f'these existing labels: {examples}. Reuse one of them if it fits. '
+            'Return only the label, with no explanation, quotes or punctuation.'
+        )
+        response = client.models.generate_content(
+            model="gemini-3.6-flash",
+            contents=prompt,
+            config=types.GenerateContentConfig(
+                tools=[types.Tool(google_search=types.GoogleSearch())],
+                temperature=0.0
+            ),
+        )
+        lines = (response.text or "").strip().splitlines()
+        return clean_label(lines[0]) if lines else None
+    except Exception as e:
+        print(f"Gemini cuisine guess error for {name}: {e}")
+        return None
+
+def set_output(key, value):
+    """Hand a one-line result to the GitHub Actions workflow (used for the issue comment)."""
+    path = os.environ.get("GITHUB_OUTPUT")
+    if path:
+        with open(path, "a") as f:
+            f.write(f"{key}={re.sub(r'[\r\n]+', ' ', str(value))}\n")
+
+def abort(message):
+    print(f"ABORT: {message}")
+    set_output("error", message)
+    sys.exit(1)
+
 def main():
     issue_body = os.environ.get("ISSUE_BODY", "")
 
     name = extract_field(issue_body, "Restaurant Name")
     category = extract_field(issue_body, "Cuisine Category")
     address = extract_field(issue_body, "Street Address or City")
-    coordinates_input = extract_field(issue_body, "Coordinates or Google Maps Link (Optional)")
+    maps_link = extract_field(issue_body, "Google Maps Link")  # the one-field "from a Maps link" form
+    coordinates_input = extract_field(issue_body, "Coordinates or Google Maps Link (Optional)") or maps_link
     website = normalize_website(extract_field(issue_body, "Website URL"))
     menu_url = extract_field(issue_body, "Online Menu / Ordering URL")
     manual_pricing_text = extract_field(issue_body, "Manual Pricing Overrides (Optional)")
 
+    # A Maps share link carries the place's name and address; use them for anything the form left blank
+    place_text = place_text_from_maps_url(coordinates_input) or place_text_from_maps_url(address)
+    if not name:
+        name = derive_name_from_place_text(place_text)
+        if name:
+            print(f"Restaurant name taken from the Maps link: {name}")
+    if not name:
+        abort("Could not find a restaurant name in that Google Maps link. Open the restaurant's page in Google Maps "
+              "(not just a dropped pin) before sharing, or use the full 'Add New Venue' form.")
+
     # Extract exact coordinates: try the Coordinates field first, then the address field
     coords = extract_coords_from_google_maps_url(coordinates_input) or extract_coords_from_google_maps_url(address)
+    coords_exact = bool(coords)
     if not coords:
         # Fallback: geocode text. A pasted Maps share link carries a place name/address;
         # try that first, then the street address.
@@ -270,9 +338,24 @@ def main():
                       "Paste a Google Maps share link or exact coordinates for storefront precision.")
                 break
     if not coords:
-        print(f"ABORT: Could not determine coordinates from the Coordinates field ('{coordinates_input}') or the address field ('{address}'). "
-              "Paste a Google Maps share link or 'lat, lon' coordinates.")
-        return
+        abort(f"Could not determine coordinates from the Maps link / coordinates ('{coordinates_input}') or the address ('{address}'). "
+              "Paste a Google Maps share link of the restaurant's page, or 'lat, lon' coordinates.")
+
+    # Cuisine label: use what the form gave, else keep an existing venue's label, else let Gemini guess
+    with open("venues.json", "r") as f:
+        venues = json.load(f)
+    existing_idx = next((i for i, v in enumerate(venues) if name_key(v["name"]) == name_key(name)), None)
+    category = clean_label(category)
+    category_guessed = False
+    if not category:
+        if existing_idx is not None and venues[existing_idx].get("category"):
+            category = venues[existing_idx]["category"]
+        else:
+            category = guess_cuisine_via_gemini(name, place_text or address, [v.get("category", "") for v in venues])
+            category_guessed = bool(category)
+            if not category:
+                category = "Restaurant"
+                print("Could not guess a cuisine label; using 'Restaurant'. Edit venues.json to change it.")
 
     # Step 1: Try direct PDF download if the menu URL is a PDF
     pricing = None
@@ -307,6 +390,12 @@ def main():
 
         desserts_list = pricing.get("desserts") or [8.00]
         dessert = round(statistics.median(desserts_list), 2)
+    elif existing_idx is not None and venues[existing_idx].get("casualMain") is not None:
+        # The price lookup failed for a venue that is already on the map: keep its current prices
+        old = venues[existing_idx]
+        casual_main, premium_main = old["casualMain"], old["premiumMain"]
+        app, drink, dessert = old["app"], old["drink"], old["dessert"]
+        print("Price lookup failed; kept the venue's existing prices.")
     else:
         # Fallback to realistic Naperville full-service medians if search fails
         casual_main = 19.00
@@ -326,13 +415,9 @@ def main():
     total_cost = round((app + (1 * casual_main) + (1 * premium_main) + (2 * drink) + dessert) * 1.30)
     tier_color = calculate_tier_color(total_cost)
 
-    with open("venues.json", "r") as f:
-        venues = json.load(f)
-
     next_id = max([v.get("id", 0) for v in venues], default=0) + 1
 
     # Overwrite if restaurant already exists, else append
-    existing_idx = next((i for i, v in enumerate(venues) if v["name"].lower() == name.lower()), None)
     entry = {
         "id": (existing_idx + 1) if existing_idx is not None else next_id,
         "name": name,
@@ -348,10 +433,12 @@ def main():
     }
 
     if existing_idx is not None:
-        previous_site = venues[existing_idx].get("website")
-        if previous_site and "website" not in entry:
-            entry["website"] = previous_site  # keep the saved site when the form leaves it blank
-        venues[existing_idx] = entry
+        previous = venues[existing_idx]
+        if not coords_exact and previous.get("coords"):
+            entry["coords"] = previous["coords"]  # never replace saved coordinates with an address-level guess
+            print("Kept the venue's existing coordinates (the new ones were only approximate).")
+        entry["name"] = previous["name"]  # keep the name as already saved (the link may spell it slightly differently)
+        venues[existing_idx] = {**previous, **entry}  # keeps saved extras such as website and isTapas
     else:
         venues.append(entry)
 
@@ -375,6 +462,12 @@ def main():
             print(f"Warning: Could not append URL to urls.py: {e}")
 
     print(f"Added {name} (ID: {entry['id']}): Casual ${casual_main}, Prime ${premium_main}, Color: {tier_color}")
+
+    notes = [f"Cuisine: {category}" + (" (best guess, edit venues.json if it is off)" if category_guessed else "")]
+    notes.append("location exact" if coords_exact else "location approximate (from the address; send a share link of the place's page or exact coordinates to fix it)")
+    if not (pricing and pricing.get("casualMains")):
+        notes.append("prices could not be found, so typical defaults were used")
+    set_output("summary", f"✓ Added {name}. " + "; ".join(notes) + f". Estimated total ${total_cost}.")
 
 if __name__ == "__main__":
     main()

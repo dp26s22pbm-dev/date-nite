@@ -1,0 +1,13 @@
+name: Add New Venue (from a Google Maps link)
+description: Paste a Google Maps link and the venue is added automatically
+title: "[New Venue]: "
+labels: ["add-venue"]
+body:
+  - type: input
+    id: maps_link
+    attributes:
+      label: Google Maps Link
+      description: "In Google Maps, open the restaurant's page, tap Share, then Copy link, and paste it here. The name, location, cuisine and prices are filled in automatically."
+      placeholder: "https://maps.app.goo.gl/..."
+    validations:
+      required: true
