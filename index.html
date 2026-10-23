@@ -1530,7 +1530,7 @@
       const html = `
         <div class="pop-header">
           <div class="pop-name">${nameHtml}</div>
-          <div class="pop-cat">${venue.category}</div>
+          <div class="pop-cat">${escapeHtml(venue.category || '')}</div>
         </div>
         <div class="pop-badge">
           <span class="pop-badge-label">Est. TOTAL (incl. tip and tax)</span>

@@ -6,6 +6,9 @@ on:
 
 jobs:
   add-venue:
+    # The repository is public, so only run for the owner and collaborators; otherwise any stranger's issue
+    # could write to venues.json and use the Gemini key
+    if: contains(fromJSON('["OWNER","MEMBER","COLLABORATOR"]'), github.event.issue.author_association)
     runs-on: ubuntu-latest
     permissions:
       contents: write
@@ -27,6 +30,7 @@ jobs:
           pip install -r requirements.txt
 
       - name: Parse Issue and Add Venue
+        id: add
         env:
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
           ISSUE_BODY: ${{ github.event.issue.body }}
@@ -45,4 +49,12 @@ jobs:
         uses: peter-evans/close-issue@v3
         with:
           issue-number: ${{ github.event.issue.number }}
-          comment: "✓ Venue parsed, pricing calculated, and added to venues.json!"
+          comment: ${{ steps.add.outputs.summary || '✓ Venue parsed, pricing calculated, and added to venues.json!' }}
+
+      - name: Report failure on the issue
+        if: failure()
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REASON: ${{ steps.add.outputs.error }}
+        run: |
+          gh issue comment ${{ github.event.issue.number }} --repo ${{ github.repository }} --body "Could not add this venue. ${REASON:-See the workflow run for details.} Run: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
