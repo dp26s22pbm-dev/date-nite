@@ -10,9 +10,6 @@ jobs:
     # could write to venues.json and use the Gemini key
     if: contains(fromJSON('["OWNER","MEMBER","COLLABORATOR"]'), github.event.issue.author_association)
     runs-on: ubuntu-latest
-    concurrency:
-      group: venues-data-write
-      cancel-in-progress: false
     permissions:
       contents: write
       issues: write
@@ -22,6 +19,9 @@ jobs:
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v4
+        with:
+          # issues events check out the commit that was main when the issue opened, which is stale for a queued run
+          ref: main
 
       - name: Set up Python
         uses: actions/setup-python@v5
@@ -32,27 +32,27 @@ jobs:
         run: |
           pip install -r requirements.txt
 
-      - name: Parse Issue and Add Venue
+      - name: Parse Issue, Add Venue, and Push
         id: add
         env:
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
           ISSUE_BODY: ${{ github.event.issue.body }}
           ISSUE_TITLE: ${{ github.event.issue.title }}
         run: |
-          python add_venue_from_issue.py
-
-      - name: Commit and Push Changes
-        run: |
           git config --global user.name "github-actions[bot]"
           git config --global user.email "github-actions[bot]@users.noreply.github.com"
-          git add venues.json urls.py
-          git commit -m "Add new venue via Issue #${{ github.event.issue.number }}" || exit 0
-          for attempt in 1 2 3 4 5; do
-            git pull --rebase origin main && git push && exit 0
-            git rebase --abort 2>/dev/null || true
-            sleep $((attempt * 3))
+          # Another run may push first. venues.json is appended to, so two runs always conflict on
+          # a rebase; start over from the new main and add the venue again instead.
+          for attempt in 1 2 3 4 5 6; do
+            python add_venue_from_issue.py || exit 1
+            git add venues.json urls.py
+            git commit -m "Add new venue via Issue #${{ github.event.issue.number }}" || exit 0
+            git push && exit 0
+            echo "Push rejected (attempt $attempt); resetting to origin/main and adding the venue again"
+            git fetch origin main
+            git reset --hard origin/main
           done
-          echo "Could not push after 5 attempts" >&2
+          echo "Could not push after 6 attempts" >&2
           exit 1
 
       - name: Close Issue
