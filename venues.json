@@ -675,5 +675,22 @@
     "drink": 7.0,
     "dessert": 10.18,
     "tierColor": "#eab308"
+  },
+  {
+    "id": 43,
+    "name": "Empire Burgers + Brew",
+    "category": "Casual American",
+    "website": "https://www.empireburgerbar.com/",
+    "mapsUrl": "https://maps.app.goo.gl/pvwBSi4qfNMrmRc18",
+    "coords": [
+      -88.149361,
+      41.771278
+    ],
+    "app": 12.0,
+    "casualMain": 17.0,
+    "premiumMain": 19.0,
+    "drink": 14.5,
+    "dessert": 11.0,
+    "tierColor": "#eab308"
   }
 ]
