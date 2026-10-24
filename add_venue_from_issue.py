@@ -2,6 +2,7 @@ import os
 import re
 import sys
 import json
+import math
 import statistics
 import urllib.request
 import urllib.parse
@@ -380,6 +381,55 @@ def verify_website(url, name, where):
         return False
     return True
 
+def haversine_m(a, b):
+    """Distance in meters between two [lon, lat] points."""
+    rad = math.pi / 180
+    d_lat, d_lon = (b[1] - a[1]) * rad, (b[0] - a[0]) * rad
+    h = math.sin(d_lat / 2) ** 2 + math.cos(a[1] * rad) * math.cos(b[1] * rad) * math.sin(d_lon / 2) ** 2
+    return 2 * 6371000 * math.asin(math.sqrt(h))
+
+def maps_tool_experiment(name, where, saved_coords):
+    """EXPERIMENT ONLY, never used for the saved location. Ask Gemini's Google Maps tool for the place's
+    coordinates, write everything it returns to the workflow log, and return a one-line note for the issue
+    comment (or None). The saved point is passed in only to measure how far off the answer is."""
+    try:
+        prompt = (
+            f'Use Google Maps to find the restaurant "{name}"' + (f' ({where})' if where else '')
+            + ' in the Naperville, IL area. Reply with only JSON like {"lat": 41.7, "lng": -88.2, "address": "..."} '
+            'giving the latitude and longitude of that restaurant, or {"lat": null, "lng": null} if you cannot tell.'
+        )
+        response = client.models.generate_content(
+            model="gemini-3.6-flash",
+            contents=prompt,
+            config=types.GenerateContentConfig(
+                tools=[types.Tool(google_maps=types.GoogleMaps())],
+                tool_config=types.ToolConfig(retrieval_config=types.RetrievalConfig(
+                    lat_lng=types.LatLng(latitude=saved_coords[1], longitude=saved_coords[0]))),
+                temperature=0.0
+            ),
+        )
+        text = (response.text or "").strip()
+        print(f"[maps-experiment] raw reply: {text[:500]}")
+        try:
+            grounding = response.candidates[0].grounding_metadata
+            for chunk in (getattr(grounding, "grounding_chunks", None) or []):
+                maps = getattr(chunk, "maps", None)
+                if maps:
+                    print(f"[maps-experiment] place: title={getattr(maps, 'title', None)} "
+                          f"uri={getattr(maps, 'uri', None)} place_id={getattr(maps, 'place_id', None)}")
+        except Exception as e:
+            print(f"[maps-experiment] no grounding details: {e}")
+        match = re.search(r'"lat"\s*:\s*(-?\d+(?:\.\d+)?)\s*,\s*"lng"\s*:\s*(-?\d+(?:\.\d+)?)', text)
+        if not match:
+            return "Experiment (not used): Gemini's Maps tool gave no coordinates."
+        lat, lng = float(match.group(1)), float(match.group(2))
+        metres = round(haversine_m([lng, lat], saved_coords))
+        print(f"[maps-experiment] answer {lat}, {lng} is {metres} m from the saved point")
+        return f"Experiment (not used): Gemini's Maps tool gave {lat:.5f}, {lng:.5f}, {metres} m from the saved point."
+    except Exception as e:
+        print(f"[maps-experiment] failed: {e}")
+        return None
+
 def set_output(key, value):
     """Hand a one-line result to the GitHub Actions workflow (used for the issue comment)."""
     path = os.environ.get("GITHUB_OUTPUT")
@@ -591,7 +641,12 @@ def main():
             notes.append("no website found (add one with the full form's Website URL field)")
     if not (pricing and pricing.get("casualMains")):
         notes.append("prices could not be found, so typical defaults were used")
-    set_output("summary", f"✓ Added {name}. " + "; ".join(notes) + f". Estimated total ${total_cost}.")
+    summary = f"✓ Added {name}. " + "; ".join(notes) + f". Estimated total ${total_cost}."
+    final_coords = (venues[existing_idx] if existing_idx is not None else entry)["coords"]
+    experiment = maps_tool_experiment(name, place_text or address, final_coords)
+    if experiment:
+        summary += " " + experiment
+    set_output("summary", summary)
 
 if __name__ == "__main__":
     main()
