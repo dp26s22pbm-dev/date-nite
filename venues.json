@@ -527,5 +527,21 @@
     "drink": 16.0,
     "dessert": 11.0,
     "tierColor": "#f97316"
+  },
+  {
+    "id": 34,
+    "name": "STK Steakhouse",
+    "category": "Prime Steak & Seafood",
+    "mapsUrl": "https://maps.app.goo.gl/oRQMrKLa6c4rmHdy5",
+    "coords": [
+      -87.949699,
+      41.846272
+    ],
+    "app": 28.0,
+    "casualMain": 31.2,
+    "premiumMain": 142.8,
+    "drink": 19.5,
+    "dessert": 23.0,
+    "tierColor": "#ef4444"
   }
 ]
