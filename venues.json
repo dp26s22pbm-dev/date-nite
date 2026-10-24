@@ -575,5 +575,21 @@
     "drink": 13.0,
     "dessert": 7.45,
     "tierColor": "#eab308"
+  },
+  {
+    "id": 37,
+    "name": "Coa",
+    "category": "Spanish Tapas",
+    "mapsUrl": "https://maps.app.goo.gl/SgUWuNck6xvAjM7N6",
+    "coords": [
+      -87.927733,
+      41.84509
+    ],
+    "app": 12.0,
+    "casualMain": 28.5,
+    "premiumMain": 48.0,
+    "drink": 16.0,
+    "dessert": 10.0,
+    "tierColor": "#f97316"
   }
 ]
