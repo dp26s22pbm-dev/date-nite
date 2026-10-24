@@ -12,7 +12,7 @@ jobs:
   refresh:
     runs-on: ubuntu-latest
     concurrency:
-      group: venues-data-write
+      group: refresh-venues
       cancel-in-progress: false
     permissions:
       contents: write
@@ -20,6 +20,8 @@ jobs:
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v4
+        with:
+          ref: main
 
       - name: Set up Python
         uses: actions/setup-python@v5
