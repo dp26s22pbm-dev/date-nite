@@ -658,5 +658,22 @@
     "drink": 13.0,
     "dessert": 9.0,
     "tierColor": "#eab308"
+  },
+  {
+    "id": 42,
+    "name": "Granite City Food & Brewery",
+    "category": "Casual American",
+    "website": "https://www.gcfb.com/location/naperville-illinois/",
+    "mapsUrl": "https://maps.app.goo.gl/HTcYU93V4aLFcrw99",
+    "coords": [
+      -88.128171,
+      41.804944
+    ],
+    "app": 13.25,
+    "casualMain": 16.98,
+    "premiumMain": 29.9,
+    "drink": 7.0,
+    "dessert": 10.18,
+    "tierColor": "#eab308"
   }
 ]
