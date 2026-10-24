@@ -591,5 +591,22 @@
     "drink": 16.0,
     "dessert": 10.0,
     "tierColor": "#f97316"
+  },
+  {
+    "id": 38,
+    "name": "Rosebud Naperville",
+    "category": "Italian",
+    "website": "https://rosebudnaperville.com/",
+    "mapsUrl": "https://maps.app.goo.gl/gTxjtWRcXgzz7qyA9",
+    "coords": [
+      -88.147812,
+      41.771204
+    ],
+    "app": 19.0,
+    "casualMain": 19.0,
+    "premiumMain": 45.0,
+    "drink": 16.0,
+    "dessert": 17.0,
+    "tierColor": "#f97316"
   }
 ]
