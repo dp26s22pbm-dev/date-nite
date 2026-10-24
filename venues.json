@@ -497,13 +497,12 @@
   },
   {
     "id": 32,
-    "name": "Wild Tuna Sushi   Grill",
+    "name": "Wild Tuna Sushi + Grill",
     "category": "Modern Japanese",
     "website": "https://www.wildtunasushi.com/",
-    "mapsUrl": "https://maps.app.goo.gl/Bkdh2uK3q2pTDADU9?g_st=com.apple.shortcuts.Run-Workflow.(null",
+    "mapsUrl": "https://maps.app.goo.gl/Bkdh2uK3q2pTDADU9",
     "coords": [
-      -88.204646,
-      41.704126
+      -88.204653, 41.704274
     ],
     "app": 8.88,
     "casualMain": 17.5,

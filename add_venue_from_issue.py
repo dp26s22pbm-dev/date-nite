@@ -132,6 +132,12 @@ def extract_coords_from_google_maps_url(input_str):
 
     return None
 
+def decode_maps_text(raw):
+    """Decode a Maps URL fragment. Google writes a space as '+', and some links also write a literal plus sign
+    unencoded, so 'Sushi + Grill' arrives as 'Sushi+++Grill'. Treat a run of exactly three as ' + '."""
+    raw = re.sub(r"(?<=[^+])\+\+\+(?=[^+])", " %2B ", raw)
+    return urllib.parse.unquote_plus(raw).strip()
+
 def place_text_from_maps_url(input_str):
     """Pull the place name/address Google embeds in /maps/place/<text>/ share URLs."""
     if not is_maps_link(input_str):
@@ -139,10 +145,10 @@ def place_text_from_maps_url(input_str):
     final_url = expand_maps_url(input_str)
     m = re.search(r'/maps/place/([^/@?]+)', final_url)
     if m:
-        return urllib.parse.unquote_plus(m.group(1)).strip()
+        return decode_maps_text(m.group(1))
     m = re.search(r'[?&](?:q|query)=([^&]+)', final_url)
     if m:
-        text = urllib.parse.unquote_plus(m.group(1)).strip()
+        text = decode_maps_text(m.group(1))
         if not re.fullmatch(r'[-+\d.,\s]+', text):
             return text
     return None
@@ -252,7 +258,11 @@ def normalize_maps_url(value):
         or (host == "goo.gl" and parsed.path.startswith("/maps"))
         or (host in ("google.com", "www.google.com") and parsed.path.startswith("/maps"))
     )
-    return value if is_maps else ""
+    if not is_maps:
+        return ""
+    if host == "maps.app.goo.gl":
+        return f"{parsed.scheme}://{host}{parsed.path}"  # drop tracking suffixes such as ?g_st=...
+    return value
 
 def find_maps_url_in_text(text):
     """First Google Maps address anywhere in the text. Lets an issue created by a script (for example the iPhone
@@ -424,7 +434,7 @@ def main():
         for field in (coordinates_input, address):
             text = place_text_from_maps_url(field)
             if text:
-                candidates.extend(dict.fromkeys([strip_business_name(text), text]))
+                candidates.extend(dict.fromkeys([text, strip_business_name(text)]))
         if address and not is_maps_link(address):
             candidates.append(address)
         for text in candidates:
