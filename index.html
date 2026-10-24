@@ -922,7 +922,9 @@
     const listEl = document.getElementById('venue-list');
     const listCards = document.getElementById('list-cards');
     let listSort = 'cost';
-    let listOrigin = null; // where distances are measured from: the car once placed, otherwise the map's starting center
+    // Distances are always measured from home (Book Rd & 104th St). The car's browser-reported location is often
+    // miles off on desktop, so it never moves this origin.
+    const HOME = [-88.1859, 41.6936];
 
     function toggleList() {
       const on = listEl.classList.toggle('hidden') === false;
@@ -949,7 +951,7 @@
     }
 
     function renderList() {
-      const origin = listOrigin || MAP_CENTER;
+      const origin = HOME;
       const items = rawVenues
         .map(v => ({ v, total: calculateTotal(v), miles: haversineM(origin, v.coords) / 1609.344 }))
         .filter(i => i.miles * 1609.344 <= LIST_RADIUS_M)
@@ -1210,8 +1212,6 @@
       ensureCarLayers();
       carPos = lngLat.slice();
       carParkDest = null;
-      listOrigin = lngLat.slice();
-      renderList();
       carBtn.classList.add('active');
       if (!carLoopRaf) carLoopRaf = requestAnimationFrame(carLoop);
     }
