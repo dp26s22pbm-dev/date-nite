@@ -625,5 +625,22 @@
     "drink": 14.5,
     "dessert": 11.88,
     "tierColor": "#eab308"
+  },
+  {
+    "id": 40,
+    "name": "Piccolo Buco by Cooper's Hawk",
+    "category": "Italian / Pizza",
+    "website": "https://piccolobuco.coopershawk.com/locations/naperville",
+    "mapsUrl": "https://maps.app.goo.gl/wgyubAXda82Gw7BT6",
+    "coords": [
+      -88.205261,
+      41.763068
+    ],
+    "app": 18.99,
+    "casualMain": 21.99,
+    "premiumMain": 30.99,
+    "drink": 13.0,
+    "dessert": 11.99,
+    "tierColor": "#eab308"
   }
 ]
