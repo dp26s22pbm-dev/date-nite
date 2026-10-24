@@ -692,5 +692,21 @@
     "drink": 14.5,
     "dessert": 11.0,
     "tierColor": "#eab308"
+  },
+  {
+    "id": 44,
+    "name": "Beatrix",
+    "category": "Modern American Bistro",
+    "mapsUrl": "https://maps.app.goo.gl/TVx66HDaYPefrZEU6",
+    "coords": [
+      -87.950545,
+      41.84927
+    ],
+    "app": 14.95,
+    "casualMain": 19.95,
+    "premiumMain": 31.95,
+    "drink": 11.5,
+    "dessert": 11.95,
+    "tierColor": "#eab308"
   }
 ]
