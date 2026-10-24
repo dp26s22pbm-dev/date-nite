@@ -494,5 +494,22 @@
     "drink": 12.0,
     "dessert": 13.0,
     "tierColor": "#eab308"
+  },
+  {
+    "id": 32,
+    "name": "Wild Tuna Sushi   Grill",
+    "category": "Modern Japanese",
+    "website": "https://www.wildtunasushi.com/",
+    "mapsUrl": "https://maps.app.goo.gl/Bkdh2uK3q2pTDADU9?g_st=com.apple.shortcuts.Run-Workflow.(null",
+    "coords": [
+      -88.204646,
+      41.704126
+    ],
+    "app": 8.88,
+    "casualMain": 17.5,
+    "premiumMain": 33.12,
+    "drink": 5.0,
+    "dessert": 5.5,
+    "tierColor": "#22c55e"
   }
 ]
