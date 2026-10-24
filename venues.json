@@ -559,5 +559,21 @@
     "drink": 16.0,
     "dessert": 16.1,
     "tierColor": "#ef4444"
+  },
+  {
+    "id": 36,
+    "name": "Capri Ristorante",
+    "category": "Italian",
+    "mapsUrl": "https://maps.app.goo.gl/cdGHJEahMSDMMYtp9",
+    "coords": [
+      -87.91127,
+      41.75106
+    ],
+    "app": 15.95,
+    "casualMain": 18.95,
+    "premiumMain": 34.95,
+    "drink": 13.0,
+    "dessert": 7.45,
+    "tierColor": "#eab308"
   }
 ]
