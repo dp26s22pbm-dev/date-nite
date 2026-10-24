@@ -330,13 +330,23 @@ NOT_A_WEBSITE = (
 )
 NAME_STOPWORDS = {"the", "and", "of", "restaurant", "naperville", "il", "illinois", "south", "north", "east", "west"}
 
+def local_markers(where):
+    """Zip codes and city names from the venue's own address text, so a site is checked against the town the
+    venue is really in. Falls back to Naperville when the text has neither."""
+    zips = re.findall(r"\b\d{5}\b", where or "")
+    cities = [c.strip().lower() for c in re.findall(r",\s*([A-Za-z][A-Za-z .'-]*?),?\s+(?:IL|Illinois)\b", where or "")]
+    if not zips and not cities:
+        cities = ["naperville"]
+    return zips, cities
+
 def find_website_via_gemini(name, where):
     """Ask Gemini (with web search) for the restaurant's own website. Returns a URL or None. Always verify it."""
     try:
         prompt = (
             f'What is the official website of the restaurant "{name}"'
             + (f' ({where})' if where else '')
-            + ' in the Naperville, IL area? If the chain has a page for this specific location, give that page. '
+            + (' in the area it is located in. ' if where else ' in the Naperville, IL area. ')
+            + 'If the chain has a page for this specific location, give that page. '
             'Do not give Facebook, Instagram, Yelp, TripAdvisor, OpenTable, delivery-app, map or directory pages. '
             'Return only the URL, or the single word NONE if you are not sure.'
         )
@@ -356,7 +366,7 @@ def find_website_via_gemini(name, where):
 
 def verify_website(url, name, where):
     """Accept a website only if it loads, is not a directory or delivery page, and its text shows both the
-    restaurant's name and its Naperville location (so a same-named business elsewhere is rejected)."""
+    restaurant's name and its location (city or zip from the venue's address, Naperville if none) (so a same-named business elsewhere is rejected)."""
     parsed = urllib.parse.urlparse(url or "")
     if parsed.scheme not in ("http", "https") or "." not in parsed.netloc:
         return False
@@ -374,10 +384,11 @@ def verify_website(url, name, where):
         return False
     tokens = [t for t in re.findall(r"[a-z0-9]+", name.lower()) if t not in NAME_STOPWORDS]
     named = bool(tokens) and sum(t in text for t in tokens) >= max(1, round(0.6 * len(tokens)))
-    zips = re.findall(r"\b\d{5}\b", where or "")
-    local = "naperville" in text or any(z in text for z in zips)
+    zips, cities = local_markers(where)
+    compact = re.sub(r"[^a-z0-9]", "", text)
+    local = any(z in text for z in zips) or any(c in text or re.sub(r"[^a-z0-9]", "", c) in compact for c in cities)
     if not (named and local):
-        print(f"Website rejected (name found: {named}, Naperville/zip found: {local}): {url}")
+        print(f"Website rejected (name found: {named}, city/zip found: {local}): {url}")
         return False
     return True
 
