@@ -708,5 +708,22 @@
     "drink": 11.5,
     "dessert": 11.95,
     "tierColor": "#eab308"
+  },
+  {
+    "id": 45,
+    "name": "Davanti Enoteca",
+    "category": "Modern Italian",
+    "website": "https://www.davantienoteca.com/location/davanti-enoteca-naperville/",
+    "mapsUrl": "https://maps.app.goo.gl/6G4W6q9AnqQkwHM87",
+    "coords": [
+      -88.147307,
+      41.771664
+    ],
+    "app": 17.0,
+    "casualMain": 26.0,
+    "premiumMain": 36.0,
+    "drink": 14.5,
+    "dessert": 13.0,
+    "tierColor": "#f97316"
   }
 ]
