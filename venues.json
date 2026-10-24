@@ -502,7 +502,8 @@
     "website": "https://www.wildtunasushi.com/",
     "mapsUrl": "https://maps.app.goo.gl/Bkdh2uK3q2pTDADU9",
     "coords": [
-      -88.204653, 41.704274
+      -88.204653,
+      41.704274
     ],
     "app": 8.88,
     "casualMain": 17.5,
@@ -510,5 +511,21 @@
     "drink": 5.0,
     "dessert": 5.5,
     "tierColor": "#22c55e"
+  },
+  {
+    "id": 33,
+    "name": "RH Rooftop Restaurant at RH Oak Brook",
+    "category": "American",
+    "mapsUrl": "https://maps.app.goo.gl/pcsBSxJ7onhSNeEfA",
+    "coords": [
+      -87.950566,
+      41.847382
+    ],
+    "app": 24.0,
+    "casualMain": 26.0,
+    "premiumMain": 38.0,
+    "drink": 16.0,
+    "dessert": 11.0,
+    "tierColor": "#f97316"
   }
 ]
