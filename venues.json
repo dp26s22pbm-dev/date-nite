@@ -608,5 +608,22 @@
     "drink": 16.0,
     "dessert": 17.0,
     "tierColor": "#f97316"
+  },
+  {
+    "id": 39,
+    "name": "Fat Rosie's Taco and Tequila Bar",
+    "category": "Elevated Mexican",
+    "website": "https://www.fatrosies.com/location/naperville/",
+    "mapsUrl": "https://maps.app.goo.gl/KW5YMyZBdY1qDvKq7",
+    "coords": [
+      -88.147048,
+      41.771035
+    ],
+    "app": 10.5,
+    "casualMain": 19.0,
+    "premiumMain": 27.12,
+    "drink": 14.5,
+    "dessert": 11.88,
+    "tierColor": "#eab308"
   }
 ]
