@@ -254,6 +254,15 @@ def normalize_maps_url(value):
     )
     return value if is_maps else ""
 
+def find_maps_url_in_text(text):
+    """First Google Maps address anywhere in the text. Lets an issue created by a script (for example the iPhone
+    Shortcut) hold the link on the same line as the header, or with no header at all."""
+    for match in re.finditer(r"https?://[^\s<>\"')\]]+", text or ""):
+        url = normalize_maps_url(match.group(0).rstrip(".,;:"))
+        if url:
+            return url
+    return ""
+
 def name_from_title(title):
     """The issue title as a venue name, ignoring the '[New Venue]:' prefix the full form pre-fills."""
     return re.sub(r"^\s*\[new venue\]\s*:?\s*", "", title or "", flags=re.IGNORECASE).strip() or None
@@ -381,7 +390,8 @@ def main():
     category = extract_field(issue_body, "Cuisine Category")
     address = extract_field(issue_body, "Street Address or City")
     # The one-field "from a Maps link" form (its label was "Google Maps Link" before it became "(required)")
-    maps_link = extract_field(issue_body, "Google Maps link (required)") or extract_field(issue_body, "Google Maps Link")
+    maps_link = (extract_field(issue_body, "Google Maps link (required)") or extract_field(issue_body, "Google Maps Link")
+                 or find_maps_url_in_text(issue_body))
     coordinates_input = extract_field(issue_body, "Coordinates or Google Maps Link (Optional)") or maps_link
     website = normalize_website(extract_field(issue_body, "Website URL"))
     menu_url = extract_field(issue_body, "Online Menu / Ordering URL")
