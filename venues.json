@@ -543,5 +543,21 @@
     "drink": 19.5,
     "dessert": 23.0,
     "tierColor": "#ef4444"
+  },
+  {
+    "id": 35,
+    "name": "Eddie Merlot's",
+    "category": "Prime Steak & Seafood",
+    "mapsUrl": "https://maps.app.goo.gl/rubmj18foQmb3KhD6",
+    "coords": [
+      -88.170109,
+      41.802736
+    ],
+    "app": 21.85,
+    "casualMain": 19.0,
+    "premiumMain": 75.6,
+    "drink": 16.0,
+    "dessert": 16.1,
+    "tierColor": "#ef4444"
   }
 ]
