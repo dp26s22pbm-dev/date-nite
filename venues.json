@@ -725,5 +725,22 @@
     "drink": 14.5,
     "dessert": 13.0,
     "tierColor": "#f97316"
+  },
+  {
+    "id": 46,
+    "name": "Cooper\u2019s Hawk Winery & Restaurant",
+    "category": "Modern American Bistro",
+    "website": "https://chwinery.com/locations/illinois/naperville",
+    "mapsUrl": "https://maps.app.goo.gl/nVrcRXrfECYBHnVP8",
+    "coords": [
+      -88.125831,
+      41.802675
+    ],
+    "app": 19.49,
+    "casualMain": 21.99,
+    "premiumMain": 43.99,
+    "drink": 13.75,
+    "dessert": 13.49,
+    "tierColor": "#f97316"
   }
 ]
