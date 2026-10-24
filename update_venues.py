@@ -22,7 +22,7 @@ Search for current menu pricing for "{venue_name}" in {city}.
 Find real-world pricing for these categories:
 1. apps: typical appetizer / starter item price (in USD, number only)
 2. casualMains: standard, lower-cost main entree or sandwich prices (in USD, number only)
-3. premiumMains: prices of the standard steak, seafood and specialty entrees a typical guest orders as a splurge (for example filet, ribeye, strip, salmon, sea bass), in USD, number only. Exclude large-format or shared cuts (tomahawk, porterhouse for two), wagyu, market-price or "MP" items, surf-and-turf add-ons, seafood towers and platters for sharing.
+3. premiumMains: prices of the steak and expensive seafood entrees (for example filet, ribeye, strip, lobster, king crab, scallops, salmon, sea bass), in USD, number only. List the standard single-entree plate for each. Do not include chicken, pork or vegetarian dishes, combination plates or multi-protein platters. Exclude large-format or shared cuts (tomahawk, porterhouse for two), wagyu, market-price or "MP" items, surf-and-turf add-ons, seafood towers and platters for sharing. If the menu has no steak or expensive seafood, list its highest priced standard entrees instead.
 4. drinks: standard cocktail or craft beverage prices (in USD, number only)
 5. desserts: typical dessert prices (in USD, number only)
 
