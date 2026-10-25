@@ -680,7 +680,7 @@
   </div>
 
   <!-- Car / location -->
-  <button id="car-toggle" class="car-btn" onclick="locateUser()" aria-label="Show my car at my location" title="Show my car at my location">
+  <button id="car-toggle" class="car-btn" onclick="toggleCar()" aria-label="Show my car at my location" title="Show my car at my location">
     <svg viewBox="0 0 24 24"><path d="M18.92 6.01C18.72 5.42 18.16 5 17.5 5h-11c-.66 0-1.21.42-1.42 1.01L3 12v8c0 .55.45 1 1 1h1c.55 0 1-.45 1-1v-1h12v1c0 .55.45 1 1 1h1c.55 0 1-.45 1-1v-8l-2.08-5.99zM6.5 16c-.83 0-1.5-.67-1.5-1.5S5.67 13 6.5 13s1.5.67 1.5 1.5S7.33 16 6.5 16zm11 0c-.83 0-1.5-.67-1.5-1.5s.67-1.5 1.5-1.5 1.5.67 1.5 1.5-.67 1.5-1.5 1.5zM5 11l1.5-4.5h11L19 11H5z"/></svg>
   </button>
   <button id="zoom-reset" class="zoom-btn" onclick="resetZoom()" aria-label="Zoom out to the starting view" title="Zoom out to the starting view">
@@ -1134,6 +1134,9 @@
     let carRaf = null;
     let driveToken = 0;
     let toastTimer = null;
+    let carAlpha = 1; // 1 = fully visible; fades to 0 when the car button hides the car
+    let carFadeRaf = null;
+    const CAR_FADE_MS = 400;
 
     function showCarToast(msg) {
       carToast.textContent = msg;
@@ -1241,6 +1244,7 @@
       const bob = calm ? 0 : 0.006 * (0.5 + 0.5 * Math.sin(t / 55));
       const shake = calm ? 0 : 0.008 * Math.sin(t / 41);
 
+      map.setPaintProperty('car-3d-body', 'fill-extrusion-opacity', carAlpha);
       map.getSource('car-3d').setData({
         type: 'FeatureCollection',
         features: CAR_PARTS.map((p) => ({
@@ -1260,7 +1264,7 @@
           type: 'Feature', properties: {}, geometry: { type: 'Polygon', coordinates: [ring(b)] }
         }))
       });
-      map.setPaintProperty('car-beam-fill', 'fill-opacity', calm ? 0.25 : 0.2 + 0.1 * Math.sin(t / 260));
+      map.setPaintProperty('car-beam-fill', 'fill-opacity', (calm ? 0.25 : 0.2 + 0.1 * Math.sin(t / 260)) * carAlpha);
 
       // Exhaust puffs drift back and fade
       map.getSource('car-puff').setData(calm ? emptyFC : {
@@ -1269,7 +1273,7 @@
           const p = ((t / 1400) + offset) % 1;
           return {
             type: 'Feature',
-            properties: { r: 2 + p * 7, o: (1 - p) * 0.5 },
+            properties: { r: 2 + p * 7, o: (1 - p) * 0.5 * carAlpha },
             geometry: { type: 'Point', coordinates: toLL((i ? 0.07 : -0.07) + p * 0.04, -0.54 - p * 0.45) }
           };
         })
@@ -1288,13 +1292,57 @@
       // Only the first placement has to wait for the map; once the car exists it redraws constantly, so the map is never idle
       if (!map.getSource('car-3d') && !map.isStyleLoaded()) { map.once('idle', () => placeCar(lngLat)); return; }
       cancelAnimationFrame(carRaf);
+      cancelAnimationFrame(carFadeRaf);
+      carFadeRaf = null;
+      carAlpha = 1;
       driveToken++;
       clearCarRoute();
       ensureCarLayers();
       carPos = lngLat.slice();
       carParkDest = null;
       carBtn.classList.add('active');
+      carBtn.setAttribute('aria-label', 'Hide my car');
+      carBtn.title = 'Hide my car';
       if (!carLoopRaf) carLoopRaf = requestAnimationFrame(carLoop);
+    }
+
+    // Fades the car out along with any dotted trail, then stops drawing it
+    function hideCar() {
+      cancelAnimationFrame(carRaf);
+      driveToken++; // abandons any drive in progress
+      carBtn.classList.remove('active');
+      carBtn.setAttribute('aria-label', 'Show my car at my location');
+      carBtn.title = 'Show my car at my location';
+      fadeCarRoute();
+      cancelAnimationFrame(carFadeRaf);
+      const finish = () => {
+        carFadeRaf = null;
+        carAlpha = 0;
+        cancelAnimationFrame(carLoopRaf);
+        carLoopRaf = null;
+        carPos = null;
+        carParkDest = null;
+        ['car-3d', 'car-beam', 'car-puff'].forEach((id) => {
+          const src = map.getSource(id);
+          if (src) src.setData(emptyFC);
+        });
+      };
+      if (reducedMotion.matches) { finish(); return; }
+      const from = carAlpha, t0 = performance.now();
+      const step = (now) => {
+        const k = Math.min(1, (now - t0) / CAR_FADE_MS);
+        carAlpha = from * (1 - k);
+        if (k < 1) carFadeRaf = requestAnimationFrame(step);
+        else finish();
+      };
+      carFadeRaf = requestAnimationFrame(step);
+    }
+
+    // First click fades the car out; the next click puts it back at the user's location
+    function toggleCar() {
+      if (carBtn.classList.contains('busy')) return;
+      if (carPos && carBtn.classList.contains('active')) hideCar();
+      else locateUser();
     }
 
     function locateUser() {
