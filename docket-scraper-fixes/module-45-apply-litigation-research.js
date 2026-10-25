@@ -64,8 +64,9 @@ const enrichedResearch = researchCases.map(base => {
     String(base.confidence || '').toLowerCase() === 'research failed';
 
   const matters = Array.isArray(research.matters) ? research.matters : [];
+  // The new docket often appears as a matter with no counsel yet, so it only counts when a firm is named.
   const sameDocketMatter = matters.some(
-    matter => normalizeDocket(matter.caseNumber) === docket && Boolean(docket)
+    matter => normalizeDocket(matter.caseNumber) === docket && Boolean(docket) && usable(matter.counselFirm)
   );
 
   const researchFailed =
