@@ -1430,6 +1430,8 @@
       while (driveTotal > total * 0.5 && haversineM(pointAtDistance(path, cum, driveTotal), dest) < gapM) {
         driveTotal -= backStep;
       }
+      // Keep the popup card off the car's final approach (about 150px out) so the car never hides behind it
+      steerPopupAwayFromCar(pointAtDistance(path, cum, Math.max(0, driveTotal - 150 * mppStart)), dest);
       let d = 0;
       const t0 = performance.now();
       let last = t0;
@@ -1648,6 +1650,25 @@
       }
     }
 
+    // The popup card is HTML above the map canvas, so it would hide a car arriving from its side of the dot.
+    // The card sits on the opposite side of the dot from the car's final approach.
+    let popupAnchor = 'bottom'; // 'bottom' puts the card above the dot, 'top' below it
+    let rebuildingPopup = false;
+
+    function steerPopupAwayFromCar(approachPoint, dest) {
+      const a = map.project(approachPoint), d = map.project(dest);
+      const anchor = a.y < d.y - 20 ? 'top' : 'bottom';
+      if (anchor === popupAnchor) return;
+      popupAnchor = anchor;
+      const venue = rawVenues.find(v => v.id === selectedVenueId);
+      if (!venue || !currentPopup) return;
+      rebuildingPopup = true;
+      currentPopup.remove();
+      rebuildingPopup = false;
+      currentPopup = null;
+      renderPopup(venue);
+    }
+
     function renderPopup(venue) {
       const total = calculateTotal(venue);
       const cMult = venue.isTapas ? (state.casual * 2) : state.casual;
@@ -1688,12 +1709,13 @@
       if (currentPopup && currentPopup.isOpen()) {
         currentPopup.setLngLat(venue.coords).setHTML(html);
       } else {
-        currentPopup = new maplibregl.Popup({ closeButton: true, closeOnClick: false, offset: POPUP_OFFSET_PX })
+        currentPopup = new maplibregl.Popup({ closeButton: true, closeOnClick: false, offset: POPUP_OFFSET_PX, anchor: popupAnchor })
           .setLngLat(venue.coords)
           .setHTML(html)
           .addTo(map);
 
         currentPopup.on('close', () => {
+          if (rebuildingPopup) return;
           selectedVenueId = null;
           currentPopup = null;
           updateListSelection();
