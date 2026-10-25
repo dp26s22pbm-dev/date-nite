@@ -1136,7 +1136,10 @@
     let toastTimer = null;
     let carAlpha = 1; // 1 = fully visible; fades to 0 when the car button hides the car
     let carFadeRaf = null;
+    let carHiding = false; // the car is fading out; a drive in progress keeps going until the fade ends
+    let carDriving = false;
     const CAR_FADE_MS = 400;
+    const CAR_DRIVING_FADE_MS = 1200; // longer when moving, so the car visibly keeps rolling along its track
 
     function showCarToast(msg) {
       carToast.textContent = msg;
@@ -1295,6 +1298,8 @@
       cancelAnimationFrame(carFadeRaf);
       carFadeRaf = null;
       carAlpha = 1;
+      carHiding = false;
+      carDriving = false;
       driveToken++;
       clearCarRoute();
       ensureCarLayers();
@@ -1308,16 +1313,21 @@
 
     // Fades the car out along with any dotted trail, then stops drawing it
     function hideCar() {
-      cancelAnimationFrame(carRaf);
-      driveToken++; // abandons any drive in progress
+      carHiding = true;
       carBtn.classList.remove('active');
       carBtn.setAttribute('aria-label', 'Show my car at my location');
       carBtn.title = 'Show my car at my location';
-      fadeCarRoute();
+      // A car that is mid-drive keeps following its track while it and the trail fade together
+      const ms = carDriving ? CAR_DRIVING_FADE_MS : CAR_FADE_MS;
+      fadeCarRoute(ms);
       cancelAnimationFrame(carFadeRaf);
       const finish = () => {
         carFadeRaf = null;
         carAlpha = 0;
+        carHiding = false;
+        carDriving = false;
+        cancelAnimationFrame(carRaf);
+        driveToken++; // ends the drive, if it is still going
         cancelAnimationFrame(carLoopRaf);
         carLoopRaf = null;
         carPos = null;
@@ -1330,7 +1340,7 @@
       if (reducedMotion.matches) { finish(); return; }
       const from = carAlpha, t0 = performance.now();
       const step = (now) => {
-        const k = Math.min(1, (now - t0) / CAR_FADE_MS);
+        const k = Math.min(1, (now - t0) / ms);
         carAlpha = from * (1 - k);
         if (k < 1) carFadeRaf = requestAnimationFrame(step);
         else finish();
@@ -1408,12 +1418,12 @@
       if (map.getLayer && map.getLayer('car-route-line')) map.setPaintProperty('car-route-line', 'line-opacity', ROUTE_OPACITY);
     }
 
-    function fadeCarRoute() {
+    function fadeCarRoute(ms = ROUTE_FADE_MS) {
       if (!map.getLayer('car-route-line') || reducedMotion.matches) { clearCarRoute(); return; }
       cancelRouteFade();
       const t0 = performance.now();
       const step = (now) => {
-        const k = Math.min(1, (now - t0) / ROUTE_FADE_MS);
+        const k = Math.min(1, (now - t0) / ms);
         map.setPaintProperty('car-route-line', 'line-opacity', ROUTE_OPACITY * (1 - k));
         if (k < 1) {
           routeFadeRaf = requestAnimationFrame(step);
@@ -1451,7 +1461,7 @@
     }
 
     async function driveCarTo(dest) {
-      if (!carPos) return;
+      if (!carPos || carHiding) return;
       const token = ++driveToken;
       const requestedFrom = carVisualPos().slice();
       const road = await fetchDrivingRoute(requestedFrom, dest);
@@ -1468,6 +1478,7 @@
       if (total < 1) return;
 
       setCarRoute(path);
+      carDriving = true;
       // Stop short of the venue dot so the dot stays visible
       const mppStart = metersPerPixel(start[1]);
       // Walk back from the end until the car is a full gap away from the dot in a straight line
@@ -1515,7 +1526,8 @@
         if (d < driveTotal) {
           carRaf = requestAnimationFrame(step);
         } else {
-          fadeCarRoute(); // arrived: the trail fades out; the car stays just short of the dot, still idling
+          carDriving = false;
+          if (!carHiding) fadeCarRoute(); // arrived: the trail fades out; the car stays just short of the dot, still idling
           const mLonD = 111320 * Math.cos(dest[1] * Math.PI / 180);
           carParkOffsetPx = [
             (pos[0] - dest[0]) * mLonD / mppStart,
