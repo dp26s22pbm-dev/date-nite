@@ -286,6 +286,26 @@
       background: transparent !important;
     }
 
+    /* Venue name that fades in beside a hovered dot. It never takes the mouse, and sits under the popup. */
+    .dot-label {
+      position: fixed;
+      left: 0;
+      top: 0;
+      z-index: 1000;
+      padding: 3px 8px;
+      border-radius: 6px;
+      background: rgba(13, 17, 23, 0.55);
+      color: #ffffff;
+      font-size: 13px;
+      font-weight: 700;
+      white-space: nowrap;
+      text-shadow: 0 1px 3px rgba(0, 0, 0, 0.9);
+      pointer-events: none;
+      opacity: 0;
+      transition: opacity 0.12s ease;
+    }
+    .dot-label.show { opacity: 1; }
+
     .pop-header { margin-bottom: 8px; padding-right: 18px; }
     .pop-name { font-size: 16px; font-weight: 700; margin: 0; }
     .pop-name a { color: inherit; text-decoration: none; border-bottom: 1px dotted rgba(255, 255, 255, 0.45); }
@@ -888,7 +908,12 @@
         const hits = venuesUnderPoint(e.point);
         const crowded = hits.length > 1 && map.getZoom() < CROWD_MAX_ZOOM - 0.5;
         map.getCanvas().style.cursor = crowded ? 'zoom-in' : (hits.length > 0 ? 'pointer' : '');
+        if (hits.length > 0 && !crowded && !map.isMoving()) showDotLabel(hits[0].venue);
+        else hideDotLabel();
       });
+      map.getCanvas().addEventListener('mouseleave', hideDotLabel);
+      map.on('movestart', hideDotLabel);
+      map.on('click', hideDotLabel);
 
       // If location permission was already granted on an earlier visit, show the car without a tap
       try {
@@ -1426,6 +1451,55 @@
         if (dist <= DOT_HIT_RADIUS_PX) hits.push({ venue, dist });
       }
       return hits.sort((a, b) => a.dist - b.dist);
+    }
+
+    // ---- Hover label: the venue's name beside a dot, placed where no open card is ----
+    const DOT_LABEL_GAP_PX = DOT_OUTER_RADIUS_PX + 8;
+    const DOT_LABEL_CLEARANCE_PX = 8;
+    const dotLabel = document.createElement('div');
+    dotLabel.className = 'dot-label';
+    document.body.appendChild(dotLabel);
+
+    function rectsOverlap(a, b, pad) {
+      return a.left < b.right + pad && a.right > b.left - pad && a.top < b.bottom + pad && a.bottom > b.top - pad;
+    }
+
+    function showDotLabel(venue) {
+      // The selected dot already has its card open, so it needs no label
+      if (venue.id === selectedVenueId) { hideDotLabel(); return; }
+      dotLabel.textContent = venue.name;
+      const w = dotLabel.offsetWidth;
+      const h = dotLabel.offsetHeight;
+      const mapBox = map.getContainer().getBoundingClientRect();
+      const p = map.project(venue.coords);
+      const x = mapBox.left + p.x;
+      const y = mapBox.top + p.y;
+      const g = DOT_LABEL_GAP_PX;
+
+      // Everything the label must stay clear of: the open popup card and the strip of venue cards
+      const avoid = [];
+      if (currentPopup && currentPopup.isOpen()) avoid.push(currentPopup.getElement().getBoundingClientRect());
+      avoid.push(listEl.getBoundingClientRect());
+
+      const candidates = [
+        { left: x - w / 2, top: y - g - h },   // above
+        { left: x - w / 2, top: y + g },       // below
+        { left: x + g, top: y - h / 2 },       // right
+        { left: x - g - w, top: y - h / 2 }    // left
+      ].map(c => ({ ...c, right: c.left + w, bottom: c.top + h }));
+
+      const fits = (c) =>
+        c.left >= mapBox.left + 4 && c.right <= mapBox.right - 4 && c.top >= mapBox.top + 4 && c.bottom <= mapBox.bottom - 4 &&
+        !avoid.some(r => rectsOverlap(c, r, DOT_LABEL_CLEARANCE_PX));
+      const spot = candidates.find(fits) || candidates[0];
+
+      dotLabel.style.left = `${Math.round(spot.left)}px`;
+      dotLabel.style.top = `${Math.round(spot.top)}px`;
+      dotLabel.classList.add('show');
+    }
+
+    function hideDotLabel() {
+      dotLabel.classList.remove('show');
     }
 
     function zoomToSeparate(hits) {
