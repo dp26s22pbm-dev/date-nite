@@ -758,6 +758,8 @@
     
     let rawVenues = [];
     let currentPopup = null;
+    const LABELS_MIN_ZOOM = 15.5; // from this zoom in, every dot shows its name
+    const LABELS_FADE_ZOOM = 0.4; // the names fade in over this much zoom just below it
     let selectedVenueId = null;
 
     const state = {
@@ -884,6 +886,32 @@
         }
       });
 
+      // Close up, every dot carries its name, which fades in as the map zooms past LABELS_MIN_ZOOM and out again below it.
+      // The open venue's own label is left off because its card already shows the name.
+      map.addLayer({
+        id: 'restaurants-label',
+        type: 'symbol',
+        source: 'restaurants',
+        minzoom: LABELS_MIN_ZOOM - LABELS_FADE_ZOOM,
+        filter: ['!=', ['get', 'id'], selectedVenueId ?? -1],
+        layout: {
+          'text-field': ['get', 'name'],
+          'text-font': ['Noto Sans Regular'],
+          'text-size': 14,
+          'text-variable-anchor': ['left', 'right', 'top', 'bottom'],
+          'text-radial-offset': 1.7, // in text heights: clears the dot's edge with a small gap
+          'text-max-width': 12
+        },
+        paint: {
+          'text-color': '#ffffff',
+          'text-halo-color': 'rgba(0, 0, 0, 0.85)',
+          'text-halo-width': 1.5,
+          'text-opacity': ['interpolate', ['linear'], ['zoom'],
+            LABELS_MIN_ZOOM - LABELS_FADE_ZOOM, 0,
+            LABELS_MIN_ZOOM, ['get', 'opacity']]
+        }
+      });
+
       map.on('click', (e) => {
         const hits = venuesUnderPoint(e.point);
 
@@ -913,6 +941,7 @@
       });
       map.getCanvas().addEventListener('mouseleave', hideDotLabel);
       map.on('movestart', hideDotLabel);
+      map.on('zoom', () => { if (map.getZoom() >= LABELS_MIN_ZOOM - LABELS_FADE_ZOOM) hideDotLabel(); });
       map.on('click', hideDotLabel);
 
       // If location permission was already granted on an earlier visit, show the car without a tap
@@ -1005,6 +1034,9 @@
     window.addEventListener('resize', updateListFade);
 
     function updateListSelection() {
+      if (map.getLayer('restaurants-label')) {
+        map.setFilter('restaurants-label', ['!=', ['get', 'id'], selectedVenueId ?? -1]);
+      }
       listCards.querySelectorAll('.venue-card').forEach(c =>
         c.classList.toggle('selected', Number(c.dataset.id) === selectedVenueId));
     }
@@ -1465,8 +1497,8 @@
     }
 
     function showDotLabel(venue) {
-      // The selected dot already has its card open, so it needs no label
-      if (venue.id === selectedVenueId) { hideDotLabel(); return; }
+      // The selected dot already has its card open, and zoomed in every dot is labelled already
+      if (venue.id === selectedVenueId || map.getZoom() >= LABELS_MIN_ZOOM - LABELS_FADE_ZOOM) { hideDotLabel(); return; }
       dotLabel.textContent = venue.name;
       const w = dotLabel.offsetWidth;
       const h = dotLabel.offsetHeight;
