@@ -955,12 +955,14 @@
           'text-max-width': 12
         },
         paint: {
-          'text-color': '#ffffff',
-          'text-halo-color': 'rgba(0, 0, 0, 0.85)',
+          // Over-budget venues dim their name through the color's alpha. The zoom fade has to stay a plain zoom
+          // expression: mixing venue data into its stops makes the map ramp the fade in far more slowly.
+          'text-color': ['rgba', 255, 255, 255, ['get', 'opacity']],
+          'text-halo-color': ['rgba', 0, 0, 0, ['*', ['get', 'opacity'], 0.85]],
           'text-halo-width': 1.8,
           'text-opacity': ['interpolate', ['linear'], ['zoom'],
             LABELS_MIN_ZOOM - LABELS_FADE_ZOOM, 0,
-            LABELS_MIN_ZOOM, ['get', 'opacity']]
+            LABELS_MIN_ZOOM, 1]
         }
       });
 
