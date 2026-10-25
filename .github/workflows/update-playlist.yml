@@ -1,0 +1,38 @@
+name: Update music playlist
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'mp3/*.mp3'
+  workflow_dispatch:
+
+jobs:
+  playlist:
+    runs-on: ubuntu-latest
+    concurrency:
+      group: update-playlist
+      cancel-in-progress: false
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+        with:
+          ref: main
+
+      - name: Rebuild mp3/playlist.json
+        run: |
+          python3 - <<'PY'
+          import json, pathlib
+          names = sorted(p.name for p in pathlib.Path('mp3').glob('*.mp3'))
+          pathlib.Path('mp3/playlist.json').write_text(json.dumps(names, indent=2) + '\n')
+          PY
+
+      - name: Commit Playlist
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add mp3/playlist.json
+          git diff --cached --quiet || (git commit -m "Update music playlist" && git push)
