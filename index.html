@@ -760,6 +760,7 @@
     let currentPopup = null;
     const LABELS_MIN_ZOOM = 15.5; // from this zoom in, every dot shows its name
     const LABELS_FADE_ZOOM = 0.4; // the names fade in over this much zoom just below it
+    const DOT_BLOCKER_PX = 30; // a little wider than the dot (26px with its outline) so names keep a gap
     let selectedVenueId = null;
 
     const state = {
@@ -927,6 +928,24 @@
           'text-opacity': ['interpolate', ['linear'], ['zoom'],
             LABELS_MIN_ZOOM - LABELS_FADE_ZOOM, 0,
             LABELS_MIN_ZOOM, ['get', 'opacity']]
+        }
+      });
+
+      // An invisible marker over each dot, above the names in the layer order, so no name is drawn across another
+      // venue's dot and a name that can't fit beside its own dot tries another side instead of being dropped.
+      if (!map.hasImage('dot-blocker')) {
+        map.addImage('dot-blocker', { width: 1, height: 1, data: new Uint8Array(4) });
+      }
+      map.addLayer({
+        id: 'restaurants-dot-blocker',
+        type: 'symbol',
+        source: 'restaurants',
+        minzoom: LABELS_MIN_ZOOM - LABELS_FADE_ZOOM,
+        layout: {
+          'icon-image': 'dot-blocker',
+          'icon-size': DOT_BLOCKER_PX, // the 1px image stretched to cover the dot and its outline
+          'icon-allow-overlap': true,
+          'icon-ignore-placement': false
         }
       });
 
