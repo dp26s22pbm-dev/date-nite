@@ -1117,6 +1117,21 @@
       }
       listCards.querySelectorAll('.venue-card').forEach(c =>
         c.classList.toggle('selected', Number(c.dataset.id) === selectedVenueId));
+      centerSelectedCard();
+    }
+
+    // Scroll the strip so the selected card sits in its middle (clamped at either end of the list)
+    function centerSelectedCard() {
+      const card = listCards.querySelector('.venue-card.selected');
+      if (!card || listEl.classList.contains('hidden')) return;
+      const box = listCards.getBoundingClientRect();
+      const r = card.getBoundingClientRect();
+      const target = listCards.scrollLeft + (r.left + r.width / 2) - (box.left + box.width / 2);
+      const max = listCards.scrollWidth - listCards.clientWidth;
+      listCards.scrollTo({
+        left: Math.max(0, Math.min(max, target)),
+        behavior: reducedMotion.matches ? 'auto' : 'smooth'
+      });
     }
 
     // With a mouse, hovering near either end of the strip (or past it, level with the cards) scrolls the
