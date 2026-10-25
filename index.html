@@ -947,13 +947,19 @@
             return;
           }
           selectVenue(venueId);
+          return;
         }
+
+        // A venue's name works like its dot
+        const labelled = venueUnderLabel(e.point);
+        if (labelled) selectVenue(labelled.id);
       });
 
       map.on('mousemove', (e) => {
         const hits = venuesUnderPoint(e.point);
         const crowded = hits.length > 1 && map.getZoom() < CROWD_MAX_ZOOM - 0.5;
-        map.getCanvas().style.cursor = crowded ? 'zoom-in' : (hits.length > 0 ? 'pointer' : '');
+        const overLabel = hits.length === 0 && venueUnderLabel(e.point) !== null;
+        map.getCanvas().style.cursor = crowded ? 'zoom-in' : (hits.length > 0 || overLabel ? 'pointer' : '');
         if (hits.length > 0 && !crowded && !map.isMoving()) showDotLabel(hits[0].venue);
         else hideDotLabel();
       });
@@ -1550,6 +1556,13 @@
 
     function hideDotLabel() {
       dotLabel.classList.remove('show');
+    }
+
+    // The venue whose name is drawn under a screen point, once the names are clearly visible
+    function venueUnderLabel(point) {
+      if (map.getZoom() < LABELS_MIN_ZOOM - LABELS_FADE_ZOOM / 2 || !map.getLayer('restaurants-label')) return null;
+      const f = map.queryRenderedFeatures(point, { layers: ['restaurants-label'] })[0];
+      return f ? rawVenues.find(v => v.id === Number(f.properties.id)) || null : null;
     }
 
     function zoomToSeparate(hits) {
