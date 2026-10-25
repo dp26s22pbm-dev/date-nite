@@ -792,6 +792,7 @@
     let currentPopup = null;
     const LABELS_MIN_ZOOM = 15.5; // from this zoom in, every dot shows its name
     const LABELS_FADE_ZOOM = 0.4; // the names fade in over this much zoom just below it
+    const LABELS_FULL_ZOOM = LABELS_MIN_ZOOM + 0.1; // a little past the fade, so rounding in the easing can't leave names dim
     const DOT_BLOCKER_PX = 30; // a little wider than the dot (26px with its outline) so names keep a gap
     let selectedVenueId = null;
 
@@ -1688,8 +1689,9 @@
         padding: { top: 140, bottom: 140, left: 80, right: 80 },
         maxZoom: CROWD_MAX_ZOOM
       });
-      // Always zoom in a meaningful amount, even when the dots share almost the same spot
-      const zoom = Math.min(CROWD_MAX_ZOOM, Math.max(cam ? cam.zoom : 0, map.getZoom() + 1.5));
+      // Always zoom in a meaningful amount, even when the dots share almost the same spot, and never stop short of
+      // the height where every name is fully faded in. With many dots that means a name at the edge may be cut off.
+      const zoom = Math.min(CROWD_MAX_ZOOM, Math.max(cam ? cam.zoom : 0, map.getZoom() + 1.5, LABELS_FULL_ZOOM));
       const center = cam ? cam.center : bounds.getCenter();
       map.easeTo({
         center,
