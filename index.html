@@ -1117,6 +1117,7 @@
     const carToast = document.getElementById('car-toast');
     const MAP_CENTER = [-88.16632, 41.74594];
     const MAX_DISTANCE_FROM_MAP_M = 60000;
+    const MAX_TRUSTED_ACCURACY_M = 1000;
     let carPos = null; // [lng, lat] of the car, or null until located
     let carLoopRaf = null;
     // When parked at a venue the car sits just short of the dot. The offset is kept in screen
@@ -1364,7 +1365,11 @@
       navigator.geolocation.getCurrentPosition(
         (pos) => {
           carBtn.classList.remove('busy');
-          const here = [pos.coords.longitude, pos.coords.latitude];
+          // Desktop browsers often report a location from the IP address, miles off and flagged with a large
+          // accuracy radius. That reading isn't trusted; the car starts at home instead.
+          const here = pos.coords.accuracy > MAX_TRUSTED_ACCURACY_M
+            ? HOME.slice()
+            : [pos.coords.longitude, pos.coords.latitude];
           if (haversineM(here, MAP_CENTER) > MAX_DISTANCE_FROM_MAP_M) {
             showCarToast('You appear to be outside the Naperville area, so your car is not shown.');
             return;
