@@ -760,5 +760,21 @@
     "drink": 2.87,
     "dessert": 4.99,
     "tierColor": "#22c55e"
+  },
+  {
+    "id": 48,
+    "name": "Vasco\u2019s PeriPeri Naperville",
+    "category": "Mediterranean",
+    "mapsUrl": "https://maps.app.goo.gl/pNY1YYfPLcR7fpFf7",
+    "coords": [
+      -88.204074,
+      41.707348
+    ],
+    "app": 7.74,
+    "casualMain": 14.99,
+    "premiumMain": 28.49,
+    "drink": 4.36,
+    "dessert": 6.99,
+    "tierColor": "#22c55e"
   }
 ]
