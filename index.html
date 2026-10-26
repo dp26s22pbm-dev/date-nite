@@ -323,6 +323,8 @@
       transition: opacity 0.12s ease;
     }
     .dot-label.show { opacity: 1; }
+    .dot-label.slow { transition-duration: 0.3s; } /* a click on the dot lets its name linger a little longer */
+    @media (prefers-reduced-motion: reduce) { .dot-label.slow { transition-duration: 0.12s; } }
 
     .pop-header { margin-bottom: 8px; padding-right: 18px; }
     .pop-name { font-size: 16px; font-weight: 700; margin: 0; }
@@ -1059,7 +1061,7 @@
       map.getCanvas().addEventListener('mouseleave', hideDotLabel);
       map.on('movestart', hideDotLabel);
       map.on('zoom', () => { if (map.getZoom() >= LABELS_MIN_ZOOM - LABELS_FADE_ZOOM) hideDotLabel(); });
-      map.on('click', hideDotLabel);
+      map.on('click', () => hideDotLabel(true));
 
       // If location permission was already granted on an earlier visit, show the car without a tap
       try {
@@ -1761,10 +1763,12 @@
 
       dotLabel.style.left = `${Math.round(spot.left)}px`;
       dotLabel.style.top = `${Math.round(spot.top)}px`;
+      dotLabel.classList.remove('slow');
       dotLabel.classList.add('show');
     }
 
-    function hideDotLabel() {
+    function hideDotLabel(slow = false) {
+      dotLabel.classList.toggle('slow', slow === true);
       dotLabel.classList.remove('show');
     }
 
