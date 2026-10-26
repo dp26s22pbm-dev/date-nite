@@ -308,6 +308,17 @@
       border-top: 2px solid rgba(255, 255, 255, 0.85) !important;
       margin-left: -8px !important;
     }
+    /* Over-budget venue: card is slightly grayed with a dimmer outline, like its dot on the map */
+    .maplibregl-popup.popup-over .maplibregl-popup-content,
+    .maplibregl-popup.popup-over .maplibregl-popup-tip {
+      border-color: rgba(255, 255, 255, 0.35) !important;
+    }
+    .maplibregl-popup.popup-over .pop-header,
+    .maplibregl-popup.popup-over .pop-badge,
+    .maplibregl-popup.popup-over .pop-grid {
+      opacity: 0.6;
+      filter: grayscale(0.6);
+    }
     .maplibregl-popup-close-button {
       color: #8b949e !important;
       font-size: 18px !important;
@@ -2084,6 +2095,9 @@
         popupEl.addEventListener('click', onPopupClick);
         popupEl.addEventListener('mousemove', onPopupHover);
       }
+
+      // Matches the grayed-out dot: an over-budget venue gets a dimmed card with a softer outline
+      currentPopup.getElement().classList.toggle('popup-over', isOverBudget(total));
     }
 
     function refreshMap() {
