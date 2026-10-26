@@ -425,7 +425,7 @@
     /* Floating Audio Toggle Button */
     .audio-btn {
       position: fixed !important;
-      right: 20px !important;
+      right: 16px !important;
       bottom: var(--btn-base) !important;
       width: 44px !important;
       height: 44px !important;
@@ -482,7 +482,7 @@
     /* Round map buttons stacked above the audio toggle: the car first, then the zoom-out cloud */
     .car-btn, .zoom-btn, .list-btn {
       position: fixed !important;
-      right: 20px !important;
+      right: 16px !important;
       bottom: calc(var(--btn-base) + 54px) !important;
       width: 44px !important;
       height: 44px !important;
@@ -597,7 +597,7 @@
 
     .car-toast {
       position: fixed;
-      right: 74px;
+      right: 70px;
       bottom: calc(var(--btn-base) + 60px);
       max-width: 260px;
       padding: 10px 12px;
@@ -1085,7 +1085,36 @@
     });
 
 
-    // Open a venue's popup, send the car, and glide the venue to the center of the map, keeping the current zoom and tilt
+    // Where the selected venue's dot should land on screen: the center of the map, unless the popup above it would
+    // run under the cost tier, budget or menu panels (narrow screens). Then the dot moves down far enough to clear
+    // them, but never so far that it slides under the venue list.
+    const POPUP_PANEL_GAP_PX = 12;
+    function venueTargetPoint() {
+      const c = map.getContainer();
+      const cx = c.clientWidth / 2;
+      const cy = c.clientHeight / 2;
+      const content = currentPopup && currentPopup.getElement()?.querySelector('.maplibregl-popup-content');
+      if (!content) return { x: cx, y: cy };
+      const left = cx - content.offsetWidth / 2;
+      const right = cx + content.offsetWidth / 2;
+      let panelBottom = 0;
+      for (const sel of ['.legend-panel', '.budget-card', '.control-panel']) {
+        const r = document.querySelector(sel).getBoundingClientRect();
+        if (r.right > left && r.left < right) panelBottom = Math.max(panelBottom, r.bottom);
+      }
+      if (!panelBottom) return { x: cx, y: cy };
+      // The card's real distance above its dot (the CSS tip adds to the Popup offset), read from where it is now
+      const dot = map.project(currentPopup.getLngLat());
+      const dotToCardBottom = dot.y - content.getBoundingClientRect().bottom;
+      const popupTop = cy - dotToCardBottom - content.offsetHeight;
+      const shift = Math.max(0, panelBottom + POPUP_PANEL_GAP_PX - popupTop);
+      const listH = listEl.classList.contains('hidden') ? 0 : listEl.offsetHeight;
+      const maxY = Math.max(cy, c.clientHeight - listH - 24);
+      return { x: cx, y: Math.min(cy + shift, maxY) };
+    }
+
+    // Open a venue's popup, send the car, and glide the venue to its spot on the map (the center, or lower on narrow
+    // screens so its card clears the panels), keeping the current zoom and tilt
     function selectVenue(venueId) {
       const venue = rawVenues.find(v => v.id === venueId);
       if (!venue) return;
@@ -1094,26 +1123,28 @@
       selectedVenueId = venueId;
       renderPopup(venue, hide);
       driveCarTo(venue.coords);
+      const target = venueTargetPoint();
+      const container = map.getContainer();
       map.easeTo({
         center: venue.coords,
+        offset: [target.x - container.clientWidth / 2, target.y - container.clientHeight / 2],
         duration: reducedMotion.matches ? 0 : 900,
         easing: (x) => 0.5 - Math.cos(Math.PI * x) / 2
       });
-      if (hide) revealPopupNearCenter(venue);
+      if (hide) revealPopupNearCenter(venue, target);
       updateListSelection();
     }
 
     // A new popup starts invisible so it never shows at the wrong anchor while the camera travels. It fades in
     // once the venue is close to the center of the map (or when the camera stops, whichever comes first).
     let cancelPendingReveal = null;
-    function revealPopupNearCenter(venue) {
+    function revealPopupNearCenter(venue, target) {
       if (cancelPendingReveal) cancelPendingReveal();
       const popup = currentPopup;
       if (!popup) return;
       const offCenter = () => {
         const p = map.project(venue.coords);
-        const c = map.getContainer();
-        return Math.hypot(p.x - c.clientWidth / 2, p.y - c.clientHeight / 2);
+        return Math.hypot(p.x - target.x, p.y - target.y);
       };
       const start = offCenter();
       let done = false;
