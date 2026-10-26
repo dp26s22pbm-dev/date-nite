@@ -587,14 +587,14 @@
     .app-ver {
       position: fixed;
       left: 14px; /* 8px padding keeps the text where it was */
-      bottom: 12px; /* level with the map credit's "i" button on the right */
+      bottom: 0; /* flush with the browser bar below */
       z-index: 1000;
       font-size: 11px;
       font-weight: 400;
       letter-spacing: 0.08em;
       color: #fff;
-      padding: 3px 8px;
-      border-radius: 6px;
+      padding: 3px 8px 12px; /* bottom padding keeps the text level with the map credit's "i" button */
+      border-radius: 6px 6px 0 0;
       background: rgba(13, 17, 23, 0.55); /* same semi-black backing as the venue labels */
       text-shadow: 0 1px 3px #000;
       pointer-events: none;
