@@ -366,6 +366,56 @@ def find_website_via_gemini(name, where):
         print(f"Gemini website lookup error for {name}: {e}")
         return None
 
+PLACES_URL = "https://places.googleapis.com/v1/places:searchText"
+# Centered on Naperville; only a bias, so a more exact match elsewhere still wins
+PLACES_BIAS = {"circle": {"center": {"latitude": 41.75, "longitude": -88.15}, "radius": 30000.0}}
+
+def clean_listing_website(url):
+    """Google's website field often carries tracking parameters (?utm_source=...); keep the plain address."""
+    parsed = urllib.parse.urlparse((url or "").strip())
+    query = [p for p in parsed.query.split("&") if p and not p.lower().startswith(("utm_", "fbclid", "gclid"))]
+    return urllib.parse.urlunparse(parsed._replace(query="&".join(query), fragment=""))
+
+def places_lookup(name, where):
+    """Look the venue up in Google's Places API (the data behind the Maps listing). Returns
+    {"coords": [lon, lat], "website": str, "name": str, "address": str} for the best match, else None.
+    Needs GOOGLE_PLACES_API_KEY; without it the importer falls back to the older address/search methods."""
+    key = os.environ.get("GOOGLE_PLACES_API_KEY", "").strip()
+    if not key:
+        return None
+    query = f"{name}, {where}" if where and name.lower() not in where.lower() else (where or name)
+    body = json.dumps({"textQuery": query, "maxResultCount": 5, "locationBias": PLACES_BIAS}).encode()
+    req = urllib.request.Request(PLACES_URL, data=body, headers={
+        "Content-Type": "application/json",
+        "X-Goog-Api-Key": key,
+        "X-Goog-FieldMask": "places.displayName,places.formattedAddress,places.location,places.websiteUri",
+    })
+    try:
+        with urllib.request.urlopen(req, timeout=20) as resp:
+            places = json.load(resp).get("places") or []
+    except Exception as e:
+        print(f"Places API lookup failed: {e}")
+        return None
+    tokens = [t for t in re.findall(r"[a-z0-9]+", name.lower()) if t not in NAME_STOPWORDS]
+    zips, _ = local_markers(where)
+    for p in places:
+        shown = (p.get("displayName") or {}).get("text", "")
+        address = p.get("formattedAddress", "")
+        haystack = re.sub(r"[^a-z0-9]", "", shown.lower())
+        named = bool(tokens) and sum(t in haystack for t in tokens) >= max(1, round(0.6 * len(tokens)))
+        in_zip = (not zips) or any(z in address for z in zips)
+        loc = p.get("location") or {}
+        if named and in_zip and "latitude" in loc and "longitude" in loc:
+            print(f"Places API matched '{shown}' at {address}")
+            return {
+                "coords": [round(loc["longitude"], 6), round(loc["latitude"], 6)],
+                "website": clean_listing_website(p.get("websiteUri", "")),
+                "name": shown,
+                "address": address,
+            }
+    print(f"Places API: no result matching '{name}' ({len(places)} returned)")
+    return None
+
 def verify_website(url, name, where):
     """Accept a website only if it loads, is not a directory or delivery page, and its text shows both the
     restaurant's name and its location (city or zip from the venue's address, Naperville if none) (so a same-named business elsewhere is rejected)."""
@@ -490,6 +540,14 @@ def main():
     # Extract exact coordinates: try the Coordinates field first, then the address field
     coords = extract_coords_from_google_maps_url(coordinates_input) or extract_coords_from_google_maps_url(address)
     coords_exact = bool(coords)
+
+    # Google's Places API holds what the Maps listing shows: the exact pin and the website. Ask it when either is missing.
+    listing = None
+    if not coords or not website:
+        listing = places_lookup(name, place_text or address)
+    if listing and not coords:
+        coords, coords_exact = listing["coords"], True
+        print(f"Using the Maps listing's exact location: {coords}")
     if not coords:
         # Fallback: geocode text. A pasted Maps share link carries a place name/address;
         # try that first, then the street address.
@@ -530,11 +588,16 @@ def main():
     # Website: look one up only when none was given and none is saved; it is kept only if it passes verification
     website_found = False
     saved_site = existing_idx is not None and venues[existing_idx].get("website")
+    website_source = "found automatically and checked"
     if not website and not saved_site:
-        guess = find_website_via_gemini(name, place_text or address)
-        if guess and verify_website(guess, name, place_text or address):
-            website, website_found = guess, True
-            print(f"Website found and verified: {website}")
+        if listing and listing["website"] and normalize_website(listing["website"]):
+            website, website_found, website_source = listing["website"], True, "from the Google Maps listing"
+            print(f"Website taken from the Maps listing: {website}")
+        else:
+            guess = find_website_via_gemini(name, place_text or address)
+            if guess and verify_website(guess, name, place_text or address):
+                website, website_found = guess, True
+                print(f"Website found and verified: {website}")
 
     # Step 1: Try direct PDF download if the menu URL is a PDF
     pricing = None
@@ -646,7 +709,7 @@ def main():
     notes = [f"Cuisine: {category}" + (" (best guess, edit venues.json if it is off)" if category_guessed else "")]
     notes.append("location exact" if coords_exact else "location approximate (from the address; send a share link of the place's page or exact coordinates to fix it)")
     if website_found:
-        notes.append(f"website {website} (found automatically and checked)")
+        notes.append(f"website {website} ({website_source})")
     elif not (website or saved_site):
         if maps_url:
             notes.append("no website found, so the venue name links to your Google Maps link (add a website with the full form's Website URL field)")
