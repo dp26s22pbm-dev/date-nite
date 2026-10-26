@@ -573,7 +573,7 @@
     /* App name and build number, bottom left under the card strip (attribution sits bottom right) */
     .app-ver {
       position: fixed;
-      left: 18px; /* flush with the first card's left edge */
+      left: 22px;
       bottom: 15px; /* level with the map credit's "i" button on the right */
       z-index: 1000;
       font-size: 11px;
@@ -583,6 +583,7 @@
       text-shadow: 0 1px 3px #000;
       pointer-events: none;
     }
+    #app-ver-num { margin-left: -3px; } /* tucks the number closer to "ver." */
     .app-ver b { color: #a855f7; font-weight: 700; }
     .list-head { display: flex; align-items: center; gap: 6px; position: relative; z-index: 1; } /* above the cards' padding overlap */
     .sort-chip {

@@ -4,12 +4,11 @@ name: Stamp Version Number
 on:
   push:
     branches: [main]
-    paths-ignore:
-      - index.html
 
 jobs:
   stamp:
-    # The stamp commit itself only touches index.html, which the paths-ignore above skips
+    # A push made with the workflow token never starts another run, but skip the stamp commit anyway
+    if: ${{ !startsWith(github.event.head_commit.message, 'Stamp version') }}
     runs-on: ubuntu-latest
     permissions:
       contents: write
