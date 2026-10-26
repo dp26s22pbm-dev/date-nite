@@ -169,6 +169,8 @@ def calculate_tier_color(total_cost):
 def normalize_address(address):
     """Make a street address friendlier to OpenStreetMap: drop suite numbers and spell out route names."""
     text = address.strip()
+    # Google sometimes runs the street number into the direction ("3124S Rte 59")
+    text = re.sub(r'\b(\d+)([NSEW])\b(?=\s)', r'\1 \2', text)
     text = re.sub(r'\s*(?:#\s*\w+|\b(?:suite|ste|unit|apt|bldg)\.?\s*\w+)', '', text, flags=re.IGNORECASE)
     text = re.sub(r'\b(?:(?:Illinois|IL)\s+)?(?:Rte|Rt|Route)\.?\s+(\d{1,3})\b', r'Illinois Route \1', text, flags=re.IGNORECASE)
     text = re.sub(r'\b(?:IL|Illinois)[\s-]+(\d{1,3})\b', r'Illinois Route \1', text, flags=re.IGNORECASE)
