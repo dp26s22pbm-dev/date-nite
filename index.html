@@ -557,6 +557,19 @@
     .list-btn.active .row-3 { fill: #ef4444; }
     .car-btn svg, .zoom-btn svg, .list-btn svg { width: 22px !important; height: 22px !important; fill: currentColor !important; pointer-events: none !important; }
 
+    /* Phones: the four round buttons leave the bottom-right stack and form a 2x2 grid at the top, centered between
+       the Cost rail and the Menu rail. Top row: cards, sound. Bottom row: car, cloud. */
+    @media (max-width: 480px) {
+      .list-btn, .audio-btn, .car-btn, .zoom-btn {
+        right: auto !important;
+        bottom: auto !important;
+      }
+      .list-btn, .car-btn { left: calc(50% - 48px) !important; }
+      .audio-btn, .zoom-btn { left: calc(50% + 4px) !important; }
+      .list-btn, .audio-btn { top: 16px !important; }
+      .car-btn, .zoom-btn { top: 68px !important; }
+    }
+
     /* Venue list along the bottom: a row of cards that scrolls sideways, full width under the round buttons */
     .venue-list {
       position: fixed;
