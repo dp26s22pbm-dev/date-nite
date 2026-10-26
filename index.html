@@ -570,6 +570,20 @@
       pointer-events: none; /* only the chips and cards take clicks, so the map stays draggable around them */
     }
     .venue-list.hidden { display: none; }
+    /* App name and build number, bottom left under the card strip (attribution sits bottom right) */
+    .app-ver {
+      position: fixed;
+      left: 16px;
+      bottom: 10px;
+      z-index: 1000;
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      color: #fff;
+      text-shadow: 0 1px 3px #000;
+      pointer-events: none;
+    }
+    .app-ver b { color: #a855f7; font-weight: 800; }
     .list-head { display: flex; align-items: center; gap: 6px; position: relative; z-index: 1; } /* above the cards' padding overlap */
     .sort-chip {
       pointer-events: auto;
@@ -775,6 +789,8 @@
     </div>
     <div class="list-cards" id="list-cards"></div>
   </div>
+
+  <div class="app-ver"><b>DATE NITE</b> ver. <span id="app-ver-num">135</span></div>
 
   <!-- Audio Controls -->
   <audio id="bg-audio" preload="auto"></audio>
