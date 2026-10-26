@@ -586,13 +586,16 @@
     /* App name and build number, bottom left under the card strip (attribution sits bottom right) */
     .app-ver {
       position: fixed;
-      left: 22px;
-      bottom: 15px; /* level with the map credit's "i" button on the right */
+      left: 14px; /* 8px padding keeps the text where it was */
+      bottom: 12px; /* level with the map credit's "i" button on the right */
       z-index: 1000;
       font-size: 11px;
       font-weight: 400;
       letter-spacing: 0.08em;
       color: #fff;
+      padding: 3px 8px;
+      border-radius: 6px;
+      background: rgba(13, 17, 23, 0.55); /* same semi-black backing as the venue labels */
       text-shadow: 0 1px 3px #000;
       pointer-events: none;
     }
