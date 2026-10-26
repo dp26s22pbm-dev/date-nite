@@ -1099,7 +1099,7 @@
         if (el) el.classList.remove('popup-pending');
       };
       cancelPendingReveal = () => { done = true; map.off('move', onMove); map.off('moveend', reveal); };
-      const onMove = () => { if (offCenter() <= Math.max(40, start * 0.2)) reveal(); };
+      const onMove = () => { if (offCenter() <= Math.max(60, start * 0.35)) reveal(); };
       if (reducedMotion.matches || start < 40) { reveal(); return; }
       map.on('move', onMove);
       map.on('moveend', reveal);
