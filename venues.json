@@ -777,5 +777,22 @@
     "drink": 4.36,
     "dessert": 6.99,
     "tierColor": "#22c55e"
+  },
+  {
+    "id": 49,
+    "name": "Szechuan House",
+    "category": "Szechuan Cuisine",
+    "website": "http://szechuan-house-aurora.keeq.io/",
+    "mapsUrl": "https://maps.app.goo.gl/W1ECBt6Eh7iSS2pc8",
+    "coords": [
+      -88.209183,
+      41.762717
+    ],
+    "app": 9.45,
+    "casualMain": 16.7,
+    "premiumMain": 21.45,
+    "drink": 4.72,
+    "dessert": 11.95,
+    "tierColor": "#22c55e"
   }
 ]
