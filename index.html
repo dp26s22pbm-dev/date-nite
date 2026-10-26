@@ -39,7 +39,7 @@
       position: fixed;
       top: 16px;
       right: 16px;
-      width: 140px;
+      width: 112px;
       z-index: 1000;
       -webkit-user-select: none;
       user-select: none;
@@ -50,7 +50,7 @@
       position: fixed;
       top: 16px;
       left: 16px;
-      width: 140px;
+      width: 112px;
       display: flex;
       flex-direction: column;
       align-items: stretch;
@@ -91,22 +91,23 @@
       width: 100%;
       margin: 0;
       padding: 0;
-      gap: 6px;
+      gap: 0;
     }
 
+    /* Rows are separated by hairlines, like the line under the Cost Tier title */
     .counter-pill {
       width: 100%;
-      padding: 4px 6px;
+      padding: 6px 0;
       margin: 0;
       box-sizing: border-box;
       display: flex;
       flex-direction: column;
       align-items: center;
       justify-content: center;
-      background: #161b22;
-      border: 1px solid #30363d;
-      border-radius: 8px;
     }
+    .counter-pill + .counter-pill { border-top: 1px solid rgba(255, 255, 255, 0.12); }
+    .counter-pill:first-child { padding-top: 0; }
+    .counter-pill:last-child { padding-bottom: 0; }
 
     .counter-label {
       font-size: 9px;
