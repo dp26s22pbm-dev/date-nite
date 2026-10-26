@@ -1051,9 +1051,13 @@
           'text-field': ['get', 'name'],
           'text-font': ['Noto Sans Bold'],
           'text-size': 14,
-          'text-variable-anchor': ['left', 'right', 'top', 'bottom'],
+          // Every side and corner is tried before a name is dropped, and a name that wraps to a narrower block gets
+          // more places to fit. Names are placed shortest first so a long neighbour can't crowd a short one out.
+          'text-variable-anchor': ['left', 'right', 'top', 'bottom', 'top-left', 'top-right', 'bottom-left', 'bottom-right'],
           'text-radial-offset': 1.7, // in text heights: clears the dot's edge with a small gap
-          'text-max-width': 12
+          'text-max-width': 8,
+          'text-padding': 0,
+          'symbol-sort-key': ['length', ['get', 'name']]
         },
         paint: {
           // Over-budget venues dim their name through the color's alpha. The zoom fade has to stay a plain zoom
