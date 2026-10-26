@@ -768,13 +768,13 @@
     "website": "https://vascosperiperi.com",
     "mapsUrl": "https://maps.app.goo.gl/pNY1YYfPLcR7fpFf7",
     "coords": [
-      -88.204074,
-      41.707348
+      -88.20402,
+      41.706743
     ],
-    "app": 7.74,
-    "casualMain": 14.99,
-    "premiumMain": 28.49,
-    "drink": 4.36,
+    "app": 7.49,
+    "casualMain": 13.99,
+    "premiumMain": 18.99,
+    "drink": 3.99,
     "dessert": 6.99,
     "tierColor": "#22c55e"
   },
