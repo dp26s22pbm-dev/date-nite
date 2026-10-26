@@ -413,6 +413,8 @@
       border-bottom: 1px solid transparent;
       cursor: pointer;
     }
+    .control-panel, .legend-panel { transition: border-color 0.2s ease; }
+    .control-panel.open, .legend-panel.open { border-color: rgba(255, 255, 255, 0.6); } /* same outline as the open Budget bar */
     .roll.open .roll-title { padding-bottom: 6px; border-bottom-color: rgba(255, 255, 255, 0.12); }
     .roll-body {
       display: grid;
