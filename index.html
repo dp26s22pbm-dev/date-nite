@@ -164,17 +164,20 @@
       align-items: baseline;
       justify-content: center;
       gap: 8px;
-      padding: 8px 10px;
+      box-sizing: border-box;
+      padding: 12px 10px;
       font: inherit;
-      font-size: 12px;
-      font-weight: 600;
-      color: #8b949e;
+      font-size: 9px;
+      line-height: 14px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      color: #f0f6fc;
       background: transparent;
       border: none;
+      border-bottom: 1px solid transparent;
       cursor: pointer;
-      transition: color 0.2s ease;
     }
-    .budget-card.open .budget-btn { color: #f0f6fc; }
+    .budget-card.open .budget-btn { padding-bottom: 6px; border-bottom-color: rgba(255, 255, 255, 0.12); }
     .budget-amount { display: none; }
     .budget-card.open .budget-amount { display: inline; }
     /* 0fr to 1fr animates the body's height without knowing it */
@@ -398,16 +401,16 @@
       font-size: 9px;
       text-transform: uppercase;
       letter-spacing: 0.5px;
-      color: #8b949e;
+      line-height: 14px;
+      color: #f0f6fc;
       text-align: center;
+      box-sizing: border-box;
       padding: 12px 10px;
       background: transparent;
       border: none;
       border-bottom: 1px solid transparent;
       cursor: pointer;
-      transition: color 0.2s ease, border-color 0.2s ease;
     }
-    .roll-title:hover { color: #f0f6fc; }
     .roll.open .roll-title { padding-bottom: 6px; border-bottom-color: rgba(255, 255, 255, 0.12); }
     .roll-body {
       display: grid;
