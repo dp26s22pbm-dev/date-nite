@@ -6,6 +6,7 @@ import math
 import statistics
 import urllib.request
 import urllib.parse
+from html import unescape
 from google import genai
 from google.genai import types
 
@@ -248,6 +249,93 @@ def fetch_pdf_pricing(url):
     except Exception as e:
         print(f"PDF fetch/parse error: {e}")
         return None
+
+PRICE_RE = re.compile(r"\$\s?\d{1,3}(?:\.\d{2})?")
+MENU_TEXT_LIMIT = 60000
+
+def clean_pricing(data):
+    """Keep only sane numbers from a Gemini pricing reply. Returns None unless it has at least one casual main."""
+    if not isinstance(data, dict):
+        return None
+    out = {}
+    for key in ("apps", "casualMains", "premiumMains", "drinks", "desserts"):
+        values = []
+        for x in data.get(key) or []:
+            try:
+                f = float(x)
+            except (TypeError, ValueError):
+                continue
+            if 0 < f < 500:
+                values.append(round(f, 2))
+        out[key] = values
+    return out if out["casualMains"] else None
+
+def pricing_from_menu_text(text):
+    """Parse menu prices out of plain text (a pasted menu or a restaurant's menu page) with Gemini."""
+    text = (text or "").strip()
+    if len(PRICE_RE.findall(text)) < 6:
+        print("Menu text has too few prices to use.")
+        return None
+    try:
+        response = client.models.generate_content(
+            model="gemini-3.6-flash",
+            contents=[PDF_PROMPT, "Menu text:\n" + text[:MENU_TEXT_LIMIT]],
+        )
+        clean = response.text.strip().replace("```json", "").replace("```", "")
+        return clean_pricing(json.loads(clean))
+    except Exception as e:
+        print(f"Menu text parse error: {e}")
+        return None
+
+def fetch_url(url, limit=2000000):
+    """GET a page. Returns (bytes, content_type), or None when it is blocked or fails."""
+    try:
+        req = urllib.request.Request(url, headers={"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64)"})
+        with urllib.request.urlopen(req, timeout=15) as resp:
+            if resp.status != 200:
+                return None
+            return resp.read(limit), resp.headers.get("Content-Type", "")
+    except Exception as e:
+        print(f"Could not fetch {url}: {e}")
+        return None
+
+def html_to_text(html):
+    html = re.sub(r"(?is)<(script|style|noscript|svg)\b.*?</\1>", " ", html)
+    html = re.sub(r"(?s)<[^>]+>", " ", html)
+    return re.sub(r"\s+", " ", unescape(html)).strip()
+
+def menu_page_candidates(site):
+    """Menu pages on the restaurant's own site: links on its home page that mention 'menu', then /menu and /menus."""
+    parsed = urllib.parse.urlparse(site)
+    host = parsed.netloc.lower().removeprefix("www.")
+    found = []
+    home = fetch_url(site)
+    if home:
+        page = home[0].decode("utf-8", "ignore")
+        for href, label in re.findall(r"(?is)<a\b[^>]*?href=[\"']([^\"']+)[\"'][^>]*>(.*?)</a>", page):
+            if "menu" in href.lower() or "menu" in re.sub(r"<[^>]+>", "", label).lower():
+                url = urllib.parse.urljoin(site, href.split("#")[0])
+                p = urllib.parse.urlparse(url)
+                if p.scheme in ("http", "https") and p.netloc.lower().removeprefix("www.") == host:
+                    found.append(url)
+    for path in ("/menu", "/menus"):
+        found.append(f"{parsed.scheme}://{parsed.netloc}{path}")
+    return list(dict.fromkeys(found))[:5]
+
+def pricing_from_website_menu(site):
+    """Try the restaurant's own menu pages (HTML or PDF). Returns (pricing, url) or (None, None)."""
+    for url in menu_page_candidates(site):
+        got = fetch_url(url)
+        if not got:
+            continue
+        body, ctype = got
+        if "pdf" in ctype.lower() or url.lower().split("?")[0].endswith(".pdf"):
+            pricing = clean_pricing(fetch_pdf_pricing(url))
+        else:
+            pricing = pricing_from_menu_text(html_to_text(body.decode("utf-8", "ignore")))
+        if pricing:
+            return pricing, url
+    return None, None
 
 def normalize_maps_url(value):
     """Return the link if it is a Google Maps address, else "". Used for the fallback link on the popup."""
@@ -549,6 +637,7 @@ def main():
     website = normalize_website(extract_field(issue_body, "Website URL"))
     menu_url = extract_field(issue_body, "Online Menu / Ordering URL")
     manual_pricing_text = extract_field(issue_body, "Manual Pricing Overrides (Optional)")
+    menu_text = extract_field(issue_body, "Menu text (Optional)")
 
     # A Maps share link carries the place's name and address; use them for anything the form left blank
     place_text = place_text_from_maps_url(coordinates_input) or place_text_from_maps_url(address)
@@ -629,14 +718,28 @@ def main():
                 website, website_found = guess, True
                 print(f"Website found and verified: {website}")
 
-    # Step 1: Try direct PDF download if the menu URL is a PDF
-    pricing = None
-    if menu_url and menu_url.lower().endswith(".pdf"):
-        pricing = fetch_pdf_pricing(menu_url)
-
-    # Step 2: Use Gemini Google Search Grounding as the primary method
+    # Pricing sources, best first: pasted menu text, the menu link (PDF or readable page), the restaurant's own
+    # menu pages, then a Gemini web search (estimates)
+    pricing, pricing_source = None, None
+    if menu_text:
+        pricing = pricing_from_menu_text(menu_text)
+        pricing_source = "your pasted menu"
+        if not pricing:
+            print("Could not read prices from the pasted menu text; trying other sources.")
+    if not pricing and menu_url and menu_url.lower().split("?")[0].endswith(".pdf"):
+        pricing = clean_pricing(fetch_pdf_pricing(menu_url))
+        pricing_source = "the menu PDF"
+    elif not pricing and menu_url:
+        got = fetch_url(menu_url)
+        if got and "pdf" not in got[1].lower():
+            pricing = pricing_from_menu_text(html_to_text(got[0].decode("utf-8", "ignore")))
+            pricing_source = "the menu link"
+    if not pricing and (website or saved_site):
+        pricing, menu_page = pricing_from_website_menu(website or saved_site)
+        pricing_source = f"the menu on the restaurant's website ({menu_page})"
     if not pricing:
         pricing = fetch_pricing_via_gemini_search(name)
+        pricing_source = "a web search, so they are estimates (check them against the menu)"
 
     # Parse manual pricing overrides (e.g. "app: 10.00\ncasualMain: 18.00")
     overrides = {}
@@ -745,7 +848,10 @@ def main():
             notes.append("no website found, so the venue name links to your Google Maps link (add a website with the full form's Website URL field)")
         else:
             notes.append("no website found (add one with the full form's Website URL field)")
-    if not (pricing and pricing.get("casualMains")):
+    if pricing and pricing.get("casualMains"):
+        notes.append(f"prices from {pricing_source}: appetizer ${app}, casual main ${casual_main}, premium main ${premium_main}, "
+                     f"drink ${drink}, dessert ${dessert}")
+    else:
         notes.append("prices could not be found, so typical defaults were used")
     summary = f"✓ Added {name}. " + "; ".join(notes) + f". Estimated total ${total_cost}."
     final_coords = (venues[existing_idx] if existing_idx is not None else entry)["coords"]
