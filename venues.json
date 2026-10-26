@@ -82,7 +82,7 @@
   {
     "id": 6,
     "name": "Vasili's",
-    "category": "Mediterranean Bistro",
+    "category": "Greek",
     "website": "https://vasiliskitchen.com",
     "coords": [
       -88.15090767538716,
@@ -383,7 +383,7 @@
   {
     "id": 25,
     "name": "Shawarma Express",
-    "category": "Mediterranean",
+    "category": "Levantine",
     "website": "https://order.toasttab.com/online/shawarma-express-naperville",
     "coords": [
       -88.167421,
