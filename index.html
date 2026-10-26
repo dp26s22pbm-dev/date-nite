@@ -245,6 +245,7 @@
     .maplibregl-popup.popup-pending {
       opacity: 0;
       pointer-events: none;
+      transition: none; /* hides instantly; only the reveal fades */
     }
     @media (prefers-reduced-motion: reduce) {
       .maplibregl-popup { transition: none; }
@@ -1060,22 +1061,25 @@
     function selectVenue(venueId) {
       const venue = rawVenues.find(v => v.id === venueId);
       if (!venue) return;
+      // Hide the card for a new venue, whether it's the first popup or a switch from another venue's card
+      const hide = !(currentPopup && currentPopup.isOpen()) || selectedVenueId !== venueId;
       selectedVenueId = venueId;
-      const wasOpen = !!(currentPopup && currentPopup.isOpen());
-      renderPopup(venue, !wasOpen);
+      renderPopup(venue, hide);
       driveCarTo(venue.coords);
       map.easeTo({
         center: venue.coords,
         duration: reducedMotion.matches ? 0 : 900,
         easing: (x) => 0.5 - Math.cos(Math.PI * x) / 2
       });
-      if (!wasOpen) revealPopupNearCenter(venue);
+      if (hide) revealPopupNearCenter(venue);
       updateListSelection();
     }
 
     // A new popup starts invisible so it never shows at the wrong anchor while the camera travels. It fades in
     // once the venue is close to the center of the map (or when the camera stops, whichever comes first).
+    let cancelPendingReveal = null;
     function revealPopupNearCenter(venue) {
+      if (cancelPendingReveal) cancelPendingReveal();
       const popup = currentPopup;
       if (!popup) return;
       const offCenter = () => {
@@ -1090,9 +1094,11 @@
         done = true;
         map.off('move', onMove);
         map.off('moveend', reveal);
+        cancelPendingReveal = null;
         const el = popup.getElement();
         if (el) el.classList.remove('popup-pending');
       };
+      cancelPendingReveal = () => { done = true; map.off('move', onMove); map.off('moveend', reveal); };
       const onMove = () => { if (offCenter() <= Math.max(40, start * 0.2)) reveal(); };
       if (reducedMotion.matches || start < 40) { reveal(); return; }
       map.on('move', onMove);
@@ -1872,6 +1878,7 @@
       `;
 
       if (currentPopup && currentPopup.isOpen()) {
+        if (startHidden) currentPopup.addClassName('popup-pending');
         currentPopup.setLngLat(venue.coords).setHTML(html);
       } else {
         currentPopup = new maplibregl.Popup({ closeButton: true, closeOnClick: false, offset: POPUP_OFFSET_PX, className: startHidden ? 'popup-pending' : '' })
