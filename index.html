@@ -1169,14 +1169,17 @@
     });
 
 
-    // Where the selected venue's dot should land on screen: the center of the map, unless the popup above it would
-    // run under the cost tier, budget or menu panels (narrow screens). Then the dot moves down far enough to clear
-    // them, but never so far that it slides under the venue list.
+    // Where the selected venue's dot should land on screen: horizontally centered and 61% of the way down the map,
+    // which seats the card in the open space between the top buttons and the venue list. If the card would still run
+    // under an unrolled cost tier, budget or menu panel, the dot moves down far enough to clear it, but never so far
+    // that it slides under the venue list.
     const POPUP_PANEL_GAP_PX = 12;
+    const VENUE_REST_Y = 0.61;
     function venueTargetPoint() {
       const c = map.getContainer();
       const cx = c.clientWidth / 2;
-      const cy = c.clientHeight / 2;
+      const listH0 = listEl.classList.contains('hidden') ? 0 : listEl.offsetHeight;
+      const cy = Math.min(c.clientHeight * VENUE_REST_Y, c.clientHeight - listH0 - 24);
       const content = currentPopup && currentPopup.getElement()?.querySelector('.maplibregl-popup-content');
       if (!content) return { x: cx, y: cy };
       const left = cx - content.offsetWidth / 2;
