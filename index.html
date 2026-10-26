@@ -1305,9 +1305,10 @@
     const listEl = document.getElementById('venue-list');
     const listCards = document.getElementById('list-cards');
     let listSort = 'cost';
-    // Distances are always measured from home (Book Rd & 104th St). The car's browser-reported location is often
-    // miles off on desktop, so it never moves this origin.
-    const HOME = [-88.1859, 41.6936];
+    // Distances are measured from the visitor's own location once the browser reports a trustworthy one (see
+    // locateUser). Until then, and whenever location is denied or too coarse, they start from the middle of Naperville.
+    const DEFAULT_ORIGIN = [-88.16632, 41.74594];
+    let listOrigin = DEFAULT_ORIGIN.slice();
 
     function toggleList() {
       const on = listEl.classList.toggle('hidden') === false;
@@ -1334,9 +1335,8 @@
     }
 
     function renderList() {
-      const origin = HOME;
       const items = rawVenues
-        .map(v => ({ v, total: calculateTotal(v), miles: haversineM(origin, v.coords) / 1609.344 }))
+        .map(v => ({ v, total: calculateTotal(v), miles: haversineM(listOrigin, v.coords) / 1609.344 }))
         .filter(i => i.miles * 1609.344 <= LIST_RADIUS_M)
         .sort(listSort === 'cost'
           ? (a, b) => a.total - b.total || a.miles - b.miles
@@ -1689,13 +1689,18 @@
         (pos) => {
           carBtn.classList.remove('busy');
           // Desktop browsers often report a location from the IP address, miles off and flagged with a large
-          // accuracy radius. That reading isn't trusted; the car starts at home instead.
-          const here = pos.coords.accuracy > MAX_TRUSTED_ACCURACY_M
-            ? HOME.slice()
-            : [pos.coords.longitude, pos.coords.latitude];
+          // accuracy radius. That reading isn't trusted; the car starts at the default origin instead.
+          const trusted = pos.coords.accuracy <= MAX_TRUSTED_ACCURACY_M;
+          const here = trusted
+            ? [pos.coords.longitude, pos.coords.latitude]
+            : DEFAULT_ORIGIN.slice();
           if (haversineM(here, MAP_CENTER) > MAX_DISTANCE_FROM_MAP_M) {
             showCarToast('You appear to be outside the Naperville area, so your car is not shown.');
             return;
+          }
+          if (trusted) {
+            listOrigin = here.slice();
+            renderList();
           }
           placeCar(here);
           map.flyTo({ center: here, zoom: Math.max(map.getZoom(), 13.5), duration: 1200 });
