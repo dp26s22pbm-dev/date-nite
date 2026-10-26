@@ -794,5 +794,22 @@
     "drink": 4.72,
     "dessert": 11.95,
     "tierColor": "#22c55e"
+  },
+  {
+    "id": 50,
+    "name": "Velvet Taco",
+    "category": "Mexican Fast Casual",
+    "website": "https://www.velvettaco.com/location/naperville/",
+    "mapsUrl": "https://maps.app.goo.gl/iMZ7czTxPDk4gyNc9",
+    "coords": [
+      -88.203798,
+      41.764395
+    ],
+    "app": 8.3,
+    "casualMain": 7.45,
+    "premiumMain": 16.25,
+    "drink": 6.38,
+    "dessert": 5.65,
+    "tierColor": "#22c55e"
   }
 ]
