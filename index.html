@@ -1147,6 +1147,36 @@
       return { x: cx, y: Math.min(cy + shift, maxY) };
     }
 
+    // When a panel unrolls under the open card, glide the venue down just far enough to leave the usual gap. Rolling a
+    // panel back up never moves it, so the card stays where it is.
+    let panelPushTimer = null;
+    function pushVenueBelowPanels() {
+      clearTimeout(panelPushTimer);
+      // Measure once the 0.25s unroll has finished, so the panel's full height is known
+      panelPushTimer = setTimeout(() => {
+        const content = currentPopup && currentPopup.isOpen() && currentPopup.getElement()?.querySelector('.maplibregl-popup-content');
+        if (!content) return;
+        const box = content.getBoundingClientRect();
+        let panelBottom = 0;
+        for (const sel of ['.legend-panel', '.budget-card', '.control-panel']) {
+          const r = document.querySelector(sel).getBoundingClientRect();
+          if (r.right > box.left && r.left < box.right) panelBottom = Math.max(panelBottom, r.bottom);
+        }
+        const c = map.getContainer();
+        const dot = map.project(currentPopup.getLngLat());
+        const listH = listEl.classList.contains('hidden') ? 0 : listEl.offsetHeight;
+        const maxY = Math.max(dot.y, c.clientHeight - listH - 24);
+        const shift = Math.min(panelBottom + POPUP_PANEL_GAP_PX - box.top, maxY - dot.y);
+        if (!(shift > 1)) return;
+        map.easeTo({
+          center: currentPopup.getLngLat(),
+          offset: [dot.x - c.clientWidth / 2, dot.y + shift - c.clientHeight / 2],
+          duration: reducedMotion.matches ? 0 : 500,
+          easing: (x) => 0.5 - Math.cos(Math.PI * x) / 2
+        });
+      }, reducedMotion.matches ? 0 : 270);
+    }
+
     // Open a venue's popup, send the car, and glide the venue to its spot on the map (the center, or lower on narrow
     // screens so its card clears the panels), keeping the current zoom and tilt
     function selectVenue(venueId) {
@@ -2059,6 +2089,7 @@
     function toggleRoll(id, btn) {
       const open = document.getElementById(id).classList.toggle('open');
       btn.setAttribute('aria-expanded', String(open));
+      pushVenueBelowPanels();
     }
 
     // Unroll the budget slider (budget applies) or roll it back up (no budget)
@@ -2066,6 +2097,7 @@
       state.budgetOn = !state.budgetOn;
       document.getElementById('budget-card').classList.toggle('open', state.budgetOn);
       document.getElementById('budget-toggle').setAttribute('aria-expanded', String(state.budgetOn));
+      pushVenueBelowPanels();
       refreshMap();
     }
 
