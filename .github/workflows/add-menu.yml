@@ -1,0 +1,78 @@
+name: Add Menu Prices from Issue Reply
+
+# A venue whose prices had to be guessed is left open with the "needs-menu" label. Replying to that issue with the
+# menu text (select all on the menu page, copy, paste) updates the venue's prices and closes the issue.
+on:
+  issue_comment:
+    types: [created]
+
+jobs:
+  add-menu:
+    # Only the owner and collaborators, only on issues (not pull requests) that are waiting for a menu, and never
+    # the bot's own comments
+    if: >-
+      !github.event.issue.pull_request &&
+      contains(github.event.issue.labels.*.name, 'needs-menu') &&
+      contains(fromJSON('["OWNER","MEMBER","COLLABORATOR"]'), github.event.comment.author_association) &&
+      github.event.comment.user.type != 'Bot'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      issues: write
+      pages: write
+      id-token: write
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+        with:
+          ref: main
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install Dependencies
+        run: |
+          pip install -r requirements.txt
+
+      - name: Re-add the Venue with the Pasted Menu
+        id: add
+        env:
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          GOOGLE_PLACES_API_KEY: ${{ secrets.GOOGLE_PLACES_API_KEY }}
+          ISSUE_BODY: ${{ github.event.issue.body }}
+          ISSUE_TITLE: ${{ github.event.issue.title }}
+          MENU_TEXT_OVERRIDE: ${{ github.event.comment.body }}
+        run: |
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+          # Another run may push first; start over from the new main and redo the update instead of rebasing
+          for attempt in 1 2 3 4 5 6; do
+            python add_venue_from_issue.py || exit 1
+            git add venues.json urls.py
+            git commit -m "Update menu prices via Issue #${{ github.event.issue.number }}" || exit 0
+            git push && exit 0
+            echo "Push rejected (attempt $attempt); resetting to origin/main and updating again"
+            git fetch origin main
+            git reset --hard origin/main
+          done
+          echo "Could not push after 6 attempts" >&2
+          exit 1
+
+      - name: Close Issue
+        env:
+          GH_TOKEN: ${{ github.token }}
+          SUMMARY: ${{ steps.add.outputs.summary }}
+        run: |
+          gh issue edit ${{ github.event.issue.number }} --repo ${{ github.repository }} --remove-label needs-menu
+          gh issue close ${{ github.event.issue.number }} --repo ${{ github.repository }} --reason completed --comment "${SUMMARY:-✓ Prices updated from your menu.}"
+
+      - name: Report failure on the issue
+        if: failure()
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REASON: ${{ steps.add.outputs.error }}
+        run: |
+          gh issue comment ${{ github.event.issue.number }} --repo ${{ github.repository }} --body "Could not update the prices. ${REASON:-See the workflow run for details.} Run: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"

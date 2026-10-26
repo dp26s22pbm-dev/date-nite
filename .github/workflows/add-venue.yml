@@ -57,10 +57,23 @@ jobs:
           exit 1
 
       - name: Close Issue
+        if: steps.add.outputs.needs_menu != 'true'
         uses: peter-evans/close-issue@v3
         with:
           issue-number: ${{ github.event.issue.number }}
           comment: ${{ steps.add.outputs.summary || '✓ Venue parsed, pricing calculated, and added to venues.json!' }}
+
+      # Prices were guessed: keep the issue open, label it, and say so. Replying with the menu text finishes the job
+      # (see add-menu.yml).
+      - name: Ask for the menu
+        if: steps.add.outputs.needs_menu == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          SUMMARY: ${{ steps.add.outputs.summary }}
+        run: |
+          gh label create needs-menu --color FBCA04 --description "Venue added with estimated prices; reply with the menu text" --repo ${{ github.repository }} --force || true
+          gh issue edit ${{ github.event.issue.number }} --repo ${{ github.repository }} --add-label needs-menu
+          gh issue comment ${{ github.event.issue.number }} --repo ${{ github.repository }} --body "$SUMMARY"
 
       - name: Report failure on the issue
         if: failure()
