@@ -298,27 +298,57 @@ def clean_label(text, limit=40):
     text = re.sub(r"[<>\"`{}\[\]*_]", "", text)
     return text.strip(" .'-")[:limit].strip()
 
+# Umbrella terms that say too little about what a restaurant serves
+VAGUE_CUISINE_WORDS = {
+    "mediterranean", "asian", "international", "ethnic", "fusion", "global", "world", "eclectic",
+    "european", "latin", "middle", "eastern",
+}
+# Words that describe the format, not the food
+CUISINE_FILLER_WORDS = {
+    "modern", "casual", "upscale", "elevated", "cuisine", "restaurant", "food", "bistro", "grill",
+    "cafe", "kitchen", "bar", "and",
+}
+
+def is_vague_cuisine(label):
+    """True when every meaningful word in the label is an umbrella term, e.g. 'Mediterranean Bistro' or 'Asian Fusion'."""
+    words = [w for w in re.findall(r"[a-z]+", (label or "").lower()) if w not in CUISINE_FILLER_WORDS]
+    return not words or all(w in VAGUE_CUISINE_WORDS for w in words)
+
+def ask_gemini_for_cuisine(name, where, examples, avoid=None):
+    prompt = (
+        f'What cuisine best describes the restaurant "{name}"'
+        + (f' ({where})' if where else '')
+        + ' in the Naperville, IL area? Check the restaurant\'s own menu or website and name the specific '
+        'cuisine it serves, such as the country or regional cuisine (for example Portuguese, Szechuan, Levantine), '
+        'not a broad umbrella term like Mediterranean, Asian, International or Fusion. '
+        f'Existing labels on the map: {examples}. Reuse one of them only if it is an accurate fit; '
+        'otherwise give a new label of one to four words. '
+        + (f'"{avoid}" was too vague, so do not answer with it. ' if avoid else '')
+        + 'Return only the label, with no explanation, quotes or punctuation.'
+    )
+    response = client.models.generate_content(
+        model="gemini-3.6-flash",
+        contents=prompt,
+        config=types.GenerateContentConfig(
+            tools=[types.Tool(google_search=types.GoogleSearch())],
+            temperature=0.0
+        ),
+    )
+    lines = (response.text or "").strip().splitlines()
+    return clean_label(lines[0]) if lines else None
+
 def guess_cuisine_via_gemini(name, where, known_categories):
-    """Best-guess cuisine label for a restaurant, in the style of the labels already on the map."""
+    """Best-guess cuisine label for a restaurant, specific rather than an umbrella term; asks again once if the first answer is vague."""
     try:
-        examples = ", ".join(sorted({c for c in known_categories if c})[:30])
-        prompt = (
-            f'What cuisine category best describes the restaurant "{name}"'
-            + (f' ({where})' if where else '')
-            + ' in the Naperville, IL area? Answer with a short label of two to four words in the style of '
-            f'these existing labels: {examples}. Reuse one of them if it fits. '
-            'Return only the label, with no explanation, quotes or punctuation.'
-        )
-        response = client.models.generate_content(
-            model="gemini-3.6-flash",
-            contents=prompt,
-            config=types.GenerateContentConfig(
-                tools=[types.Tool(google_search=types.GoogleSearch())],
-                temperature=0.0
-            ),
-        )
-        lines = (response.text or "").strip().splitlines()
-        return clean_label(lines[0]) if lines else None
+        examples = ", ".join(sorted({c for c in known_categories if c and not is_vague_cuisine(c)}))
+        label = ask_gemini_for_cuisine(name, where, examples)
+        if label and is_vague_cuisine(label):
+            print(f"Cuisine guess '{label}' for {name} is too vague; asking for something more specific.")
+            retry = ask_gemini_for_cuisine(name, where, examples, avoid=label)
+            if retry and not is_vague_cuisine(retry):
+                return retry
+            return None
+        return label
     except Exception as e:
         print(f"Gemini cuisine guess error for {name}: {e}")
         return None
