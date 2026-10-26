@@ -66,7 +66,7 @@
   {
     "id": 5,
     "name": "Santo Cielo",
-    "category": "Latin Bistro",
+    "category": "Modern Mexican",
     "website": "https://www.stcielo.com",
     "coords": [
       -88.15061940422304,
@@ -82,7 +82,7 @@
   {
     "id": 6,
     "name": "Vasili's",
-    "category": "Mediterranean Bistro",
+    "category": "Greek",
     "website": "https://vasiliskitchen.com",
     "coords": [
       -88.15090767538716,
