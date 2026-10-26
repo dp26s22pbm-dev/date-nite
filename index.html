@@ -228,6 +228,14 @@
     }
     #budget-display { transition: color 0.2s ease; }
 
+    /* MapLibre attribution: dark, collapsed to the "i" button */
+    .maplibregl-ctrl-attrib.maplibregl-compact {
+      background: rgba(15, 15, 18, 0.85);
+      color: #aaa;
+    }
+    .maplibregl-ctrl-attrib a { color: #ccc; }
+    .maplibregl-ctrl-attrib-button { filter: invert(1); }
+
     /* MapLibre Popup Custom Styling */
     .maplibregl-popup {
       z-index: 1100 !important; /* above the side panels so the venue name and link are always clickable */
@@ -862,8 +870,10 @@
       zoom: DEFAULT_ZOOM,
       pitch: 60,
       bearing: 0,
-      maxPitch: 85
+      maxPitch: 85,
+      attributionControl: false
     });
+    map.addControl(new maplibregl.AttributionControl({ compact: true }));
 
     // Two-finger touchpad swipes pan the map; pinch (ctrlKey wheel) and mouse-wheel notches still zoom.
     // Browsers don't say which device sent a wheel event, so guess: touchpads send fractional, small,
