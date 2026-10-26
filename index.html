@@ -34,7 +34,18 @@
       height: 100%;
     }
 
-    /* Left rail: the menu panel with the budget button under it */
+    /* Right rail: the menu panel */
+    .right-rail {
+      position: fixed;
+      top: 16px;
+      right: 16px;
+      width: 140px;
+      z-index: 1000;
+      -webkit-user-select: none;
+      user-select: none;
+    }
+
+    /* Left rail: the cost tier legend with the budget button under it */
     .left-rail {
       position: fixed;
       top: 16px;
@@ -362,12 +373,9 @@
     .pop-grid-lbl { font-size: 8px; text-transform: uppercase; color: #8b949e; margin-bottom: 2px; }
     .pop-grid-val { font-size: 11px; font-weight: 700; color: #e6edf3; }
 
-    /* Right Side Legend Panel */
+    /* Cost tier legend, at the top of the left rail */
     .legend-panel {
-      position: fixed;
-      top: 16px;
-      right: 16px;
-      width: 140px;
+      width: 100%;
       display: flex;
       flex-direction: column;
       align-items: stretch;
@@ -380,7 +388,6 @@
       border: 1px solid rgba(255, 255, 255, 0.15);
       border-radius: 14px;
       box-shadow: 0 12px 35px rgba(0, 0, 0, 0.65);
-      z-index: 1000;
     }
 
     .legend-title {
@@ -615,8 +622,8 @@
   <!-- Map Base Container -->
   <div id="map"></div>
 
-  <!-- Left Side Controls Rail -->
-  <div class="left-rail">
+  <!-- Right Side Menu Rail -->
+  <div class="right-rail">
   <div class="control-panel">
     <div class="meal-builder-row">
       <div class="counter-pill">
@@ -662,22 +669,10 @@
     </div>
 
   </div>
-
-  <div class="budget-card" id="budget-card">
-    <button id="budget-toggle" class="budget-btn" onclick="toggleBudget()" aria-expanded="false" aria-controls="budget-body">
-      <span>Budget</span><span class="budget-amount" id="budget-display">$130</span>
-    </button>
-    <div class="budget-body" id="budget-body">
-      <div class="budget-body-inner">
-        <div class="budget-slider-wrap">
-          <input type="range" class="budget-slider" id="budget-slider" min="10" max="250" step="10" value="130" oninput="onBudgetChange(this.value)" aria-label="Maximum budget" />
-        </div>
-      </div>
-    </div>
-  </div>
   </div>
 
-  <!-- Right Side Legend Panel -->
+  <!-- Left Side Rail: cost tiers with the budget under them -->
+  <div class="left-rail">
   <div class="legend-panel">
     <div class="legend-title">Cost Tier</div>
     <div class="legend-item">
@@ -700,6 +695,20 @@
       <div class="legend-swatch" style="background: #ef4444;"></div>
       <span class="legend-label">$200+</span>
     </div>
+  </div>
+
+  <div class="budget-card" id="budget-card">
+    <button id="budget-toggle" class="budget-btn" onclick="toggleBudget()" aria-expanded="false" aria-controls="budget-body">
+      <span>Budget</span><span class="budget-amount" id="budget-display">$130</span>
+    </button>
+    <div class="budget-body" id="budget-body">
+      <div class="budget-body-inner">
+        <div class="budget-slider-wrap">
+          <input type="range" class="budget-slider" id="budget-slider" min="10" max="250" step="10" value="130" oninput="onBudgetChange(this.value)" aria-label="Maximum budget" />
+        </div>
+      </div>
+    </div>
+  </div>
   </div>
 
   <!-- Car / location -->
