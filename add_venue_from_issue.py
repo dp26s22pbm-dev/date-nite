@@ -481,6 +481,14 @@ def haversine_m(a, b):
     h = math.sin(d_lat / 2) ** 2 + math.cos(a[1] * rad) * math.cos(b[1] * rad) * math.sin(d_lon / 2) ** 2
     return 2 * 6371000 * math.asin(math.sqrt(h))
 
+NEARBY_VENUE_M = 100
+
+def nearby_venues(venue_id, coords, venues, radius_m=NEARBY_VENUE_M):
+    """Other saved venues within radius_m of coords, as (name, metres) pairs, closest first."""
+    found = [(v["name"], haversine_m(coords, v["coords"])) for v in venues
+             if v.get("id") != venue_id and v.get("coords")]
+    return sorted((n, round(m)) for n, m in found if m <= radius_m)
+
 def maps_tool_experiment(name, where, saved_coords):
     """EXPERIMENT ONLY, never used for the saved location. Ask Gemini's Google Maps tool for the place's
     coordinates, write everything it returns to the workflow log, and return a one-line note for the issue
@@ -749,6 +757,10 @@ def main():
         notes.append("prices could not be found, so typical defaults were used")
     summary = f"✓ Added {name}. " + "; ".join(notes) + f". Estimated total ${total_cost}."
     final_coords = (venues[existing_idx] if existing_idx is not None else entry)["coords"]
+    neighbors = nearby_venues(venues[existing_idx]["id"] if existing_idx is not None else entry["id"], final_coords, venues)
+    if neighbors:
+        listed = ", ".join(f"{n} ({m} m)" for n, m in neighbors)
+        summary += f" Check the pin: {len(neighbors)} saved venue(s) within {NEARBY_VENUE_M} m, which may share a building or strip mall: {listed}. If they do, confirm the pin lines up with theirs."
     experiment = maps_tool_experiment(name, place_text or address, final_coords)
     if experiment:
         summary += " " + experiment
