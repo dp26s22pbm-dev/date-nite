@@ -936,7 +936,19 @@
       maxPitch: 85,
       attributionControl: false
     });
-    map.addControl(new maplibregl.AttributionControl({ compact: true }));
+    const attribution = new maplibregl.AttributionControl({ compact: true });
+    map.addControl(attribution);
+    // compact: true starts the credit text open and only a mouse press closes it, so touch screens kept the full strip.
+    // Fold it down to the "i" button once the map is up, and again on the first touch in case the style load reopened it.
+    const collapseAttribution = () => {
+      const el = attribution._container;
+      if (!el) return;
+      el.removeAttribute('open');
+      el.classList.remove('maplibregl-compact-show');
+    };
+    map.once('load', collapseAttribution);
+    map.once('touchstart', collapseAttribution);
+    map.once('idle', collapseAttribution);
 
     // Two-finger touchpad swipes pan the map; pinch (ctrlKey wheel) and mouse-wheel notches still zoom.
     // Browsers don't say which device sent a wheel event, so guess: touchpads send fractional, small,
