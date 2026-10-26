@@ -961,6 +961,22 @@
         }
       });
 
+      // The open venue's dot is redrawn here so it sits above any dot it overlaps
+      map.addLayer({
+        id: 'restaurants-point-selected',
+        type: 'circle',
+        source: 'restaurants',
+        filter: ['==', ['get', 'id'], selectedVenueId ?? -1],
+        paint: {
+          'circle-radius': 12,
+          'circle-color': ['get', 'color'],
+          'circle-opacity': ['get', 'opacity'],
+          'circle-stroke-width': 2.5,
+          'circle-stroke-color': '#ffffff',
+          'circle-stroke-opacity': ['get', 'opacity']
+        }
+      });
+
       // Close up, every dot carries its name, which fades in as the map zooms past LABELS_MIN_ZOOM and out again below it.
       // The open venue's own label is left off because its card already shows the name.
       map.addLayer({
@@ -1171,6 +1187,9 @@
     function updateListSelection() {
       if (map.getLayer('restaurants-label')) {
         map.setFilter('restaurants-label', ['!=', ['get', 'id'], selectedVenueId ?? -1]);
+      }
+      if (map.getLayer('restaurants-point-selected')) {
+        map.setFilter('restaurants-point-selected', ['==', ['get', 'id'], selectedVenueId ?? -1]);
       }
       listCards.querySelectorAll('.venue-card').forEach(c =>
         c.classList.toggle('selected', Number(c.dataset.id) === selectedVenueId));
