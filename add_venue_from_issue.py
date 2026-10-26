@@ -645,7 +645,9 @@ def main():
     website = normalize_website(extract_field(issue_body, "Website URL"))
     menu_url = extract_field(issue_body, "Online Menu / Ordering URL")
     manual_pricing_text = extract_field(issue_body, "Manual Pricing Overrides (Optional)")
-    menu_text = extract_field(issue_body, "Menu text (Optional)")
+    # A reply to a "needs menu" issue arrives as MENU_TEXT_OVERRIDE (see the add-menu workflow)
+    menu_override = os.environ.get("MENU_TEXT_OVERRIDE", "").strip()
+    menu_text = menu_override or extract_field(issue_body, "Menu text (Optional)")
 
     # A Maps share link carries the place's name and address; use them for anything the form left blank
     place_text = place_text_from_maps_url(coordinates_input) or place_text_from_maps_url(address)
@@ -732,6 +734,9 @@ def main():
     if menu_text:
         pricing = pricing_from_menu_text(menu_text)
         pricing_source = "your pasted menu"
+        if not pricing and menu_override:
+            abort("I could not read prices from that text. Reply again with the full menu page (open it, select all, copy, "
+                  "paste); it needs at least a handful of dish prices like $12.99.")
         if not pricing:
             print("Could not read prices from the pasted menu text; trying other sources.")
     if not pricing and menu_url and menu_url.lower().split("?")[0].endswith(".pdf"):
@@ -747,7 +752,7 @@ def main():
         pricing_source = f"the menu on the restaurant's website ({menu_page})"
     if not pricing:
         pricing = fetch_pricing_via_gemini_search(name)
-        pricing_source = "a web search, so they are estimates (check them against the menu)"
+        pricing_source = "a web search (estimates)"
 
     # Parse manual pricing overrides (e.g. "app: 10.00\ncasualMain: 18.00")
     overrides = {}
@@ -862,6 +867,13 @@ def main():
     else:
         notes.append("prices could not be found, so typical defaults were used")
     summary = f"✓ Added {name}. " + "; ".join(notes) + f". Estimated total ${total_cost}."
+    # Prices that came from a web search (or defaults) are guesses unless every figure was typed in by hand
+    guessed = not (pricing and pricing.get("casualMains")) or str(pricing_source).startswith("a web search")
+    needs_menu = guessed and not all(k in overrides for k in ("app", "casualMain", "premiumMain", "drink", "dessert"))
+    if needs_menu:
+        summary += (" The prices are estimates. To fix them, reply to this issue with the menu: open the venue's menu page, "
+                    "select all, copy, and paste it here. I will update the prices and close this issue.")
+    set_output("needs_menu", "true" if needs_menu else "false")
     final_coords = (venues[existing_idx] if existing_idx is not None else entry)["coords"]
     neighbors = nearby_venues(venues[existing_idx]["id"] if existing_idx is not None else entry["id"], final_coords, venues)
     if neighbors:
