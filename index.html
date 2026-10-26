@@ -72,8 +72,8 @@
       align-items: stretch;
       justify-content: flex-start;
       box-sizing: border-box;
-      padding: 12px 10px;
-      gap: 12px;
+      padding: 0;
+      gap: 0;
       background: rgba(22, 27, 34, 0.95);
       backdrop-filter: blur(16px);
       -webkit-backdrop-filter: blur(16px);
@@ -94,7 +94,7 @@
       gap: 0;
     }
 
-    /* Rows are separated by hairlines, like the line under the Cost Tier title */
+    /* Rows are separated by hairlines, like the line under the Cost title */
     .counter-pill {
       width: 100%;
       padding: 6px 0;
@@ -381,8 +381,8 @@
       flex-direction: column;
       align-items: stretch;
       box-sizing: border-box;
-      padding: 12px 10px;
-      gap: 10px;
+      padding: 0;
+      gap: 0;
       background: rgba(22, 27, 34, 0.95);
       backdrop-filter: blur(16px);
       -webkit-backdrop-filter: blur(16px);
@@ -391,14 +391,40 @@
       box-shadow: 0 12px 35px rgba(0, 0, 0, 0.65);
     }
 
-    .legend-title {
+    /* Menu and Cost titles are buttons: pressing one rolls its panel up or back down, like the Budget bar */
+    .roll-title {
+      width: 100%;
+      font: inherit;
       font-size: 9px;
       text-transform: uppercase;
       letter-spacing: 0.5px;
       color: #8b949e;
       text-align: center;
-      padding-bottom: 6px;
-      border-bottom: 1px solid rgba(255, 255, 255, 0.12);
+      padding: 12px 10px;
+      background: transparent;
+      border: none;
+      border-bottom: 1px solid transparent;
+      cursor: pointer;
+      transition: color 0.2s ease, border-color 0.2s ease;
+    }
+    .roll-title:hover { color: #f0f6fc; }
+    .roll.open .roll-title { padding-bottom: 6px; border-bottom-color: rgba(255, 255, 255, 0.12); }
+    .roll-body {
+      display: grid;
+      grid-template-rows: 0fr;
+      transition: grid-template-rows 0.25s ease;
+    }
+    .roll.open .roll-body { grid-template-rows: 1fr; }
+    .roll-body-inner {
+      min-height: 0;
+      overflow: hidden;
+      visibility: hidden;
+      transition: visibility 0s linear 0.25s;
+    }
+    .roll.open .roll-body-inner { visibility: visible; transition: none; }
+    .roll-pad { padding: 10px 10px 12px; display: flex; flex-direction: column; gap: 10px; }
+    @media (prefers-reduced-motion: reduce) {
+      .roll-body, .roll-body-inner { transition: none; }
     }
 
     .legend-item {
@@ -625,7 +651,9 @@
 
   <!-- Right Side Menu Rail -->
   <div class="right-rail">
-  <div class="control-panel">
+  <div class="control-panel roll open" id="menu-panel">
+    <button class="roll-title" onclick="toggleRoll('menu-panel', this)" aria-expanded="true" aria-controls="menu-body">Menu</button>
+    <div class="roll-body" id="menu-body"><div class="roll-body-inner"><div class="roll-pad">
     <div class="meal-builder-row">
       <div class="counter-pill">
         <span class="counter-label">Apps</span>
@@ -668,14 +696,16 @@
         </div>
       </div>
     </div>
+    </div></div></div>
 
   </div>
   </div>
 
   <!-- Left Side Rail: cost tiers with the budget under them -->
   <div class="left-rail">
-  <div class="legend-panel">
-    <div class="legend-title">Cost Tier</div>
+  <div class="legend-panel roll open" id="cost-panel">
+    <button class="roll-title" onclick="toggleRoll('cost-panel', this)" aria-expanded="true" aria-controls="cost-body">Cost</button>
+    <div class="roll-body" id="cost-body"><div class="roll-body-inner"><div class="roll-pad">
     <div class="legend-item">
       <div class="legend-swatch" style="background: #38bdf8;"></div>
       <span class="legend-label">Under $50</span>
@@ -696,6 +726,7 @@
       <div class="legend-swatch" style="background: #ef4444;"></div>
       <span class="legend-label">$200+</span>
     </div>
+    </div></div></div>
   </div>
 
   <div class="budget-card" id="budget-card">
@@ -2019,6 +2050,12 @@
       document.getElementById('budget-display').innerText = `$${val}`;
       applyBudgetColor(val);
       refreshMap();
+    }
+
+    // Roll the Menu or Cost panel up under its title, or back down
+    function toggleRoll(id, btn) {
+      const open = document.getElementById(id).classList.toggle('open');
+      btn.setAttribute('aria-expanded', String(open));
     }
 
     // Unroll the budget slider (budget applies) or roll it back up (no budget)
