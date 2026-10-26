@@ -743,5 +743,22 @@
     "drink": 13.75,
     "dessert": 13.49,
     "tierColor": "#f97316"
+  },
+  {
+    "id": 47,
+    "name": "Sara's Pakistani & Indian Cuisine",
+    "category": "Pakistani & Indian Cuisine",
+    "website": "https://saraspakistanicuisine.com/",
+    "mapsUrl": "https://maps.app.goo.gl/Hggwqm5uR8BkpWHU6",
+    "coords": [
+      -88.206906,
+      41.71176
+    ],
+    "app": 5.75,
+    "casualMain": 14.99,
+    "premiumMain": 19.55,
+    "drink": 2.87,
+    "dessert": 4.99,
+    "tierColor": "#22c55e"
   }
 ]
