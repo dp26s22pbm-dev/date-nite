@@ -274,7 +274,11 @@
       color: #f0f6fc !important;
       box-shadow: 0 16px 36px rgba(0, 0, 0, 0.7) !important;
       position: relative !important;
-      min-width: 255px;
+      /* One width for every venue card. 300px keeps 46 of 51 names on one line; longer names wrap to a second line.
+         The max-width keeps the card on screen for narrow phones. */
+      box-sizing: border-box;
+      width: 300px;
+      max-width: calc(100vw - 32px);
     }
     .maplibregl-popup-tip {
       display: block !important;
