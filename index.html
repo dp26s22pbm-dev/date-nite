@@ -1881,7 +1881,8 @@
         if (startHidden) currentPopup.addClassName('popup-pending');
         currentPopup.setLngLat(venue.coords).setHTML(html);
       } else {
-        currentPopup = new maplibregl.Popup({ closeButton: true, closeOnClick: false, offset: POPUP_OFFSET_PX, className: startHidden ? 'popup-pending' : '' })
+        // Fixed anchor: the card always sits above its dot and is allowed to clip at the map edge instead of flipping
+        currentPopup = new maplibregl.Popup({ closeButton: true, closeOnClick: false, anchor: 'bottom', offset: POPUP_OFFSET_PX, className: startHidden ? 'popup-pending' : '' })
           .setLngLat(venue.coords)
           .setHTML(html)
           .addTo(map);
