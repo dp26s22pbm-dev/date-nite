@@ -811,5 +811,22 @@
     "drink": 6.38,
     "dessert": 5.65,
     "tierColor": "#22c55e"
+  },
+  {
+    "id": 51,
+    "name": "Yard House - Block 59",
+    "category": "Casual American",
+    "website": "https://www.yardhouse.com/locations/il/naperville/naperville-fox-valley-mall/8404?cmpid=br:yh_ag:ie_ch:loc_ca:YHGMB_sn:gmb_gt:naperville-il-8404_pl:locurl_rd:1094",
+    "mapsUrl": "https://maps.app.goo.gl/bZ4ZtwXEs4EzLgsE9",
+    "coords": [
+      -88.203749,
+      41.765325
+    ],
+    "app": 15.49,
+    "casualMain": 15.95,
+    "premiumMain": 28.89,
+    "drink": 12.14,
+    "dessert": 9.14,
+    "tierColor": "#eab308"
   }
 ]
