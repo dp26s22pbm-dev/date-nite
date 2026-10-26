@@ -239,6 +239,15 @@
     /* MapLibre Popup Custom Styling */
     .maplibregl-popup {
       z-index: 1100 !important; /* above the side panels so the venue name and link are always clickable */
+      transition: opacity 0.25s ease;
+    }
+    /* Held invisible while the camera travels to a newly selected venue, then faded in */
+    .maplibregl-popup.popup-pending {
+      opacity: 0;
+      pointer-events: none;
+    }
+    @media (prefers-reduced-motion: reduce) {
+      .maplibregl-popup { transition: none; }
     }
     .maplibregl-popup-content {
       background: #161b22 !important;
@@ -1052,14 +1061,43 @@
       const venue = rawVenues.find(v => v.id === venueId);
       if (!venue) return;
       selectedVenueId = venueId;
-      renderPopup(venue);
+      const wasOpen = !!(currentPopup && currentPopup.isOpen());
+      renderPopup(venue, !wasOpen);
       driveCarTo(venue.coords);
       map.easeTo({
         center: venue.coords,
         duration: reducedMotion.matches ? 0 : 900,
         easing: (x) => 0.5 - Math.cos(Math.PI * x) / 2
       });
+      if (!wasOpen) revealPopupNearCenter(venue);
       updateListSelection();
+    }
+
+    // A new popup starts invisible so it never shows at the wrong anchor while the camera travels. It fades in
+    // once the venue is close to the center of the map (or when the camera stops, whichever comes first).
+    function revealPopupNearCenter(venue) {
+      const popup = currentPopup;
+      if (!popup) return;
+      const offCenter = () => {
+        const p = map.project(venue.coords);
+        const c = map.getContainer();
+        return Math.hypot(p.x - c.clientWidth / 2, p.y - c.clientHeight / 2);
+      };
+      const start = offCenter();
+      let done = false;
+      const reveal = () => {
+        if (done) return;
+        done = true;
+        map.off('move', onMove);
+        map.off('moveend', reveal);
+        const el = popup.getElement();
+        if (el) el.classList.remove('popup-pending');
+      };
+      const onMove = () => { if (offCenter() <= Math.max(40, start * 0.2)) reveal(); };
+      if (reducedMotion.matches || start < 40) { reveal(); return; }
+      map.on('move', onMove);
+      map.on('moveend', reveal);
+      popup.on('close', reveal);
     }
 
     // ---------- Venue list: cards along the bottom, nearest or cheapest first ----------
@@ -1796,7 +1834,7 @@
       }
     }
 
-    function renderPopup(venue) {
+    function renderPopup(venue, startHidden = false) {
       const total = calculateTotal(venue);
       const cMult = venue.isTapas ? (state.casual * 2) : state.casual;
       const pMult = venue.isTapas ? (state.prime * 2) : state.prime;
@@ -1836,7 +1874,7 @@
       if (currentPopup && currentPopup.isOpen()) {
         currentPopup.setLngLat(venue.coords).setHTML(html);
       } else {
-        currentPopup = new maplibregl.Popup({ closeButton: true, closeOnClick: false, offset: POPUP_OFFSET_PX })
+        currentPopup = new maplibregl.Popup({ closeButton: true, closeOnClick: false, offset: POPUP_OFFSET_PX, className: startHidden ? 'popup-pending' : '' })
           .setLngLat(venue.coords)
           .setHTML(html)
           .addTo(map);
