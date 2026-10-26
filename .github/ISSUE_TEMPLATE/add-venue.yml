@@ -57,6 +57,14 @@ body:
       required: false
 
   - type: textarea
+    id: menu_text
+    attributes:
+      label: Menu text (Optional)
+      description: "Open the restaurant's menu or ordering page, select all, copy, and paste it here. Prices are read from this text, which works for ordering pages (Toast and similar) that block automated reads."
+    validations:
+      required: false
+
+  - type: textarea
     id: manual_pricing
     attributes:
       label: Manual Pricing Overrides (Optional)
