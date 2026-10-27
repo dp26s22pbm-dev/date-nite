@@ -367,9 +367,9 @@
       min-width: 220px;
       z-index: 1500;
     }
-    /* On a phone the menus and round buttons take the top edge, so the bar sits in the open map below them */
-    @media (max-width: 480px) {
-      .search-bar { top: 330px; width: calc(100vw - 32px); min-width: 0; }
+    /* Search isn't built for phones yet, so the bar stays off narrow and touch-first screens */
+    @media (max-width: 480px), (hover: none) and (pointer: coarse) {
+      .search-bar { display: none; }
     }
     .search-input {
       width: 100%;
@@ -2074,6 +2074,7 @@
       if (li) chooseSearchResult(searchMatches[Number(li.dataset.i)]);
     });
     window.addEventListener('keydown', (e) => {
+      if (!searchBar.getClientRects().length) return; // bar hidden (phones): leave the browser's own keys alone
       // Ctrl+F and Cmd+F jump to the search bar in place of the browser's find
       if ((e.ctrlKey || e.metaKey) && !e.altKey && !e.shiftKey && e.key.toLowerCase() === 'f') {
         e.preventDefault();
