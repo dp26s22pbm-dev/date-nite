@@ -69,7 +69,9 @@ jobs:
         run: |
           gh issue edit ${{ github.event.issue.number }} --repo ${{ github.repository }} --remove-label needs-menu || true
           gh issue edit ${{ github.event.issue.number }} --repo ${{ github.repository }} --remove-label double-check || true
-          gh issue close ${{ github.event.issue.number }} --repo ${{ github.repository }} --reason completed --comment "${SUMMARY:-✓ Prices updated from your menu.}"
+          # Comment first and close without --comment: gh skips the comment when the issue is already closed
+          gh issue comment ${{ github.event.issue.number }} --repo ${{ github.repository }} --body "${SUMMARY:-✓ Prices updated from your menu.}"
+          gh issue close ${{ github.event.issue.number }} --repo ${{ github.repository }} --reason completed
 
       - name: Report failure on the issue
         if: failure()
