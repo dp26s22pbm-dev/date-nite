@@ -4,7 +4,7 @@ on:
   push:
     branches: [main]
     paths:
-      - 'mp3/**/*.mp3'
+      - 'mp3/*.mp3'
   workflow_dispatch:
 
 jobs:
@@ -26,7 +26,7 @@ jobs:
         run: |
           python3 - <<'PY'
           import json, pathlib
-          names = sorted(p.relative_to('mp3').as_posix() for p in pathlib.Path('mp3').rglob('*.mp3'))
+          names = sorted(p.name for p in pathlib.Path('mp3').glob('*.mp3'))
           pathlib.Path('mp3/playlist.json').write_text(json.dumps(names, indent=2) + '\n')
           PY
 
