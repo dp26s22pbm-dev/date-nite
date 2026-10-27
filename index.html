@@ -367,9 +367,34 @@
       min-width: 220px;
       z-index: 1500;
     }
-    /* Search isn't built for phones yet, so the bar stays off narrow and touch-first screens */
-    @media (max-width: 480px), (hover: none) and (pointer: coarse) {
+    /* Touch tablets keep the bar off; phones get a small pill at top center in the gap between the Cost and Menu rails */
+    @media (min-width: 481px) and (hover: none) and (pointer: coarse) {
       .search-bar { display: none; }
+    }
+    /* Phones: the bar rests as a spaced-out "S E A R C H" pill. Pressing it glides it down to just under the rails
+       (the script sets its top from the rails' fully unrolled height), widens it, and the keyboard opens. */
+    @media (max-width: 480px) {
+      .search-bar {
+        width: 104px;
+        min-width: 0;
+        transition: top 0.3s ease, width 0.3s ease;
+      }
+      .search-bar.expanded { width: calc(100vw - 32px); }
+      .search-input {
+        height: 36px;
+        padding: 0 8px;
+        border-radius: 999px;
+        border-color: rgba(255, 255, 255, 0.25);
+        text-align: center;
+        font-size: 11px;
+        cursor: pointer;
+        transition: font-size 0.3s ease, border-color 0.3s ease;
+      }
+      .search-input:focus { font-size: 16px; border-color: rgba(255, 255, 255, 0.6); cursor: text; } /* 16px keeps iOS from zooming in */
+      .search-bar:not(.expanded) .search-results { display: none; }
+    }
+    @media (max-width: 480px) and (prefers-reduced-motion: reduce) {
+      .search-bar, .search-input { transition: none; }
     }
     .search-input {
       width: 100%;
@@ -622,19 +647,6 @@
     .list-btn.active .row-2 { fill: #eab308; }
     .list-btn.active .row-3 { fill: #ef4444; }
     .car-btn svg, .zoom-btn svg, .list-btn svg { width: 22px !important; height: 22px !important; fill: currentColor !important; pointer-events: none !important; }
-
-    /* Phones: the four round buttons leave the bottom-right stack and form a 2x2 grid at the top, centered between
-       the Cost rail and the Menu rail. Top row: cards, sound. Bottom row: car, cloud. */
-    @media (max-width: 480px) {
-      .list-btn, .audio-btn, .car-btn, .zoom-btn {
-        right: auto !important;
-        bottom: auto !important;
-      }
-      .list-btn, .car-btn { left: calc(50% - 48px) !important; }
-      .audio-btn, .zoom-btn { left: calc(50% + 4px) !important; }
-      .list-btn, .audio-btn { top: 16px !important; }
-      .car-btn, .zoom-btn { top: 68px !important; }
-    }
 
     /* Venue list along the bottom: a row of cards that scrolls sideways, full width under the round buttons */
     .venue-list {
@@ -2062,6 +2074,35 @@
       selectVenue(venue.id);
     }
 
+    // Phones: the placeholder reads "S E A R C H"; focus moves the bar below the fully unrolled rails and widens it,
+    // and blur sends it back to the top center
+    const phoneQuery = window.matchMedia('(max-width: 480px)');
+    function syncSearchPlaceholder() {
+      searchInput.placeholder = phoneQuery.matches ? 'S E A R C H' : 'Search restaurants';
+      if (!phoneQuery.matches) { searchBar.classList.remove('expanded'); searchBar.style.top = ''; }
+    }
+    syncSearchPlaceholder();
+    phoneQuery.addEventListener('change', syncSearchPlaceholder);
+    // Bottom edge of the Cost + Budget rail or the Menu rail with every panel unrolled, whatever its state now
+    function railsOpenBottom() {
+      const extra = (el) => { const inner = el.querySelector('.roll-body-inner, .budget-body-inner'); return inner ? Math.max(0, inner.scrollHeight - inner.offsetHeight) : 0; };
+      const left = document.querySelector('.left-rail').getBoundingClientRect().bottom
+        + extra(document.querySelector('.legend-panel')) + extra(document.querySelector('.budget-card'));
+      const menu = document.querySelector('.control-panel');
+      return Math.max(left, menu.getBoundingClientRect().bottom + extra(menu));
+    }
+    searchInput.addEventListener('focus', () => {
+      if (!phoneQuery.matches) return;
+      searchBar.style.top = (railsOpenBottom() + POPUP_PANEL_GAP_PX) + 'px';
+      searchBar.classList.add('expanded');
+    });
+    searchInput.addEventListener('blur', () => {
+      if (!phoneQuery.matches) return;
+      searchBar.classList.remove('expanded');
+      searchBar.style.top = '';
+      searchInput.value = '';
+      renderSearchResults();
+    });
     searchInput.addEventListener('input', renderSearchResults);
     searchInput.addEventListener('keydown', (e) => {
       if (e.key === 'Enter') { e.preventDefault(); chooseSearchResult(searchMatches[searchActive]); }
