@@ -527,11 +527,11 @@
       pointer-events: none !important;
     }
 
-    /* Round map buttons stacked above the audio toggle: the car first, then the zoom-out cloud */
+    /* Round map buttons in a row above the venue cards, right-aligned: cards, cloud, car, then the sound toggle */
     .car-btn, .zoom-btn, .list-btn {
       position: fixed !important;
-      right: 16px !important;
-      bottom: calc(var(--btn-base) + 54px) !important;
+      right: 70px !important;
+      bottom: var(--btn-base) !important;
       width: 44px !important;
       height: 44px !important;
       border-radius: 50% !important;
@@ -547,8 +547,8 @@
       pointer-events: auto !important;
       transition: all 0.2s ease !important;
     }
-    .zoom-btn { bottom: calc(var(--btn-base) + 108px) !important; }
-    .list-btn { bottom: calc(var(--btn-base) + 162px) !important; }
+    .zoom-btn { right: 124px !important; }
+    .list-btn { right: 178px !important; }
     .car-btn.active {
       color: #a78bfa !important;
       border-color: #a78bfa !important;
@@ -677,7 +677,7 @@
     .car-toast {
       position: fixed;
       right: 70px;
-      bottom: calc(var(--btn-base) + 60px);
+      bottom: calc(var(--btn-base) + 54px);
       max-width: 260px;
       padding: 10px 12px;
       border-radius: 10px;
