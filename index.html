@@ -689,13 +689,14 @@
         border-radius: 50%;
         background: #161b22;
         border: 1px solid #ffffff;
-        color: #f97316; /* orange, the $150 tier */
+        color: #fb923c; /* a lighter take on the $150 tier's orange */
         display: flex;
         align-items: center;
         justify-content: center;
         font: inherit;
         font-size: 17px;
-        font-weight: 700;
+        font-weight: 900;
+        -webkit-text-stroke: 0.6px currentColor; /* a touch heavier than the bold weight alone */
         line-height: 1;
         cursor: pointer;
         box-shadow: 0 4px 18px rgba(0, 0, 0, 0.7);
@@ -723,6 +724,19 @@
         opacity: 0;
         visibility: hidden;
         transition: opacity 0.2s ease, visibility 0s linear 0.2s, bottom 0.2s ease;
+      }
+      /* Pointer down to the ? button, like the tip under a venue card; the ? is 59px + 16.5px from the screen's right edge */
+      .cost-pop::after {
+        content: '';
+        position: absolute;
+        bottom: -7px;
+        right: 51px;
+        width: 14px;
+        height: 14px;
+        background: #161b22;
+        border-right: 1px solid rgba(255, 255, 255, 0.6);
+        border-bottom: 1px solid rgba(255, 255, 255, 0.6);
+        transform: rotate(45deg);
       }
       .cost-pop.open { opacity: 1; visibility: visible; transition: opacity 0.2s ease, bottom 0.2s ease; }
       .cost-pop-title {
