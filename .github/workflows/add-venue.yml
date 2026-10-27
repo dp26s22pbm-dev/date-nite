@@ -57,7 +57,7 @@ jobs:
           exit 1
 
       - name: Close Issue
-        if: steps.add.outputs.needs_menu != 'true'
+        if: steps.add.outputs.needs_menu != 'true' && steps.add.outputs.needs_check != 'true'
         uses: peter-evans/close-issue@v3
         with:
           issue-number: ${{ github.event.issue.number }}
@@ -73,6 +73,18 @@ jobs:
         run: |
           gh label create needs-menu --color FBCA04 --description "Venue added with estimated prices; reply with the menu text" --repo ${{ github.repository }} --force || true
           gh issue edit ${{ github.event.issue.number }} --repo ${{ github.repository }} --add-label needs-menu
+          gh issue comment ${{ github.event.issue.number }} --repo ${{ github.repository }} --body "$SUMMARY"
+
+      # The prices look odd (premium close to casual, an appetizer above the casual main, ...): keep the issue open,
+      # label it, and say why. Replying with the menu text fixes them (see add-menu.yml); closing the issue accepts them.
+      - name: Flag prices to double-check
+        if: steps.add.outputs.needs_menu != 'true' && steps.add.outputs.needs_check == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          SUMMARY: ${{ steps.add.outputs.summary }}
+        run: |
+          gh label create double-check --color D93F0B --description "Venue added, but its prices look off; check them" --repo ${{ github.repository }} --force || true
+          gh issue edit ${{ github.event.issue.number }} --repo ${{ github.repository }} --add-label double-check
           gh issue comment ${{ github.event.issue.number }} --repo ${{ github.repository }} --body "$SUMMARY"
 
       - name: Report failure on the issue

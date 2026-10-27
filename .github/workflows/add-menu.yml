@@ -1,7 +1,8 @@
 name: Add Menu Prices from Issue Reply
 
-# A venue whose prices had to be guessed is left open with the "needs-menu" label. Replying to that issue with the
-# menu text (select all on the menu page, copy, paste) updates the venue's prices and closes the issue.
+# A venue whose prices had to be guessed is left open with the "needs-menu" label, and one whose prices look off with
+# the "double-check" label. Replying to either issue with the menu text (select all on the menu page, copy, paste)
+# updates the venue's prices and closes the issue.
 on:
   issue_comment:
     types: [created]
@@ -12,7 +13,7 @@ jobs:
     # the bot's own comments
     if: >-
       !github.event.issue.pull_request &&
-      contains(github.event.issue.labels.*.name, 'needs-menu') &&
+      (contains(github.event.issue.labels.*.name, 'needs-menu') || contains(github.event.issue.labels.*.name, 'double-check')) &&
       contains(fromJSON('["OWNER","MEMBER","COLLABORATOR"]'), github.event.comment.author_association) &&
       github.event.comment.user.type != 'Bot'
     runs-on: ubuntu-latest
@@ -66,7 +67,8 @@ jobs:
           GH_TOKEN: ${{ github.token }}
           SUMMARY: ${{ steps.add.outputs.summary }}
         run: |
-          gh issue edit ${{ github.event.issue.number }} --repo ${{ github.repository }} --remove-label needs-menu
+          gh issue edit ${{ github.event.issue.number }} --repo ${{ github.repository }} --remove-label needs-menu || true
+          gh issue edit ${{ github.event.issue.number }} --repo ${{ github.repository }} --remove-label double-check || true
           gh issue close ${{ github.event.issue.number }} --repo ${{ github.repository }} --reason completed --comment "${SUMMARY:-✓ Prices updated from your menu.}"
 
       - name: Report failure on the issue

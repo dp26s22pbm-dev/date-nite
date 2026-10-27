@@ -669,6 +669,17 @@ def maps_tool_experiment(name, where, saved_coords):
         print(f"[maps-experiment] failed: {e}")
         return None
 
+def price_sanity_warnings(app, casual, premium, drink, dessert):
+    """Reasons the saved prices may be off. A venue with any of these is left open for a second look."""
+    warnings = []
+    if premium < casual * 1.5:
+        warnings.append(f"the premium main (${premium}) is within 50% of the casual main (${casual}), which often means "
+                        "lunch or combo prices were read")
+    for label, value in (("appetizer", app), ("drink", drink), ("dessert", dessert)):
+        if value > casual * 1.1:
+            warnings.append(f"the {label} (${value}) costs more than the casual main (${casual})")
+    return warnings
+
 def set_output(key, value):
     """Hand a one-line result to the GitHub Actions workflow (used for the issue comment)."""
     path = os.environ.get("GITHUB_OUTPUT")
@@ -927,6 +938,13 @@ def main():
         summary += (" The prices are estimates. To fix them, reply to this issue with the menu: open the venue's menu page, "
                     "select all, copy, and paste it here. I will update the prices and close this issue.")
     set_output("needs_menu", "true" if needs_menu else "false")
+    warnings = price_sanity_warnings(app, casual_main, premium_main, drink, dessert)
+    if warnings:
+        summary += " Double-check these prices: " + "; ".join(warnings) + "."
+        if not menu_override:
+            summary += (" If they are wrong, reply to this issue with the menu text (open the venue's menu page, select "
+                        "all, copy, paste) and I will update them; if they are fine, close this issue.")
+    set_output("needs_check", "true" if warnings else "false")
     final_coords = (venues[existing_idx] if existing_idx is not None else entry)["coords"]
     neighbors = nearby_venues(venues[existing_idx]["id"] if existing_idx is not None else entry["id"], final_coords, venues)
     if neighbors:
