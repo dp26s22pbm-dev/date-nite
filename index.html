@@ -393,8 +393,11 @@
       .search-input:focus { font-size: 16px; cursor: text; } /* 16px keeps iOS from zooming in */
       .search-bar:not(.expanded) .search-results { display: none; }
     }
+    /* While searching on a phone the panels fade out of the way and stop taking taps */
+    .left-rail, .right-rail { transition: opacity 0.25s ease; }
+    body.searching .left-rail, body.searching .right-rail { opacity: 0; pointer-events: none; }
     @media (max-width: 480px) and (prefers-reduced-motion: reduce) {
-      .search-bar, .search-input { transition: none; }
+      .search-bar, .search-input, .left-rail, .right-rail { transition: none; }
     }
     .search-input {
       width: 100%;
@@ -2077,32 +2080,24 @@
       selectVenue(venue.id);
     }
 
-    // Phones: the placeholder reads "S E A R C H"; focus moves the bar below the fully unrolled rails and widens it,
-    // and blur sends it back to the top center
+    // Phones: the placeholder reads "Search"; focus widens the bar at the top and fades the Cost, Budget and Menu
+    // panels away so the results list has the room above the keyboard, and blur brings them back
     const phoneQuery = window.matchMedia('(max-width: 480px)');
     function syncSearchPlaceholder() {
-      searchInput.placeholder = phoneQuery.matches ? 'Search' :'Search restaurants';
-      if (!phoneQuery.matches) { searchBar.classList.remove('expanded'); searchBar.style.top = ''; }
+      searchInput.placeholder = phoneQuery.matches ? 'Search' : 'Search restaurants';
+      if (!phoneQuery.matches) { searchBar.classList.remove('expanded'); document.body.classList.remove('searching'); }
     }
     syncSearchPlaceholder();
     phoneQuery.addEventListener('change', syncSearchPlaceholder);
-    // Bottom edge of the Cost + Budget rail or the Menu rail with every panel unrolled, whatever its state now
-    function railsOpenBottom() {
-      const extra = (el) => { const inner = el.querySelector('.roll-body-inner, .budget-body-inner'); return inner ? Math.max(0, inner.scrollHeight - inner.offsetHeight) : 0; };
-      const left = document.querySelector('.left-rail').getBoundingClientRect().bottom
-        + extra(document.querySelector('.legend-panel')) + extra(document.querySelector('.budget-card'));
-      const menu = document.querySelector('.control-panel');
-      return Math.max(left, menu.getBoundingClientRect().bottom + extra(menu));
-    }
     searchInput.addEventListener('focus', () => {
       if (!phoneQuery.matches) return;
-      searchBar.style.top = (railsOpenBottom() + POPUP_PANEL_GAP_PX) + 'px';
       searchBar.classList.add('expanded');
+      document.body.classList.add('searching');
     });
     searchInput.addEventListener('blur', () => {
       if (!phoneQuery.matches) return;
       searchBar.classList.remove('expanded');
-      searchBar.style.top = '';
+      document.body.classList.remove('searching');
       searchInput.value = '';
       renderSearchResults();
     });
