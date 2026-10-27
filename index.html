@@ -561,7 +561,7 @@
       height: 33px !important;
       border-radius: 50% !important;
       background: #161b22 !important;
-      border: 1px solid rgba(255, 255, 255, 0.25) !important;
+      border: 1px solid #ffffff !important;
       color: #8b949e !important;
       display: flex !important;
       align-items: center !important;
@@ -579,7 +579,6 @@
     @property --music-blur { syntax: '<length>'; inherits: false; initial-value: 14px; }
     .audio-btn.playing {
       color: var(--music-c) !important;
-      border-color: var(--music-c) !important;
       box-shadow: 0 0 14px rgba(56, 189, 248, 0.4) !important; /* fallback for browsers without color-mix */
       box-shadow: 0 0 var(--music-blur) color-mix(in srgb, var(--music-c) 60%, transparent) !important;
       transition: bottom 0.2s ease !important; /* the animation smooths the glow; only the slide keeps its transition so it matches the other buttons */
@@ -618,7 +617,7 @@
       height: 33px !important;
       border-radius: 50% !important;
       background: #161b22 !important;
-      border: 1px solid rgba(255, 255, 255, 0.25) !important;
+      border: 1px solid #ffffff !important;
       color: #8b949e !important;
       display: flex !important;
       align-items: center !important;
@@ -633,18 +632,15 @@
     .car-btn { right: 145px !important; }
     .car-btn.active {
       color: #a78bfa !important;
-      border-color: #a78bfa !important;
       box-shadow: 0 0 14px rgba(167, 139, 250, 0.45) !important;
     }
+    .zoom-btn { color: #38bdf8 !important; } /* the cloud stays blue on or off; the white glow shows it's on */
     .zoom-btn.active {
-      color: #ffffff !important;
-      border-color: #ffffff !important;
       box-shadow: 0 0 14px rgba(255, 255, 255, 0.4) !important;
     }
     .car-btn.busy { opacity: 0.6; }
     .list-btn.active {
       color: #38bdf8 !important;
-      border-color: #38bdf8 !important;
       box-shadow: 0 0 14px rgba(56, 189, 248, 0.4) !important;
     }
     /* While the list is on, its three rows take the cost-tier colors (green, yellow, red); the outline stays blue.
@@ -706,7 +702,7 @@
       align-items: center;
       justify-content: center;
       background: #161b22;
-      border: 1px solid rgba(255, 255, 255, 0.25);
+      border: 1px solid #ffffff;
       color: #8b949e;
       border-radius: 50%;
       font: inherit;
@@ -718,7 +714,9 @@
       transition: all 0.2s ease;
     }
     .sort-chip svg { width: 16.5px; height: 16.5px; fill: currentColor; pointer-events: none; }
-    .sort-chip.active { color: #ffffff; border-color: #ffffff; box-shadow: 0 0 14px rgba(255, 255, 255, 0.4); }
+    #sort-cost { color: #22c55e; }
+    #sort-near { color: #eab308; }
+    .sort-chip.active { box-shadow: 0 0 14px rgba(255, 255, 255, 0.4); } /* the glow shows which sort is on; the outlines stay white */
     .list-count { font-size: 11px; color: #8b949e; text-shadow: 0 1px 3px #000; }
     .list-cards {
       display: flex;
