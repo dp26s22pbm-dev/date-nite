@@ -865,5 +865,22 @@
     "drink": 8.0,
     "dessert": 8.0,
     "tierColor": "#eab308"
+  },
+  {
+    "id": 54,
+    "name": "Uncle Julio's Naperville",
+    "category": "Tex-Mex",
+    "website": "https://unclejulios.com/",
+    "mapsUrl": "https://maps.app.goo.gl/i5Z2SgYuSWzKEaM37",
+    "coords": [
+      -88.129635,
+      41.805042
+    ],
+    "app": 12.75,
+    "casualMain": 15.88,
+    "premiumMain": 29.95,
+    "drink": 13.0,
+    "dessert": 10.09,
+    "tierColor": "#eab308"
   }
 ]
