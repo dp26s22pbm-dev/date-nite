@@ -42,6 +42,7 @@ You are a restaurant menu pricing extraction engine. Analyze the provided menu c
   "desserts": [float, ...]
 }
 Rules:
+- Prices may have no dollar sign and may run into a calorie count: "12.991,220 cal" is $12.99 and 1,220 cal. Calorie counts are never prices.
 - "apps": Starters, sides, appetizers, soups, salads.
 - "casualMains": Standard pastas, pizzas, handhelds, burgers, chicken entrees, or basic sandwiches.
 - "premiumMains": Standard steaks (ribeye, strip, filet), veal chops, prime seafood (salmon, lobster, sea bass), with the standard single-entree plate for each. Exclude combination or multi-protein plates, chicken and vegetarian dishes, large-format or shared cuts, wagyu, market-price items and sharing platters. If there are no premium luxury cuts, use the top 25% highest priced entrees.
@@ -251,6 +252,8 @@ def fetch_pdf_pricing(url):
         return None
 
 PRICE_RE = re.compile(r"\$\s?\d{1,3}(?:\.\d{2})?")
+# Some menu pages copy as "12.991,220 cal": no dollar sign, and the price runs into the calorie count
+BARE_PRICE_RE = re.compile(r"(?<![\d.,])\d{1,3}\.\d{2}")
 MENU_TEXT_LIMIT = 60000
 
 def clean_pricing(data):
@@ -273,7 +276,7 @@ def clean_pricing(data):
 def pricing_from_menu_text(text):
     """Parse menu prices out of plain text (a pasted menu or a restaurant's menu page) with Gemini."""
     text = (text or "").strip()
-    if len(PRICE_RE.findall(text)) < 6:
+    if max(len(PRICE_RE.findall(text)), len(BARE_PRICE_RE.findall(text))) < 6:
         print("Menu text has too few prices to use.")
         return None
     try:
