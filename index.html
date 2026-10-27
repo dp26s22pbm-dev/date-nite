@@ -162,6 +162,7 @@
 
     /* Budget card under the menu: the Budget button is its header, and the slider unrolls downward beneath it */
     .budget-card {
+      display: none; /* hidden for now, on every screen size */
       background: rgba(22, 27, 34, 0.95);
       backdrop-filter: blur(16px);
       -webkit-backdrop-filter: blur(16px);
@@ -540,6 +541,19 @@
       align-items: center;
       gap: 8px;
     }
+
+    /* The Cost panel's rows are built like the Menu's counter rows (same height, padding and hairlines between), so
+       the open Cost panel runs exactly as long as the open Menu panel */
+    #cost-panel .roll-pad { gap: 0; }
+    #cost-panel .legend-item {
+      min-height: 33px;
+      padding: 6px 0;
+      justify-content: center;
+      box-sizing: content-box;
+    }
+    #cost-panel .legend-item + .legend-item { border-top: 1px solid rgba(255, 255, 255, 0.12); }
+    #cost-panel .legend-item:first-child { padding-top: 0; margin-top: -4px; }
+    #cost-panel .legend-item:last-child { padding-bottom: 0; }
 
     .legend-swatch {
       width: 18px;
