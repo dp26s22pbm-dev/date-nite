@@ -823,7 +823,7 @@
     <div class="list-cards" id="list-cards"></div>
   </div>
 
-  <div class="app-ver"><b>DATE NITE</b> ver. <span id="app-ver-num">158</span></div>
+  <div class="app-ver"><b>DATE NITE</b> ver. <span id="app-ver-num">159</span></div>
 
   <!-- Audio Controls -->
   <audio id="bg-audio" preload="auto"></audio>
@@ -1411,7 +1411,6 @@
     // list that way, faster the closer the pointer is to the edge. Touch screens just swipe.
     const EDGE_ZONE_PX = 80;
     const EDGE_MAX_PX_PER_SEC = 700;
-    const EDGE_VERTICAL_SLACK_PX = 20;
     let edgePointer = null;
     let edgeRaf = null;
     let edgeLast = 0;
@@ -1419,7 +1418,10 @@
     function edgeVelocity() {
       if (!edgePointer || listEl.classList.contains('hidden')) return 0;
       const r = listCards.getBoundingClientRect();
-      if (edgePointer.y < r.top - EDGE_VERTICAL_SLACK_PX || edgePointer.y > r.bottom + EDGE_VERTICAL_SLACK_PX) return 0;
+      // Vertical bounds are the cards themselves, not the strip's padding, so a pointer below the cards doesn't scroll
+      const card = listCards.querySelector('.venue-card');
+      const cr = card ? card.getBoundingClientRect() : r;
+      if (edgePointer.y < cr.top || edgePointer.y > cr.bottom) return 0;
       if (edgePointer.x < r.left + EDGE_ZONE_PX) return -Math.min(1, (r.left + EDGE_ZONE_PX - edgePointer.x) / EDGE_ZONE_PX) * EDGE_MAX_PX_PER_SEC;
       if (edgePointer.x > r.right - EDGE_ZONE_PX) return Math.min(1, (edgePointer.x - (r.right - EDGE_ZONE_PX)) / EDGE_ZONE_PX) * EDGE_MAX_PX_PER_SEC;
       return 0;
