@@ -695,19 +695,30 @@
     }
     #app-ver-num { margin-left: -3px; } /* tucks the number closer to "ver." */
     .app-ver b { color: #a78bfa; /* same purple as the car trail */  font-weight: 700; }
-    .list-head { display: flex; align-items: center; gap: 6px; position: relative; z-index: 1; margin-bottom: 4px; /* chips clear the cards by the same 12px as the round buttons */ } /* above the cards' padding overlap */
+    .list-head { display: flex; align-items: center; gap: 10px; position: relative; z-index: 1; margin-bottom: 4px; /* buttons clear the cards by the same 12px as the round map buttons */ } /* above the cards' padding overlap */
+    /* Sort buttons: round like the map buttons, one lit at a time. White when on, so they don't compete with the blue list button. */
     .sort-chip {
       pointer-events: auto;
-      background: rgba(22, 27, 34, 0.95);
-      border: 1px solid rgba(255, 255, 255, 0.2);
+      width: 33px;
+      height: 33px;
+      padding: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: #161b22;
+      border: 1px solid rgba(255, 255, 255, 0.25);
       color: #8b949e;
-      border-radius: 999px;
-      padding: 5px 12.5px;
-      font-size: 13.75px;
-      font-weight: 600;
+      border-radius: 50%;
+      font: inherit;
+      font-size: 17px;
+      font-weight: 700;
+      line-height: 1;
       cursor: pointer;
+      box-shadow: 0 4px 18px rgba(0, 0, 0, 0.7);
+      transition: all 0.2s ease;
     }
-    .sort-chip.active { color: #f0f6fc; border-color: rgba(255, 255, 255, 0.6); } /* same outline as the open Menu, Cost and Budget bars */
+    .sort-chip svg { width: 16.5px; height: 16.5px; fill: currentColor; pointer-events: none; }
+    .sort-chip.active { color: #ffffff; border-color: #ffffff; box-shadow: 0 0 14px rgba(255, 255, 255, 0.4); }
     .list-count { font-size: 11px; color: #8b949e; text-shadow: 0 1px 3px #000; }
     .list-cards {
       display: flex;
@@ -905,8 +916,8 @@
   <!-- Venue list along the bottom -->
   <div id="venue-list" class="venue-list">
     <div class="list-head">
-      <button class="sort-chip active" id="sort-cost" onclick="setListSort('cost')">Cost</button>
-      <button class="sort-chip" id="sort-near" onclick="setListSort('near')">Proximity</button>
+      <button class="sort-chip active" id="sort-cost" onclick="setListSort('cost')" aria-label="Sort by cost" title="Sort by cost">$</button>
+      <button class="sort-chip" id="sort-near" onclick="setListSort('near')" aria-label="Sort by distance" title="Sort by distance"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2a7 7 0 0 0-7 7c0 5.25 7 13 7 13s7-7.75 7-13a7 7 0 0 0-7-7zm0 9.5A2.5 2.5 0 1 1 12 6.5a2.5 2.5 0 0 1 0 5z"/></svg></button>
       <span class="list-count" id="list-count"></span>
     </div>
     <div class="list-cards" id="list-cards"></div>
