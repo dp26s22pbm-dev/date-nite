@@ -1397,7 +1397,7 @@
 
     // Open a venue's popup, send the car, and glide the venue to its spot on the map (the center, or lower on narrow
     // screens so its card clears the panels), keeping the current zoom and tilt
-    const SEARCH_ZOOM = 16; // the height the map settles at when a venue is chosen from the search bar
+    const SEARCH_ZOOM = 16; // the height the map settles at when a venue is chosen from the search bar or the bottom list
     function selectVenue(venueId, zoom) {
       const venue = rawVenues.find(v => v.id === venueId);
       if (!venue) return;
@@ -1591,7 +1591,7 @@
     // Clicking a card does what clicking its dot does. Scrolling the list never moves the map.
     listCards.addEventListener('click', (e) => {
       const card = e.target.closest('.venue-card');
-      if (card) selectVenue(Number(card.dataset.id));
+      if (card) selectVenue(Number(card.dataset.id), SEARCH_ZOOM);
     });
 
     // ---------- Running car: shows the user's location and drives to clicked venues ----------
