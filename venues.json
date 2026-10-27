@@ -273,6 +273,7 @@
     "id": 18,
     "name": "The Cheesecake Factory",
     "category": "American / International",
+    "labelAbove": true,
     "website": "https://www.thecheesecakefactory.com",
     "coords": [
       -88.2038,
