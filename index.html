@@ -596,8 +596,18 @@
       gap: 6px;
       z-index: 1000;
       pointer-events: none; /* only the chips and cards take clicks, so the map stays draggable around them */
+      opacity: 1;
+      transition: opacity 0.25s ease, visibility 0s linear 0s;
     }
-    .venue-list.hidden { display: none; }
+    /* Fades out instead of vanishing; visibility drops once the fade ends so the hidden cards take no clicks */
+    .venue-list.hidden {
+      opacity: 0;
+      visibility: hidden;
+      transition: opacity 0.25s ease, visibility 0s linear 0.25s;
+    }
+    @media (prefers-reduced-motion: reduce) {
+      .venue-list, .venue-list.hidden { transition: none; }
+    }
     /* App name and build number, bottom left under the card strip (attribution sits bottom right) */
     .app-ver {
       position: fixed;
