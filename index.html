@@ -641,11 +641,12 @@
       pointer-events: auto;
       scrollbar-width: none; /* no bar: the edge hover and swipe do the scrolling */
       /* Cards fade out at an edge instead of being cut off. The script sets --fade-l / --fade-r to 1 only on
-         a side that has more cards hidden, so the first and last cards are never dimmed when fully in view. */
+         a side that has more cards hidden, so the first and last cards are never dimmed when fully in view. The ramps run between the 14px
+         of margin on each side, so a faded edge ends flush with the Cost, Budget and Menu bars, not past them. */
       --fade-l: 0;
       --fade-r: 0;
-      -webkit-mask-image: linear-gradient(to right, rgba(0, 0, 0, calc(1 - var(--fade-l))) 0, #000 56px, #000 calc(100% - 56px), rgba(0, 0, 0, calc(1 - var(--fade-r))) 100%);
-      mask-image: linear-gradient(to right, rgba(0, 0, 0, calc(1 - var(--fade-l))) 0, #000 56px, #000 calc(100% - 56px), rgba(0, 0, 0, calc(1 - var(--fade-r))) 100%);
+      -webkit-mask-image: linear-gradient(to right, rgba(0, 0, 0, calc(1 - var(--fade-l))) 14px, #000 70px, #000 calc(100% - 70px), rgba(0, 0, 0, calc(1 - var(--fade-r))) calc(100% - 14px));
+      mask-image: linear-gradient(to right, rgba(0, 0, 0, calc(1 - var(--fade-l))) 14px, #000 70px, #000 calc(100% - 70px), rgba(0, 0, 0, calc(1 - var(--fade-r))) calc(100% - 14px));
     }
     .list-cards::-webkit-scrollbar { display: none; }
     .venue-card {
