@@ -1296,14 +1296,17 @@
       map.on('zoom', () => { if (map.getZoom() >= LABELS_MIN_ZOOM - LABELS_FADE_ZOOM) hideDotLabel(); });
       map.on('click', () => hideDotLabel(true));
 
-      // The car is on by default, parked at the default origin. If location permission was already granted on an
-      // earlier visit, it moves to the user's location without a tap.
-      placeCar(DEFAULT_ORIGIN);
+      // The car is on by default. If location permission was already granted on an earlier visit, it appears at the
+      // user's location without a tap, and is not parked at the default origin first (it would visibly jump). It
+      // parks at the default origin right away otherwise, or if that location attempt fails.
+      const parkAtDefault = () => placeCar(DEFAULT_ORIGIN);
       try {
-        navigator.permissions?.query({ name: 'geolocation' })
-          .then((p) => { if (p.state === 'granted') locateUser(); })
-          .catch(() => {});
-      } catch (e) { /* permissions API unavailable */ }
+        if (navigator.permissions?.query) {
+          navigator.permissions.query({ name: 'geolocation' })
+            .then((p) => { if (p.state === 'granted') locateUser({ fallbackToDefault: true }); else parkAtDefault(); })
+            .catch(parkAtDefault);
+        } else parkAtDefault();
+      } catch (e) { parkAtDefault(); /* permissions API unavailable */ }
 
       // Ensure viewport dimensions calculate cleanly on load
       map.resize();
@@ -1812,9 +1815,12 @@
       else locateUser();
     }
 
-    function locateUser() {
+    // fallbackToDefault: the startup attempt, where no car is showing yet; if no location comes back, park it at the default origin
+    function locateUser({ fallbackToDefault = false } = {}) {
+      const fallback = () => { if (fallbackToDefault) placeCar(DEFAULT_ORIGIN); };
       if (!navigator.geolocation) {
         showCarToast('Your browser does not support location.');
+        fallback();
         return;
       }
       carBtn.classList.add('busy');
@@ -1829,6 +1835,7 @@
             : DEFAULT_ORIGIN.slice();
           if (haversineM(here, MAP_CENTER) > MAX_DISTANCE_FROM_MAP_M) {
             showCarToast('You appear to be outside the Naperville area, so your car is not shown.');
+            fallback();
             return;
           }
           if (trusted) {
@@ -1843,6 +1850,7 @@
           showCarToast(err.code === 1
             ? 'Location permission was denied. Allow it in your browser settings to see your car.'
             : 'Could not get your location. Try again.');
+          fallback();
         },
         { enableHighAccuracy: true, timeout: 15000, maximumAge: 60000 }
       );
