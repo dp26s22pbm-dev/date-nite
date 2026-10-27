@@ -348,21 +348,38 @@ def pricing_from_website_menu(site):
             return pricing, url
     return None, None
 
+def _gemini_read_site(name, site, hint=""):
+    prompt = (f"Open {site} and find the dinner (or all-day dine-in) menu for \"{name}\". Follow the site's menu or "
+              "ordering links if the home page has no prices. Use only prices printed on the restaurant's own menu "
+              "pages, never estimates or third-party listings. When the menu has separate lunch and dinner sections, "
+              "use the dinner prices only; ignore lunch specials, kids menus, party packages and catering. "
+              + hint + "If you cannot open a page with real dish prices, return {\"casualMains\": []}.\n" + PDF_PROMPT)
+    response = client.models.generate_content(
+        model="gemini-3.6-flash",
+        contents=prompt,
+        config=types.GenerateContentConfig(tools=[types.Tool(url_context=types.UrlContext())], temperature=0.1),
+    )
+    raw = response.text.strip().replace("```json", "").replace("```", "")
+    return clean_pricing(json.loads(raw))
+
+def _premium_looks_low(pricing):
+    """A premium main at or near the casual main usually means lunch or combo prices were read."""
+    prem, casual = pricing.get("premiumMains"), pricing.get("casualMains")
+    return bool(prem) and statistics.median(prem) < statistics.median(casual) * 1.25
+
 def pricing_from_gemini_reading_site(name, site):
     """Last attempt at real prices before a plain web search: have Gemini open the restaurant's own menu pages
     itself, which covers menus that need JavaScript to show. Returns pricing or None."""
     try:
-        prompt = (f"Open {site} and find the dine-in menu for \"{name}\". Follow the site's menu or ordering links "
-                  "if the home page has no prices. Use only prices printed on the restaurant's own menu pages, "
-                  "never estimates or third-party listings. If you cannot open a page with real dish prices, "
-                  "return {\"casualMains\": []}.\n" + PDF_PROMPT)
-        response = client.models.generate_content(
-            model="gemini-3.6-flash",
-            contents=prompt,
-            config=types.GenerateContentConfig(tools=[types.Tool(url_context=types.UrlContext())], temperature=0.1),
-        )
-        raw = response.text.strip().replace("```json", "").replace("```", "")
-        pricing = clean_pricing(json.loads(raw))
+        pricing = _gemini_read_site(name, site)
+        if pricing and _premium_looks_low(pricing):
+            print("Premium mains came out close to casual mains; asking Gemini to re-check for dinner prices.")
+            retry = _gemini_read_site(name, site, "A first read gave entree prices that look like lunch prices; "
+                                                   "find the dinner entrees (steak, seafood, hibachi dinners) and use those. ")
+            if retry and not _premium_looks_low(retry):
+                pricing = retry
+            else:
+                print("Premium mains still look low; keeping the first read.")
         if pricing and sum(len(v) for v in pricing.values()) >= 6:
             return pricing
         print("Gemini could not read enough real prices from the restaurant's site.")
