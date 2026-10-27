@@ -307,8 +307,13 @@ def html_to_text(html):
     html = re.sub(r"(?s)<[^>]+>", " ", html)
     return re.sub(r"\s+", " ", unescape(html)).strip()
 
+MENU_LINK_WORDS = ("menu", "food", "dine", "dining", "drink", "order", "eat", "lunch", "dinner", "brunch")
+ORDERING_HOSTS = ("toasttab.com", "chownow.com", "square.site", "olo.com", "popmenu.com", "order.online", "ordering.", "menus.")
+MENU_PATHS = ("/menu", "/menus", "/our-menu", "/food-menu", "/food", "/dinner", "/dinner-menu", "/dining", "/order", "/order-online")
+
 def menu_page_candidates(site):
-    """Menu pages on the restaurant's own site: links on its home page that mention 'menu', then /menu and /menus."""
+    """Menu pages for a restaurant: links on its home page that look like menu or ordering links (same site or a
+    known ordering platform), then common menu paths."""
     parsed = urllib.parse.urlparse(site)
     host = parsed.netloc.lower().removeprefix("www.")
     found = []
@@ -316,14 +321,17 @@ def menu_page_candidates(site):
     if home:
         page = home[0].decode("utf-8", "ignore")
         for href, label in re.findall(r"(?is)<a\b[^>]*?href=[\"']([^\"']+)[\"'][^>]*>(.*?)</a>", page):
-            if "menu" in href.lower() or "menu" in re.sub(r"<[^>]+>", "", label).lower():
-                url = urllib.parse.urljoin(site, href.split("#")[0])
-                p = urllib.parse.urlparse(url)
-                if p.scheme in ("http", "https") and p.netloc.lower().removeprefix("www.") == host:
-                    found.append(url)
-    for path in ("/menu", "/menus"):
+            text = re.sub(r"<[^>]+>", "", label).lower()
+            if not (any(w in href.lower() for w in MENU_LINK_WORDS) or any(w in text for w in MENU_LINK_WORDS)):
+                continue
+            url = urllib.parse.urljoin(site, href.split("#")[0])
+            p = urllib.parse.urlparse(url)
+            netloc = p.netloc.lower().removeprefix("www.")
+            if p.scheme in ("http", "https") and (netloc == host or any(h in netloc for h in ORDERING_HOSTS)):
+                found.append(url)
+    for path in MENU_PATHS:
         found.append(f"{parsed.scheme}://{parsed.netloc}{path}")
-    return list(dict.fromkeys(found))[:5]
+    return list(dict.fromkeys(found))[:12]
 
 def pricing_from_website_menu(site):
     """Try the restaurant's own menu pages (HTML or PDF). Returns (pricing, url) or (None, None)."""
@@ -339,6 +347,28 @@ def pricing_from_website_menu(site):
         if pricing:
             return pricing, url
     return None, None
+
+def pricing_from_gemini_reading_site(name, site):
+    """Last attempt at real prices before a plain web search: have Gemini open the restaurant's own menu pages
+    itself, which covers menus that need JavaScript to show. Returns pricing or None."""
+    try:
+        prompt = (f"Open {site} and find the dine-in menu for \"{name}\". Follow the site's menu or ordering links "
+                  "if the home page has no prices. Use only prices printed on the restaurant's own menu pages, "
+                  "never estimates or third-party listings. If you cannot open a page with real dish prices, "
+                  "return {\"casualMains\": []}.\n" + PDF_PROMPT)
+        response = client.models.generate_content(
+            model="gemini-3.6-flash",
+            contents=prompt,
+            config=types.GenerateContentConfig(tools=[types.Tool(url_context=types.UrlContext())], temperature=0.1),
+        )
+        raw = response.text.strip().replace("```json", "").replace("```", "")
+        pricing = clean_pricing(json.loads(raw))
+        if pricing and sum(len(v) for v in pricing.values()) >= 6:
+            return pricing
+        print("Gemini could not read enough real prices from the restaurant's site.")
+    except Exception as e:
+        print(f"Gemini site read error for {site}: {e}")
+    return None
 
 def normalize_maps_url(value):
     """Return the link if it is a Google Maps address, else "". Used for the fallback link on the popup."""
@@ -753,6 +783,9 @@ def main():
     if not pricing and (website or saved_site):
         pricing, menu_page = pricing_from_website_menu(website or saved_site)
         pricing_source = f"the menu on the restaurant's website ({menu_page})"
+    if not pricing and (website or saved_site):
+        pricing = pricing_from_gemini_reading_site(name, website or saved_site)
+        pricing_source = "Gemini reading the restaurant's own menu pages"
     if not pricing:
         pricing = fetch_pricing_via_gemini_search(name)
         pricing_source = "a web search (estimates)"
