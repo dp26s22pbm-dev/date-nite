@@ -56,6 +56,20 @@ jobs:
           echo "Could not push after 6 attempts" >&2
           exit 1
 
+      # A reopened issue may still carry labels from an earlier run; drop the ones this run does not set
+      - name: Clear stale labels
+        env:
+          GH_TOKEN: ${{ github.token }}
+          NEEDS_MENU: ${{ steps.add.outputs.needs_menu }}
+          NEEDS_CHECK: ${{ steps.add.outputs.needs_check }}
+        run: |
+          if [ "$NEEDS_MENU" != "true" ]; then
+            gh issue edit ${{ github.event.issue.number }} --repo ${{ github.repository }} --remove-label needs-menu || true
+          fi
+          if [ "$NEEDS_CHECK" != "true" ] || [ "$NEEDS_MENU" = "true" ]; then
+            gh issue edit ${{ github.event.issue.number }} --repo ${{ github.repository }} --remove-label double-check || true
+          fi
+
       - name: Close Issue
         if: steps.add.outputs.needs_menu != 'true' && steps.add.outputs.needs_check != 'true'
         uses: peter-evans/close-issue@v3
