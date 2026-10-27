@@ -1338,10 +1338,14 @@
       updateButtonLift();
     }
 
-    // The round buttons sit a little above the list and stay put when the list is hidden
+    // The round buttons sit a little above the list and slide down to the bottom edge when the list is hidden
     const BUTTON_GAP_PX = 12;
+    const BUTTON_REST_PX = 20; // matches the --btn-base default in :root
     function updateButtonLift() {
-      if (listEl.classList.contains('hidden')) return; // hidden has no height to measure; keep the last position
+      if (listEl.classList.contains('hidden')) {
+        document.documentElement.style.setProperty('--btn-base', BUTTON_REST_PX + 'px');
+        return;
+      }
       // Measure from the top of the cards themselves; the sort chips sit to the left, so the buttons can drop beside them
       const card = listCards.querySelector('.venue-card');
       const lift = card
