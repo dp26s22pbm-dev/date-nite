@@ -2087,6 +2087,12 @@
     });
     searchInput.addEventListener('blur', () => { if (isSearchOpen()) closeSearch(); });
     window.addEventListener('keydown', (e) => {
+      // Ctrl+F and Cmd+F open the search bar in place of the browser's find; with the bar already open they leave it alone
+      if ((e.ctrlKey || e.metaKey) && !e.altKey && !e.shiftKey && e.key.toLowerCase() === 'f' && rawVenues.length) {
+        e.preventDefault();
+        if (!isSearchOpen()) openSearch('');
+        return;
+      }
       if (isSearchOpen() || e.ctrlKey || e.metaKey || e.altKey || e.isComposing) return;
       if (e.key.length !== 1 || e.key === ' ') return; // printable characters only
       const t = e.target;
