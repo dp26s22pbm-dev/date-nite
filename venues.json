@@ -831,5 +831,22 @@
     "drink": 11.29,
     "dessert": 10.49,
     "tierColor": "#eab308"
+  },
+  {
+    "id": 52,
+    "name": "Zuka Sushi-Hibachi & Chinese (Bolingbrook)",
+    "category": "Japanese Steakhouse",
+    "website": "https://zukabolingbrook.com/",
+    "mapsUrl": "https://maps.app.goo.gl/Xm8EkonnQnWQybT6A",
+    "coords": [
+      -88.068878,
+      41.687366
+    ],
+    "app": 14.65,
+    "casualMain": 15.7,
+    "premiumMain": 35.6,
+    "drink": 5.2,
+    "dessert": 5.5,
+    "tierColor": "#eab308"
   }
 ]
