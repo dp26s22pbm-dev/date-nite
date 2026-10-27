@@ -1098,7 +1098,7 @@
 
       // Close up, every dot carries its name, which fades in as the map zooms past LABELS_MIN_ZOOM and out again below it.
       // The open venue's own label is left off because its card already shows the name.
-      // Venues flagged labelAbove (a dot almost on top of another) try the spot straight above first, so the name
+      // Venues flagged labelAbove (a dot almost on top of another) get their own layer with a fixed side, so the name
       // reads as theirs. That layer is added second so it is placed before the general names.
       const addLabelLayer = (id, above) => map.addLayer({
         id,
@@ -1112,11 +1112,13 @@
           'text-size': 14,
           // Every side and corner is tried before a name is dropped, and a name that wraps to a narrower block gets
           // more places to fit. Names are placed shortest first so a long neighbour can't crowd a short one out.
+          // A flagged name has one fixed side, so it never flips to another when the camera moves and placement reruns
           'text-variable-anchor': above
-            ? ['bottom', 'bottom-left', 'bottom-right', 'left', 'right', 'top', 'top-left', 'top-right']
+            ? ['left']
             : ['left', 'right', 'top', 'bottom', 'top-left', 'top-right', 'bottom-left', 'bottom-right'],
           'text-radial-offset': above ? 1.3 : 1.7, // in text heights: clears the dot's edge with a small gap; tighter above so a name can tuck under a dot overhead
           'text-max-width': 8,
+          'text-allow-overlap': above, // a flagged name is always drawn; the general names place around it
           'text-padding': 0,
           'symbol-sort-key': ['length', ['get', 'name']]
         },
