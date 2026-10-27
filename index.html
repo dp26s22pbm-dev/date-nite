@@ -1378,7 +1378,8 @@
 
     // Open a venue's popup, send the car, and glide the venue to its spot on the map (the center, or lower on narrow
     // screens so its card clears the panels), keeping the current zoom and tilt
-    function selectVenue(venueId) {
+    const SEARCH_ZOOM = 16; // the height the map settles at when a venue is chosen from the search bar
+    function selectVenue(venueId, zoom) {
       const venue = rawVenues.find(v => v.id === venueId);
       if (!venue) return;
       // Hide the card for a new venue, whether it's the first popup or a switch from another venue's card
@@ -1390,6 +1391,7 @@
       const container = map.getContainer();
       map.easeTo({
         center: venue.coords,
+        ...(zoom !== undefined && { zoom }),
         offset: [target.x - container.clientWidth / 2, target.y - container.clientHeight / 2],
         duration: reducedMotion.matches ? 0 : 900,
         easing: (x) => 0.5 - Math.cos(Math.PI * x) / 2
@@ -2096,7 +2098,7 @@
       searchInput.value = '';
       renderSearchResults();
       searchInput.blur();
-      selectVenue(venue.id);
+      selectVenue(venue.id, SEARCH_ZOOM);
     }
 
     // Phones: the placeholder reads "Search"; focus widens the bar at the top and fades the Cost, Budget and Menu
