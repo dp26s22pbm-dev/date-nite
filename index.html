@@ -388,9 +388,9 @@
         text-align: center;
         font-size: 11px;
         cursor: pointer;
-        transition: font-size 0.3s ease, border-color 0.3s ease;
+        transition: font-size 0.3s ease, border-color 0.3s ease, box-shadow 0.2s ease;
       }
-      .search-input:focus { font-size: 16px; border-color: rgba(255, 255, 255, 0.6); cursor: text; } /* 16px keeps iOS from zooming in */
+      .search-input:focus { font-size: 16px; cursor: text; } /* 16px keeps iOS from zooming in */
       .search-bar:not(.expanded) .search-results { display: none; }
     }
     @media (max-width: 480px) and (prefers-reduced-motion: reduce) {
@@ -411,6 +411,9 @@
       user-select: text;
     }
     .search-input::placeholder { color: rgba(240, 246, 252, 0.5); }
+    /* Focused: the same glow a selected venue card has, in white; it dims back once the bar loses focus */
+    .search-input { transition: box-shadow 0.2s ease, border-color 0.2s ease; }
+    .search-input:focus { box-shadow: 0 0 14px rgba(255, 255, 255, 0.55), 0 6px 24px rgba(0, 0, 0, 0.45); border-color: #fff; }
     .search-results {
       margin: 6px 0 0;
       padding: 4px;
@@ -2078,7 +2081,7 @@
     // and blur sends it back to the top center
     const phoneQuery = window.matchMedia('(max-width: 480px)');
     function syncSearchPlaceholder() {
-      searchInput.placeholder = phoneQuery.matches ? 'S E A R C H' : 'Search restaurants';
+      searchInput.placeholder = phoneQuery.matches ? 'Search' :'Search restaurants';
       if (!phoneQuery.matches) { searchBar.classList.remove('expanded'); searchBar.style.top = ''; }
     }
     syncSearchPlaceholder();
@@ -2105,7 +2108,8 @@
     });
     searchInput.addEventListener('input', renderSearchResults);
     searchInput.addEventListener('keydown', (e) => {
-      if (e.key === 'Enter') { e.preventDefault(); chooseSearchResult(searchMatches[searchActive]); }
+      if (e.key === 'Escape') { searchInput.blur(); }
+      else if (e.key === 'Enter') { e.preventDefault(); chooseSearchResult(searchMatches[searchActive]); }
       else if (e.key === 'ArrowDown') { e.preventDefault(); setSearchActive(searchActive + 1); }
       else if (e.key === 'ArrowUp') { e.preventDefault(); setSearchActive(searchActive - 1); }
     });
