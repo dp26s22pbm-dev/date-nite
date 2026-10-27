@@ -906,7 +906,8 @@
 
     // Music starts on its own. Browsers refuse to play sound before the visitor has interacted with the page,
     // so when the first attempt is blocked, the music starts on the first click, tap, or key press instead.
-    const GESTURE_EVENTS = ['pointerup', 'click', 'touchend', 'keydown'];
+    // pointerdown/mousedown come first so grabbing the map to drag it starts the music, before any click is swallowed.
+    const GESTURE_EVENTS = ['pointerdown', 'mousedown', 'pointerup', 'click', 'touchend', 'keydown'];
     function onFirstGesture(e) {
       if (e.target.closest && e.target.closest('#audio-toggle')) return; // the music button handles itself
       startAudio().catch(() => {}); // still blocked: keep waiting for the next gesture
