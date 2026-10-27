@@ -952,6 +952,8 @@
       return '#ef4444';
     }
 
+    const labelFilter = above => ['all', ['!=', ['get', 'id'], selectedVenueId ?? -1], ['==', ['get', 'labelAbove'], above]];
+
     function buildGeoJSON() {
       return {
         type: "FeatureCollection",
@@ -965,6 +967,7 @@
               id: v.id,
               name: v.name,
               category: v.category,
+              labelAbove: !!v.labelAbove,
               total: total,
               color: getTierColor(total),
               opacity: isUnderBudget ? 1.0 : 0.15
@@ -1090,20 +1093,24 @@
 
       // Close up, every dot carries its name, which fades in as the map zooms past LABELS_MIN_ZOOM and out again below it.
       // The open venue's own label is left off because its card already shows the name.
-      map.addLayer({
-        id: 'restaurants-label',
+      // Venues flagged labelAbove (a dot almost on top of another) try the spot straight above first, so the name
+      // reads as theirs. That layer is added second so it is placed before the general names.
+      const addLabelLayer = (id, above) => map.addLayer({
+        id,
         type: 'symbol',
         source: 'restaurants',
         minzoom: LABELS_MIN_ZOOM - LABELS_FADE_ZOOM,
-        filter: ['!=', ['get', 'id'], selectedVenueId ?? -1],
+        filter: labelFilter(above),
         layout: {
           'text-field': ['get', 'name'],
           'text-font': ['Noto Sans Bold'],
           'text-size': 14,
           // Every side and corner is tried before a name is dropped, and a name that wraps to a narrower block gets
           // more places to fit. Names are placed shortest first so a long neighbour can't crowd a short one out.
-          'text-variable-anchor': ['left', 'right', 'top', 'bottom', 'top-left', 'top-right', 'bottom-left', 'bottom-right'],
-          'text-radial-offset': 1.7, // in text heights: clears the dot's edge with a small gap
+          'text-variable-anchor': above
+            ? ['bottom', 'bottom-left', 'bottom-right', 'left', 'right', 'top', 'top-left', 'top-right']
+            : ['left', 'right', 'top', 'bottom', 'top-left', 'top-right', 'bottom-left', 'bottom-right'],
+          'text-radial-offset': above ? 1.3 : 1.7, // in text heights: clears the dot's edge with a small gap; tighter above so a name can tuck under a dot overhead
           'text-max-width': 8,
           'text-padding': 0,
           'symbol-sort-key': ['length', ['get', 'name']]
@@ -1119,6 +1126,8 @@
             LABELS_MIN_ZOOM, 1]
         }
       });
+      addLabelLayer('restaurants-label', false);
+      addLabelLayer('restaurants-label-above', true);
 
       // An invisible marker over each dot, above the names in the layer order, so no name is drawn across another
       // venue's dot and a name that can't fit beside its own dot tries another side instead of being dropped.
@@ -1368,8 +1377,8 @@
     window.addEventListener('resize', updateListFade);
 
     function updateListSelection() {
-      if (map.getLayer('restaurants-label')) {
-        map.setFilter('restaurants-label', ['!=', ['get', 'id'], selectedVenueId ?? -1]);
+      for (const [id, above] of [['restaurants-label', false], ['restaurants-label-above', true]]) {
+        if (map.getLayer(id)) map.setFilter(id, labelFilter(above));
       }
       if (map.getLayer('restaurants-point-selected')) {
         map.setFilter('restaurants-point-selected', ['==', ['get', 'id'], selectedVenueId ?? -1]);
@@ -1961,7 +1970,7 @@
     // The venue whose name is drawn under a screen point, once the names are clearly visible
     function venueUnderLabel(point) {
       if (map.getZoom() < LABELS_MIN_ZOOM - LABELS_FADE_ZOOM / 2 || !map.getLayer('restaurants-label')) return null;
-      const f = map.queryRenderedFeatures(point, { layers: ['restaurants-label'] })[0];
+      const f = map.queryRenderedFeatures(point, { layers: ['restaurants-label', 'restaurants-label-above'] })[0];
       return f ? rawVenues.find(v => v.id === Number(f.properties.id)) || null : null;
     }
 
