@@ -386,8 +386,7 @@
     @media (min-width: 481px) and (hover: none) and (pointer: coarse) {
       .search-bar { display: none; }
     }
-    /* Phones: the bar runs across the top edge to edge, with the Menu row below it. The input keeps its 16px
-       text so iOS doesn't zoom in on focus. */
+    /* Phones: the bar runs across the top edge to edge, with the Menu row below it. */
     @media (max-width: 480px) {
       .search-bar {
         left: 16px;
@@ -405,13 +404,16 @@
     }
     .search-input {
       width: 100%;
-      padding: 11px 14px;
+      box-sizing: border-box;
+      height: 40px; /* same height as the Menu and Cost title bars: 12px padding + 14px line + 12px padding + 2px border */
+      padding: 12px 14px;
+      line-height: 14px;
       border: 1px solid rgba(255, 255, 255, 0.6); /* same outline as the open Menu, Cost and Budget bars */
       border-radius: 10px;
       background: rgba(13, 17, 23, 0.9);
       color: #f0f6fc;
       font: inherit;
-      font-size: 16px;
+      font-size: 13px; /* same as the venue names in the bottom list */
       text-align: center; /* the placeholder and what's typed sit in the middle of the bar */
       outline: none;
       box-shadow: 0 6px 24px rgba(0, 0, 0, 0.45);
@@ -437,11 +439,11 @@
       gap: 12px;
       padding: 8px 10px;
       border-radius: 7px;
-      font-size: 14px;
+      font-size: 13px;
       cursor: pointer;
     }
     .search-results li.active { background: rgba(167, 139, 250, 0.25); }
-    .search-results .sr-cat { color: rgba(240, 246, 252, 0.55); font-size: 12px; white-space: nowrap; align-self: center; }
+    .search-results .sr-cat { color: rgba(240, 246, 252, 0.55); font-size: 10px; white-space: nowrap; align-self: center; }
     .search-results .sr-none { color: rgba(240, 246, 252, 0.55); cursor: default; }
 
     .pop-header { margin-bottom: 8px; padding-right: 18px; }
@@ -563,7 +565,7 @@
     }
 
     .legend-label {
-      font-size: 10px;
+      font-size: 9px;
       font-weight: 400;
       color: #e6edf3;
       line-height: 1.3;
