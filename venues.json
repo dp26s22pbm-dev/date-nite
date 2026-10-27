@@ -156,6 +156,7 @@
     "premiumMain": 14.69,
     "drink": 4.02,
     "dessert": 5.5,
+    "isTaco": true,
     "tierColor": "#22c55e"
   },
   {
@@ -811,6 +812,7 @@
     "premiumMain": 13.25,
     "drink": 2.75,
     "dessert": 4.5,
+    "isTaco": true,
     "tierColor": "#38bdf8"
   },
   {

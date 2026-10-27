@@ -927,7 +927,7 @@
     };
 
     function calculateTotal(v) {
-      const cMult = v.isTapas ? (state.casual * 2) : state.casual;
+      const cMult = (v.isTapas || v.isTaco) ? (state.casual * 2) : state.casual; // taco shops price Casual as 2 tacos
       const pMult = v.isTapas ? (state.prime * 2) : state.prime;
 
       const subtotal = 
@@ -2060,7 +2060,7 @@
 
     function renderPopup(venue, startHidden = false) {
       const total = calculateTotal(venue);
-      const cMult = venue.isTapas ? (state.casual * 2) : state.casual;
+      const cMult = (venue.isTapas || venue.isTaco) ? (state.casual * 2) : state.casual; // taco shops price Casual as 2 tacos
       const pMult = venue.isTapas ? (state.prime * 2) : state.prime;
 
       const appCost = Math.round(state.apps * (venue.app || 0));
