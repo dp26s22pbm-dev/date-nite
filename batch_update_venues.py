@@ -1,6 +1,7 @@
 import os
 import json
 import statistics
+from datetime import date
 from google import genai
 from google.genai import types
 
@@ -11,6 +12,8 @@ try:
 except Exception as e:
     print(f"Failed to import TARGET_URLS from urls.py: {e}")
     VENUE_URLS = {}
+
+DEFAULT_VENUE_LIMIT = 14
 
 SEARCH_PRICING_PROMPT = """
 Search for current menu pricing for "{venue_name}" in {city}.
@@ -120,7 +123,20 @@ def apply_pricing_to_venue(v, pricing):
 
     total_cost = round((v["app"] + (1 * v["casualMain"]) + (1 * v["premiumMain"]) + (2 * v["drink"]) + v["dessert"]) * 1.30)
     v["tierColor"] = calculate_tier_color(total_cost)
+    v["lastUpdated"] = date.today().isoformat()
     return True
+
+def select_venues(venues, target_venue, limit):
+    """Pick which venues to refresh this run.
+
+    A target name matches by substring and ignores the limit. Otherwise the
+    `limit` least recently updated venues are chosen (never-updated first),
+    so repeated runs rotate through the whole list. A limit of 0 means all.
+    """
+    if target_venue:
+        return [v for v in venues if target_venue in v.get("name", "").lower()]
+    ordered = sorted(venues, key=lambda v: v.get("lastUpdated", ""))
+    return ordered if limit <= 0 else ordered[:limit]
 
 def main():
     target_venue = os.environ.get("TARGET_VENUE", "").strip().lower()
@@ -128,13 +144,18 @@ def main():
     with open("venues.json", "r") as f:
         venues = json.load(f)
 
+    try:
+        limit = int(os.environ.get("VENUE_LIMIT", "").strip() or DEFAULT_VENUE_LIMIT)
+    except ValueError:
+        limit = DEFAULT_VENUE_LIMIT
+
+    selected = select_venues(venues, target_venue, limit)
+    print(f"Refreshing {len(selected)} of {len(venues)} venue(s).")
+
     updated_count = 0
-    for v in venues:
+    for v in selected:
         venue_id = v.get("id")
         name = v.get("name", "")
-
-        if target_venue and target_venue not in name.lower():
-            continue
 
         print(f"Refreshing pricing for: {name} (ID: {venue_id})")
 

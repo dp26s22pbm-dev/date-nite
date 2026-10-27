@@ -1,12 +1,19 @@
 name: Refresh Venue Pricing
 
 on:
+  schedule:
+    # Weekly, Sundays 08:17 UTC. Each run refreshes the least recently updated slice.
+    - cron: '17 8 * * 0'
   workflow_dispatch:
     inputs:
       target:
-        description: 'Target restaurant name (leave blank to refresh ALL venues)'
+        description: 'Target restaurant name (leave blank to refresh a rotating slice)'
         required: false
         default: ''
+      limit:
+        description: 'Max venues to refresh when no target is given (0 = all venues)'
+        required: false
+        default: '14'
 
 jobs:
   refresh:
@@ -36,6 +43,7 @@ jobs:
         env:
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
           TARGET_VENUE: ${{ github.event.inputs.target }}
+          VENUE_LIMIT: ${{ github.event.inputs.limit }}
         run: |
           python batch_update_venues.py
 
