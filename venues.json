@@ -848,5 +848,22 @@
     "drink": 5.2,
     "dessert": 5.5,
     "tierColor": "#eab308"
+  },
+  {
+    "id": 53,
+    "name": "The Nest Bar & Grill",
+    "category": "Casual American",
+    "website": "http://www.bolingbrookgolfclub.com/",
+    "mapsUrl": "https://maps.app.goo.gl/kTrkNHyPvXtDnd5v5",
+    "coords": [
+      -88.148889,
+      41.666389
+    ],
+    "app": 15.0,
+    "casualMain": 18.0,
+    "premiumMain": 32.0,
+    "drink": 8.0,
+    "dessert": 7.0,
+    "tierColor": "#eab308"
   }
 ]
