@@ -1300,10 +1300,14 @@
 
       // The car is on by default. If location permission was already granted on an earlier visit, it appears at the
       // user's location without a tap, and is not parked at the default origin first (it would visibly jump). It
-      // parks at the default origin right away otherwise, or if that location attempt fails.
+      // parks at the default origin right away otherwise, or if that location attempt fails. iOS browsers often report
+      // "prompt" for a permission that was already allowed, so a remembered successful fix counts as granted too.
       const parkAtDefault = () => placeCar(DEFAULT_ORIGIN);
+      let locatedBefore = false;
+      try { locatedBefore = localStorage.getItem(LOCATED_KEY) === '1'; } catch (e) { /* storage unavailable */ }
       try {
-        if (navigator.permissions?.query) {
+        if (locatedBefore) locateUser({ fallbackToDefault: true });
+        else if (navigator.permissions?.query) {
           navigator.permissions.query({ name: 'geolocation' })
             .then((p) => { if (p.state === 'granted') locateUser({ fallbackToDefault: true }); else parkAtDefault(); })
             .catch(parkAtDefault);
@@ -1819,6 +1823,11 @@
       else locateUser();
     }
 
+    const LOCATED_KEY = 'datenite-located'; // set once a location fix has worked on this device
+    function rememberLocated(on) {
+      try { if (on) localStorage.setItem(LOCATED_KEY, '1'); else localStorage.removeItem(LOCATED_KEY); } catch (e) { /* storage unavailable */ }
+    }
+
     // fallbackToDefault: the startup attempt, where no car is showing yet; if no location comes back, park it at the default origin
     function locateUser({ fallbackToDefault = false } = {}) {
       const fallback = () => { if (fallbackToDefault) placeCar(DEFAULT_ORIGIN); };
@@ -1843,6 +1852,7 @@
             return;
           }
           if (trusted) {
+            rememberLocated(true);
             listOrigin = here.slice();
             renderList();
           }
@@ -1851,6 +1861,7 @@
         },
         (err) => {
           carBtn.classList.remove('busy');
+          if (err.code === 1) rememberLocated(false);
           showCarToast(err.code === 1
             ? 'Location permission was denied. Allow it in your browser settings to see your car.'
             : 'Could not get your location. Try again.');
