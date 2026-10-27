@@ -385,33 +385,22 @@
     @media (min-width: 481px) and (hover: none) and (pointer: coarse) {
       .search-bar { display: none; }
     }
-    /* Phones: the bar rests as a spaced-out "S E A R C H" pill. Pressing it glides it down to just under the rails
-       (the script sets its top from the rails' fully unrolled height), widens it, and the keyboard opens. */
+    /* Phones: the bar runs across the top edge to edge, with the Menu row below it. The input keeps its 16px
+       text so iOS doesn't zoom in on focus. */
     @media (max-width: 480px) {
       .search-bar {
-        width: 104px;
+        left: 16px;
+        right: 16px;
+        width: auto;
         min-width: 0;
-        transition: top 0.3s ease, width 0.3s ease;
+        transform: none;
       }
-      .search-bar.expanded { width: calc(100vw - 32px); }
-      .search-input {
-        height: 36px;
-        padding: 0 8px;
-        border-radius: 999px;
-        border-color: rgba(255, 255, 255, 0.25);
-        text-align: center;
-        font-size: 11px;
-        cursor: pointer;
-        transition: font-size 0.3s ease, border-color 0.3s ease, box-shadow 0.2s ease;
-      }
-      .search-input:focus { font-size: 16px; cursor: text; } /* 16px keeps iOS from zooming in */
-      .search-bar:not(.expanded) .search-results { display: none; }
     }
-    /* While searching on a phone the panels fade out of the way and stop taking taps */
+    /* While searching on a phone the Menu row fades out of the way and stops taking taps */
     .left-rail, .right-rail { transition: opacity 0.25s ease; }
     body.searching .left-rail, body.searching .right-rail { opacity: 0; pointer-events: none; }
     @media (max-width: 480px) and (prefers-reduced-motion: reduce) {
-      .search-bar, .search-input, .left-rail, .right-rail { transition: none; }
+      .left-rail, .right-rail { transition: none; }
     }
     .search-input {
       width: 100%;
@@ -665,6 +654,96 @@
     .list-btn.active .row-2 { fill: #eab308; }
     .list-btn.active .row-3 { fill: #ef4444; }
     .car-btn svg, .zoom-btn svg, .list-btn svg { width: 16.5px !important; height: 16.5px !important; fill: currentColor !important; pointer-events: none !important; }
+
+    /* Phone layout: search across the top, the Menu as a row beneath it, and no Budget bar for now. The Cost
+       legend leaves the left rail and becomes a "?" button at the far right of the bottom row; pressing it opens a
+       horizontal Cost explanation just above the row. The other round buttons each move over one slot to make room. */
+    .cost-btn, .cost-pop { display: none; }
+    @media (max-width: 480px) {
+      .left-rail { display: none; } /* Cost and Budget */
+
+      .right-rail { top: 68px; left: 16px; right: 16px; width: auto; }
+      #menu-panel .roll-title { display: none; } /* always open: the row is short enough to leave up */
+      #menu-panel .roll-body { grid-template-rows: 1fr; }
+      #menu-panel .roll-body-inner { visibility: visible; }
+      #menu-panel .roll-pad { padding: 8px 4px; }
+      #menu-panel .meal-builder-row { flex-direction: row; }
+      #menu-panel .counter-pill { flex: 1 1 0; min-width: 0; padding: 0 2px; }
+      #menu-panel .counter-pill + .counter-pill { border-top: none; border-left: 1px solid rgba(255, 255, 255, 0.12); }
+      #menu-panel .counter-pill:first-child { margin-top: 0; }
+      #menu-panel .counter-actions { gap: 3px; }
+      #menu-panel .counter-value { min-width: 12px; }
+
+      .list-btn { right: 59px !important; }
+      .audio-btn { right: 102px !important; }
+      .zoom-btn { right: 145px !important; }
+      .car-btn { right: 188px !important; }
+      .car-toast { right: 188px; }
+
+      .cost-btn {
+        position: fixed;
+        right: 16px;
+        bottom: var(--btn-base);
+        width: 33px;
+        height: 33px;
+        padding: 0;
+        border-radius: 50%;
+        background: #161b22;
+        border: 1px solid #ffffff;
+        color: #f0f6fc;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font: inherit;
+        font-size: 17px;
+        font-weight: 700;
+        line-height: 1;
+        cursor: pointer;
+        box-shadow: 0 4px 18px rgba(0, 0, 0, 0.7);
+        z-index: 1000;
+        transition: all 0.2s ease;
+      }
+      .cost-btn.active { box-shadow: 0 0 4px rgba(255, 255, 255, 0.8), 0 0 12px rgba(255, 255, 255, 0.45); }
+
+      .cost-pop {
+        position: fixed;
+        left: 16px;
+        right: 16px;
+        bottom: calc(var(--btn-base) + 33px + 10px);
+        display: block;
+        padding: 10px 6px;
+        background: rgba(22, 27, 34, 0.95);
+        backdrop-filter: blur(16px);
+        -webkit-backdrop-filter: blur(16px);
+        border: 1px solid rgba(255, 255, 255, 0.6);
+        border-radius: 14px;
+        box-shadow: 0 12px 35px rgba(0, 0, 0, 0.65);
+        z-index: 1000;
+        -webkit-user-select: none;
+        user-select: none;
+        opacity: 0;
+        visibility: hidden;
+        transition: opacity 0.2s ease, visibility 0s linear 0.2s, bottom 0.2s ease;
+      }
+      .cost-pop.open { opacity: 1; visibility: visible; transition: opacity 0.2s ease, bottom 0.2s ease; }
+      .cost-pop-title {
+        font-size: 9px;
+        font-weight: 700;
+        line-height: 14px;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        text-align: center;
+        padding-bottom: 6px;
+        margin-bottom: 8px;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.12);
+      }
+      .cost-pop-row { display: flex; }
+      .cost-pop .legend-item { flex: 1 1 0; min-width: 0; flex-direction: column; gap: 5px; }
+      .cost-pop .legend-label { text-align: center; white-space: nowrap; }
+    }
+    @media (max-width: 480px) and (prefers-reduced-motion: reduce) {
+      .cost-btn, .cost-pop, .cost-pop.open { transition: none; }
+    }
 
     /* Venue list along the bottom: a row of cards that scrolls sideways, full width under the round buttons */
     .venue-list {
@@ -926,6 +1005,18 @@
       <path class="row-3" d="M3 17h4v4H3v-4zm6 0h12v4H9v-4z"/>
     </g></svg>
   </button>
+  <!-- Phones only: the Cost legend as a "?" button at the end of the bottom row, opening a horizontal explanation above it -->
+  <button id="cost-toggle" class="cost-btn" onclick="toggleCostPop()" aria-label="What the colors cost" aria-expanded="false" aria-controls="cost-pop" title="What the colors cost">?</button>
+  <div id="cost-pop" class="cost-pop" role="region" aria-label="Cost">
+    <div class="cost-pop-title">Cost</div>
+    <div class="cost-pop-row">
+      <div class="legend-item"><div class="legend-swatch" style="background: #38bdf8;"></div><span class="legend-label">Under $50</span></div>
+      <div class="legend-item"><div class="legend-swatch" style="background: #22c55e;"></div><span class="legend-label">$50 – $99</span></div>
+      <div class="legend-item"><div class="legend-swatch" style="background: #eab308;"></div><span class="legend-label">$100 – $149</span></div>
+      <div class="legend-item"><div class="legend-swatch" style="background: #f97316;"></div><span class="legend-label">$150 – $199</span></div>
+      <div class="legend-item"><div class="legend-swatch" style="background: #ef4444;"></div><span class="legend-label">$200+</span></div>
+    </div>
+  </div>
   <div id="car-toast" class="car-toast" role="status"></div>
 
   <!-- Venue list along the bottom -->
@@ -2127,23 +2218,17 @@
       selectVenue(venue.id, SEARCH_ZOOM);
     }
 
-    // Phones: the placeholder reads "Search"; focus widens the bar at the top and fades the Cost, Budget and Menu
-    // panels away so the results list has the room above the keyboard, and blur brings them back
+    // Phones: focus fades the Menu row away so the results list has the room above the keyboard, and blur brings it back
     const phoneQuery = window.matchMedia('(max-width: 480px)');
-    function syncSearchPlaceholder() {
-      searchInput.placeholder = phoneQuery.matches ? 'Search' : 'Search restaurants';
-      if (!phoneQuery.matches) { searchBar.classList.remove('expanded'); document.body.classList.remove('searching'); }
-    }
-    syncSearchPlaceholder();
-    phoneQuery.addEventListener('change', syncSearchPlaceholder);
+    phoneQuery.addEventListener('change', () => {
+      if (!phoneQuery.matches) document.body.classList.remove('searching');
+    });
     searchInput.addEventListener('focus', () => {
       if (!phoneQuery.matches) return;
-      searchBar.classList.add('expanded');
       document.body.classList.add('searching');
     });
     searchInput.addEventListener('blur', () => {
       if (!phoneQuery.matches) return;
-      searchBar.classList.remove('expanded');
       document.body.classList.remove('searching');
       searchInput.value = '';
       renderSearchResults();
@@ -2446,6 +2531,17 @@
       btn.setAttribute('aria-expanded', String(open));
       pushVenueBelowPanels();
     }
+
+    // Phones: the "?" button opens or closes the Cost explanation; a tap anywhere else closes it
+    function toggleCostPop(force) {
+      const open = typeof force === 'boolean' ? force : !document.getElementById('cost-pop').classList.contains('open');
+      document.getElementById('cost-pop').classList.toggle('open', open);
+      document.getElementById('cost-toggle').classList.toggle('active', open);
+      document.getElementById('cost-toggle').setAttribute('aria-expanded', String(open));
+    }
+    document.addEventListener('click', (e) => {
+      if (!e.target.closest('#cost-pop, #cost-toggle')) toggleCostPop(false);
+    });
 
     // Unroll the budget slider (budget applies) or roll it back up (no budget)
     function toggleBudget() {
