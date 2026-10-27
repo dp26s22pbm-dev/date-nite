@@ -473,7 +473,7 @@
     /* Floating Audio Toggle Button */
     .audio-btn {
       position: fixed !important;
-      right: 16px !important;
+      right: 70px !important;
       bottom: var(--btn-base) !important;
       width: 44px !important;
       height: 44px !important;
@@ -527,11 +527,11 @@
       pointer-events: none !important;
     }
 
-    /* Round map buttons stacked above the audio toggle: the car first, then the zoom-out cloud */
+    /* Round map buttons in a row above the venue cards, right-aligned: car, cloud, sound, then the cards */
     .car-btn, .zoom-btn, .list-btn {
       position: fixed !important;
       right: 16px !important;
-      bottom: calc(var(--btn-base) + 54px) !important;
+      bottom: var(--btn-base) !important;
       width: 44px !important;
       height: 44px !important;
       border-radius: 50% !important;
@@ -547,8 +547,8 @@
       pointer-events: auto !important;
       transition: all 0.2s ease !important;
     }
-    .zoom-btn { bottom: calc(var(--btn-base) + 108px) !important; }
-    .list-btn { bottom: calc(var(--btn-base) + 162px) !important; }
+    .zoom-btn { right: 124px !important; }
+    .car-btn { right: 178px !important; }
     .car-btn.active {
       color: #a78bfa !important;
       border-color: #a78bfa !important;
@@ -676,8 +676,8 @@
 
     .car-toast {
       position: fixed;
-      right: 70px;
-      bottom: calc(var(--btn-base) + 60px);
+      right: 178px;
+      bottom: calc(var(--btn-base) + 54px);
       max-width: 260px;
       padding: 10px 12px;
       border-radius: 10px;
@@ -1320,7 +1320,11 @@
     const BUTTON_GAP_PX = 12;
     function updateButtonLift() {
       if (listEl.classList.contains('hidden')) return; // hidden has no height to measure; keep the last position
-      const lift = 34 + listEl.offsetHeight + BUTTON_GAP_PX;
+      // Measure from the top of the cards themselves; the sort chips sit to the left, so the buttons can drop beside them
+      const card = listCards.querySelector('.venue-card');
+      const lift = card
+        ? window.innerHeight - card.getBoundingClientRect().top + BUTTON_GAP_PX
+        : 34 + listEl.offsetHeight + BUTTON_GAP_PX;
       document.documentElement.style.setProperty('--btn-base', lift + 'px');
     }
     if (window.ResizeObserver) new ResizeObserver(updateButtonLift).observe(listEl);
