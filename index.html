@@ -945,8 +945,13 @@
       return Math.round(subtotal * 1.30);
     }
 
+    const BUDGET_MAX = 250; // the slider's far right stop, shown as "$250+" with no cap
+    function budgetLabel(val) {
+      return Number(val) >= BUDGET_MAX ? `$${BUDGET_MAX}+` : `$${val}`;
+    }
+
     function isOverBudget(total) {
-      return state.budgetOn && total > state.maxBudget;
+      return state.budgetOn && state.maxBudget < BUDGET_MAX && total > state.maxBudget; // the top stop, $250+, has no cap
     }
 
     function getTierColor(total) {
@@ -2184,7 +2189,7 @@
 
     function onBudgetChange(val) {
       state.maxBudget = Number(val);
-      document.getElementById('budget-display').innerText = `$${val}`;
+      document.getElementById('budget-display').innerText = budgetLabel(val);
       applyBudgetColor(val);
       refreshMap();
     }
