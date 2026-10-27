@@ -859,7 +859,7 @@
       let next = Math.floor(Math.random() * TRACKS.length);
       if (TRACKS.length > 1 && next === currentTrack) next = (next + 1 + Math.floor(Math.random() * (TRACKS.length - 1))) % TRACKS.length;
       currentTrack = next;
-      audio.src = 'mp3/' + encodeURIComponent(TRACKS[next]);
+      audio.src = 'mp3/' + TRACKS[next].split('/').map(encodeURIComponent).join('/');
     }
     audio.addEventListener('ended', () => {
       loadRandomTrack();
