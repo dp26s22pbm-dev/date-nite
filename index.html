@@ -2283,7 +2283,7 @@
         // Fixed anchor: the card always sits above its dot and is allowed to clip at the map edge instead of flipping.
         // maxWidth 'none' lifts MapLibre's 240px default, which is narrower than the card's min-width and would push
         // the card off-center to the right of its tip.
-        currentPopup = new maplibregl.Popup({ closeButton: true, closeOnClick: false, anchor: 'bottom', maxWidth: 'none', offset: POPUP_OFFSET_PX, className: startHidden ? 'popup-pending' : '' })
+        currentPopup = new maplibregl.Popup({ closeButton: true, closeOnClick: false, focusAfterOpen: false, anchor: 'bottom', maxWidth: 'none', offset: POPUP_OFFSET_PX, className: startHidden ? 'popup-pending' : '' })
           .setLngLat(venue.coords)
           .setHTML(html)
           .addTo(map);
