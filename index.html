@@ -34,6 +34,20 @@
       height: 100%;
     }
 
+    /* Dims the dots and names from the round-button line down so the venue strip reads first. Follows the buttons as they lift. */
+    .map-scrim {
+      position: fixed;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      height: calc(var(--btn-base) + 33px); /* up to the top of the round buttons */
+      background: linear-gradient(to bottom, rgba(13, 17, 23, 0) 0%, rgba(13, 17, 23, 0.6) 40%);
+      pointer-events: none; /* taps and drags go through to the map */
+      z-index: 900; /* over the map, under the buttons, venue list and open venue card */
+      transition: height 0.2s ease;
+    }
+    @media (prefers-reduced-motion: reduce) { .map-scrim { transition: none; } }
+
     /* Right rail: the menu panel */
     .right-rail {
       position: fixed;
@@ -802,6 +816,7 @@
 
   <!-- Map Base Container -->
   <div id="map"></div>
+  <div class="map-scrim" aria-hidden="true"></div>
 
   <!-- Right Side Menu Rail -->
   <div class="right-rail">
