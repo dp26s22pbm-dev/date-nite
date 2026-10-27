@@ -420,7 +420,8 @@
       -webkit-user-select: text;
       user-select: text;
     }
-    .search-input::placeholder { color: rgba(240, 246, 252, 0.5); }
+    .search-input::placeholder { color: #fff; transition: color 0.2s ease; }
+    .search-input:focus::placeholder { color: rgba(240, 246, 252, 0.5); }
     /* Focused: the same glow a selected venue card has, in white; it dims back once the bar loses focus */
     .search-input { transition: box-shadow 0.2s ease, border-color 0.2s ease; }
     .search-input:focus { box-shadow: 0 0 14px rgba(255, 255, 255, 0.55), 0 6px 24px rgba(0, 0, 0, 0.45); border-color: #fff; }
