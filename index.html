@@ -1197,7 +1197,9 @@
       map.on('zoom', () => { if (map.getZoom() >= LABELS_MIN_ZOOM - LABELS_FADE_ZOOM) hideDotLabel(); });
       map.on('click', () => hideDotLabel(true));
 
-      // If location permission was already granted on an earlier visit, show the car without a tap
+      // The car is on by default, parked at the default origin. If location permission was already granted on an
+      // earlier visit, it moves to the user's location without a tap.
+      placeCar(DEFAULT_ORIGIN);
       try {
         navigator.permissions?.query({ name: 'geolocation' })
           .then((p) => { if (p.state === 'granted') locateUser(); })
