@@ -926,8 +926,13 @@
       budgetOn: false // the slider stays rolled up until the Budget button is pressed, and then no budget applies
     };
 
+    // A taco place whose appetizer costs more than its Casual price sells tacos one at a time, so Casual means 2 tacos
+    function tacoAtATime(v) {
+      return !!v.isTaco && (v.app || 0) > (v.casualMain || 0);
+    }
+
     function calculateTotal(v) {
-      const cMult = v.isTapas ? (state.casual * 2) : state.casual;
+      const cMult = (v.isTapas || tacoAtATime(v)) ? (state.casual * 2) : state.casual;
       const pMult = v.isTapas ? (state.prime * 2) : state.prime;
 
       const subtotal = 
@@ -2060,7 +2065,7 @@
 
     function renderPopup(venue, startHidden = false) {
       const total = calculateTotal(venue);
-      const cMult = venue.isTapas ? (state.casual * 2) : state.casual;
+      const cMult = (venue.isTapas || tacoAtATime(venue)) ? (state.casual * 2) : state.casual;
       const pMult = venue.isTapas ? (state.prime * 2) : state.prime;
 
       const appCost = Math.round(state.apps * (venue.app || 0));
