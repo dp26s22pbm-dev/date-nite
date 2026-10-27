@@ -500,7 +500,7 @@
       border-color: var(--music-c) !important;
       box-shadow: 0 0 14px rgba(56, 189, 248, 0.4) !important; /* fallback for browsers without color-mix */
       box-shadow: 0 0 var(--music-blur) color-mix(in srgb, var(--music-c) 60%, transparent) !important;
-      transition: none !important; /* the animation does the smoothing */
+      transition: bottom 0.2s ease !important; /* the animation smooths the glow; only the slide keeps its transition so it matches the other buttons */
       animation: music-tier-pulse 6s linear infinite;
     }
     /* One swell and ebb of the glow per color, 1.2 s each; the color slides to the next tier as the glow ebbs */
