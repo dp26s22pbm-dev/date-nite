@@ -421,7 +421,8 @@
       user-select: text;
     }
     @media (max-width: 480px) {
-      .search-input { height: 51px; } /* phones: same height as the Menu row beneath it */
+      .search-input { height: 51px; border-color: rgba(255, 255, 255, 0.6); } /* phones: same height as the Menu row beneath it; a brighter outline than the dimmed Menu row, same as an open panel */
+      .search-input:focus { border-color: #fff; } /* still brightens when engaged */
     }
     .search-input::placeholder { color: #fff; transition: color 0.2s ease; }
     .search-input:focus::placeholder { color: rgba(240, 246, 252, 0.5); }
