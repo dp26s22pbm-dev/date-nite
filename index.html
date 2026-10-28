@@ -395,7 +395,6 @@
         min-width: 0;
         transform: none;
       }
-      .search-input { height: 51px; } /* same height as the Menu row beneath it */
     }
     /* While searching on a phone the Menu row fades out of the way and stops taking taps */
     .left-rail, .right-rail { transition: opacity 0.25s ease; }
@@ -420,6 +419,9 @@
       box-shadow: 0 6px 24px rgba(0, 0, 0, 0.45);
       -webkit-user-select: text;
       user-select: text;
+    }
+    @media (max-width: 480px) {
+      .search-input { height: 51px; } /* phones: same height as the Menu row beneath it */
     }
     .search-input::placeholder { color: #fff; transition: color 0.2s ease; }
     .search-input:focus::placeholder { color: rgba(240, 246, 252, 0.5); }
