@@ -916,5 +916,22 @@
     "drink": 14.5,
     "dessert": 13.5,
     "tierColor": "#eab308"
+  },
+  {
+    "id": 57,
+    "name": "Barrel & Vine",
+    "category": "New American",
+    "website": "https://www.barrelvine.net/",
+    "mapsUrl": "https://maps.app.goo.gl/oCDv4trkGCfgx4rA6",
+    "coords": [
+      -88.203848,
+      41.608289
+    ],
+    "app": 14.0,
+    "casualMain": 30.0,
+    "premiumMain": 50.0,
+    "drink": 8.0,
+    "dessert": 8.0,
+    "tierColor": "#f97316"
   }
 ]
