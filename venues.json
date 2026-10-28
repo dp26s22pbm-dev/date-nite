@@ -1145,5 +1145,21 @@
     "drink": 18.0,
     "dessert": 17.0,
     "tierColor": "#ef4444"
+  },
+  {
+    "id": 71,
+    "name": "Rock Bottom Restaurant & Brewery",
+    "category": "Casual American",
+    "mapsUrl": "https://maps.app.goo.gl/4gpB3pEo6bcx4rhm8",
+    "coords": [
+      -88.171776,
+      41.802992
+    ],
+    "app": 15.25,
+    "casualMain": 19.25,
+    "premiumMain": 33.0,
+    "drink": 7.5,
+    "dessert": 9.5,
+    "tierColor": "#eab308"
   }
 ]
