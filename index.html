@@ -2286,6 +2286,11 @@
       else if (e.key === 'ArrowUp') { e.preventDefault(); setSearchActive(searchActive - 1); }
     });
     searchResults.addEventListener('mousedown', (e) => e.preventDefault()); // keep focus so the click lands
+    // The highlight follows the pointer; Enter then picks whatever is highlighted
+    searchResults.addEventListener('mouseover', (e) => {
+      const li = e.target.closest('li[data-i]');
+      if (li) setSearchActive(Number(li.dataset.i));
+    });
     searchResults.addEventListener('click', (e) => {
       const li = e.target.closest('li[data-i]');
       if (li) chooseSearchResult(searchMatches[Number(li.dataset.i)]);
