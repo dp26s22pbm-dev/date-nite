@@ -14,6 +14,14 @@ except Exception as e:
     VENUE_URLS = {}
 
 DEFAULT_VENUE_LIMIT = 14
+CLOSURE_FLAGS_FILE = "closure_flags.json"
+
+CLOSURE_PROMPT = """
+Is the restaurant "{venue_name}" ({category}), located near latitude {lat}, longitude {lon} in the Naperville, IL area, permanently closed?
+Use Google Search. Answer CLOSED only if a source says this location has permanently closed, has been replaced by a different business, or is "permanently closed" on Google Maps or Yelp. Temporary closures, renovations and seasonal hours are not closures. Answer OPEN if sources show it operating, and UNKNOWN if you cannot tell.
+Return ONLY a valid JSON object: {{"status": "OPEN" | "CLOSED" | "UNKNOWN", "evidence": "one sentence naming the source"}}
+Do not include markdown code block formatting.
+"""
 
 SEARCH_PRICING_PROMPT = """
 Search for current menu pricing for "{venue_name}" in {city}.
@@ -85,6 +93,29 @@ def fetch_pricing_via_gemini_search(venue_name, city="Naperville, IL"):
         print(f"Gemini Search Grounding error for {venue_name}: {e}")
         return None
 
+def check_for_closure(v):
+    """Ask Gemini (with search) whether a venue has permanently closed. Returns an evidence string if it
+    reports CLOSED, else None. Never edits the venue: a person reviews the flag and removes it."""
+    try:
+        lon, lat = v["coords"]
+        response = client.models.generate_content(
+            model="gemini-3.6-flash",
+            contents=CLOSURE_PROMPT.format(venue_name=v["name"], category=v.get("category", "restaurant"), lat=lat, lon=lon),
+            config=types.GenerateContentConfig(
+                tools=[types.Tool(google_search=types.GoogleSearch())],
+                temperature=0.0
+            ),
+        )
+        raw_text = response.text.strip()
+        if raw_text.startswith("```"):
+            raw_text = raw_text.strip("`").removeprefix("json").strip()
+        result = json.loads(raw_text)
+        if str(result.get("status", "")).upper() == "CLOSED":
+            return str(result.get("evidence", "")).strip() or "No source given."
+    except Exception as e:
+        print(f"Closure check error for {v.get('name')}: {e}")
+    return None
+
 def parse_pricing_from_pdf(pdf_bytes):
     """Parse pricing from a PDF using Gemini (no search grounding needed)."""
     try:
@@ -153,11 +184,17 @@ def main():
     print(f"Refreshing {len(selected)} of {len(venues)} venue(s).")
 
     updated_count = 0
+    closure_flags = []
     for v in selected:
         venue_id = v.get("id")
         name = v.get("name", "")
 
         print(f"Refreshing pricing for: {name} (ID: {venue_id})")
+
+        evidence = check_for_closure(v)
+        if evidence:
+            print(f"  Possible permanent closure: {evidence}")
+            closure_flags.append({"id": venue_id, "name": name, "evidence": evidence})
 
         # Step 1: Try direct PDF download if the registered URL is a PDF
         pdf_pricing = None
@@ -185,6 +222,9 @@ def main():
             updated_count += 1
         else:
             print(f"  Could not retrieve new prices for {name}; keeping existing data.")
+
+    with open(CLOSURE_FLAGS_FILE, "w") as f:
+        json.dump(closure_flags, f, indent=2)
 
     if updated_count > 0:
         with open("venues.json", "w") as f:

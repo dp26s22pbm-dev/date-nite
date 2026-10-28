@@ -23,6 +23,7 @@ jobs:
       cancel-in-progress: false
     permissions:
       contents: write
+      issues: write
 
     steps:
       - name: Checkout Repository
@@ -46,6 +47,25 @@ jobs:
           VENUE_LIMIT: ${{ github.event.inputs.limit }}
         run: |
           python batch_update_venues.py
+
+      - name: Open Issues for Possible Closures
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          python - <<'PY'
+          import json, subprocess
+          for f in json.load(open("closure_flags.json")):
+              title = f"Possible closure: {f['name']} (ID {f['id']})"
+              existing = subprocess.run(
+                  ["gh", "issue", "list", "--state", "open", "--search", f'"{title}" in:title', "--json", "title", "--jq", ".[].title"],
+                  capture_output=True, text=True).stdout.splitlines()
+              if title in existing:
+                  continue
+              body = (f"The weekly venue refresh found a source suggesting {f['name']} has permanently closed.\n\n"
+                      f"Evidence: {f['evidence']}\n\n"
+                      "Please confirm, then remove the venue from `venues.json`. Nothing was changed automatically.")
+              subprocess.run(["gh", "issue", "create", "--title", title, "--body", body])
+          PY
 
       - name: Commit and Push Changes
         run: |
