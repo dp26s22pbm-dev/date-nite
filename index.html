@@ -425,6 +425,46 @@
     }
     .search-input::placeholder { color: #fff; transition: color 0.2s ease; }
     .search-input:focus::placeholder { color: rgba(240, 246, 252, 0.5); }
+    /* Idle bar: an 8s loop that alternates a bouncy, color-shifting DATE NITE with "Search restaurants". The real placeholder
+       stays underneath (hidden while idle) and takes over on focus, so typing and screen readers behave as before. */
+    .search-field { position: relative; }
+    .search-input:not(:focus)::placeholder { color: transparent; }
+    .search-hint {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 13px;
+      pointer-events: none;
+      transition: opacity 0.2s ease;
+    }
+    .search-input:focus ~ .search-hint,
+    .search-input:not(:placeholder-shown) ~ .search-hint { opacity: 0; }
+    .hint-brand { position: absolute; font-weight: 800; letter-spacing: 3px; white-space: pre; }
+    .hint-brand span { display: inline-block; opacity: 0; animation: hint-letter 8s ease-in-out infinite; animation-delay: calc(var(--i) * 0.07s); }
+    .hint-text { position: absolute; color: #fff; opacity: 0; animation: hint-text 8s ease-in-out infinite; }
+    @keyframes hint-letter {
+      0%   { opacity: 0; transform: translateY(10px) scale(0.5) rotate(-12deg); color: #fff; }
+      4%   { opacity: 1; transform: translateY(-5px) scale(1.25) rotate(6deg); color: #ff7eb6; }
+      7%   { opacity: 1; transform: translateY(0) scale(1) rotate(0); color: #fff; }
+      14%  { transform: translateY(-3px) scale(1.1); color: #ffd166; }
+      19%  { transform: translateY(0) scale(1); color: #ff7eb6; }
+      25%  { transform: translateY(-3px) scale(1.1); color: #a78bfa; }
+      30%  { transform: translateY(0) scale(1); color: #ffd166; }
+      38%  { opacity: 1; transform: translateY(0) scale(1); color: #fff; }
+      43%  { opacity: 0; transform: translateY(-8px) scale(0.8); color: #fff; }
+      100% { opacity: 0; transform: translateY(-8px) scale(0.8); color: #fff; }
+    }
+    @keyframes hint-text {
+      0%, 46% { opacity: 0; transform: translateY(4px); }
+      54%, 90% { opacity: 1; transform: translateY(0); }
+      98%, 100% { opacity: 0; transform: translateY(-4px); }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      .search-hint { display: none; }
+      .search-input:not(:focus)::placeholder { color: #fff; }
+    }
     /* Focused: the same glow a selected venue card has, in white; it dims back once the bar loses focus */
     .search-input { transition: box-shadow 0.2s ease, border-color 0.2s ease; }
     .search-input:focus { box-shadow: 0 0 14px rgba(255, 255, 255, 0.55), 0 6px 24px rgba(0, 0, 0, 0.45); border-color: #fff; }
@@ -2214,7 +2254,13 @@
     searchBar.className = 'search-bar';
     searchBar.setAttribute('role', 'search');
     searchBar.innerHTML = `
-      <input class="search-input" type="text" placeholder="Search restaurants" autocomplete="off" spellcheck="false" aria-label="Search restaurants" />
+      <div class="search-field">
+        <input class="search-input" type="text" placeholder="Search restaurants" autocomplete="off" spellcheck="false" aria-label="Search restaurants" />
+        <div class="search-hint" aria-hidden="true">
+          <span class="hint-brand">${[...'DATE NITE'].map((c, i) => `<span style="--i:${i}">${c === ' ' ? '&nbsp;' : c}</span>`).join('')}</span>
+          <span class="hint-text">Search restaurants</span>
+        </div>
+      </div>
       <ul class="search-results" role="listbox"></ul>`;
     document.body.appendChild(searchBar);
     const searchInput = searchBar.querySelector('.search-input');
