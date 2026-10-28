@@ -19,6 +19,7 @@
     "id": 2,
     "name": "Hacienda Real",
     "category": "Elevated Mexican",
+    "website": "https://www.haciendaflavorsofmexico.com/",
     "coords": [
       -88.12242814486318,
       41.69276269813153
@@ -115,6 +116,7 @@
     "id": 8,
     "name": "Entourage",
     "category": "Steakhouse",
+    "website": "https://entouragerestaurant.com/naperville/",
     "coords": [
       -88.20544700422381,
       41.75867088875935
@@ -259,6 +261,7 @@
     "id": 17,
     "name": "Little Pops NY Pizzeria",
     "category": "Italian / Pizza",
+    "website": "https://www.littlepopspizzeria.com/locations/naperville",
     "coords": [
       -88.099682,
       41.735556
@@ -518,6 +521,7 @@
     "id": 33,
     "name": "RH Rooftop Restaurant at RH Oak Brook",
     "category": "American",
+    "website": "https://rh.com/us/en/oakbrook",
     "mapsUrl": "https://maps.app.goo.gl/pcsBSxJ7onhSNeEfA",
     "coords": [
       -87.950566,
@@ -534,6 +538,7 @@
     "id": 34,
     "name": "STK Steakhouse",
     "category": "Prime Steak & Seafood",
+    "website": "https://stksteakhouse.com/en-us/location/oak-brook/",
     "mapsUrl": "https://maps.app.goo.gl/oRQMrKLa6c4rmHdy5",
     "coords": [
       -87.949699,
@@ -550,6 +555,7 @@
     "id": 35,
     "name": "Eddie Merlot's",
     "category": "Prime Steak & Seafood",
+    "website": "https://www.eddiemerlots.com/warrenville/",
     "mapsUrl": "https://maps.app.goo.gl/rubmj18foQmb3KhD6",
     "coords": [
       -88.170109,
@@ -563,25 +569,10 @@
     "tierColor": "#f97316"
   },
   {
-    "id": 36,
-    "name": "Capri Ristorante",
-    "category": "Italian",
-    "mapsUrl": "https://maps.app.goo.gl/cdGHJEahMSDMMYtp9",
-    "coords": [
-      -87.91127,
-      41.75106
-    ],
-    "app": 15.95,
-    "casualMain": 18.95,
-    "premiumMain": 34.95,
-    "drink": 13.0,
-    "dessert": 7.45,
-    "tierColor": "#eab308"
-  },
-  {
     "id": 37,
     "name": "Coa",
     "category": "Spanish Tapas",
+    "website": "https://coaoakbrook.com/",
     "mapsUrl": "https://maps.app.goo.gl/SgUWuNck6xvAjM7N6",
     "coords": [
       -87.927733,
@@ -649,6 +640,7 @@
     "id": 41,
     "name": "Quiubo",
     "category": "Elevated Mexican",
+    "website": "https://www.quiubomx.com/",
     "mapsUrl": "https://maps.app.goo.gl/gTcGSDUHUZPZbjC87",
     "coords": [
       -88.151099,
