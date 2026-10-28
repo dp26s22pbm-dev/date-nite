@@ -1887,19 +1887,26 @@
       [-hw + c, -hl], [hw - c, -hl], [hw, -hl + c], [hw, hl - c],
       [hw - c, hl], [-hw + c, hl], [-hw, hl - c], [-hw, -hl + c]
     ];
+    // A wheel seen from the side is a circle, but an extrusion only rises straight up. So each wheel is a stack of thin
+    // slices, narrower toward the top and bottom, which steps out a circle of this radius and height.
+    const WHEEL_R = 0.065, WHEEL_H = 0.12, WHEEL_SLICES = 8;
+    const wheelSlices = (x1, x2, yc) => Array.from({ length: WHEEL_SLICES }, (_, k) => {
+      const dz = WHEEL_H / WHEEL_SLICES;
+      const off = (k + 0.5) * dz - WHEEL_H / 2;
+      const half = Math.sqrt(WHEEL_R * WHEEL_R - off * off);
+      return { color: '#6b7280', base: k * dz, top: (k + 1) * dz, wheel: true, ring: rect(x1, x2, yc - half, yc + half) };
+    });
     // Local coordinates are in car lengths: x = right, y = forward; base/top are heights.
     const CAR_PARTS = [
       { color: '#a78bfa', base: 0.07, top: 0.20, ring: chamfered(0.23, 0.50, 0.10) },          // body
       { color: '#1f2433', base: 0.20, top: 0.31, ring: rect(-0.20, 0.20, -0.10, 0.12) },       // windshield and side glass
-      { color: '#a78bfa', base: 0.20, top: 0.31, ring: rect(-0.20, 0.20, -0.17, -0.10) },      // lilac pillar behind the side glass
-      { color: '#1f2433', base: 0.20, top: 0.31, ring: rect(-0.14, 0.14, -0.27, -0.17) },      // rear window
-      { color: '#a78bfa', base: 0.20, top: 0.31, ring: rect(-0.20, -0.14, -0.27, -0.17) },     // lilac posts framing the rear window
-      { color: '#a78bfa', base: 0.20, top: 0.31, ring: rect(0.14, 0.20, -0.27, -0.17) },
+      { color: '#a78bfa', base: 0.20, top: 0.31, ring: rect(-0.20, 0.20, -0.155, -0.10) },     // lilac pillar behind the side glass
+      { color: '#1f2433', base: 0.20, top: 0.31, ring: rect(-0.152, 0.152, -0.27, -0.155) },   // rear window
+      { color: '#a78bfa', base: 0.20, top: 0.31, ring: rect(-0.20, -0.152, -0.27, -0.155) },  // lilac posts framing the rear window
+      { color: '#a78bfa', base: 0.20, top: 0.31, ring: rect(0.152, 0.20, -0.27, -0.155) },
       { color: '#c4b5fd', base: 0.31, top: 0.34, ring: rect(-0.19, 0.19, -0.24, 0.08) },       // roof
-      { color: '#0d1017', base: 0, top: 0.12, wheel: true, ring: rect(-0.265, -0.20, 0.27, 0.40) },
-      { color: '#0d1017', base: 0, top: 0.12, wheel: true, ring: rect(0.20, 0.265, 0.27, 0.40) },
-      { color: '#0d1017', base: 0, top: 0.12, wheel: true, ring: rect(-0.265, -0.20, -0.40, -0.27) },
-      { color: '#0d1017', base: 0, top: 0.12, wheel: true, ring: rect(0.20, 0.265, -0.40, -0.27) },
+      ...wheelSlices(-0.265, -0.20, 0.335), ...wheelSlices(0.20, 0.265, 0.335),
+      ...wheelSlices(-0.265, -0.20, -0.335), ...wheelSlices(0.20, 0.265, -0.335),
       { color: '#fff4be', base: 0.12, top: 0.165, ring: rect(-0.20, -0.12, 0.495, 0.52) },     // headlights
       { color: '#fff4be', base: 0.12, top: 0.165, ring: rect(0.12, 0.20, 0.495, 0.52) },
       { color: '#ff5d5d', base: 0.12, top: 0.16, ring: rect(-0.20, -0.12, -0.52, -0.495) },    // taillights
