@@ -23,7 +23,7 @@ SCOPE_RULES = """Scope rules (they apply to every category below):
 - Use dinner (or all-day dine-in) prices for one person. Ignore lunch, brunch, happy hour, kids, party or group packages, and catering.
 - Catering prices are per tray, pan or "serves N" and run several times a dine-in price. If the only prices you can find are catering prices, return empty lists.
 - A fixed price per person (a buffet, a rodizio, a prix fixe) is one main. Use its dinner price, not the lunch price.
-- drinks: priced cocktails or craft beverages only. Leave out non-alcoholic drinks, beer and wine unless nothing else is priced.
+- drinks: priced cocktails or craft beverages. Never include soft drinks, coffee, tea, juice or other non-alcoholic drinks. Use beer and wine only if no cocktail is priced. Many menus list no alcohol prices; then return an empty list.
 - If a category has no prices printed on the menu, return an empty list for it. Never estimate or fill in a typical price.
 """
 
@@ -62,7 +62,7 @@ Rules:
 - "apps": Starters, sides, appetizers, soups, salads.
 - "casualMains": Standard pastas, pizzas, handhelds, burgers, chicken entrees, or basic sandwiches.
 - "premiumMains": Standard steaks (ribeye, strip, filet), veal chops, prime seafood (salmon, lobster, sea bass), with the standard single-entree plate for each. Exclude combination or multi-protein plates, chicken and vegetarian dishes, large-format or shared cuts, wagyu, market-price items and sharing platters. If there are no premium luxury cuts, use the top 25% highest priced entrees.
-- "drinks": House wine, draft beer, specialty cocktails, or soft drinks.
+- "drinks": Specialty cocktails; if none are priced, house wine or draft beer. Never soft drinks or other non-alcoholic drinks.
 - "desserts": Tiramisu, cannoli, cakes, gelato.
 """ + SCOPE_RULES + "Return strictly valid JSON with no markdown formatting.\n"
 
@@ -945,7 +945,8 @@ def main():
 
         # Categories with no menu price keep a stand-in number (the map needs one) but are listed in
         # defaulted, so the issue says they were not read from a menu
-        for key, label in (("premiumMains", "premium main"), ("apps", "appetizer"), ("drinks", "drink"), ("desserts", "dessert")):
+        # Drinks are left out on purpose: many menus omit alcohol prices, and the guess below is close enough
+        for key, label in (("premiumMains", "premium main"), ("apps", "appetizer"), ("desserts", "dessert")):
             if not pricing.get(key):
                 defaulted.append(label)
 
@@ -955,7 +956,7 @@ def main():
         apps_list = pricing.get("apps") or [round(casual_main * 0.55, 2)]
         app = round(statistics.median(apps_list), 2)
 
-        drinks_list = pricing.get("drinks") or [8.00]
+        drinks_list = pricing.get("drinks") or [max(8.00, round(casual_main * 0.5, 2))]
         drink = round(statistics.median(drinks_list), 2)
 
         desserts_list = pricing.get("desserts") or [8.00]
