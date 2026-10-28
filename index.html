@@ -10,7 +10,7 @@
   <style>
     * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
     /* Where the bottom-right button stack starts. The script raises it to sit above the venue list. */
-    :root { --btn-base: 20px; }
+    :root { --btn-base: 20px; --scrim-reach: 133px; }
     html, body {
       margin: 0;
       padding: 0;
@@ -40,7 +40,7 @@
       left: 0;
       right: 0;
       bottom: 0;
-      height: calc(var(--btn-base) + 133px); /* starts 100px above the top of the round buttons */
+      height: calc(var(--btn-base) + var(--scrim-reach)); /* starts 100px above the top of the round buttons; the selected dot is kept below this line, see dotMaxY */
       background: linear-gradient(to bottom, rgba(13, 17, 23, 0) 0%, rgba(13, 17, 23, 0.6) 40%);
       pointer-events: none; /* taps and drags go through to the map */
       z-index: 900; /* over the map, under the buttons, venue list and open venue card */
@@ -1519,11 +1519,20 @@
     // that it slides under the venue list.
     const POPUP_PANEL_GAP_PX = 12;
     const VENUE_REST_Y = 0.61;
+    const DOT_SCRIM_GAP_PX = 16;
+    // The lowest the selected dot may sit: clear of the venue list, and above the top of the bottom scrim so the
+    // dimming never covers it
+    function dotMaxY() {
+      const c = map.getContainer();
+      const listH = listEl.classList.contains('hidden') ? 0 : listEl.offsetHeight;
+      const rootStyle = getComputedStyle(document.documentElement);
+      const scrimH = (parseFloat(rootStyle.getPropertyValue('--btn-base')) || 0) + (parseFloat(rootStyle.getPropertyValue('--scrim-reach')) || 0);
+      return Math.min(c.clientHeight - listH - 24, c.clientHeight - scrimH - DOT_SCRIM_GAP_PX);
+    }
     function venueTargetPoint() {
       const c = map.getContainer();
       const cx = c.clientWidth / 2;
-      const listH0 = listEl.classList.contains('hidden') ? 0 : listEl.offsetHeight;
-      const cy = Math.min(c.clientHeight * VENUE_REST_Y, c.clientHeight - listH0 - 24);
+      const cy = Math.min(c.clientHeight * VENUE_REST_Y, dotMaxY());
       const content = currentPopup && currentPopup.getElement()?.querySelector('.maplibregl-popup-content');
       if (!content) return { x: cx, y: cy };
       const left = cx - content.offsetWidth / 2;
@@ -1539,8 +1548,7 @@
       const dotToCardBottom = dot.y - content.getBoundingClientRect().bottom;
       const popupTop = cy - dotToCardBottom - content.offsetHeight;
       const shift = Math.max(0, panelBottom + POPUP_PANEL_GAP_PX - popupTop);
-      const listH = listEl.classList.contains('hidden') ? 0 : listEl.offsetHeight;
-      const maxY = Math.max(cy, c.clientHeight - listH - 24);
+      const maxY = Math.max(cy, dotMaxY());
       return { x: cx, y: Math.min(cy + shift, maxY) };
     }
 
@@ -1561,8 +1569,7 @@
         }
         const c = map.getContainer();
         const dot = map.project(currentPopup.getLngLat());
-        const listH = listEl.classList.contains('hidden') ? 0 : listEl.offsetHeight;
-        const maxY = Math.max(dot.y, c.clientHeight - listH - 24);
+        const maxY = Math.max(dot.y, dotMaxY());
         const shift = Math.min(panelBottom + POPUP_PANEL_GAP_PX - box.top, maxY - dot.y);
         if (!(shift > 1)) return;
         map.easeTo({
