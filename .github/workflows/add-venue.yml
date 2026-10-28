@@ -31,6 +31,8 @@ jobs:
       - name: Install Dependencies
         run: |
           pip install -r requirements.txt
+          # A headless browser reads menus that JavaScript draws, which plain HTML requests cannot see
+          playwright install --with-deps chromium
 
       - name: Parse Issue, Add Venue, and Push
         id: add
