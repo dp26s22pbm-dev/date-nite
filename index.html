@@ -954,6 +954,9 @@
     }
     .venue-card.over { opacity: 0.45; } /* over budget, matching the dimmed dot */
     .venue-card.selected { border-color: var(--tier); box-shadow: 0 0 14px var(--tier); }
+    @supports (color: color-mix(in srgb, red 50%, transparent)) {
+      .venue-card.selected { box-shadow: 0 0 14px color-mix(in srgb, var(--tier) 70%, transparent); } /* slightly softer glow */
+    }
     .card-name { font-size: 13px; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
     .card-cat { font-size: 10px; color: #8b949e; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-top: 1px; }
     .card-foot { display: flex; justify-content: space-between; align-items: baseline; margin-top: 6px; }
