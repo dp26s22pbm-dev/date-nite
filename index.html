@@ -1905,12 +1905,16 @@
       [[-0.17, 0.50], [-0.30, 1.35], [-0.04, 1.35], [-0.08, 0.50]],
       [[0.17, 0.50], [0.30, 1.35], [0.04, 1.35], [0.08, 0.50]]
     ];
-    // Purple wipers that sweep the windshield while it rains or snows. Each blade pivots at the base of the glass, lies
-    // along it at rest, and swings back over the cabin. Heavier weather sweeps faster; drizzle sweeps once, then pauses.
-    const WIPER_COLOR = '#6d28d9';
-    const WIPER_PIVOTS = [[-0.16, 0.115], [0.03, 0.115]];
-    const WIPER_LEN = 0.13, WIPER_WIDTH = 0.032, WIPER_BASE = 0.335, WIPER_TOP = 0.355; // just above the roof
-    const WIPER_SWEEP = 80 * Math.PI / 180;
+    // Wipers on the windshield, in the body's lilac so they show against the dark glass. The glass is the front face of
+    // the cabin (y = 0.12, heights 0.20 to 0.31). A prism can only be extruded straight up, so each blade is a short
+    // row of small floating boxes standing just proud of the glass. Each blade pivots at the base of the glass, lies
+    // along it at rest, and swings up. Heavier weather sweeps faster; drizzle sweeps once, then pauses.
+    const WIPER_COLOR = '#a78bfa';
+    const WIPER_PIVOTS_X = [-0.17, 0];
+    const WIPER_BASE_Z = 0.21; // pivot height, a hair above the hood
+    const WIPER_LEN = 0.10, WIPER_SEGMENTS = 7, WIPER_HALF_W = 0.014, WIPER_THICK = 0.016;
+    const WIPER_Y = [0.122, 0.138]; // just in front of the glass
+    const WIPER_SWEEP = 95 * Math.PI / 180;
     const WIPER_PAUSE_MS = 1800;
     function wiperAngle(t) {
       const wet = Math.max(weatherScene.rain, weatherScene.snow);
@@ -1920,14 +1924,21 @@
       const u = (t % (period + pause)) / period;
       return u >= 1 ? 0 : WIPER_SWEEP * (0.5 - 0.5 * Math.cos(2 * Math.PI * u));
     }
-    function wiperRings(t) {
+    function wiperBoxes(t) {
       const a = wiperAngle(t);
       if (a === null) return [];
-      const dx = Math.cos(a), dy = -Math.sin(a), nx = -dy * WIPER_WIDTH / 2, ny = dx * WIPER_WIDTH / 2;
-      return WIPER_PIVOTS.map(([px, py]) => {
-        const ex = px + dx * WIPER_LEN, ey = py + dy * WIPER_LEN;
-        return [[px - nx, py - ny], [ex - nx, ey - ny], [ex + nx, ey + ny], [px + nx, py + ny]];
-      });
+      const boxes = [];
+      for (const px of WIPER_PIVOTS_X) {
+        for (let i = 0; i < WIPER_SEGMENTS; i++) {
+          const d = (i + 0.5) * WIPER_LEN / WIPER_SEGMENTS;
+          const x = px + d * Math.cos(a), z = WIPER_BASE_Z + d * Math.sin(a);
+          boxes.push({
+            ring: rect(x - WIPER_HALF_W, x + WIPER_HALF_W, WIPER_Y[0], WIPER_Y[1]),
+            base: z - WIPER_THICK / 2, top: z + WIPER_THICK / 2
+          });
+        }
+      }
+      return boxes;
     }
     const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
     const emptyFC = { type: 'FeatureCollection', features: [] };
@@ -1987,10 +1998,10 @@
             top: (p.top + (p.wheel ? 0 : bob)) * L
           },
           geometry: { type: 'Polygon', coordinates: [ring(p.ring.map(([x, y]) => [x + (p.wheel ? 0 : shake), y]))] }
-        })).concat(wiperRings(t).map((r) => ({
+        })).concat(wiperBoxes(t).map((w) => ({
           type: 'Feature',
-          properties: { color: WIPER_COLOR, base: (WIPER_BASE + bob) * L, top: (WIPER_TOP + bob) * L },
-          geometry: { type: 'Polygon', coordinates: [ring(r.map(([x, y]) => [x + shake, y]))] }
+          properties: { color: WIPER_COLOR, base: (w.base + bob) * L, top: (w.top + bob) * L },
+          geometry: { type: 'Polygon', coordinates: [ring(w.ring.map(([x, y]) => [x + shake, y]))] }
         })))
       });
 
