@@ -1001,5 +1001,22 @@
     "drink": 12.0,
     "dessert": 9.0,
     "tierColor": "#eab308"
+  },
+  {
+    "id": 62,
+    "name": "NWB Next Whiskey Bar Plainfield",
+    "category": "Casual American",
+    "website": "http://www.nwbars.com/",
+    "mapsUrl": "https://maps.app.goo.gl/amNHHkU7YkydmCCA9",
+    "coords": [
+      -88.207448,
+      41.608247
+    ],
+    "app": 14.62,
+    "casualMain": 15.88,
+    "premiumMain": 21.0,
+    "drink": 14.25,
+    "dessert": 13.5,
+    "tierColor": "#eab308"
   }
 ]
