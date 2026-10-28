@@ -291,6 +291,11 @@
     @media (prefers-reduced-motion: reduce) {
       .maplibregl-popup { transition: none; }
     }
+    /* Slow swell and ebb of the white halo, so it reads as light radiating out from the card; no flashing */
+    @keyframes popup-glow {
+      0%, 100% { box-shadow: 0 0 8px rgba(255, 255, 255, 0.5), 0 0 20px rgba(255, 255, 255, 0.25), 0 0 40px rgba(255, 255, 255, 0.1), 0 16px 36px rgba(0, 0, 0, 0.7); }
+      50% { box-shadow: 0 0 12px rgba(255, 255, 255, 0.65), 0 0 36px rgba(255, 255, 255, 0.4), 0 0 72px rgba(255, 255, 255, 0.2), 0 16px 36px rgba(0, 0, 0, 0.7); }
+    }
     .maplibregl-popup-content {
       background: #252b33 !important;
       border: 2px solid rgba(255, 255, 255, 0.85) !important; /* thicker than the Menu, Cost and Budget bars so the open card stands out */
@@ -298,7 +303,9 @@
       padding: 16px !important;
       color: #f0f6fc !important;
       border-color: #fff !important; /* full white, like the focused search bar */
-      box-shadow: 0 0 14px rgba(255, 255, 255, 0.55), 0 16px 36px rgba(0, 0, 0, 0.7) !important;
+      /* No !important here: an animation can't override one. The glow breathes outward and back, see popup-glow */
+      box-shadow: 0 0 10px rgba(255, 255, 255, 0.6), 0 0 28px rgba(255, 255, 255, 0.35), 0 0 60px rgba(255, 255, 255, 0.18), 0 16px 36px rgba(0, 0, 0, 0.7);
+      animation: popup-glow 3.6s ease-in-out infinite;
       position: relative !important;
       /* One width for every venue card. 300px keeps 46 of 51 names on one line; longer names wrap to a second line.
          The max-width keeps the card on screen for narrow phones. */
@@ -306,6 +313,7 @@
       width: 300px;
       max-width: calc(100vw - 32px);
     }
+    @media (prefers-reduced-motion: reduce) { .maplibregl-popup-content { animation: none; } }
     .maplibregl-popup-tip {
       display: block !important;
       width: 14px !important;
