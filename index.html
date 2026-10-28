@@ -1649,7 +1649,7 @@
       const hide = !(currentPopup && currentPopup.isOpen()) || selectedVenueId !== venueId;
       selectedVenueId = venueId;
       renderPopup(venue, hide);
-      driveCarTo(venue.coords);
+      driveCarTo(venue.coords, zoom !== undefined ? zoom : map.getZoom());
       const target = venueTargetPoint();
       const container = map.getContainer();
       map.easeTo({
@@ -1895,7 +1895,7 @@
     const MAX_TRUSTED_ACCURACY_M = 1000;
     let carPos = null; // [lng, lat] of the car, or null until located
     let carLoopRaf = null;
-    // When parked at a venue the car sits just short of the dot. The offset is kept in screen
+    // When parked at a venue the car sits a gap below the dot on screen. The offset is kept in screen
     // pixels, so the gap stays the same size as the user zooms.
     const PARK_GAP_PX = 33;
     // Driving speed is set in screen pixels, so the car looks the same speed at any zoom.
@@ -2514,73 +2514,39 @@
               path[i - 1][1] + (path[i][1] - path[i - 1][1]) * f];
     }
 
-    async function driveCarTo(dest) {
+    // Meters per screen pixel at a given zoom, so the gap can be sized for the zoom the map is heading to
+    function metersPerPixelAt(lat, zoom) {
+      return 78271.517 * Math.cos(lat * Math.PI / 180) / Math.pow(2, zoom);
+    }
+
+    // The car parks on the viewer's side of the dot (straight down the screen, so the card above the dot stays clear)
+    // and drives to that spot directly instead of overshooting the dot. zoom is the zoom the map settles at.
+    async function driveCarTo(dest, zoom = map.getZoom()) {
       if (!carPos || carHiding) return;
       const token = ++driveToken;
+      const gapM = PARK_GAP_PX * metersPerPixelAt(dest[1], zoom);
+      const downRad = (map.getBearing() + 180) * Math.PI / 180; // ground direction of "down the screen"
+      const park = [
+        dest[0] + Math.sin(downRad) * gapM / (111320 * Math.cos(dest[1] * Math.PI / 180)),
+        dest[1] + Math.cos(downRad) * gapM / 111320
+      ];
       const requestedFrom = carVisualPos().slice();
-      const road = await fetchDrivingRoute(requestedFrom, dest);
+      const road = await fetchDrivingRoute(requestedFrom, park);
       if (token !== driveToken) return; // a newer click or a re-locate superseded this drive
 
       cancelAnimationFrame(carRaf);
       const start = carVisualPos().slice(); // wherever the car is now (parked, or still mid-drive)
       carPos = start.slice();
       carParkDest = null;
-      const trail = [start, ...(road || []), dest];
-      if (haversineM(start, dest) < 1) return;
-
-      // The car prefers to park in front of the dot: it drives past the venue and stops a gap beyond it, facing the
-      // way it was going. To allow that the route is extended in a straight line past where the road ends (or past
-      // the dot when there is no road), and the stopping point is picked along that extension.
-      const mLonD0 = 111320 * Math.cos(dest[1] * Math.PI / 180);
-      const hasRoad = !!(road && road.length);
-      // Which way the car is going as it nears the dot: along the road's last stretch, else straight at the dot
-      const roadEnd = hasRoad ? road[road.length - 1] : dest;
-      let before = start;
-      if (hasRoad) {
-        for (let i = road.length - 2; i >= 0; i--) {
-          if (haversineM(road[i], roadEnd) >= 1) { before = road[i]; break; }
-        }
-      }
-      const heading = haversineM(before, roadEnd) >= 1 ? bearingDeg(before, roadEnd) : bearingDeg(start, dest);
-      const extM = Math.min(200000, Math.max(500, PARK_GAP_PX * 78271.517 * Math.cos(dest[1] * Math.PI / 180) / Math.pow(2, map.getMinZoom())));
-      const extEnd = [
-        roadEnd[0] + Math.sin(heading * Math.PI / 180) * extM / mLonD0,
-        roadEnd[1] + Math.cos(heading * Math.PI / 180) * extM / 111320
-      ];
-      const path = hasRoad ? [start, ...road, extEnd] : [start, dest, extEnd];
+      const path = [start, ...(road || []), park];
       const cum = [0];
       for (let i = 1; i < path.length; i++) cum.push(cum[i - 1] + haversineM(path[i - 1], path[i]));
       const total = cum[cum.length - 1];
       if (total < 1) return;
 
-      // Distance along the path where it comes closest to the dot; the car parks beyond that point
-      let closestD = 0, closestDist = Infinity;
-      for (let i = 1; i < path.length; i++) {
-        const ax = (path[i - 1][0] - dest[0]) * mLonD0, ay = (path[i - 1][1] - dest[1]) * 111320;
-        const bx = (path[i][0] - dest[0]) * mLonD0, by = (path[i][1] - dest[1]) * 111320;
-        const dx = bx - ax, dy = by - ay;
-        const len2 = dx * dx + dy * dy || 1;
-        const t = Math.min(1, Math.max(0, -(ax * dx + ay * dy) / len2));
-        const dist = Math.hypot(ax + dx * t, ay + dy * t);
-        if (dist < closestDist - 1e-6) { closestDist = dist; closestD = cum[i - 1] + (cum[i] - cum[i - 1]) * t; }
-      }
-
-      setCarRoute(trail);
+      setCarRoute(path);
       carDriving = true;
-      // Walk forward from the closest point until the car is a full gap away from the dot in a straight line
-      // (road geometry can bend near the venue, so path length alone would leave it too close)
-      let driveTotal = closestD;
-      // The gap is measured in screen pixels at the zoom of the moment: choosing a venue also eases the map's
-      // zoom, so a gap fixed in meters at the start of the drive would end up wider than PARK_GAP_PX on screen
-      const settleDriveTotal = () => {
-        const gapM = PARK_GAP_PX * metersPerPixel(dest[1]);
-        const stepM = Math.max(0.5, gapM / 60);
-        driveTotal = closestD;
-        while (driveTotal + stepM <= total && haversineM(pointAtDistance(path, cum, driveTotal), dest) < gapM) {
-          driveTotal += stepM;
-        }
-      };
-      settleDriveTotal();
+      const driveTotal = total;
       let d = 0;
       const t0 = performance.now();
       let last = t0;
@@ -2600,7 +2566,6 @@
         const boost = 1 + (OFFSCREEN_BOOST - 1) * Math.min(1, Math.max(0, (pxFromView - nearPx) / nearPx));
         let speed = DRIVE_PX_PER_SEC * mpp * boost;
         const brakeM = BRAKE_PX * mpp;
-        settleDriveTotal();
         const remaining = Math.max(0, driveTotal - d);
         if (remaining < brakeM) speed *= Math.max(0.2, remaining / brakeM); // ease out into the parking spot
         speed *= Math.min(1, 0.25 + (now - t0) / 800); // ease in from a standstill
