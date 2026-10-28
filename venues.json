@@ -1038,11 +1038,11 @@
       -87.624692,
       41.881327
     ],
-    "app": 18.0,
-    "casualMain": 28.0,
-    "premiumMain": 38.0,
+    "app": 16.0,
+    "casualMain": 29.0,
+    "premiumMain": 62.0,
     "drink": 18.0,
     "dessert": 15.0,
-    "tierColor": "#f97316"
+    "tierColor": "#ef4444"
   }
 ]
