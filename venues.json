@@ -1129,5 +1129,21 @@
     "drink": 8.5,
     "dessert": 8.0,
     "tierColor": "#eab308"
+  },
+  {
+    "id": 69,
+    "name": "RPM Italian",
+    "category": "Modern Italian",
+    "mapsUrl": "https://maps.app.goo.gl/RNtRb1a66YoWbkXUA",
+    "coords": [
+      -87.629989,
+      41.891055
+    ],
+    "app": 12.0,
+    "casualMain": 19.0,
+    "premiumMain": 34.0,
+    "drink": 8.5,
+    "dessert": 8.0,
+    "tierColor": "#eab308"
   }
 ]
