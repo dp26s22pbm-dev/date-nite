@@ -1890,7 +1890,11 @@
     // Local coordinates are in car lengths: x = right, y = forward; base/top are heights.
     const CAR_PARTS = [
       { color: '#a78bfa', base: 0.07, top: 0.20, ring: chamfered(0.23, 0.50, 0.10) },          // body
-      { color: '#1f2433', base: 0.20, top: 0.31, ring: rect(-0.20, 0.20, -0.27, 0.12) },       // glass cabin
+      { color: '#1f2433', base: 0.20, top: 0.31, ring: rect(-0.20, 0.20, -0.10, 0.12) },       // windshield and side glass
+      { color: '#a78bfa', base: 0.20, top: 0.31, ring: rect(-0.20, 0.20, -0.17, -0.10) },      // lilac pillar behind the side glass
+      { color: '#1f2433', base: 0.20, top: 0.31, ring: rect(-0.14, 0.14, -0.27, -0.17) },      // rear window
+      { color: '#a78bfa', base: 0.20, top: 0.31, ring: rect(-0.20, -0.14, -0.27, -0.17) },     // lilac posts framing the rear window
+      { color: '#a78bfa', base: 0.20, top: 0.31, ring: rect(0.14, 0.20, -0.27, -0.17) },
       { color: '#c4b5fd', base: 0.31, top: 0.34, ring: rect(-0.19, 0.19, -0.24, 0.08) },       // roof
       { color: '#0d1017', base: 0, top: 0.12, wheel: true, ring: rect(-0.265, -0.20, 0.27, 0.40) },
       { color: '#0d1017', base: 0, top: 0.12, wheel: true, ring: rect(0.20, 0.265, 0.27, 0.40) },
