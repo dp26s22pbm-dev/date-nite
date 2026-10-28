@@ -1377,6 +1377,7 @@
         layout: { 'circle-sort-key': ['get', 'depth'] },
         paint: {
           'circle-radius': 22,
+          'circle-pitch-scale': 'viewport', // a tilted map shouldn't shrink far dots or grow near ones: names keep a fixed gap from the dot's edge
           'circle-color': ['get', 'color'],
           'circle-opacity': ['*', ['get', 'opacity'], 0.35],
           'circle-blur': 0.8
@@ -1390,6 +1391,7 @@
         layout: { 'circle-sort-key': ['get', 'depth'] },
         paint: {
           'circle-radius': 12,
+          'circle-pitch-scale': 'viewport',
           'circle-color': ['get', 'color'],
           'circle-opacity': ['get', 'opacity'],
           'circle-stroke-width': 2.5,
@@ -1406,6 +1408,7 @@
         filter: ['==', ['get', 'id'], selectedVenueId ?? -1],
         paint: {
           'circle-radius': 12,
+          'circle-pitch-scale': 'viewport',
           'circle-color': ['get', 'color'],
           'circle-opacity': ['get', 'opacity'],
           'circle-stroke-width': 2.5,
