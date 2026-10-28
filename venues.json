@@ -967,5 +967,22 @@
     "drink": 14.0,
     "dessert": 14.0,
     "tierColor": "#f97316"
+  },
+  {
+    "id": 60,
+    "name": "MAGO - Bolingbrook",
+    "category": "Elevated Mexican",
+    "website": "http://www.magogrill.com/",
+    "mapsUrl": "https://maps.app.goo.gl/C88gV6q96wayL2t8A",
+    "coords": [
+      -88.04232,
+      41.719486
+    ],
+    "app": 55.0,
+    "casualMain": 100.0,
+    "premiumMain": 160.0,
+    "drink": 8.0,
+    "dessert": 3.5,
+    "tierColor": "#ef4444"
   }
 ]
