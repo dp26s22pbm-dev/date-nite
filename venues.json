@@ -1027,5 +1027,22 @@
     "drink": 14.5,
     "dessert": 8.5,
     "tierColor": "#f97316"
+  },
+  {
+    "id": 64,
+    "name": "The Gage",
+    "category": "New American",
+    "website": "https://thegagechicago.com/",
+    "mapsUrl": "https://maps.app.goo.gl/Qf6S9V5H3zB1P5218",
+    "coords": [
+      -87.624692,
+      41.881327
+    ],
+    "app": 17.0,
+    "casualMain": 28.0,
+    "premiumMain": 55.0,
+    "drink": 18.0,
+    "dessert": 14.0,
+    "tierColor": "#f97316"
   }
 ]
