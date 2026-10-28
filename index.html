@@ -1431,10 +1431,26 @@
           // Every side and corner is tried before a name is dropped, and a name that wraps to a narrower block gets
           // more places to fit. Names are placed shortest first so a long neighbour can't crowd a short one out.
           // A flagged name has one fixed side, so it never flips to another when the camera moves and placement reruns
-          'text-variable-anchor': above
-            ? ['left']
-            : ['left', 'right', 'top', 'bottom', 'top-left', 'top-right', 'bottom-left', 'bottom-right'],
-          'text-radial-offset': above ? 1.3 : 1.7, // in text heights: clears the dot's edge with a small gap; tighter above so a name can tuck under a dot overhead
+          ...(above
+            ? {
+              'text-variable-anchor': ['left'],
+              'text-radial-offset': 1.3 // in text heights: tighter so a name can tuck under a dot overhead
+            }
+            : {
+              // [x, y] offsets in text heights that clear the dot's edge with a small gap. The text box carries line-height
+              // padding above and below the glyphs, so the top and bottom anchors take a smaller offset than the sides
+              // to look the same distance from the dot.
+              'text-variable-anchor-offset': [
+                'left', [1.7, 0],
+                'right', [1.7, 0],
+                'top', [0, 1.4],
+                'bottom', [0, 1.4],
+                'top-left', [1.2, 1.0],
+                'top-right', [1.2, 1.0],
+                'bottom-left', [1.2, 1.0],
+                'bottom-right', [1.2, 1.0]
+              ]
+            }),
           'text-max-width': 8,
           'text-allow-overlap': above, // a flagged name is always drawn; the general names place around it
           'text-padding': 0,
