@@ -308,14 +308,27 @@ def pricing_from_menu_text(text):
         print(f"Menu text parse error: {e}")
         return None
 
-def fetch_url(url, limit=2000000):
-    """GET a page. Returns (bytes, content_type), or None when it is blocked or fails."""
+# Hosts that refused a plain request (401, 403, 429). A real browser often gets through where a script is turned away.
+BLOCKED_HOSTS = set()
+
+def _host(url):
+    return urllib.parse.urlparse(url).netloc.lower().removeprefix("www.")
+
+def fetch_url(url, limit=2000000, with_url=False):
+    """GET a page. Returns (bytes, content_type), or (bytes, content_type, final_url) with with_url, or None when it
+    is blocked or fails."""
     try:
         req = urllib.request.Request(url, headers={"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64)"})
         with urllib.request.urlopen(req, timeout=15) as resp:
             if resp.status != 200:
                 return None
-            return resp.read(limit), resp.headers.get("Content-Type", "")
+            data, ctype = resp.read(limit), resp.headers.get("Content-Type", "")
+            return (data, ctype, resp.geturl()) if with_url else (data, ctype)
+    except urllib.error.HTTPError as e:
+        if e.code in (401, 403, 429):
+            BLOCKED_HOSTS.add(_host(url))
+        print(f"Could not fetch {url}: {e}")
+        return None
     except Exception as e:
         print(f"Could not fetch {url}: {e}")
         return None
@@ -330,20 +343,106 @@ def html_to_text(html):
 TAB_KEEP_WORDS = ("dinner", "all day", "all-day", "food", "dessert", "dine", "beverage", "drink", "cocktail", "wine", "beer", "menu")
 TAB_SKIP_WORDS = ("lunch", "brunch", "happy", "kid", "catering", "party", "private", "gift")
 
-def render_page_text(url, timeout_ms=45000):
-    """Open a page in a headless browser so menus that JavaScript draws (including ones split into tabs) have their
-    text. Returns the visible text plus each tab's text under a "=== tab ===" heading, or None when playwright is not
-    installed or the page will not load."""
+# Each browser launch costs 10 to 45 seconds, so a run only opens a few
+BROWSER_LIMIT = 6
+browser_launches = 0
+
+def _use_browser():
+    """True when a browser may be launched now: playwright is installed and the run's limit is not spent."""
+    global browser_launches
     if sync_playwright is None:
         print("playwright is not installed; skipping the browser read.")
+        return False
+    if browser_launches >= BROWSER_LIMIT:
+        print("Browser limit reached for this run; skipping the browser read.")
+        return False
+    browser_launches += 1
+    return True
+
+def _open_page(page, url, timeout_ms=45000):
+    """Load a page and give its scripts time to draw. A page that never goes quiet (trackers, chat widgets) is still
+    used once it has loaded."""
+    page.goto(url, wait_until="domcontentloaded", timeout=timeout_ms)
+    try:
+        page.wait_for_load_state("networkidle", timeout=15000)
+    except Exception:
+        pass
+    page.wait_for_timeout(2000)
+
+def _scroll_page(page):
+    """Scroll to the bottom in steps. Many sites draw a section (including the menu link and dish lists) only when it
+    scrolls into view."""
+    try:
+        for _ in range(15):
+            height = page.evaluate("document.body.scrollHeight")
+            page.evaluate("window.scrollBy(0, window.innerHeight)")
+            page.wait_for_timeout(400)
+            at_bottom = page.evaluate("window.scrollY + window.innerHeight >= document.body.scrollHeight - 5")
+            if at_bottom and page.evaluate("document.body.scrollHeight") == height:
+                break
+        page.wait_for_timeout(800)
+    except Exception:
+        pass
+
+MORE_RE = re.compile(r"load more|show all|show more|view all|see more", re.I)
+
+def _expand_page(page):
+    """Click "Load more content" and "Show all items" controls so a menu that lists a few dishes at a time shows all
+    of them. Links that leave the page are not clicked."""
+    for _ in range(6):
+        clicked = False
+        for control in page.locator("button, [role=button], a").filter(has_text=MORE_RE).all()[:10]:
+            try:
+                href = control.get_attribute("href")
+                if (href and not href.startswith("#")) or not control.is_visible():
+                    continue
+                control.click(timeout=3000)
+                page.wait_for_timeout(1500)
+                clicked = True
+                break
+            except Exception:
+                continue
+        if not clicked:
+            break
+
+def render_page_html(url):
+    """(html, final_url) of a page after a headless browser has loaded it, or None. Used for sites that refuse plain
+    requests."""
+    if not _use_browser():
         return None
     try:
         with sync_playwright() as pw:
             browser = pw.chromium.launch(args=["--no-sandbox"])
             try:
                 page = browser.new_page(user_agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64)")
-                page.goto(url, wait_until="networkidle", timeout=timeout_ms)
-                page.wait_for_timeout(2000)
+                _open_page(page, url)
+                _scroll_page(page)
+                try:
+                    # Sites built with scripts add their links after the page loads; the menu link is the one we want
+                    page.wait_for_selector('a[href*="menu" i]', timeout=10000, state="attached")
+                except Exception:
+                    pass
+                return page.content(), page.url
+            finally:
+                browser.close()
+    except Exception as e:
+        print(f"Browser read failed for {url}: {e}")
+        return None
+
+def render_page_text(url, timeout_ms=45000):
+    """Open a page in a headless browser so menus that JavaScript draws (including ones split into tabs) have their
+    text. Returns the visible text plus each tab's text under a "=== tab ===" heading, or None when playwright is not
+    installed or the page will not load."""
+    if not _use_browser():
+        return None
+    try:
+        with sync_playwright() as pw:
+            browser = pw.chromium.launch(args=["--no-sandbox"])
+            try:
+                page = browser.new_page(user_agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64)")
+                _open_page(page, url, timeout_ms)
+                _scroll_page(page)
+                _expand_page(page)
                 parts = [page.inner_text("body")]
                 # Menu widgets (SinglePlatform and similar) draw inside an iframe, which the page's own text leaves out
                 for frame in page.frames[1:]:
@@ -370,6 +469,15 @@ def render_page_text(url, timeout_ms=45000):
         print(f"Browser read failed for {url}: {e}")
         return None
 
+def get_page(url):
+    """(html, final_url) for a page: a plain request first, then a browser when the site refuses plain requests."""
+    got = fetch_url(url, with_url=True)
+    if got:
+        return got[0].decode("utf-8", "ignore"), got[2]
+    if _host(url) in BLOCKED_HOSTS:
+        return render_page_html(url)
+    return None
+
 MENU_LINK_WORDS = ("menu", "food", "dine", "dining", "drink", "order", "eat", "lunch", "dinner", "brunch")
 ORDERING_HOSTS = ("toasttab.com", "chownow.com", "square.site", "olo.com", "popmenu.com", "order.online", "ordering.", "menus.")
 MENU_PATHS = ("/menu", "/menus", "/our-menu", "/food-menu", "/food", "/dinner", "/dinner-menu", "/dining", "/order", "/order-online")
@@ -388,7 +496,7 @@ LOCATION_SKIP_WORDS = ("site-map", "sitemap", "accessibility", "privacy", "terms
                        "about", "gift", "event", "private", "catering", "franchise", "news", "blog", "login")
 ANCHOR_RE = re.compile(r"(?is)<a\b[^>]*?href=[\"']([^\"']+)[\"'][^>]*>(.*?)</a>")
 
-def menu_links_from_page(page, base_url, host):
+def menu_links_from_page(page, base_url, hosts):
     """(url, label) for each link on the page that looks like a menu or ordering link, on this site, a known ordering
     platform or a PDF."""
     found = []
@@ -403,11 +511,11 @@ def menu_links_from_page(page, base_url, host):
         netloc = p.netloc.lower().removeprefix("www.")
         # Menu PDFs are often served from a CDN rather than the restaurant's own domain
         is_pdf = p.path.lower().endswith(".pdf")
-        if p.scheme in ("http", "https") and (netloc == host or any(h in netloc for h in ORDERING_HOSTS) or is_pdf):
+        if p.scheme in ("http", "https") and (netloc in hosts or any(h in netloc for h in ORDERING_HOSTS) or is_pdf):
             found.append((url, text))
     return found
 
-def location_pages(page, site, host, where):
+def location_pages(page, site, hosts, where):
     """Links on the home page to the page for this venue's own city (not another city's), from the venue's address."""
     _, cities = local_markers(where)
     pages = []
@@ -416,7 +524,7 @@ def location_pages(page, site, host, where):
         url = urllib.parse.urljoin(site, href.split("#")[0])
         p = urllib.parse.urlparse(url)
         path = p.path.strip("/").lower()
-        if p.netloc.lower().removeprefix("www.") != host or not path or "/" in path:
+        if p.netloc.lower().removeprefix("www.") not in hosts or not path or "/" in path:
             continue
         if any(w in path for w in LOCATION_SKIP_WORDS):
             continue
@@ -427,20 +535,21 @@ def location_pages(page, site, host, where):
 def menu_page_candidates(site, where=""):
     """Menu pages for a restaurant: links on its home page that look like menu or ordering links (same site or a
     known ordering platform), links on the page for its own city when the home page is a city picker, then common
-    menu paths."""
+    menu paths. A site that sends visitors to another domain (or refuses plain requests) is read through a browser."""
     parsed = urllib.parse.urlparse(site)
-    host = parsed.netloc.lower().removeprefix("www.")
     found = []
     locations = []
-    home = fetch_url(site)
+    home = get_page(site)
     if home:
-        page = home[0].decode("utf-8", "ignore")
-        found = menu_links_from_page(page, site, host)
+        page, final = home
+        hosts = {_host(site), _host(final)}
+        found = menu_links_from_page(page, final, hosts)
         if where:
-            for loc in location_pages(page, site, host, where):
-                got = fetch_url(loc)
+            for loc in location_pages(page, final, hosts, where):
+                got = get_page(loc)
                 if got:
-                    found += menu_links_from_page(got[0].decode("utf-8", "ignore"), loc, host)
+                    loc_page, loc_final = got
+                    found += menu_links_from_page(loc_page, loc_final, hosts | {_host(loc_final)})
                 locations.append(loc.rstrip("/") + "/menu")
     found = [u for u, _ in sorted(dict.fromkeys(found), key=lambda c: -menu_link_score(*c))]
     found += locations
@@ -453,16 +562,24 @@ def pricing_from_website_menu(site, where=""):
     for url in menu_page_candidates(site, where):
         got = fetch_url(url)
         if not got:
+            if _host(url) in BLOCKED_HOSTS:
+                # The site turns away plain requests; a browser may not be
+                rendered = render_page_text(url)
+                pricing = pricing_from_menu_text(rendered) if rendered else None
+                if pricing:
+                    return pricing, url
             continue
         body, ctype = got
         if "pdf" in ctype.lower() or url.lower().split("?")[0].endswith(".pdf"):
             pricing = clean_pricing(fetch_pdf_pricing(url))
         else:
-            pricing = pricing_from_menu_text(html_to_text(body.decode("utf-8", "ignore")))
-            if not pricing:
-                # The HTML had too few prices, which usually means JavaScript draws the menu
+            text = html_to_text(body.decode("utf-8", "ignore"))
+            pricing = pricing_from_menu_text(text)
+            if not pricing or MORE_RE.search(text):
+                # Too few prices in the HTML usually means JavaScript draws the menu; a "Load more" control means the
+                # page lists only some of the dishes until it is clicked
                 rendered = render_page_text(url)
-                pricing = pricing_from_menu_text(rendered) if rendered else None
+                pricing = (pricing_from_menu_text(rendered) if rendered else None) or pricing
         if pricing:
             return pricing, url
     return None, None
