@@ -933,5 +933,22 @@
     "drink": 8.0,
     "dessert": 8.0,
     "tierColor": "#f97316"
+  },
+  {
+    "id": 58,
+    "name": "Station One Smokehouse",
+    "category": "Texas BBQ",
+    "website": "https://www.stationonesmokehouse.com/",
+    "mapsUrl": "https://maps.app.goo.gl/no9SbTD4CcAotN539",
+    "coords": [
+      -88.204918,
+      41.608979
+    ],
+    "app": 4.0,
+    "casualMain": 11.99,
+    "premiumMain": 15.99,
+    "drink": 8.0,
+    "dessert": 8.0,
+    "tierColor": "#22c55e"
   }
 ]
