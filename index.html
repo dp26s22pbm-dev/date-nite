@@ -1905,6 +1905,30 @@
       [[-0.17, 0.50], [-0.30, 1.35], [-0.04, 1.35], [-0.08, 0.50]],
       [[0.17, 0.50], [0.30, 1.35], [0.04, 1.35], [0.08, 0.50]]
     ];
+    // Purple wipers that sweep the windshield while it rains or snows. Each blade pivots at the base of the glass, lies
+    // along it at rest, and swings back over the cabin. Heavier weather sweeps faster; drizzle sweeps once, then pauses.
+    const WIPER_COLOR = '#6d28d9';
+    const WIPER_PIVOTS = [[-0.16, 0.115], [0.03, 0.115]];
+    const WIPER_LEN = 0.13, WIPER_WIDTH = 0.032, WIPER_BASE = 0.335, WIPER_TOP = 0.355; // just above the roof
+    const WIPER_SWEEP = 80 * Math.PI / 180;
+    const WIPER_PAUSE_MS = 1800;
+    function wiperAngle(t) {
+      const wet = Math.max(weatherScene.rain, weatherScene.snow);
+      if (!wet) return null; // dry: wipers are not drawn
+      const period = 1500 - 700 * wet;
+      const pause = wet < 0.4 ? WIPER_PAUSE_MS : 0;
+      const u = (t % (period + pause)) / period;
+      return u >= 1 ? 0 : WIPER_SWEEP * (0.5 - 0.5 * Math.cos(2 * Math.PI * u));
+    }
+    function wiperRings(t) {
+      const a = wiperAngle(t);
+      if (a === null) return [];
+      const dx = Math.cos(a), dy = -Math.sin(a), nx = -dy * WIPER_WIDTH / 2, ny = dx * WIPER_WIDTH / 2;
+      return WIPER_PIVOTS.map(([px, py]) => {
+        const ex = px + dx * WIPER_LEN, ey = py + dy * WIPER_LEN;
+        return [[px - nx, py - ny], [ex - nx, ey - ny], [ex + nx, ey + ny], [px + nx, py + ny]];
+      });
+    }
     const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
     const emptyFC = { type: 'FeatureCollection', features: [] };
 
@@ -1963,7 +1987,11 @@
             top: (p.top + (p.wheel ? 0 : bob)) * L
           },
           geometry: { type: 'Polygon', coordinates: [ring(p.ring.map(([x, y]) => [x + (p.wheel ? 0 : shake), y]))] }
-        }))
+        })).concat(wiperRings(t).map((r) => ({
+          type: 'Feature',
+          properties: { color: WIPER_COLOR, base: (WIPER_BASE + bob) * L, top: (WIPER_TOP + bob) * L },
+          geometry: { type: 'Polygon', coordinates: [ring(r.map(([x, y]) => [x + shake, y]))] }
+        })))
       });
 
       map.getSource('car-beam').setData({
