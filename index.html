@@ -425,7 +425,7 @@
     }
     .search-input::placeholder { color: #fff; transition: color 0.2s ease; }
     .search-input:focus::placeholder { color: rgba(240, 246, 252, 0.5); }
-    /* Idle bar: a 12s loop that alternates a bouncy, color-shifting "Welcome to DATE NITE!" with "Search restaurants". The real placeholder
+    /* Idle bar: a 16s loop that alternates a bouncy, color-shifting "Welcome to DATE NITE!" with "Search restaurants". The real placeholder
        stays underneath (hidden while idle) and takes over on focus, so typing and screen readers behave as before. */
     .search-field { position: relative; }
     .search-input:not(:focus)::placeholder { color: transparent; }
@@ -442,27 +442,27 @@
     .search-input:focus ~ .search-hint,
     .search-input:not(:placeholder-shown) ~ .search-hint { opacity: 0; }
     .hint-brand { position: absolute; font-weight: 800; letter-spacing: 1px; white-space: pre; }
-    .hint-brand span { display: inline-block; opacity: 0; animation: hint-letter 12s ease-in-out infinite; animation-delay: calc(var(--i) * 0.05s); }
-    .hint-text { position: absolute; color: #fff; opacity: 0; animation: hint-text 12s ease-in-out infinite; }
+    .hint-brand span { display: inline-block; opacity: 0; animation: hint-letter 16s ease-in-out infinite; animation-delay: calc(var(--i) * 0.05s); }
+    .hint-text { position: absolute; color: #fff; opacity: 0; animation: hint-text 16s ease-in-out infinite; }
     @keyframes hint-letter {
       0%   { opacity: 0; transform: translateY(10px) scale(0.5) rotate(-12deg); color: #fff; }
-      3%   { opacity: 1; transform: translateY(-5px) scale(1.25) rotate(6deg); color: #ff7eb6; }
-      5%   { opacity: 1; transform: translateY(0) scale(1) rotate(0); color: #fff; }
-      10%  { transform: translateY(-3px) scale(1.1); color: #ffd166; }
-      14%  { transform: translateY(0) scale(1); color: #ff7eb6; }
-      19%  { transform: translateY(-3px) scale(1.1); color: #a78bfa; }
-      23%  { transform: translateY(0) scale(1); color: #ffd166; }
-      28%  { transform: translateY(-3px) scale(1.1); color: #ff7eb6; }
-      32%  { transform: translateY(0) scale(1); color: #a78bfa; }
-      40%  { opacity: 1; transform: translateY(0) scale(1); color: #fff; }
-      48%  { opacity: 1; transform: translateY(0) scale(1); color: #fff; }
-      52%  { opacity: 0; transform: translateY(-8px) scale(0.8); color: #fff; }
-      100% { opacity: 0; transform: translateY(-8px) scale(0.8); color: #fff; }
+      2.25% { opacity: 1; transform: translateY(-5px) scale(1.25) rotate(6deg); color: #ff7eb6; }
+      3.75% { opacity: 1; transform: translateY(0) scale(1) rotate(0); color: #fff; }
+      7.5%  { transform: translateY(-3px) scale(1.1); color: #ffd166; }
+      10.5% { transform: translateY(0) scale(1); color: #ff7eb6; }
+      14.25% { transform: translateY(-3px) scale(1.1); color: #a78bfa; }
+      17.25% { transform: translateY(0) scale(1); color: #ffd166; }
+      21%   { transform: translateY(-3px) scale(1.1); color: #ff7eb6; }
+      24%   { transform: translateY(0) scale(1); color: #a78bfa; }
+      30%   { opacity: 1; transform: translateY(0) scale(1); color: #fff; }
+      36%   { opacity: 1; transform: translateY(0) scale(1); color: #fff; }
+      39%   { opacity: 0; transform: translateY(-8px) scale(0.8); color: #fff; }
+      100%  { opacity: 0; transform: translateY(-8px) scale(0.8); color: #fff; }
     }
     @keyframes hint-text {
-      0%, 54% { opacity: 0; transform: translateY(4px); }
-      60%, 93% { opacity: 1; transform: translateY(0); }
-      99%, 100% { opacity: 0; transform: translateY(-4px); }
+      0%, 40.5% { opacity: 0; transform: translateY(4px); }
+      45%, 95% { opacity: 1; transform: translateY(0); }
+      99.5%, 100% { opacity: 0; transform: translateY(-4px); }
     }
     @media (prefers-reduced-motion: reduce) {
       .search-hint { display: none; }
