@@ -1095,5 +1095,22 @@
     "drink": 15.0,
     "dessert": 12.5,
     "tierColor": "#f97316"
+  },
+  {
+    "id": 67,
+    "name": "Girl & The Goat",
+    "category": "New American",
+    "website": "http://www.girlandthegoat.com/",
+    "mapsUrl": "https://maps.app.goo.gl/mhcDmGy4m1xkC7VeA",
+    "coords": [
+      -87.647935,
+      41.884128
+    ],
+    "app": 12.0,
+    "casualMain": 19.0,
+    "premiumMain": 34.0,
+    "drink": 8.5,
+    "dessert": 8.0,
+    "tierColor": "#eab308"
   }
 ]
