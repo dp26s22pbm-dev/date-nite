@@ -2219,10 +2219,13 @@
         } else {
           carDriving = false;
           if (!carHiding) fadeCarRoute(); // arrived: the trail fades out; the car stays just short of the dot, still idling
+          // Convert with the zoom as it is now, not at the start of the drive: carVisualPos() converts back
+          // with the current zoom, so a zoom change mid-drive would otherwise make the car jump on arrival
           const mLonD = 111320 * Math.cos(dest[1] * Math.PI / 180);
+          const mppNow = metersPerPixel(dest[1]);
           carParkOffsetPx = [
-            (pos[0] - dest[0]) * mLonD / mppStart,
-            (pos[1] - dest[1]) * 111320 / mppStart
+            (pos[0] - dest[0]) * mLonD / mppNow,
+            (pos[1] - dest[1]) * 111320 / mppNow
           ];
           carParkDest = dest.slice();
         }
