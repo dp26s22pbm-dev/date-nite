@@ -1043,7 +1043,7 @@ def main():
 
     # Overwrite if restaurant already exists, else append
     entry = {
-        "id": (existing_idx + 1) if existing_idx is not None else next_id,
+        "id": venues[existing_idx].get("id", next_id) if existing_idx is not None else next_id,
         "name": name,
         "category": category,
         **({"website": website} if website else {}),
