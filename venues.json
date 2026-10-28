@@ -1018,5 +1018,22 @@
     "drink": 14.25,
     "dessert": 13.5,
     "tierColor": "#eab308"
+  },
+  {
+    "id": 63,
+    "name": "Capri Sogno",
+    "category": "Italian",
+    "website": "http://www.caprisogno.com/",
+    "mapsUrl": "https://maps.app.goo.gl/jXwhBDR8pbThy4kq8",
+    "coords": [
+      -88.205273,
+      41.608664
+    ],
+    "app": 16.0,
+    "casualMain": 29.0,
+    "premiumMain": 53.5,
+    "drink": 14.5,
+    "dessert": 8.5,
+    "tierColor": "#f97316"
   }
 ]
