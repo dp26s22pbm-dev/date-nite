@@ -10,6 +10,11 @@ from html import unescape
 from google import genai
 from google.genai import types
 
+try:
+    from playwright.sync_api import sync_playwright
+except ImportError:
+    sync_playwright = None
+
 client = genai.Client(api_key=os.environ.get("GEMINI_API_KEY", ""))
 
 # Scope rules shared by every pricing prompt. Each one closes a way the wrong menu has been read before:
@@ -317,6 +322,42 @@ def html_to_text(html):
     html = re.sub(r"(?s)<[^>]+>", " ", html)
     return re.sub(r"\s+", " ", unescape(html)).strip()
 
+# Tabs that hold the dining-room food and drink menus. Lunch, brunch and happy hour tabs are read only when a page
+# has nothing else, because SCOPE_RULES says to ignore them.
+TAB_KEEP_WORDS = ("dinner", "all day", "all-day", "food", "dessert", "dine", "beverage", "drink", "cocktail", "wine", "beer", "menu")
+TAB_SKIP_WORDS = ("lunch", "brunch", "happy", "kid", "catering", "party", "private", "gift")
+
+def render_page_text(url, timeout_ms=45000):
+    """Open a page in a headless browser so menus that JavaScript draws (including ones split into tabs) have their
+    text. Returns the visible text plus each tab's text under a "=== tab ===" heading, or None when playwright is not
+    installed or the page will not load."""
+    if sync_playwright is None:
+        print("playwright is not installed; skipping the browser read.")
+        return None
+    try:
+        with sync_playwright() as pw:
+            browser = pw.chromium.launch(args=["--no-sandbox"])
+            try:
+                page = browser.new_page(user_agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64)")
+                page.goto(url, wait_until="networkidle", timeout=timeout_ms)
+                parts = [page.inner_text("body")]
+                tabs = page.locator("[role=tab]")
+                labels = [(tabs.nth(i).inner_text() or "").strip() for i in range(min(tabs.count(), 20))]
+                wanted = [i for i, t in enumerate(labels) if any(w in t.lower() for w in TAB_KEEP_WORDS) and not any(w in t.lower() for w in TAB_SKIP_WORDS)]
+                for i in wanted or [i for i, t in enumerate(labels) if t]:
+                    try:
+                        tabs.nth(i).click(timeout=5000)
+                        page.wait_for_timeout(500)
+                        parts.append(f"=== {labels[i]} ===\n" + page.inner_text("body"))
+                    except Exception as e:
+                        print(f"Could not open the {labels[i]!r} tab on {url}: {e}")
+                return "\n".join(parts)
+            finally:
+                browser.close()
+    except Exception as e:
+        print(f"Browser read failed for {url}: {e}")
+        return None
+
 MENU_LINK_WORDS = ("menu", "food", "dine", "dining", "drink", "order", "eat", "lunch", "dinner", "brunch")
 ORDERING_HOSTS = ("toasttab.com", "chownow.com", "square.site", "olo.com", "popmenu.com", "order.online", "ordering.", "menus.")
 MENU_PATHS = ("/menu", "/menus", "/our-menu", "/food-menu", "/food", "/dinner", "/dinner-menu", "/dining", "/order", "/order-online")
@@ -368,6 +409,10 @@ def pricing_from_website_menu(site):
             pricing = clean_pricing(fetch_pdf_pricing(url))
         else:
             pricing = pricing_from_menu_text(html_to_text(body.decode("utf-8", "ignore")))
+            if not pricing:
+                # The HTML had too few prices, which usually means JavaScript draws the menu
+                rendered = render_page_text(url)
+                pricing = pricing_from_menu_text(rendered) if rendered else None
         if pricing:
             return pricing, url
     return None, None
@@ -840,6 +885,9 @@ def main():
         got = fetch_url(menu_url)
         if got and "pdf" not in got[1].lower():
             pricing = pricing_from_menu_text(html_to_text(got[0].decode("utf-8", "ignore")))
+            if not pricing:
+                rendered = render_page_text(menu_url)
+                pricing = pricing_from_menu_text(rendered) if rendered else None
             pricing_source = "the menu link"
     if not pricing and (website or saved_site):
         pricing, menu_page = pricing_from_website_menu(website or saved_site)

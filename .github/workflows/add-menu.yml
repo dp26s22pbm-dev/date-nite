@@ -37,6 +37,8 @@ jobs:
       - name: Install Dependencies
         run: |
           pip install -r requirements.txt
+          # A headless browser reads menus that JavaScript draws, which plain HTML requests cannot see
+          playwright install --with-deps chromium
 
       - name: Re-add the Venue with the Pasted Menu
         id: add
