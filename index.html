@@ -2027,20 +2027,22 @@
 
     function ensureCarLayers() {
       if (map.getSource('car-3d')) return;
-      ['car-3d', 'car-beam', 'car-puff'].forEach((id) => map.addSource(id, { type: 'geojson', data: emptyFC }));
+      // The body, beams and puffs share one source so a single setData moves them together. Separate sources load
+      // in the worker independently, and the lighter beam data could land a frame or more ahead of the body.
+      map.addSource('car-3d', { type: 'geojson', data: emptyFC });
       map.addLayer({
-        id: 'car-beam-fill', type: 'fill', source: 'car-beam',
+        id: 'car-beam-fill', type: 'fill', source: 'car-3d', filter: ['==', ['get', 'beam'], true],
         paint: { 'fill-color': '#fff4be', 'fill-opacity': 0.25 }
       });
       map.addLayer({
-        id: 'car-puff-dot', type: 'circle', source: 'car-puff',
+        id: 'car-puff-dot', type: 'circle', source: 'car-3d', filter: ['==', ['geometry-type'], 'Point'],
         paint: {
           'circle-radius': ['get', 'r'], 'circle-color': '#c8cdd7', 'circle-opacity': ['get', 'o'],
           'circle-blur': 0.6, 'circle-pitch-alignment': 'map'
         }
       });
       map.addLayer({
-        id: 'car-3d-body', type: 'fill-extrusion', source: 'car-3d',
+        id: 'car-3d-body', type: 'fill-extrusion', source: 'car-3d', filter: ['!=', ['get', 'beam'], true],
         paint: {
           'fill-extrusion-color': ['get', 'color'],
           'fill-extrusion-height': ['get', 'top'],
@@ -2070,6 +2072,7 @@
       const shake = calm ? 0 : 0.008 * Math.sin(t / 41);
 
       map.setPaintProperty('car-3d-body', 'fill-extrusion-opacity', carAlpha);
+      map.setPaintProperty('car-beam-fill', 'fill-opacity', (calm ? 0.25 : 0.2 + 0.1 * Math.sin(t / 260)) * carAlpha);
       map.getSource('car-3d').setData({
         type: 'FeatureCollection',
         features: CAR_PARTS.map((p) => ({
@@ -2084,28 +2087,17 @@
           type: 'Feature',
           properties: { color: WIPER_COLOR, base: (w.base + bob) * L, top: (w.top + bob) * L },
           geometry: { type: 'Polygon', coordinates: [ring(w.ring.map(([x, y]) => [x + shake, y]))] }
-        })))
-      });
-
-      map.getSource('car-beam').setData({
-        type: 'FeatureCollection',
-        features: CAR_BEAMS.map((b) => ({
-          type: 'Feature', properties: {}, geometry: { type: 'Polygon', coordinates: [ring(b)] }
-        }))
-      });
-      map.setPaintProperty('car-beam-fill', 'fill-opacity', (calm ? 0.25 : 0.2 + 0.1 * Math.sin(t / 260)) * carAlpha);
-
-      // Exhaust puffs drift back and fade
-      map.getSource('car-puff').setData(calm ? emptyFC : {
-        type: 'FeatureCollection',
-        features: [0, 0.5].map((offset, i) => {
+        }))).concat(CAR_BEAMS.map((b) => ({
+          type: 'Feature', properties: { beam: true }, geometry: { type: 'Polygon', coordinates: [ring(b)] }
+        }))).concat(calm ? [] : [0, 0.5].map((offset, i) => {
+          // Exhaust puffs drift back and fade
           const p = ((t / 1400) + offset) % 1;
           return {
             type: 'Feature',
             properties: { r: 2 + p * 7, o: (1 - p) * 0.5 * carAlpha },
             geometry: { type: 'Point', coordinates: toLL((i ? 0.07 : -0.07) + p * 0.04, -0.54 - p * 0.45) }
           };
-        })
+        }))
       });
     }
 
@@ -2158,10 +2150,8 @@
         carLoopRaf = null;
         carPos = null;
         carParkDest = null;
-        ['car-3d', 'car-beam', 'car-puff'].forEach((id) => {
-          const src = map.getSource(id);
-          if (src) src.setData(emptyFC);
-        });
+        const src = map.getSource('car-3d');
+        if (src) src.setData(emptyFC);
       };
       if (reducedMotion.matches) { finish(); return; }
       const from = carAlpha, t0 = performance.now();
