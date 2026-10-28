@@ -1233,6 +1233,7 @@
     const LABELS_MIN_ZOOM = 15.5; // from this zoom in, every dot shows its name
     const LABELS_FADE_ZOOM = 0.4; // the names fade in over this much zoom just below it
     const LABELS_FULL_ZOOM = LABELS_MIN_ZOOM + 0.1; // a little past the fade, so rounding in the easing can't leave names dim
+    const LABELS_DIM = 0.65; // while a venue's card is open, the other venues' names settle to this brightness
     const DOT_BLOCKER_PX = 28; // a little wider than the dot (26px with its outline) so names keep a gap; wider boxes crowd out a neighbour's name
     let selectedVenueId = null;
 
@@ -1282,6 +1283,9 @@
       return '#ef4444';
     }
 
+    const labelOpacity = peak => ['interpolate', ['linear'], ['zoom'],
+      LABELS_MIN_ZOOM - LABELS_FADE_ZOOM, 0,
+      LABELS_MIN_ZOOM, peak];
     const labelFilter = above => ['all', ['!=', ['get', 'id'], selectedVenueId ?? -1], ['==', ['get', 'labelAbove'], above]];
 
     function buildGeoJSON() {
@@ -1472,9 +1476,8 @@
           'text-color': ['rgba', 255, 255, 255, ['get', 'opacity']],
           'text-halo-color': ['rgba', 0, 0, 0, ['*', ['get', 'opacity'], 0.85]],
           'text-halo-width': 1.8,
-          'text-opacity': ['interpolate', ['linear'], ['zoom'],
-            LABELS_MIN_ZOOM - LABELS_FADE_ZOOM, 0,
-            LABELS_MIN_ZOOM, 1]
+          'text-opacity': labelOpacity(1),
+          'text-opacity-transition': { duration: 250 }
         }
       });
       addLabelLayer('restaurants-label', false);
@@ -1797,7 +1800,10 @@
 
     function updateListSelection() {
       for (const [id, above] of [['restaurants-label', false], ['restaurants-label-above', true]]) {
-        if (map.getLayer(id)) map.setFilter(id, labelFilter(above));
+        if (!map.getLayer(id)) continue;
+        map.setFilter(id, labelFilter(above));
+        // The other venues' names dim while a card is open and come back to full brightness when it closes
+        map.setPaintProperty(id, 'text-opacity', labelOpacity(selectedVenueId === null ? 1 : LABELS_DIM));
       }
       if (map.getLayer('restaurants-point-selected')) {
         map.setFilter('restaurants-point-selected', ['==', ['get', 'id'], selectedVenueId ?? -1]);
