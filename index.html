@@ -1661,9 +1661,15 @@
     let listDesc = false; // pressing the lit sort button again flips between ascending and descending
     // Distances are measured only from the visitor's own location, once the browser reports a trustworthy one (see
     // locateUser). Until then, and whenever location is denied or too coarse, listOrigin stays null: the cards show
-    // no mileage, the 25 mile cutoff doesn't apply, and the proximity button is grayed out.
-    const DEFAULT_ORIGIN = [-88.16632, 41.74594]; // only where the car is parked, never a distance origin
+    // no mileage and the proximity button is grayed out.
+    const DEFAULT_ORIGIN = [-88.16632, 41.74594]; // parks the car and centers the 25 mile cutoff without a fix, never a mileage origin
     let listOrigin = null;
+
+    // The 25 mile cutoff is centered on the user's location when known. Otherwise it falls back to the middle of
+    // Naperville; later this will be the town or city chosen during new user setup.
+    function radiusCenter() {
+      return listOrigin || DEFAULT_ORIGIN;
+    }
 
     function updateNearButton() {
       document.getElementById('sort-near').classList.toggle('unavailable', !listOrigin);
@@ -1738,7 +1744,7 @@
       updateNearButton();
       const items = rawVenues
         .map(v => ({ v, total: calculateTotal(v), miles: listOrigin ? haversineM(listOrigin, v.coords) / 1609.344 : 0 }))
-        .filter(i => !listOrigin || i.miles * 1609.344 <= LIST_RADIUS_M)
+        .filter(i => haversineM(radiusCenter(), i.v.coords) <= LIST_RADIUS_M)
         .sort(listSort === 'cost'
           ? (a, b) => (listDesc ? b.total - a.total : a.total - b.total) || a.miles - b.miles
           : (a, b) => (listDesc ? b.miles - a.miles : a.miles - b.miles) || a.total - b.total);
