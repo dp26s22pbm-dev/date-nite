@@ -1125,7 +1125,7 @@
     ],
     "app": 18.7,
     "casualMain": 34.0,
-    "premiumMain": 39.0,
+    "premiumMain": 46.0,
     "drink": 17.0,
     "dessert": 10.0,
     "tierColor": "#f97316"
@@ -1143,7 +1143,7 @@
     "casualMain": 26.0,
     "premiumMain": 60.0,
     "drink": 18.0,
-    "dessert": 8.0,
-    "tierColor": "#f97316"
+    "dessert": 17.0,
+    "tierColor": "#ef4444"
   }
 ]
