@@ -1061,5 +1061,22 @@
     "drink": 3.99,
     "dessert": 10.99,
     "tierColor": "#eab308"
+  },
+  {
+    "id": 65,
+    "name": "The Dearborn",
+    "category": "New American",
+    "website": "http://www.thedearborntavern.com/",
+    "mapsUrl": "https://maps.app.goo.gl/m5uSxSbpaedui9kH6",
+    "coords": [
+      -87.629277,
+      41.884337
+    ],
+    "app": 20.0,
+    "casualMain": 26.0,
+    "premiumMain": 49.5,
+    "drink": 18.0,
+    "dessert": 8.0,
+    "tierColor": "#f97316"
   }
 ]
