@@ -47,6 +47,8 @@ jobs:
           GOOGLE_PLACES_API_KEY: ${{ secrets.GOOGLE_PLACES_API_KEY }}
           ISSUE_BODY: ${{ github.event.issue.body }}
           ISSUE_TITLE: ${{ github.event.issue.title }}
+          # Kept outside the repository so a retry after a rejected push reuses the first prices
+          PRICING_CACHE_FILE: ${{ runner.temp }}/pricing-cache.json
           MENU_TEXT_OVERRIDE: ${{ github.event.comment.body }}
         run: |
           git config --global user.name "github-actions[bot]"

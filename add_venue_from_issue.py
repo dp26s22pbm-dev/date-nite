@@ -758,6 +758,31 @@ def price_sanity_warnings(app, casual, premium, drink, dessert, defaulted=()):
             warnings.append(f"the {label} (${value}) costs more than the casual main (${casual})")
     return warnings
 
+# The workflows start over from the new main when a push is rejected, which runs this script again. Gemini does not
+# answer the same way twice, so the first prices are kept in this file (outside the repository) and reused.
+PRICING_CACHE_FILE = os.environ.get("PRICING_CACHE_FILE", "")
+
+def load_pricing_cache():
+    """Prices and their source saved by an earlier attempt of this run, or None."""
+    if not PRICING_CACHE_FILE or not os.path.exists(PRICING_CACHE_FILE):
+        return None
+    try:
+        with open(PRICING_CACHE_FILE) as f:
+            saved = json.load(f)
+        return saved["pricing"], saved["source"]
+    except Exception as e:
+        print(f"Could not read the saved prices: {e}")
+        return None
+
+def save_pricing_cache(pricing, source):
+    if not PRICING_CACHE_FILE or not pricing:
+        return
+    try:
+        with open(PRICING_CACHE_FILE, "w") as f:
+            json.dump({"pricing": pricing, "source": source}, f)
+    except Exception as e:
+        print(f"Could not save the prices: {e}")
+
 def set_output(key, value):
     """Hand a one-line result to the GitHub Actions workflow (used for the issue comment)."""
     path = os.environ.get("GITHUB_OUTPUT")
@@ -869,8 +894,11 @@ def main():
 
     # Pricing sources, best first: pasted menu text, the menu link (PDF or readable page), the restaurant's own
     # menu pages, then a Gemini web search (estimates)
-    pricing, pricing_source = None, None
-    if menu_text:
+    pricing, pricing_source = load_pricing_cache() or (None, None)
+    reused_pricing = bool(pricing)
+    if reused_pricing:
+        print(f"Reusing the prices from the first attempt ({pricing_source}).")
+    if not pricing and menu_text:
         pricing = pricing_from_menu_text(menu_text)
         pricing_source = "your pasted menu"
         if not pricing and menu_override:
@@ -898,6 +926,8 @@ def main():
     if not pricing:
         pricing = fetch_pricing_via_gemini_search(name)
         pricing_source = "a web search (estimates)"
+    if not reused_pricing:
+        save_pricing_cache(pricing, pricing_source)
 
     # Parse manual pricing overrides (e.g. "app: 10.00\ncasualMain: 18.00")
     overrides = {}
