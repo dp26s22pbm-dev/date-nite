@@ -984,5 +984,22 @@
     "drink": 8.0,
     "dessert": 3.5,
     "tierColor": "#ef4444"
+  },
+  {
+    "id": 61,
+    "name": "Khaos Brewcade & Kitchen",
+    "category": "Casual American",
+    "website": "https://www.khaosbrewing.com/",
+    "mapsUrl": "https://maps.app.goo.gl/yqAx9yqJC4KdGzHq6",
+    "coords": [
+      -88.202425,
+      41.656821
+    ],
+    "app": 11.0,
+    "casualMain": 16.0,
+    "premiumMain": 18.0,
+    "drink": 12.0,
+    "dessert": 9.0,
+    "tierColor": "#eab308"
   }
 ]
