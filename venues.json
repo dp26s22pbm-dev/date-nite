@@ -1044,5 +1044,22 @@
     "drink": 18.0,
     "dessert": 15.0,
     "tierColor": "#ef4444"
+  },
+  {
+    "id": 64,
+    "name": "Sweetwater Tavern & Grille (Michigan Plaza - Chicago)",
+    "category": "Casual American",
+    "website": "http://www.sweetwatertavernandgrille.com/",
+    "mapsUrl": "https://maps.app.goo.gl/ZQzi3A6bZTGvnhRk8",
+    "coords": [
+      -87.624228,
+      41.886565
+    ],
+    "app": 14.74,
+    "casualMain": 20.99,
+    "premiumMain": 31.99,
+    "drink": 3.99,
+    "dessert": 10.99,
+    "tierColor": "#eab308"
   }
 ]
