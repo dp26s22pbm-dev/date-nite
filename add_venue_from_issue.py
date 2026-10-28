@@ -12,6 +12,16 @@ from google.genai import types
 
 client = genai.Client(api_key=os.environ.get("GEMINI_API_KEY", ""))
 
+# Scope rules shared by every pricing prompt. Each one closes a way the wrong menu has been read before:
+# catering trays, lunch-only prices, fixed-price packages and invented numbers.
+SCOPE_RULES = """Scope rules (they apply to every category below):
+- Use dinner (or all-day dine-in) prices for one person. Ignore lunch, brunch, happy hour, kids, party or group packages, and catering.
+- Catering prices are per tray, pan or "serves N" and run several times a dine-in price. If the only prices you can find are catering prices, return empty lists.
+- A fixed price per person (a buffet, a rodizio, a prix fixe) is one main. Use its dinner price, not the lunch price.
+- drinks: priced cocktails or craft beverages only. Leave out non-alcoholic drinks, beer and wine unless nothing else is priced.
+- If a category has no prices printed on the menu, return an empty list for it. Never estimate or fill in a typical price.
+"""
+
 SEARCH_PRICING_PROMPT = """
 Search for current menu pricing for "{venue_name}" in {city}.
 Find real-world pricing for these categories:
@@ -21,6 +31,7 @@ Find real-world pricing for these categories:
 4. drinks: standard cocktail or craft beverage prices (in USD, number only)
 5. desserts: typical dessert prices (in USD, number only)
 
+{scope_rules}
 Return ONLY a valid JSON object matching this schema:
 {{
   "apps": [float, ...],
@@ -48,8 +59,7 @@ Rules:
 - "premiumMains": Standard steaks (ribeye, strip, filet), veal chops, prime seafood (salmon, lobster, sea bass), with the standard single-entree plate for each. Exclude combination or multi-protein plates, chicken and vegetarian dishes, large-format or shared cuts, wagyu, market-price items and sharing platters. If there are no premium luxury cuts, use the top 25% highest priced entrees.
 - "drinks": House wine, draft beer, specialty cocktails, or soft drinks.
 - "desserts": Tiramisu, cannoli, cakes, gelato.
-Return strictly valid JSON with no markdown formatting.
-"""
+""" + SCOPE_RULES + "Return strictly valid JSON with no markdown formatting.\n"
 
 def extract_field(body, header):
     pattern = rf"### {re.escape(header)}\s*\n\s*(.*?)(?=\n###|\Z)"
@@ -215,7 +225,7 @@ def geocode_via_nominatim(address):
 def fetch_pricing_via_gemini_search(venue_name, city="Naperville, IL"):
     """Query Gemini with Google Search Grounding to find live menu pricing."""
     try:
-        prompt = SEARCH_PRICING_PROMPT.format(venue_name=venue_name, city=city)
+        prompt = SEARCH_PRICING_PROMPT.format(venue_name=venue_name, city=city, scope_rules=SCOPE_RULES)
         response = client.models.generate_content(
             model="gemini-3.6-flash",
             contents=prompt,
@@ -311,6 +321,15 @@ MENU_LINK_WORDS = ("menu", "food", "dine", "dining", "drink", "order", "eat", "l
 ORDERING_HOSTS = ("toasttab.com", "chownow.com", "square.site", "olo.com", "popmenu.com", "order.online", "ordering.", "menus.")
 MENU_PATHS = ("/menu", "/menus", "/our-menu", "/food-menu", "/food", "/dinner", "/dinner-menu", "/dining", "/order", "/order-online")
 
+# Links to these are never the dinner menu. Catering and party menus carry tray prices, so reading one gives prices
+# several times too high.
+SKIP_MENU_WORDS = ("catering", "kids", "kid-", "party", "banquet", "private", "gift", "event", "brunch", "lunch", "happy")
+
+def menu_link_score(url, label=""):
+    """Rank a candidate menu link: dinner menus first, drink-only menus last."""
+    text = (url + " " + label).lower()
+    return (3 if "dinner" in text else 0) + (1 if "menu" in text else 0) - (2 if any(w in text for w in ("bar", "drink", "wine", "beer", "cocktail")) else 0)
+
 def menu_page_candidates(site):
     """Menu pages for a restaurant: links on its home page that look like menu or ordering links (same site or a
     known ordering platform), then common menu paths."""
@@ -325,10 +344,15 @@ def menu_page_candidates(site):
             if not (any(w in href.lower() for w in MENU_LINK_WORDS) or any(w in text for w in MENU_LINK_WORDS)):
                 continue
             url = urllib.parse.urljoin(site, href.split("#")[0])
+            if any(w in (url + " " + text).lower() for w in SKIP_MENU_WORDS):
+                continue
             p = urllib.parse.urlparse(url)
             netloc = p.netloc.lower().removeprefix("www.")
-            if p.scheme in ("http", "https") and (netloc == host or any(h in netloc for h in ORDERING_HOSTS)):
-                found.append(url)
+            # Menu PDFs are often served from a CDN rather than the restaurant's own domain
+            is_pdf = p.path.lower().endswith(".pdf")
+            if p.scheme in ("http", "https") and (netloc == host or any(h in netloc for h in ORDERING_HOSTS) or is_pdf):
+                found.append((url, text))
+    found = [u for u, _ in sorted(dict.fromkeys(found), key=lambda c: -menu_link_score(*c))]
     for path in MENU_PATHS:
         found.append(f"{parsed.scheme}://{parsed.netloc}{path}")
     return list(dict.fromkeys(found))[:12]
@@ -669,9 +693,18 @@ def maps_tool_experiment(name, where, saved_coords):
         print(f"[maps-experiment] failed: {e}")
         return None
 
-def price_sanity_warnings(app, casual, premium, drink, dessert):
+# Highest plausible dine-in price per category. Catering trays and per-pan prices land far above these.
+PRICE_CEILINGS = {"appetizer": 35, "casual main": 65, "premium main": 120, "drink": 25, "dessert": 25}
+
+def price_sanity_warnings(app, casual, premium, drink, dessert, defaulted=()):
     """Reasons the saved prices may be off. A venue with any of these is left open for a second look."""
     warnings = []
+    for label, value in (("appetizer", app), ("casual main", casual), ("premium main", premium), ("drink", drink), ("dessert", dessert)):
+        if value > PRICE_CEILINGS[label]:
+            warnings.append(f"the {label} (${value}) is unusually high for one person, which often means catering or "
+                            "party-package prices were read")
+    if defaulted:
+        warnings.append("no menu price was found for the " + ", ".join(defaulted) + ", so a typical stand-in was saved")
     if premium < casual * 1.5:
         warnings.append(f"the premium main (${premium}) is within 50% of the casual main (${casual}), which often means "
                         "lunch or combo prices were read")
@@ -827,9 +860,16 @@ def main():
                 overrides[m.group(1)] = float(m.group(2))
 
     # Calculate medians with guarded fallbacks
+    defaulted = []
     if pricing and pricing.get("casualMains"):
         casual_list = pricing.get("casualMains") or [19.00]
         casual_main = round(statistics.median(casual_list), 2)
+
+        # Categories with no menu price keep a stand-in number (the map needs one) but are listed in
+        # defaulted, so the issue says they were not read from a menu
+        for key, label in (("premiumMains", "premium main"), ("apps", "appetizer"), ("drinks", "drink"), ("desserts", "dessert")):
+            if not pricing.get(key):
+                defaulted.append(label)
 
         prem_list = pricing.get("premiumMains") or [round(casual_main * 1.6, 2)]
         premium_main = round(statistics.median(prem_list), 2)
@@ -858,6 +898,8 @@ def main():
 
     # Apply manual pricing overrides if provided
     if overrides:
+        defaulted = [lbl for lbl, key in (("premium main", "premiumMain"), ("appetizer", "app"), ("drink", "drink"), ("dessert", "dessert"))
+                     if lbl in defaulted and key not in overrides]
         if "app" in overrides: app = overrides["app"]
         if "casualMain" in overrides: casual_main = overrides["casualMain"]
         if "premiumMain" in overrides: premium_main = overrides["premiumMain"]
@@ -938,7 +980,7 @@ def main():
         summary += (" The prices are estimates. To fix them, reply to this issue with the menu: open the venue's menu page, "
                     "select all, copy, and paste it here. I will update the prices and close this issue.")
     set_output("needs_menu", "true" if needs_menu else "false")
-    warnings = price_sanity_warnings(app, casual_main, premium_main, drink, dessert)
+    warnings = price_sanity_warnings(app, casual_main, premium_main, drink, dessert, defaulted)
     if warnings:
         summary += " Double-check these prices: " + "; ".join(warnings) + "."
         if not menu_override:
