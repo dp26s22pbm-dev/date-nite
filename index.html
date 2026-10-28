@@ -1671,11 +1671,27 @@
     updateButtonLift();
 
     function setListSort(mode) {
+      const changed = mode !== listSort;
       listSort = mode;
       document.getElementById('sort-near').classList.toggle('active', mode === 'near');
       document.getElementById('sort-cost').classList.toggle('active', mode === 'cost');
+      // Remember where each card sat so the re-sort can slide them to their new spots
+      const before = new Map();
+      if (changed) listCards.querySelectorAll('.venue-card').forEach(c => before.set(c.dataset.id, c.getBoundingClientRect().left));
       renderList();
       listCards.scrollLeft = 0;
+      if (!changed || reducedMotion.matches || !listCards.animate) return;
+      const strip = listCards.getBoundingClientRect();
+      listCards.querySelectorAll('.venue-card').forEach((c, i) => {
+        const now = c.getBoundingClientRect().left;
+        if (now > strip.right) return; // starts and ends offscreen, nothing to see
+        // A card that wasn't in the old list (or sat far offscreen) slides in from the edge
+        const from = before.has(c.dataset.id) ? before.get(c.dataset.id) : strip.right;
+        c.animate([
+          { transform: `translateX(${from - now}px) scale(0.94)` },
+          { transform: 'translateX(0) scale(1)' }
+        ], { duration: 380, delay: Math.min(i, 8) * 18, easing: 'cubic-bezier(0.22, 1, 0.36, 1)', fill: 'backwards' });
+      });
     }
 
     function renderList() {
