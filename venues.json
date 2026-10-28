@@ -1178,5 +1178,22 @@
     "drink": 10.0,
     "dessert": 10.0,
     "tierColor": "#eab308"
+  },
+  {
+    "id": 73,
+    "name": "Ted's Montana Grill",
+    "category": "Casual American",
+    "website": "https://www.tedsmontanagrill.com/tmg055.html",
+    "mapsUrl": "https://maps.app.goo.gl/srJaFZ1UAG4wYwme9",
+    "coords": [
+      -88.043408,
+      41.720717
+    ],
+    "app": 18.5,
+    "casualMain": 20.88,
+    "premiumMain": 47.25,
+    "drink": 10.44,
+    "dessert": 12.12,
+    "tierColor": "#f97316"
   }
 ]
