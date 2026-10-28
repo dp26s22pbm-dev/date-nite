@@ -59,6 +59,7 @@ You are a restaurant menu pricing extraction engine. Analyze the provided menu c
 }
 Rules:
 - Prices may have no dollar sign and may run into a calorie count: "12.991,220 cal" is $12.99 and 1,220 cal. Calorie counts are never prices.
+- A price can be a plain number after the dish name with no dollar sign ("grilled dorade 49" is $49).
 - "apps": Starters, sides, appetizers, soups, salads.
 - "casualMains": Standard pastas, pizzas, handhelds, burgers, chicken entrees, or basic sandwiches.
 - "premiumMains": Standard steaks (ribeye, strip, filet), veal chops, prime seafood (salmon, lobster, sea bass), with the standard single-entree plate for each. Exclude combination or multi-protein plates, chicken and vegetarian dishes, large-format or shared cuts, wagyu, market-price items and sharing platters. If there are no premium luxury cuts, use the top 25% highest priced entrees.
@@ -269,6 +270,8 @@ def fetch_pdf_pricing(url):
 PRICE_RE = re.compile(r"\$\s?\d{1,3}(?:\.\d{2})?")
 # Some menu pages copy as "12.991,220 cal": no dollar sign, and the price runs into the calorie count
 BARE_PRICE_RE = re.compile(r"(?<![\d.,])\d{1,3}\.\d{2}")
+# Menus drawn by a widget often show "grilled dorade<tab>49": a whole-dollar price with no dollar sign
+TAB_PRICE_RE = re.compile(r"(?m)\S[^\n]*\t\d{1,3}(?:\.\d{2})?[ \t]*$")
 MENU_TEXT_LIMIT = 60000
 
 def clean_pricing(data):
@@ -291,7 +294,7 @@ def clean_pricing(data):
 def pricing_from_menu_text(text):
     """Parse menu prices out of plain text (a pasted menu or a restaurant's menu page) with Gemini."""
     text = (text or "").strip()
-    if max(len(PRICE_RE.findall(text)), len(BARE_PRICE_RE.findall(text))) < 6:
+    if max(len(PRICE_RE.findall(text)), len(BARE_PRICE_RE.findall(text)), len(TAB_PRICE_RE.findall(text))) < 6:
         print("Menu text has too few prices to use.")
         return None
     try:
@@ -340,7 +343,16 @@ def render_page_text(url, timeout_ms=45000):
             try:
                 page = browser.new_page(user_agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64)")
                 page.goto(url, wait_until="networkidle", timeout=timeout_ms)
+                page.wait_for_timeout(2000)
                 parts = [page.inner_text("body")]
+                # Menu widgets (SinglePlatform and similar) draw inside an iframe, which the page's own text leaves out
+                for frame in page.frames[1:]:
+                    try:
+                        framed = frame.inner_text("body")
+                    except Exception:
+                        continue
+                    if len(framed) > 200:
+                        parts.append("=== embedded frame ===\n" + framed[:40000])
                 tabs = page.locator("[role=tab]")
                 labels = [(tabs.nth(i).inner_text() or "").strip() for i in range(min(tabs.count(), 20))]
                 wanted = [i for i, t in enumerate(labels) if any(w in t.lower() for w in TAB_KEEP_WORDS) and not any(w in t.lower() for w in TAB_SKIP_WORDS)]
@@ -371,36 +383,74 @@ def menu_link_score(url, label=""):
     text = (url + " " + label).lower()
     return (3 if "dinner" in text else 0) + (1 if "menu" in text else 0) - (2 if any(w in text for w in ("bar", "drink", "wine", "beer", "cocktail")) else 0)
 
-def menu_page_candidates(site):
+# Chain sites open on a city picker whose menu sits a level down (/chicago/menu). Links to these are not location pages.
+LOCATION_SKIP_WORDS = ("site-map", "sitemap", "accessibility", "privacy", "terms", "career", "job", "press", "contact",
+                       "about", "gift", "event", "private", "catering", "franchise", "news", "blog", "login")
+ANCHOR_RE = re.compile(r"(?is)<a\b[^>]*?href=[\"']([^\"']+)[\"'][^>]*>(.*?)</a>")
+
+def menu_links_from_page(page, base_url, host):
+    """(url, label) for each link on the page that looks like a menu or ordering link, on this site, a known ordering
+    platform or a PDF."""
+    found = []
+    for href, label in ANCHOR_RE.findall(page):
+        text = re.sub(r"<[^>]+>", "", label).lower()
+        if not (any(w in href.lower() for w in MENU_LINK_WORDS) or any(w in text for w in MENU_LINK_WORDS)):
+            continue
+        url = urllib.parse.urljoin(base_url, href.split("#")[0])
+        if any(w in (url + " " + text).lower() for w in SKIP_MENU_WORDS):
+            continue
+        p = urllib.parse.urlparse(url)
+        netloc = p.netloc.lower().removeprefix("www.")
+        # Menu PDFs are often served from a CDN rather than the restaurant's own domain
+        is_pdf = p.path.lower().endswith(".pdf")
+        if p.scheme in ("http", "https") and (netloc == host or any(h in netloc for h in ORDERING_HOSTS) or is_pdf):
+            found.append((url, text))
+    return found
+
+def location_pages(page, site, host, where):
+    """Links on the home page to the page for this venue's own city (not another city's), from the venue's address."""
+    _, cities = local_markers(where)
+    pages = []
+    for href, label in ANCHOR_RE.findall(page):
+        text = re.sub(r"<[^>]+>", "", label).lower()
+        url = urllib.parse.urljoin(site, href.split("#")[0])
+        p = urllib.parse.urlparse(url)
+        path = p.path.strip("/").lower()
+        if p.netloc.lower().removeprefix("www.") != host or not path or "/" in path:
+            continue
+        if any(w in path for w in LOCATION_SKIP_WORDS):
+            continue
+        if any(c in (path + " " + text).replace("-", " ") for c in cities):
+            pages.append(url)
+    return list(dict.fromkeys(pages))[:3]
+
+def menu_page_candidates(site, where=""):
     """Menu pages for a restaurant: links on its home page that look like menu or ordering links (same site or a
-    known ordering platform), then common menu paths."""
+    known ordering platform), links on the page for its own city when the home page is a city picker, then common
+    menu paths."""
     parsed = urllib.parse.urlparse(site)
     host = parsed.netloc.lower().removeprefix("www.")
     found = []
+    locations = []
     home = fetch_url(site)
     if home:
         page = home[0].decode("utf-8", "ignore")
-        for href, label in re.findall(r"(?is)<a\b[^>]*?href=[\"']([^\"']+)[\"'][^>]*>(.*?)</a>", page):
-            text = re.sub(r"<[^>]+>", "", label).lower()
-            if not (any(w in href.lower() for w in MENU_LINK_WORDS) or any(w in text for w in MENU_LINK_WORDS)):
-                continue
-            url = urllib.parse.urljoin(site, href.split("#")[0])
-            if any(w in (url + " " + text).lower() for w in SKIP_MENU_WORDS):
-                continue
-            p = urllib.parse.urlparse(url)
-            netloc = p.netloc.lower().removeprefix("www.")
-            # Menu PDFs are often served from a CDN rather than the restaurant's own domain
-            is_pdf = p.path.lower().endswith(".pdf")
-            if p.scheme in ("http", "https") and (netloc == host or any(h in netloc for h in ORDERING_HOSTS) or is_pdf):
-                found.append((url, text))
+        found = menu_links_from_page(page, site, host)
+        if where:
+            for loc in location_pages(page, site, host, where):
+                got = fetch_url(loc)
+                if got:
+                    found += menu_links_from_page(got[0].decode("utf-8", "ignore"), loc, host)
+                locations.append(loc.rstrip("/") + "/menu")
     found = [u for u, _ in sorted(dict.fromkeys(found), key=lambda c: -menu_link_score(*c))]
+    found += locations
     for path in MENU_PATHS:
         found.append(f"{parsed.scheme}://{parsed.netloc}{path}")
-    return list(dict.fromkeys(found))[:12]
+    return list(dict.fromkeys(found))[:14]
 
-def pricing_from_website_menu(site):
+def pricing_from_website_menu(site, where=""):
     """Try the restaurant's own menu pages (HTML or PDF). Returns (pricing, url) or (None, None)."""
-    for url in menu_page_candidates(site):
+    for url in menu_page_candidates(site, where):
         got = fetch_url(url)
         if not got:
             continue
@@ -918,7 +968,8 @@ def main():
                 pricing = pricing_from_menu_text(rendered) if rendered else None
             pricing_source = "the menu link"
     if not pricing and (website or saved_site):
-        pricing, menu_page = pricing_from_website_menu(website or saved_site)
+        where_text = (listing or {}).get("address") or place_text or address or ""
+        pricing, menu_page = pricing_from_website_menu(website or saved_site, where_text)
         pricing_source = f"the menu on the restaurant's website ({menu_page})"
     if not pricing and (website or saved_site):
         pricing = pricing_from_gemini_reading_site(name, website or saved_site)
