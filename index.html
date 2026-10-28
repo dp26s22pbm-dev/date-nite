@@ -2364,7 +2364,7 @@
         type: 'line',
         source: 'car-route',
         layout: { 'line-cap': 'round', 'line-join': 'round' },
-        paint: { 'line-color': '#a78bfa', 'line-width': 3.5, 'line-opacity': 0.75, 'line-dasharray': [1.5, 2] }
+        paint: { 'line-color': '#a78bfa', 'line-width': 3.5, 'line-opacity': ROUTE_OPACITY, 'line-dasharray': [1.5, 2] }
       }, map.getLayer('restaurants-glow') ? 'restaurants-glow' : undefined);
     }
 
@@ -2383,7 +2383,7 @@
     }
 
     // On arrival the dotted trail fades out instead of blinking off
-    const ROUTE_OPACITY = 0.75; // matches the line layer's paint
+    const ROUTE_OPACITY = 0.55; // the line layer's paint, and the level the fade-out starts from
     const ROUTE_FADE_MS = 250;
     let routeFadeRaf = null;
 
