@@ -950,5 +950,22 @@
     "drink": 8.0,
     "dessert": 8.0,
     "tierColor": "#22c55e"
+  },
+  {
+    "id": 59,
+    "name": "Fuse'd",
+    "category": "New American",
+    "website": "https://thefusedlife.com/",
+    "mapsUrl": "https://maps.app.goo.gl/twB5kiMS8XAJvK9L9",
+    "coords": [
+      -88.21211,
+      41.608654
+    ],
+    "app": 18.0,
+    "casualMain": 21.0,
+    "premiumMain": 38.0,
+    "drink": 14.0,
+    "dessert": 14.0,
+    "tierColor": "#f97316"
   }
 ]
