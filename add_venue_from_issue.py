@@ -1,6 +1,7 @@
 import os
 import re
 import sys
+import time
 import json
 import math
 import statistics
@@ -311,6 +312,9 @@ def pricing_from_menu_text(text):
 # Hosts that refused a plain request (401, 403, 429). A real browser often gets through where a script is turned away.
 BLOCKED_HOSTS = set()
 
+# Some sites set a cookie and redirect; without a cookie jar a script is bounced in a loop
+_opener = urllib.request.build_opener(urllib.request.HTTPCookieProcessor())
+
 def _host(url):
     return urllib.parse.urlparse(url).netloc.lower().removeprefix("www.")
 
@@ -319,13 +323,14 @@ def fetch_url(url, limit=2000000, with_url=False):
     is blocked or fails."""
     try:
         req = urllib.request.Request(url, headers={"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64)"})
-        with urllib.request.urlopen(req, timeout=15) as resp:
+        with _opener.open(req, timeout=15) as resp:
             if resp.status != 200:
                 return None
             data, ctype = resp.read(limit), resp.headers.get("Content-Type", "")
             return (data, ctype, resp.geturl()) if with_url else (data, ctype)
     except urllib.error.HTTPError as e:
-        if e.code in (401, 403, 429):
+        # 301 to 308 here means urllib gave up on a redirect loop, which a browser may follow
+        if e.code in (401, 403, 429, 301, 302, 303, 307, 308):
             BLOCKED_HOSTS.add(_host(url))
         print(f"Could not fetch {url}: {e}")
         return None
@@ -504,7 +509,7 @@ def menu_links_from_page(page, base_url, hosts):
         text = re.sub(r"<[^>]+>", "", label).lower()
         if not (any(w in href.lower() for w in MENU_LINK_WORDS) or any(w in text for w in MENU_LINK_WORDS)):
             continue
-        url = urllib.parse.urljoin(base_url, href.split("#")[0])
+        url = urllib.parse.urljoin(base_url, unescape(href).split("#")[0])
         if any(w in (url + " " + text).lower() for w in SKIP_MENU_WORDS):
             continue
         p = urllib.parse.urlparse(url)
@@ -521,7 +526,7 @@ def location_pages(page, site, hosts, where):
     pages = []
     for href, label in ANCHOR_RE.findall(page):
         text = re.sub(r"<[^>]+>", "", label).lower()
-        url = urllib.parse.urljoin(site, href.split("#")[0])
+        url = urllib.parse.urljoin(site, unescape(href).split("#")[0])
         p = urllib.parse.urlparse(url)
         path = p.path.strip("/").lower()
         if p.netloc.lower().removeprefix("www.") not in hosts or not path or "/" in path:
@@ -794,12 +799,23 @@ def places_lookup(name, where):
         "X-Goog-Api-Key": key,
         "X-Goog-FieldMask": "places.displayName,places.formattedAddress,places.location,places.websiteUri",
     })
-    try:
-        with urllib.request.urlopen(req, timeout=20) as resp:
-            places = json.load(resp).get("places") or []
-    except Exception as e:
-        print(f"Places API lookup failed: {e}")
-        return None
+    places = None
+    for attempt in range(3):
+        try:
+            with urllib.request.urlopen(req, timeout=20) as resp:
+                places = json.load(resp).get("places") or []
+            break
+        except urllib.error.HTTPError as e:
+            # 429 (too many requests) and 5xx pass if the call is repeated a little later
+            if e.code in (429, 500, 502, 503) and attempt < 2:
+                print(f"Places API lookup got HTTP {e.code}; trying again in {5 * (attempt + 1)} seconds.")
+                time.sleep(5 * (attempt + 1))
+                continue
+            print(f"Places API lookup failed: {e}")
+            return None
+        except Exception as e:
+            print(f"Places API lookup failed: {e}")
+            return None
     tokens = [t for t in re.findall(r"[a-z0-9]+", name.lower()) if t not in NAME_STOPWORDS]
     zips, _ = local_markers(where)
     for p in places:
@@ -829,15 +845,11 @@ def verify_website(url, name, where):
     if any(bad in parsed.netloc.lower() for bad in NOT_A_WEBSITE):
         print(f"Website rejected (directory or delivery page): {url}")
         return False
-    try:
-        req = urllib.request.Request(url, headers={"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64)"})
-        with urllib.request.urlopen(req, timeout=12) as resp:
-            if resp.status != 200:
-                return False
-            text = resp.read(400000).decode("utf-8", "ignore").lower()
-    except Exception as e:
-        print(f"Website could not be checked ({url}): {e}")
+    got = get_page(url)
+    if not got:
+        print(f"Website could not be checked: {url}")
         return False
+    text = got[0][:400000].lower()
     tokens = [t for t in re.findall(r"[a-z0-9]+", name.lower()) if t not in NAME_STOPWORDS]
     named = bool(tokens) and sum(t in text for t in tokens) >= max(1, round(0.6 * len(tokens)))
     zips, cities = local_markers(where)
