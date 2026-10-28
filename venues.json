@@ -1161,5 +1161,22 @@
     "drink": 7.5,
     "dessert": 9.5,
     "tierColor": "#eab308"
+  },
+  {
+    "id": 72,
+    "name": "Fogo de Ch\u00e3o Brazilian Steakhouse",
+    "category": "Brazilian Steakhouse",
+    "website": "https://fogodechao.com/location/naperville/",
+    "mapsUrl": "https://maps.app.goo.gl/JXrzJmFg9hucYucu7",
+    "coords": [
+      -88.128962,
+      41.804278
+    ],
+    "app": 9.5,
+    "casualMain": 12.0,
+    "premiumMain": 35.0,
+    "drink": 10.0,
+    "dessert": 10.0,
+    "tierColor": "#eab308"
   }
 ]
