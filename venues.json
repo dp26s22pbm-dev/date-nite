@@ -1112,5 +1112,22 @@
     "drink": 21.0,
     "dessert": 16.0,
     "tierColor": "#ef4444"
+  },
+  {
+    "id": 68,
+    "name": "Mercadito",
+    "category": "Elevated Mexican",
+    "website": "https://www.mercaditorivernorth.com/",
+    "mapsUrl": "https://maps.app.goo.gl/ihpUEc43Cv9GVN8m6",
+    "coords": [
+      -87.631598,
+      41.889378
+    ],
+    "app": 12.0,
+    "casualMain": 19.0,
+    "premiumMain": 34.0,
+    "drink": 8.5,
+    "dessert": 8.0,
+    "tierColor": "#eab308"
   }
 ]
