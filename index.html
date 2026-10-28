@@ -896,9 +896,9 @@
       line-height: 1;
       cursor: pointer;
       box-shadow: 0 4px 18px rgba(0, 0, 0, 0.7);
-      transition: all 0.2s ease;
+      transition: box-shadow 0.2s ease, color 0.2s ease;
     }
-    .sort-chip svg { width: 16.5px; height: 16.5px; fill: currentColor; pointer-events: none; }
+    .sort-chip svg { width: 17px; height: 17px; fill: currentColor; pointer-events: none; } /* whole pixels: 17 centers exactly in the 31px interior, where 16.5 landed on a half pixel and could snap on mobile */
     #sort-cost { color: #22c55e; }
     @media (min-width: 481px) { #sort-cost { padding-bottom: 2px; } } /* nudges the $ up 1px off mobile */
     #sort-near { color: #eab308; }
