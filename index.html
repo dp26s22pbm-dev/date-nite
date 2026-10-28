@@ -1894,7 +1894,7 @@
       const dz = WHEEL_H / WHEEL_SLICES;
       const off = (k + 0.5) * dz - WHEEL_H / 2;
       const half = Math.sqrt(WHEEL_R * WHEEL_R - off * off);
-      return { color: '#0d1017', base: k * dz, top: (k + 1) * dz, wheel: true, ring: rect(x1, x2, yc - half, yc + half) };
+      return { color: '#6b7280', base: k * dz, top: (k + 1) * dz, wheel: true, ring: rect(x1, x2, yc - half, yc + half) };
     });
     // Local coordinates are in car lengths: x = right, y = forward; base/top are heights.
     const CAR_PARTS = [
