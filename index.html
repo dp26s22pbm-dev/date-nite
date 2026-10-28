@@ -395,6 +395,7 @@
         min-width: 0;
         transform: none;
       }
+      .search-input { height: 51px; } /* same height as the Menu row beneath it */
     }
     /* While searching on a phone the Menu row fades out of the way and stops taking taps */
     .left-rail, .right-rail { transition: opacity 0.25s ease; }
@@ -679,7 +680,7 @@
     @media (max-width: 480px) {
       .left-rail { display: none; } /* Cost and Budget */
 
-      .right-rail { top: 68px; left: 16px; right: 16px; width: auto; }
+      .right-rail { top: 79px; left: 16px; right: 16px; width: auto; }
       #menu-panel .roll-title { display: none; } /* always open: the row is short enough to leave up */
       #menu-panel .roll-body { grid-template-rows: 1fr; }
       #menu-panel .roll-body-inner { visibility: visible; }
