@@ -896,9 +896,9 @@
       line-height: 1;
       cursor: pointer;
       box-shadow: 0 4px 18px rgba(0, 0, 0, 0.7);
-      transition: all 0.2s ease;
+      transition: box-shadow 0.2s ease, color 0.2s ease;
     }
-    .sort-chip svg { width: 16.5px; height: 16.5px; fill: currentColor; pointer-events: none; }
+    .sort-chip svg { width: 17px; height: 17px; fill: currentColor; pointer-events: none; } /* whole pixels: 17 centers exactly in the 31px interior, where 16.5 landed on a half pixel and could snap on mobile */
     #sort-cost { color: #22c55e; }
     #sort-near { color: #eab308; }
     .sort-chip.active { box-shadow: 0 0 4px rgba(255, 255, 255, 0.8), 0 0 12px rgba(255, 255, 255, 0.45) !important; } /* the glow shows which sort is on; the outlines stay white */
