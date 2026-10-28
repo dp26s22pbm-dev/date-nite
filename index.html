@@ -408,7 +408,7 @@
       height: 40px; /* same height as the Menu and Cost title bars: 12px padding + 14px line + 12px padding + 2px border */
       padding: 12px 14px;
       line-height: 14px;
-      border: 1px solid rgba(255, 255, 255, 0.15); /* same dimmed outline as the rolled-up Menu, Cost and Budget bars */
+      border: 1px solid rgba(255, 255, 255, 0.6); /* same outline as the open Menu, Cost and Budget bars */
       border-radius: 10px;
       background: rgba(13, 17, 23, 0.9);
       color: #f0f6fc;
@@ -421,8 +421,8 @@
       user-select: text;
     }
     @media (max-width: 480px) {
-      .search-input { height: 51px; border-color: rgba(255, 255, 255, 0.6); } /* phones: same height as the Menu row beneath it; a brighter outline than the dimmed Menu row, same as an open panel */
-      .search-input:focus { border-color: #fff; } /* still brightens when engaged */
+      .search-input { height: 51px; } /* phones: same height as the Menu row beneath it */
+      #menu-panel.open { border-color: rgba(255, 255, 255, 0.15); } /* always open here, so it takes the dim outline of the venue cards at the bottom */
     }
     .search-input::placeholder { color: #fff; transition: color 0.2s ease; }
     .search-input:focus::placeholder { color: rgba(240, 246, 252, 0.5); }
@@ -876,7 +876,7 @@
     }
     #app-ver-num { margin-left: -3px; } /* tucks the number closer to "ver." */
     .app-ver b { color: #a78bfa; /* same purple as the car trail */  font-weight: 700; }
-    .list-head { display: flex; align-items: center; gap: 10px; position: relative; z-index: 1; margin-bottom: 4px; /* buttons clear the cards by the same 12px as the round map buttons */ } /* above the cards' padding overlap */
+    .list-head { display: flex; align-items: center; gap: 10px; padding-left: 2px; /* the $ button lines up with the first card's left edge, which sits 2px in from the list */ position: relative; z-index: 1; margin-bottom: 4px; /* buttons clear the cards by the same 12px as the round map buttons */ } /* above the cards' padding overlap */
     /* Sort buttons: round like the map buttons, one lit at a time. White when on, so they don't compete with the blue list button. */
     .sort-chip {
       pointer-events: auto;
