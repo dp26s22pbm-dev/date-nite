@@ -1287,6 +1287,7 @@
               name: v.name,
               category: v.category,
               labelAbove: !!v.labelAbove,
+              depth: -v.coords[1], // the map is tilted north-up, so the southern dot is nearer the viewer and draws on top
               total: total,
               color: getTierColor(total),
               opacity: isUnderBudget ? 1.0 : 0.15
@@ -1372,6 +1373,7 @@
         id: 'restaurants-glow',
         type: 'circle',
         source: 'restaurants',
+        layout: { 'circle-sort-key': ['get', 'depth'] },
         paint: {
           'circle-radius': 22,
           'circle-color': ['get', 'color'],
@@ -1384,6 +1386,7 @@
         id: 'restaurants-point',
         type: 'circle',
         source: 'restaurants',
+        layout: { 'circle-sort-key': ['get', 'depth'] },
         paint: {
           'circle-radius': 12,
           'circle-color': ['get', 'color'],
