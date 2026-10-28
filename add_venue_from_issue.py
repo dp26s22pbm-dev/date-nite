@@ -351,6 +351,8 @@ TAB_SKIP_WORDS = ("lunch", "brunch", "happy", "kid", "catering", "party", "priva
 # Each browser launch costs 10 to 45 seconds, so a run only opens a few
 BROWSER_LIMIT = 6
 browser_launches = 0
+# url -> (html, final_url) of pages the browser has read
+RENDERED_HTML = {}
 
 def _use_browser():
     """True when a browser may be launched now: playwright is installed and the run's limit is not spent."""
@@ -427,7 +429,9 @@ def render_page_html(url):
                     page.wait_for_selector('a[href*="menu" i]', timeout=10000, state="attached")
                 except Exception:
                     pass
-                return page.content(), page.url
+                html = page.content()
+                print(f"Browser read {url} -> {page.url}: {len(html)} characters of HTML, {len(ANCHOR_RE.findall(html))} links")
+                return html, page.url
             finally:
                 browser.close()
     except Exception as e:
@@ -467,7 +471,13 @@ def render_page_text(url, timeout_ms=45000):
                         parts.append(f"=== {labels[i]} ===\n" + page.inner_text("body"))
                     except Exception as e:
                         print(f"Could not open the {labels[i]!r} tab on {url}: {e}")
-                return "\n".join(parts)
+                try:
+                    RENDERED_HTML[url] = (page.content(), page.url)
+                except Exception:
+                    pass
+                text = "\n".join(parts)
+                print(f"Browser read {url} -> {page.url}: {len(text)} characters of text, {len(PRICE_RE.findall(text))} dollar prices")
+                return text
             finally:
                 browser.close()
     except Exception as e:
@@ -489,7 +499,7 @@ MENU_PATHS = ("/menu", "/menus", "/our-menu", "/food-menu", "/food", "/dinner", 
 
 # Links to these are never the dinner menu. Catering and party menus carry tray prices, so reading one gives prices
 # several times too high.
-SKIP_MENU_WORDS = ("catering", "kids", "kid-", "party", "banquet", "private", "gift", "event", "brunch", "lunch", "happy")
+SKIP_MENU_WORDS = ("get.popmenu.com", "levelaccess.com", "/items/", "/item/", "catering", "kids", "kid-", "party", "banquet", "private", "gift", "event", "brunch", "lunch", "happy")
 
 def menu_link_score(url, label=""):
     """Rank a candidate menu link: dinner menus first, drink-only menus last."""
@@ -563,30 +573,44 @@ def menu_page_candidates(site, where=""):
     return list(dict.fromkeys(found))[:14]
 
 def pricing_from_website_menu(site, where=""):
-    """Try the restaurant's own menu pages (HTML or PDF). Returns (pricing, url) or (None, None)."""
-    for url in menu_page_candidates(site, where):
-        got = fetch_url(url)
-        if not got:
-            if _host(url) in BLOCKED_HOSTS:
-                # The site turns away plain requests; a browser may not be
-                rendered = render_page_text(url)
-                pricing = pricing_from_menu_text(rendered) if rendered else None
-                if pricing:
-                    return pricing, url
+    """Try the restaurant's own menu pages (HTML or PDF). A page with no prices (a menu hub that links to Food and
+    Drinks pages) is mined for menu links, which are tried next. Returns (pricing, url) or (None, None)."""
+    queue = menu_page_candidates(site, where)
+    tried = set()
+    while queue and len(tried) < 16:
+        url = queue.pop(0)
+        if url in tried:
             continue
-        body, ctype = got
-        if "pdf" in ctype.lower() or url.lower().split("?")[0].endswith(".pdf"):
+        tried.add(url)
+        if browser_launches >= BROWSER_LIMIT and _host(url) in BLOCKED_HOSTS:
+            continue  # a plain request would be refused again and the browser's launches are spent
+        html, pricing = None, None
+        got = fetch_url(url, with_url=True)
+        if got and ("pdf" in got[1].lower() or url.lower().split("?")[0].endswith(".pdf")):
             pricing = clean_pricing(fetch_pdf_pricing(url))
-        else:
-            text = html_to_text(body.decode("utf-8", "ignore"))
+        elif got:
+            html = got[0].decode("utf-8", "ignore")
+            text = html_to_text(html)
             pricing = pricing_from_menu_text(text)
             if not pricing or MORE_RE.search(text):
                 # Too few prices in the HTML usually means JavaScript draws the menu; a "Load more" control means the
                 # page lists only some of the dishes until it is clicked
                 rendered = render_page_text(url)
                 pricing = (pricing_from_menu_text(rendered) if rendered else None) or pricing
+        elif _host(url) in BLOCKED_HOSTS:
+            # The site turns away plain requests; a browser may not be
+            rendered = render_page_text(url)
+            pricing = pricing_from_menu_text(rendered) if rendered else None
         if pricing:
             return pricing, url
+        page, final = RENDERED_HTML.get(url) or ((html, url) if html else (None, None))
+        if page:
+            hosts = {_host(site), _host(url), _host(final)}
+            links = [u for u, _ in sorted(dict.fromkeys(menu_links_from_page(page, final, hosts)), key=lambda c: -menu_link_score(*c))]
+            new = [u for u in links if u not in tried and u not in queue][:6]
+            if new:
+                print(f"{url} has no prices; trying the menu links on it: {new}")
+                queue = new + queue
     return None, None
 
 def _gemini_read_site(name, site, hint=""):
@@ -800,16 +824,16 @@ def places_lookup(name, where):
         "X-Goog-FieldMask": "places.displayName,places.formattedAddress,places.location,places.websiteUri",
     })
     places = None
-    for attempt in range(3):
+    for attempt in range(4):
         try:
             with urllib.request.urlopen(req, timeout=20) as resp:
                 places = json.load(resp).get("places") or []
             break
         except urllib.error.HTTPError as e:
             # 429 (too many requests) and 5xx pass if the call is repeated a little later
-            if e.code in (429, 500, 502, 503) and attempt < 2:
-                print(f"Places API lookup got HTTP {e.code}; trying again in {5 * (attempt + 1)} seconds.")
-                time.sleep(5 * (attempt + 1))
+            if e.code in (429, 500, 502, 503) and attempt < 3:
+                print(f"Places API lookup got HTTP {e.code}; trying again in {10 * 2 ** attempt} seconds.")
+                time.sleep(10 * 2 ** attempt)
                 continue
             print(f"Places API lookup failed: {e}")
             return None
