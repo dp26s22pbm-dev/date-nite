@@ -2153,6 +2153,7 @@
     let weatherScene = { rain: 0, snow: 0, bolt: false, wind: 0 };
     let weatherPos = MAP_CENTER.slice();
     let weatherReq = 0;
+    let weatherPinned = false; // a ?weather= preview is showing, so real conditions must not replace it
     let weatherRaf = 0;
     let weatherW = 0, weatherH = 0, weatherDpr = 1;
     let drops = [], flakes = [];
@@ -2301,6 +2302,7 @@
     }
 
     async function loadWeather(lonLat) {
+      if (weatherPinned) return;
       const req = ++weatherReq;
       weatherPos = lonLat.slice();
       try {
@@ -2322,6 +2324,7 @@
       document.addEventListener('visibilitychange', syncWeatherLoop);
       reducedMotion.addEventListener?.('change', syncWeatherLoop);
       if (preview) {
+        weatherPinned = true;
         weatherScene = { rain: 0, snow: 0, bolt: false, wind: 0, ...preview };
         setWeatherScene(weatherScene);
       } else {
