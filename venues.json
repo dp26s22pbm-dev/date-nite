@@ -882,5 +882,22 @@
     "drink": 3.5,
     "dessert": 9.0,
     "tierColor": "#22c55e"
+  },
+  {
+    "id": 55,
+    "name": "Bullvino's Churrascaria Brazilian Steakhouse",
+    "category": "Brazilian Steakhouse",
+    "website": "https://www.bullvinosillinois.com/",
+    "mapsUrl": "https://maps.app.goo.gl/fCgfdg6ignVMPLb48",
+    "coords": [
+      -88.040722,
+      41.718652
+    ],
+    "app": 22.99,
+    "casualMain": 45.0,
+    "premiumMain": 44.95,
+    "drink": 8.0,
+    "dessert": 8.0,
+    "tierColor": "#f97316"
   }
 ]
