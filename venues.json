@@ -1029,7 +1029,7 @@
     "tierColor": "#f97316"
   },
   {
-    "id": 64,
+    "id": 63,
     "name": "The Gage",
     "category": "New American",
     "website": "https://thegagechicago.com/",
@@ -1038,11 +1038,11 @@
       -87.624692,
       41.881327
     ],
-    "app": 17.0,
+    "app": 18.0,
     "casualMain": 28.0,
-    "premiumMain": 55.0,
+    "premiumMain": 38.0,
     "drink": 18.0,
-    "dessert": 14.0,
+    "dessert": 15.0,
     "tierColor": "#f97316"
   }
 ]
