@@ -1643,6 +1643,7 @@
     const listEl = document.getElementById('venue-list');
     const listCards = document.getElementById('list-cards');
     let listSort = 'cost';
+    let listDesc = false; // pressing the lit sort button again flips between ascending and descending
     // Distances are measured from the visitor's own location once the browser reports a trustworthy one (see
     // locateUser). Until then, and whenever location is denied or too coarse, they start from the middle of Naperville.
     const DEFAULT_ORIGIN = [-88.16632, 41.74594];
@@ -1673,16 +1674,21 @@
     updateButtonLift();
 
     function setListSort(mode) {
-      const changed = mode !== listSort;
+      const flipped = mode === listSort;
+      listDesc = flipped ? !listDesc : false;
       listSort = mode;
+      if (flipped && !reducedMotion.matches) {
+        document.getElementById(mode === 'cost' ? 'sort-cost' : 'sort-near')
+          .animate([{ transform: 'rotate(0)' }, { transform: 'rotate(360deg)' }], { duration: 420, easing: 'cubic-bezier(0.22, 1, 0.36, 1)' });
+      }
       document.getElementById('sort-near').classList.toggle('active', mode === 'near');
       document.getElementById('sort-cost').classList.toggle('active', mode === 'cost');
       // Remember where each card sat so the re-sort can slide them to their new spots
       const before = new Map();
-      if (changed) listCards.querySelectorAll('.venue-card').forEach(c => before.set(c.dataset.id, c.getBoundingClientRect().left));
+      listCards.querySelectorAll('.venue-card').forEach(c => before.set(c.dataset.id, c.getBoundingClientRect().left));
       renderList();
       listCards.scrollLeft = 0;
-      if (!changed || reducedMotion.matches || !listCards.animate) return;
+      if (reducedMotion.matches || !listCards.animate) return;
       const strip = listCards.getBoundingClientRect();
       listCards.querySelectorAll('.venue-card').forEach((c, i) => {
         const now = c.getBoundingClientRect().left;
@@ -1701,8 +1707,8 @@
         .map(v => ({ v, total: calculateTotal(v), miles: haversineM(listOrigin, v.coords) / 1609.344 }))
         .filter(i => i.miles * 1609.344 <= LIST_RADIUS_M)
         .sort(listSort === 'cost'
-          ? (a, b) => a.total - b.total || a.miles - b.miles
-          : (a, b) => a.miles - b.miles || a.total - b.total);
+          ? (a, b) => (listDesc ? b.total - a.total : a.total - b.total) || a.miles - b.miles
+          : (a, b) => (listDesc ? b.miles - a.miles : a.miles - b.miles) || a.total - b.total);
 
       document.getElementById('list-count').textContent = items.length ? '' : 'No venues within 25 miles';
       listCards.innerHTML = items.map(({ v, total, miles }) => `
