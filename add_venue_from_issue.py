@@ -830,12 +830,17 @@ def places_lookup(name, where):
                 places = json.load(resp).get("places") or []
             break
         except urllib.error.HTTPError as e:
+            # Google explains a refusal in the body (which quota, which limit); the status line alone does not
+            try:
+                detail = e.read().decode("utf-8", "ignore").strip().replace("\n", " ")[:400]
+            except Exception:
+                detail = ""
             # 429 (too many requests) and 5xx pass if the call is repeated a little later
             if e.code in (429, 500, 502, 503) and attempt < 3:
-                print(f"Places API lookup got HTTP {e.code}; trying again in {10 * 2 ** attempt} seconds.")
+                print(f"Places API lookup got HTTP {e.code}: {detail}; trying again in {10 * 2 ** attempt} seconds.")
                 time.sleep(10 * 2 ** attempt)
                 continue
-            print(f"Places API lookup failed: {e}")
+            print(f"Places API lookup failed: {e}: {detail}")
             return None
         except Exception as e:
             print(f"Places API lookup failed: {e}")

@@ -10,7 +10,10 @@ jobs:
     # could write to venues.json and use the Gemini key
     if: contains(fromJSON('["OWNER","MEMBER","COLLABORATOR"]'), github.event.issue.author_association)
     runs-on: ubuntu-latest
+    # Waiting for an earlier run can take a while when several venues arrive together
+    timeout-minutes: 90
     permissions:
+      actions: read
       contents: write
       issues: write
       pages: write
@@ -22,6 +25,16 @@ jobs:
         with:
           # issues events check out the commit that was main when the issue opened, which is stale for a queued run
           ref: main
+
+      # Venue runs edit the same file and share a Google quota, so they take turns in the order they started
+      - name: Wait for earlier runs
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          .github/scripts/wait-for-earlier-runs.sh
+          # main moved while this run waited; start from the latest
+          git fetch origin main
+          git reset --hard origin/main
 
       - name: Set up Python
         uses: actions/setup-python@v5
