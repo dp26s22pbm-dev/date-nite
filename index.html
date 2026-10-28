@@ -912,6 +912,7 @@
     #sort-cost { color: #22c55e; }
     @media (min-width: 481px) { #sort-cost { padding-bottom: 2px; } } /* nudges the $ up 1px off mobile */
     #sort-near { color: #eab308; }
+    #sort-near.unavailable { color: #484f58; border-color: #484f58; } /* no location fix: grayed out, but still pressable to ask for location again */
     .sort-chip.active { box-shadow: 0 0 4px rgba(255, 255, 255, 0.8), 0 0 12px rgba(255, 255, 255, 0.45) !important; } /* the glow shows which sort is on; the outlines stay white */
     .list-count { font-size: 11px; color: #8b949e; text-shadow: 0 1px 3px #000; }
     .list-cards {
@@ -1658,10 +1659,15 @@
     const listCards = document.getElementById('list-cards');
     let listSort = 'cost';
     let listDesc = false; // pressing the lit sort button again flips between ascending and descending
-    // Distances are measured from the visitor's own location once the browser reports a trustworthy one (see
-    // locateUser). Until then, and whenever location is denied or too coarse, they start from the middle of Naperville.
-    const DEFAULT_ORIGIN = [-88.16632, 41.74594];
-    let listOrigin = DEFAULT_ORIGIN.slice();
+    // Distances are measured only from the visitor's own location, once the browser reports a trustworthy one (see
+    // locateUser). Until then, and whenever location is denied or too coarse, listOrigin stays null: the cards show
+    // no mileage, the 25 mile cutoff doesn't apply, and the proximity button is grayed out.
+    const DEFAULT_ORIGIN = [-88.16632, 41.74594]; // only where the car is parked, never a distance origin
+    let listOrigin = null;
+
+    function updateNearButton() {
+      document.getElementById('sort-near').classList.toggle('unavailable', !listOrigin);
+    }
 
     function toggleList() {
       const on = listEl.classList.toggle('hidden') === false;
@@ -1688,6 +1694,11 @@
     updateButtonLift();
 
     function setListSort(mode) {
+      // Without a location fix, proximity can't sort anything: ask for location again instead
+      if (mode === 'near' && !listOrigin) {
+        if (!carBtn.classList.contains('busy')) locateUser({ forList: true });
+        return;
+      }
       const flipped = mode === listSort;
       listDesc = flipped ? !listDesc : false;
       listSort = mode;
@@ -1717,9 +1728,17 @@
     }
 
     function renderList() {
+      // Location gone (never granted): fall back to cost order
+      if (!listOrigin && listSort === 'near') {
+        listSort = 'cost';
+        listDesc = false;
+        document.getElementById('sort-near').classList.remove('active');
+        document.getElementById('sort-cost').classList.add('active');
+      }
+      updateNearButton();
       const items = rawVenues
-        .map(v => ({ v, total: calculateTotal(v), miles: haversineM(listOrigin, v.coords) / 1609.344 }))
-        .filter(i => i.miles * 1609.344 <= LIST_RADIUS_M)
+        .map(v => ({ v, total: calculateTotal(v), miles: listOrigin ? haversineM(listOrigin, v.coords) / 1609.344 : 0 }))
+        .filter(i => !listOrigin || i.miles * 1609.344 <= LIST_RADIUS_M)
         .sort(listSort === 'cost'
           ? (a, b) => (listDesc ? b.total - a.total : a.total - b.total) || a.miles - b.miles
           : (a, b) => (listDesc ? b.miles - a.miles : a.miles - b.miles) || a.total - b.total);
@@ -1730,7 +1749,7 @@
                 data-id="${v.id}" style="--tier: ${getTierColor(total)}">
           <div class="card-name">${escapeHtml(v.name)}</div>
           <div class="card-cat">${escapeHtml(v.category || '')}</div>
-          <div class="card-foot"><span class="card-cost">$${total}</span><span class="card-dist">${miles.toFixed(1)} mi</span></div>
+          <div class="card-foot"><span class="card-cost">$${total}</span>${listOrigin ? `<span class="card-dist">${miles.toFixed(1)} mi</span>` : ''}</div>
         </button>`).join('');
       updateListFade();
     }
@@ -2119,7 +2138,8 @@
     }
 
     // fallbackToDefault: the startup attempt, where no car is showing yet; if no location comes back, park it at the default origin
-    function locateUser({ fallbackToDefault = false } = {}) {
+    // forList: the proximity button asked; the fix only feeds the list's distances and sort, the car stays as it is
+    function locateUser({ fallbackToDefault = false, forList = false } = {}) {
       const fallback = () => { if (fallbackToDefault) placeCar(DEFAULT_ORIGIN); };
       if (!navigator.geolocation) {
         showCarToast('Your browser does not support location.');
@@ -2136,17 +2156,25 @@
           const here = trusted
             ? [pos.coords.longitude, pos.coords.latitude]
             : DEFAULT_ORIGIN.slice();
+          if (trusted) {
+            rememberLocated(true);
+            listOrigin = here.slice();
+            renderList();
+            if (forList) {
+              loadWeather(here);
+              setListSort('near');
+              return;
+            }
+          } else if (forList) {
+            showCarToast('Your location is too imprecise to measure distances. Try again.');
+            return;
+          }
           if (haversineM(here, MAP_CENTER) > MAX_DISTANCE_FROM_MAP_M) {
             showCarToast('You appear to be outside the Naperville area, so your car is not shown.');
             fallback();
             return;
           }
-          if (trusted) {
-            rememberLocated(true);
-            loadWeather(here);
-            listOrigin = here.slice();
-            renderList();
-          }
+          if (trusted) loadWeather(here);
           placeCar(here);
           map.flyTo({ center: here, zoom: Math.max(map.getZoom(), 13.5), duration: 1200 });
         },
@@ -2154,7 +2182,7 @@
           carBtn.classList.remove('busy');
           if (err.code === 1) rememberLocated(false);
           showCarToast(err.code === 1
-            ? 'Location permission was denied. Allow it in your browser settings to see your car.'
+            ? 'Location permission was denied. Allow it in your browser settings to see your car and distances.'
             : 'Could not get your location. Try again.');
           fallback();
         },
