@@ -425,7 +425,7 @@
     }
     .search-input::placeholder { color: #fff; transition: color 0.2s ease; }
     .search-input:focus::placeholder { color: rgba(240, 246, 252, 0.5); }
-    /* Idle bar: an 8s loop that alternates a bouncy, color-shifting DATE NITE with "Search restaurants". The real placeholder
+    /* Idle bar: a 12s loop that alternates a bouncy, color-shifting "Welcome to DATE NITE!" with "Search restaurants". The real placeholder
        stays underneath (hidden while idle) and takes over on focus, so typing and screen readers behave as before. */
     .search-field { position: relative; }
     .search-input:not(:focus)::placeholder { color: transparent; }
@@ -441,25 +441,28 @@
     }
     .search-input:focus ~ .search-hint,
     .search-input:not(:placeholder-shown) ~ .search-hint { opacity: 0; }
-    .hint-brand { position: absolute; font-weight: 800; letter-spacing: 3px; white-space: pre; }
-    .hint-brand span { display: inline-block; opacity: 0; animation: hint-letter 8s ease-in-out infinite; animation-delay: calc(var(--i) * 0.07s); }
-    .hint-text { position: absolute; color: #fff; opacity: 0; animation: hint-text 8s ease-in-out infinite; }
+    .hint-brand { position: absolute; font-weight: 800; letter-spacing: 1px; white-space: pre; }
+    .hint-brand span { display: inline-block; opacity: 0; animation: hint-letter 12s ease-in-out infinite; animation-delay: calc(var(--i) * 0.05s); }
+    .hint-text { position: absolute; color: #fff; opacity: 0; animation: hint-text 12s ease-in-out infinite; }
     @keyframes hint-letter {
       0%   { opacity: 0; transform: translateY(10px) scale(0.5) rotate(-12deg); color: #fff; }
-      4%   { opacity: 1; transform: translateY(-5px) scale(1.25) rotate(6deg); color: #ff7eb6; }
-      7%   { opacity: 1; transform: translateY(0) scale(1) rotate(0); color: #fff; }
-      14%  { transform: translateY(-3px) scale(1.1); color: #ffd166; }
-      19%  { transform: translateY(0) scale(1); color: #ff7eb6; }
-      25%  { transform: translateY(-3px) scale(1.1); color: #a78bfa; }
-      30%  { transform: translateY(0) scale(1); color: #ffd166; }
-      38%  { opacity: 1; transform: translateY(0) scale(1); color: #fff; }
-      43%  { opacity: 0; transform: translateY(-8px) scale(0.8); color: #fff; }
+      3%   { opacity: 1; transform: translateY(-5px) scale(1.25) rotate(6deg); color: #ff7eb6; }
+      5%   { opacity: 1; transform: translateY(0) scale(1) rotate(0); color: #fff; }
+      10%  { transform: translateY(-3px) scale(1.1); color: #ffd166; }
+      14%  { transform: translateY(0) scale(1); color: #ff7eb6; }
+      19%  { transform: translateY(-3px) scale(1.1); color: #a78bfa; }
+      23%  { transform: translateY(0) scale(1); color: #ffd166; }
+      28%  { transform: translateY(-3px) scale(1.1); color: #ff7eb6; }
+      32%  { transform: translateY(0) scale(1); color: #a78bfa; }
+      40%  { opacity: 1; transform: translateY(0) scale(1); color: #fff; }
+      48%  { opacity: 1; transform: translateY(0) scale(1); color: #fff; }
+      52%  { opacity: 0; transform: translateY(-8px) scale(0.8); color: #fff; }
       100% { opacity: 0; transform: translateY(-8px) scale(0.8); color: #fff; }
     }
     @keyframes hint-text {
-      0%, 46% { opacity: 0; transform: translateY(4px); }
-      54%, 90% { opacity: 1; transform: translateY(0); }
-      98%, 100% { opacity: 0; transform: translateY(-4px); }
+      0%, 54% { opacity: 0; transform: translateY(4px); }
+      60%, 93% { opacity: 1; transform: translateY(0); }
+      99%, 100% { opacity: 0; transform: translateY(-4px); }
     }
     @media (prefers-reduced-motion: reduce) {
       .search-hint { display: none; }
@@ -2257,7 +2260,7 @@
       <div class="search-field">
         <input class="search-input" type="text" placeholder="Search restaurants" autocomplete="off" spellcheck="false" aria-label="Search restaurants" />
         <div class="search-hint" aria-hidden="true">
-          <span class="hint-brand">${[...'DATE NITE'].map((c, i) => `<span style="--i:${i}">${c === ' ' ? '&nbsp;' : c}</span>`).join('')}</span>
+          <span class="hint-brand">${[...'Welcome to DATE NITE!'].map((c, i) => `<span style="--i:${i}">${c === ' ' ? '&nbsp;' : c}</span>`).join('')}</span>
           <span class="hint-text">Search restaurants</span>
         </div>
       </div>
