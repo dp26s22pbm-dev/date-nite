@@ -249,23 +249,34 @@ def fetch_pricing_via_gemini_search(venue_name, city="Naperville, IL"):
         print(f"Gemini Search Grounding error for {venue_name}: {e}")
         return None
 
-def fetch_pdf_pricing(url):
-    """Download a PDF menu and parse pricing with Gemini."""
+IMAGE_TYPES = {".png": "image/png", ".jpg": "image/jpeg", ".jpeg": "image/jpeg", ".webp": "image/webp"}
+
+def menu_file_mime(url, content_type=""):
+    """"application/pdf" or an image type when a URL is a PDF or an image menu, else None."""
+    ctype = (content_type or "").split(";")[0].strip().lower()
+    if "pdf" in ctype or urllib.parse.urlparse(url).path.lower().endswith(".pdf"):
+        return "application/pdf"
+    if ctype in IMAGE_TYPES.values():
+        return ctype
+    return IMAGE_TYPES.get(os.path.splitext(urllib.parse.urlparse(url).path.lower())[1])
+
+def fetch_pdf_pricing(url, mime="application/pdf"):
+    """Download a PDF or image menu and parse pricing with Gemini."""
     try:
         req = urllib.request.Request(url, headers={"User-Agent": "Mozilla/5.0"})
         with urllib.request.urlopen(req, timeout=15) as res:
-            pdf_bytes = res.read()
+            pdf_bytes = res.read(20000000)
         response = client.models.generate_content(
             model="gemini-3.6-flash",
             contents=[
                 PDF_PROMPT,
-                types.Part.from_bytes(data=pdf_bytes, mime_type="application/pdf")
+                types.Part.from_bytes(data=pdf_bytes, mime_type=mime)
             ]
         )
         clean = response.text.strip().replace("```json", "").replace("```", "")
         return json.loads(clean)
     except Exception as e:
-        print(f"PDF fetch/parse error: {e}")
+        print(f"PDF or image fetch/parse error: {e}")
         return None
 
 PRICE_RE = re.compile(r"\$\s?\d{1,3}(?:\.\d{2})?")
@@ -295,6 +306,10 @@ def clean_pricing(data):
 def pricing_from_menu_text(text):
     """Parse menu prices out of plain text (a pasted menu or a restaurant's menu page) with Gemini."""
     text = (text or "").strip()
+    # Image and other binary bytes decoded as text contain digit patterns that look like prices
+    if "\x00" in text or sum(1 for c in text[:5000] if c == "\ufffd" or (ord(c) < 32 and c not in "\n\r\t")) > 50:
+        print("Menu text looks like binary data; not using it.")
+        return None
     if max(len(PRICE_RE.findall(text)), len(BARE_PRICE_RE.findall(text)), len(TAB_PRICE_RE.findall(text))) < 6:
         print("Menu text has too few prices to use.")
         return None
@@ -586,8 +601,15 @@ def pricing_from_website_menu(site, where=""):
             continue  # a plain request would be refused again and the browser's launches are spent
         html, pricing = None, None
         got = fetch_url(url, with_url=True)
-        if got and ("pdf" in got[1].lower() or url.lower().split("?")[0].endswith(".pdf")):
-            pricing = clean_pricing(fetch_pdf_pricing(url))
+        mime = menu_file_mime(url, got[1]) if got else None
+        if got and mime:
+            # A PDF or an image of the menu (a flyer with no prices simply returns nothing)
+            pricing = clean_pricing(fetch_pdf_pricing(url, mime))
+            if pricing and sum(len(v) for v in pricing.values()) < 6:
+                pricing = None
+        elif got and got[1] and not re.search(r"text|html|xml|json", got[1], re.I):
+            print(f"Skipping {url}: {got[1]} is not a page.")
+            continue
         elif got:
             html = got[0].decode("utf-8", "ignore")
             text = html_to_text(html)
@@ -799,6 +821,8 @@ def find_website_via_gemini(name, where):
         print(f"Gemini website lookup error for {name}: {e}")
         return None
 
+# Set when Google says the day's Places quota is used up: every further lookup would fail the same way
+places_quota_spent = False
 PLACES_URL = "https://places.googleapis.com/v1/places:searchText"
 # Centered on Naperville; only a bias, so a more exact match elsewhere still wins
 PLACES_BIAS = {"circle": {"center": {"latitude": 41.75, "longitude": -88.15}, "radius": 30000.0}}
@@ -813,8 +837,9 @@ def places_lookup(name, where):
     """Look the venue up in Google's Places API (the data behind the Maps listing). Returns
     {"coords": [lon, lat], "website": str, "name": str, "address": str} for the best match, else None.
     Needs GOOGLE_PLACES_API_KEY; without it the importer falls back to the older address/search methods."""
+    global places_quota_spent
     key = os.environ.get("GOOGLE_PLACES_API_KEY", "").strip()
-    if not key:
+    if not key or places_quota_spent:
         return None
     query = f"{name}, {where}" if where and name.lower() not in where.lower() else (where or name)
     body = json.dumps({"textQuery": query, "maxResultCount": 5, "locationBias": PLACES_BIAS}).encode()
@@ -835,6 +860,11 @@ def places_lookup(name, where):
                 detail = e.read().decode("utf-8", "ignore").strip().replace("\n", " ")[:400]
             except Exception:
                 detail = ""
+            # A daily quota does not pass in seconds: it resets at midnight Pacific time, so retrying only wastes a minute
+            if e.code == 429 and "per day" in detail:
+                places_quota_spent = True
+                print(f"Places API: the daily quota is used up, so no lookups will work until it resets (midnight Pacific): {detail}")
+                return None
             # 429 (too many requests) and 5xx pass if the call is repeated a little later
             if e.code in (429, 500, 502, 503) and attempt < 3:
                 print(f"Places API lookup got HTTP {e.code}: {detail}; trying again in {10 * 2 ** attempt} seconds.")
