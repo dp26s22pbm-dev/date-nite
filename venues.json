@@ -1276,5 +1276,85 @@
     "drink": 11.0,
     "dessert": 9.0,
     "tierColor": "#eab308"
+  },
+  {
+    "id": 79,
+    "name": "Pa Lian Burmese Restaurant ( BYOB)",
+    "category": "Burmese Cuisine",
+    "website": "https://palianburmeserestaurant.dine.online/",
+    "coords": [
+      -88.104278,
+      41.886688
+    ],
+    "app": 17.99,
+    "casualMain": 18.99,
+    "premiumMain": 23.99,
+    "drink": 9.49,
+    "dessert": 8.99,
+    "tierColor": "#eab308"
+  },
+  {
+    "id": 80,
+    "name": "BURMA O' CLOCK",
+    "category": "Burmese Cuisine",
+    "website": "http://burmaoclock.com/",
+    "coords": [
+      -88.10953,
+      41.864696
+    ],
+    "app": 7.99,
+    "casualMain": 17.99,
+    "premiumMain": 20.99,
+    "drink": 8.99,
+    "dessert": 7.99,
+    "tierColor": "#22c55e"
+  },
+  {
+    "id": 81,
+    "name": "302 Wheaton",
+    "category": "Casual American",
+    "website": "http://302wheaton.com/",
+    "coords": [
+      -88.110356,
+      41.864547
+    ],
+    "app": 6.0,
+    "casualMain": 8.5,
+    "premiumMain": 13.5,
+    "drink": 8.0,
+    "dessert": 6.0,
+    "tierColor": "#22c55e"
+  },
+  {
+    "id": 82,
+    "name": "Ditka's Grill",
+    "category": "American",
+    "website": "https://www.ditkasgrill.com/",
+    "coords": [
+      -88.109497,
+      41.864968
+    ],
+    "app": 14.5,
+    "casualMain": 22.0,
+    "premiumMain": 49.0,
+    "drink": 15.0,
+    "dessert": 8.0,
+    "tierColor": "#f97316"
+  },
+  {
+    "id": 83,
+    "name": "Positano Ristorante - Wheaton",
+    "category": "Italian",
+    "website": "http://positano-ristorante.com/",
+    "coords": [
+      -88.105674,
+      41.863962
+    ],
+    "app": 14.0,
+    "casualMain": 28.0,
+    "premiumMain": 39.0,
+    "drink": 15.0,
+    "dessert": 8.0,
+    "tierColor": "#f97316"
   }
 ]
