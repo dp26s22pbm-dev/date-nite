@@ -1199,14 +1199,14 @@
   },
   {
     "id": 74,
-    "name": "Pa Lian Burmese Restaurant ( BYOB)",
+    "name": "Pa Lian Burmese Restaurant",
     "category": "Burmese Cuisine",
     "website": "https://palianburmeserestaurant.dine.online/",
     "coords": [
       -88.104278,
       41.886688
     ],
-    "app": 17.99,
+    "app": 9.99,
     "casualMain": 18.99,
     "premiumMain": 23.99,
     "drink": 9.49,
