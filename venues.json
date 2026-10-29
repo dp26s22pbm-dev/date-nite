@@ -1152,14 +1152,14 @@
     "category": "Casual American",
     "mapsUrl": "https://maps.app.goo.gl/4gpB3pEo6bcx4rhm8",
     "coords": [
-      -88.171776,
-      41.802992
+      -88.171691,
+      41.803043
     ],
-    "app": 15.75,
-    "casualMain": 20.0,
-    "premiumMain": 33.0,
-    "drink": 7.5,
-    "dessert": 12.0,
+    "app": 16.8,
+    "casualMain": 22.2,
+    "premiumMain": 38.4,
+    "drink": 7.25,
+    "dessert": 11.4,
     "tierColor": "#eab308",
     "website": "https://rockbottom.com/locations/warrenville/"
   },
