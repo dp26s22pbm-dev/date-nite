@@ -21,18 +21,20 @@ PLACES_URL = "https://places.googleapis.com/v1/places:searchText"
 FIELDS = ",".join([
     "places.displayName", "places.formattedAddress", "places.location", "places.websiteUri", "places.rating",
     "places.userRatingCount", "places.businessStatus", "places.primaryType", "places.types", "places.regularOpeningHours",
-    "places.priceLevel", "nextPageToken",
+    "nextPageToken",
 ])
 
 COUNT = int(os.environ.get("VENUE_COUNT", "5"))
 MAX_PER_CUISINE = int(os.environ.get("MAX_PER_CUISINE", "2"))
-# After a venue is priced, it is dropped as fast-casual when two people spend less than this on the importer's
-# standard order (appetizer, two mains, two drinks, dessert, plus tax and tip), or its cuisine label says so. Dropped
-# venues are replaced by the next-best candidate, up to MAX_PRICED venues priced per city.
-MIN_TOTAL_FOR_TWO = int(os.environ.get("MIN_TOTAL_FOR_TWO", "75"))
+# National fast-food and fast-casual chains that never qualify. Higher-end fast casual (Shake Shack, Velvet Taco, local
+# taquerias) is allowed; a priced venue is dropped only when two people spend less than MIN_TOTAL_FOR_TWO on the
+# importer's standard order (appetizer, two mains, two drinks, dessert, plus tax and tip). A dropped venue is replaced by
+# the next-best candidate, up to MAX_PRICED venues priced per city.
+MIN_TOTAL_FOR_TWO = int(os.environ.get("MIN_TOTAL_FOR_TWO", "35"))
 MAX_PRICED = int(os.environ.get("MAX_PRICED", "10"))
-FAST_CASUAL_LABEL = re.compile(r"fast[ -]?(casual|food)|counter[ -]service|quick[ -]service", re.I)
-CHEAP_PRICE_LEVELS = {"PRICE_LEVEL_FREE", "PRICE_LEVEL_INEXPENSIVE"}
+BLOCKED_CHAINS = re.compile(
+    r"\b(mcdonalds|burger king|wendys|chick fil a|chipotle|taco bell|subway|kfc|popeyes|arbys|sonic drive|"
+    r"panda express|qdoba|panera|jimmy johns|jersey mikes|dunkin|starbucks)\b", re.I)
 # A dinner place is open at DINNER_HOUR (24h clock) on at least DINNER_DAYS days of the week
 DINNER_HOUR = int(os.environ.get("DINNER_HOUR", "19"))
 DINNER_DAYS = int(os.environ.get("DINNER_DAYS", "3"))
@@ -161,7 +163,7 @@ def eligible(place, city_name, saved_names):
         return False
     if EXCLUDED_TYPES & set(place.get("types") or []) or place.get("primaryType") in EXCLUDED_TYPES:
         return False
-    if place.get("priceLevel") in CHEAP_PRICE_LEVELS:  # Google's "$" tier
+    if BLOCKED_CHAINS.search(re.sub(r"['\u2019]", "", name).replace("-", " ")):
         return False
     # Places lists a golf course or hotel with a restaurant among its types; keep it only if eating is its main business
     primary = place.get("primaryType")
@@ -198,9 +200,9 @@ def total_for_two(venue):
     """The importer's standard order for two (appetizer, two mains, two drinks, dessert) with 30% tax and tip."""
     return round((venue["app"] + venue["casualMain"] + venue["premiumMain"] + 2 * venue["drink"] + venue["dessert"]) * 1.30)
 
-def looks_fast_casual(venue):
-    """True when a priced venue is cheap enough, or labelled, to be counter-service rather than a sit-down date spot."""
-    return total_for_two(venue) < MIN_TOTAL_FOR_TWO or bool(FAST_CASUAL_LABEL.search(venue.get("category", "")))
+def too_cheap(venue):
+    """True when a priced venue is so cheap (see MIN_TOTAL_FOR_TWO) that it is counter-service rather than a date spot."""
+    return total_for_two(venue) < MIN_TOTAL_FOR_TWO
 
 def issue_body(place):
     """The form text add_venue_from_issue.py reads. Coordinates and website come from Places; the cuisine label is
@@ -274,11 +276,11 @@ def main():
             with open(venues_file) as f:
                 venues = json.load(f)
             venue = venues[-1]
-            if looks_fast_casual(venue):
+            if too_cheap(venue):
                 with open(venues_file, "w") as f:
                     json.dump(venues[:-1], f)
-                print(f"Dropped {name}: looks fast-casual (about ${total_for_two(venue)} for two, cuisine '{venue.get('category', '')}')")
-                skipped.append(f"- {name}: looks fast-casual (about ${total_for_two(venue)} for two)")
+                print(f"Dropped {name}: too cheap (about ${total_for_two(venue)} for two)")
+                skipped.append(f"- {name}: too cheap for a date spot (about ${total_for_two(venue)} for two)")
                 continue
             kept += 1
             if cuisine_key(place):
@@ -301,7 +303,7 @@ def main():
     set_output("count", len(added))  # the workflow opens a pull request only when something was added
 
     intro = (f"Top {len(added)} restaurants for {city}, ranked by Google rating weighted by review count "
-             f"(at least {MIN_REVIEWS} reviews, at most {MAX_PER_CUISINE} of one cuisine, nothing that looks fast-casual). "
+             f"(at least {MIN_REVIEWS} reviews, at most {MAX_PER_CUISINE} of one cuisine, no national fast-food chains, nothing under ${MIN_TOTAL_FOR_TWO} for two). "
              "Ratings were used only for the ranking and are not saved.\n\n"
              f"Review the prices and pins below before merging. The venues are in `{pending_file}`; delete an entry there to drop it. "
              "They get their ids and join `venues.json` automatically after the merge.")
