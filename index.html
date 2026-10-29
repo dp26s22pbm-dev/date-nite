@@ -891,6 +891,14 @@
       opacity: 0 !important;
       pointer-events: none !important;
     }
+    /* For the moment the interface is revealed, everything fades over 0.6s (set by revealApp, then dropped) */
+    body.app-revealing :is(.left-rail, .right-rail, .search-bar, .car-btn, .zoom-btn, .list-btn, .cost-btn, .audio-btn) {
+      transition: opacity 0.6s ease !important;
+    }
+    body.app-revealing .venue-list { transition: opacity 0.6s ease, visibility 0s linear 0s !important; }
+    @media (prefers-reduced-motion: reduce) {
+      body.app-revealing :is(.left-rail, .right-rail, .search-bar, .car-btn, .zoom-btn, .list-btn, .cost-btn, .audio-btn, .venue-list) { transition: none !important; }
+    }
     @media (prefers-reduced-motion: reduce) {
       .search-bar { transition: none; }
       .venue-list, .venue-list.hidden { transition: none; }
@@ -1827,6 +1835,15 @@
     // The round buttons sit a little above the list and slide down to the bottom edge when the list is hidden
     const BUTTON_GAP_PX = 12;
     const BUTTON_REST_PX = 20; // matches the --btn-base default in :root
+    // Reveals the whole interface at once: the strip, bars and buttons fade in together over 0.6s
+    function revealApp() {
+      if (!document.body.classList.contains('app-loading') && !listEl.classList.contains('loading')) return;
+      document.body.classList.add('app-revealing');
+      document.body.classList.remove('app-loading');
+      listEl.classList.remove('loading');
+      updateButtonLift();
+      setTimeout(() => document.body.classList.remove('app-revealing'), 700);
+    }
     function updateButtonLift() {
       if (listEl.classList.contains('hidden') || listEl.classList.contains('loading')) {
         document.documentElement.style.setProperty('--btn-base', BUTTON_REST_PX + 'px');
@@ -1842,11 +1859,7 @@
     if (window.ResizeObserver) new ResizeObserver(updateButtonLift).observe(listEl);
     updateButtonLift();
     // If the venues never load, don't leave the interface hidden: reveal everything after a few seconds regardless
-    setTimeout(() => {
-      document.body.classList.remove('app-loading');
-      listEl.classList.remove('loading');
-      updateButtonLift();
-    }, 5000);
+    setTimeout(revealApp, 5000);
 
     function setListSort(mode) {
       // Without a location fix, proximity can't sort anything: ask for location again instead
@@ -1908,9 +1921,7 @@
         </button>`).join('');
       updateListFade();
       if (rawVenues.length && listEl.classList.contains('loading')) {
-        listEl.classList.remove('loading');
-        document.body.classList.remove('app-loading');
-        updateButtonLift();
+        revealApp();
       }
     }
 
