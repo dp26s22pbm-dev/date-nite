@@ -1200,7 +1200,7 @@
       if (!el) return;
       const done = () => el.classList.add('gone');
       if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
-        setTimeout(() => { el.classList.add('off'); setTimeout(done, 900); }, 2500);
+        setTimeout(() => { el.classList.add('off'); setTimeout(done, 900); }, 3500);
         return;
       }
       const rand = (a, b) => a + Math.random() * (b - a);
@@ -1208,7 +1208,7 @@
         el.style.transitionDuration = fade || '0.04s';
         el.style.opacity = opacity;
       }, at);
-      let t = rand(1200, 2200);
+      let t = rand(2200, 3200);
       for (let k = 0; k < 2; k++) {            // tube sags and re-strikes
         set(t, rand(0.1, 0.5).toFixed(2));
         t += rand(25, 90);
