@@ -898,6 +898,7 @@
       text-shadow: 0 1px 3px #000;
       pointer-events: none;
     }
+    .app-ver.pre { opacity: 0; } /* held back until the opening sign has gone, then flickered in by the script near the top of the body */
     #app-ver-num { margin-left: -3px; } /* tucks the number closer to "ver." */
     .app-ver b { color: #a78bfa; /* same purple as the car trail */  font-weight: 700; }
     .list-head { display: flex; align-items: center; gap: 10px; padding-left: 2px; /* the $ button lines up with the first card's left edge, which sits 2px in from the list */ position: relative; z-index: 1; margin-bottom: 4px; /* buttons clear the cards by the same 12px as the round map buttons */ } /* above the cards' padding overlap */
@@ -1183,7 +1184,7 @@
     <div class="list-cards" id="list-cards"></div>
   </div>
 
-  <div class="app-ver"><b>DATE NITE</b> ver. <span id="app-ver-num">305</span></div>
+  <div class="app-ver pre"><b>DATE NITE</b> ver. <span id="app-ver-num">305</span></div>
 
   <!-- Audio Controls -->
   <audio id="bg-audio" preload="auto"></audio>
@@ -1198,7 +1199,29 @@
     (function () {
       const el = document.getElementById('neon-intro');
       if (!el) return;
-      const done = () => el.classList.add('gone');
+      const ver = document.querySelector('.app-ver');
+      const showVer = () => { if (ver) { ver.style.opacity = ''; ver.classList.remove('pre'); } };
+      setTimeout(showVer, 12000); // safety net if the sequence below never runs
+      // Half a second after the sign is gone, the version label at bottom left flickers on.
+      const revealVer = () => {
+        if (!ver) return;
+        if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+          ver.style.transition = 'opacity 0.6s ease';
+          ver.style.opacity = '0';
+          ver.classList.remove('pre');
+          requestAnimationFrame(() => requestAnimationFrame(() => { ver.style.opacity = '1'; }));
+          setTimeout(showVer, 800);
+          return;
+        }
+        ver.style.transition = 'opacity 0.04s linear';
+        let at = 0;
+        [[0.7, 40], [0.1, 60], [1, 50], [0.25, 70], [0.9, 90], [0.15, 50], [1, 0]].forEach(([o, hold], i) => {
+          setTimeout(() => { ver.style.opacity = o; if (i === 0) ver.classList.remove('pre'); }, at);
+          at += hold + Math.random() * 40;
+        });
+        setTimeout(showVer, at + 100);
+      };
+      const done = () => { el.classList.add('gone'); setTimeout(revealVer, 500); };
       if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
         setTimeout(() => { el.classList.add('off'); setTimeout(done, 900); }, 3500);
         return;
