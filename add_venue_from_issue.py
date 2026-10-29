@@ -860,7 +860,8 @@ def ask_gemini_for_cuisine(name, where, examples, avoid=None):
     prompt = (
         f'What cuisine best describes the restaurant "{name}"'
         + (f' ({where})' if where else '')
-        + ' in the Naperville, IL area? Check the restaurant\'s own menu or website and name the specific '
+        + (' in the area it is located in?' if where else ' in the Naperville, IL area?')
+        + ' Check the restaurant\'s own menu or website and name the specific '
         'cuisine it serves, such as the country or regional cuisine (for example Portuguese, Szechuan, Levantine), '
         'not a broad umbrella term like Mediterranean, Asian, International or Fusion. '
         f'Existing labels on the map: {examples}. Reuse one of them only if it is an accurate fit; '
@@ -1285,7 +1286,7 @@ def main():
         pricing = pricing_from_gemini_reading_site(name, website or saved_site)
         pricing_source = "Gemini reading the restaurant's own menu pages"
     if not pricing:
-        pricing = fetch_pricing_via_gemini_search(name)
+        pricing = fetch_pricing_via_gemini_search(name, place_text or address or "Naperville, IL")
         pricing_source = "a web search (estimates)"
     if not reused_pricing:
         save_pricing_cache(pricing, pricing_source)
