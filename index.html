@@ -1002,18 +1002,18 @@
       justify-content: center;
       text-align: center;
       pointer-events: none;
-      z-index: 850; /* over the map and dots, under the scrim, buttons and venue list */
+      z-index: 950; /* over the map and the bottom scrim, under the buttons, panels and venue list */
       font-weight: 900;
       letter-spacing: 0.04em;
       line-height: 0.95;
-      font-size: min(21vw, 34vh);
+      font-size: min(30vw, 34vh); /* two stacked lines: DATE is about 2.7em wide, so 30vw keeps it inside the screen and 34vh keeps both lines inside the height */
       color: #dcc8ff;
       text-shadow: 0 0 6px #c8a2ff, 0 0 20px #b57cff, 0 0 48px #a06bff, 0 0 90px #8f55f0;
       transition: opacity 0.12s linear;
     }
     .neon-intro.off { opacity: 0; }
     .neon-intro.gone { display: none; }
-    @media (max-width: 700px) { .neon-intro span { display: block; } }
+    .neon-intro span { display: block; }
     @media (prefers-reduced-motion: reduce) { .neon-intro { transition: opacity 0.8s ease; } }
 
   </style>
