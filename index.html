@@ -467,8 +467,11 @@
     .search-input:focus ~ .search-hint,
     .search-input:not(:placeholder-shown) ~ .search-hint { opacity: 0; }
     .hint-brand { position: absolute; font-weight: 800; letter-spacing: 1px; white-space: pre; }
-    .hint-brand span { display: inline-block; opacity: 0; animation: hint-letter 16s ease-in-out infinite; animation-delay: calc(var(--i) * 0.05s); }
-    .hint-text { position: absolute; color: #fff; opacity: 0; animation: hint-text 16s ease-in-out infinite; }
+    .hint-brand span { display: inline-block; opacity: 0; animation-delay: calc(var(--i) * 0.05s); }
+    /* On load the bar just reads "Search restaurants". After 10s the script adds .cycling and the 16s loop starts. */
+    .hint-text { position: absolute; color: #fff; opacity: 1; transition: opacity 0.3s ease; }
+    .search-bar.cycling .hint-brand span { animation: hint-letter 16s ease-in-out infinite; animation-delay: calc(var(--i) * 0.05s); }
+    .search-bar.cycling .hint-text { animation: hint-text 16s ease-in-out infinite; }
     @keyframes hint-letter {
       0%   { opacity: 0; transform: translateY(10px) scale(0.5) rotate(-12deg); color: #fff; }
       2.25% { opacity: 1; transform: translateY(-5px) scale(1.25) rotate(6deg); color: #ff7eb6; }
@@ -2723,6 +2726,12 @@
       </div>
       <ul class="search-results" role="listbox"></ul>`;
     document.body.appendChild(searchBar);
+    // Static "Search restaurants" for the first 10s, then fade it out and let the idle animation cycle begin
+    const searchHintText = searchBar.querySelector('.hint-text');
+    setTimeout(() => {
+      if (searchHintText) searchHintText.style.opacity = '0';
+      setTimeout(() => { searchBar.classList.add('cycling'); if (searchHintText) searchHintText.style.opacity = ''; }, 320);
+    }, 10000);
     const searchInput = searchBar.querySelector('.search-input');
     const searchResults = searchBar.querySelector('.search-results');
     let searchMatches = [];
