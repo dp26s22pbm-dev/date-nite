@@ -885,13 +885,13 @@
     /* Until the first render has put cards in the strip, the list stays invisible (and the round buttons stay at rest), then fades in */
     .venue-list.loading { opacity: 0; visibility: hidden; } /* removing the class lets the normal 0.25s fade run */
     /* The rest of the interface waits for the same moment, then fades in with the strip */
-    .search-bar, .app-ver { transition: opacity 0.25s ease; }
-    body.app-loading :is(.left-rail, .right-rail, .search-bar, .app-ver, .car-btn, .zoom-btn, .list-btn, .cost-btn, .audio-btn) {
+    .search-bar { transition: opacity 0.25s ease; }
+    body.app-loading :is(.left-rail, .right-rail, .search-bar, .car-btn, .zoom-btn, .list-btn, .cost-btn, .audio-btn) {
       opacity: 0 !important;
       pointer-events: none !important;
     }
     @media (prefers-reduced-motion: reduce) {
-      .search-bar, .app-ver { transition: none; }
+      .search-bar { transition: none; }
       .venue-list, .venue-list.hidden { transition: none; }
     }
     /* App name and build number, bottom left under the card strip (attribution sits bottom right) */
