@@ -1,0 +1,100 @@
+name: Add City on Issue
+
+# The Add a City form names a city. The top restaurants there are looked up on Google Places, added with the same
+# importer the Add Venue form uses, and committed to a branch; a pull request opens for review instead of changing main.
+on:
+  issues:
+    types: [opened, reopened]
+
+jobs:
+  add-city:
+    # The repository is public, so only run for the owner and collaborators; otherwise any stranger's issue
+    # could use the Places and Gemini keys
+    if: >-
+      contains(fromJSON('["OWNER","MEMBER","COLLABORATOR"]'), github.event.issue.author_association) &&
+      contains(github.event.issue.labels.*.name, 'add-city')
+    runs-on: ubuntu-latest
+    # Waiting for an earlier run can take a while, and five venues are priced one after another
+    timeout-minutes: 120
+    permissions:
+      actions: read
+      contents: write
+      issues: write
+      pull-requests: write
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+        with:
+          ref: main
+
+      # City runs edit venues.json and share the Google quota with venue runs, so they take turns
+      - name: Wait for earlier runs
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          .github/scripts/wait-for-earlier-runs.sh
+          git fetch origin main
+          git reset --hard origin/main
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install Dependencies
+        run: |
+          pip install -r requirements.txt
+          playwright install --with-deps chromium
+
+      - name: Find and Add the Top Venues
+        id: city
+        env:
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          GOOGLE_PLACES_API_KEY: ${{ secrets.GOOGLE_PLACES_API_KEY }}
+          ISSUE_BODY: ${{ github.event.issue.body }}
+        run: |
+          # The form's answer is the line under its "City and State" heading
+          CITY=$(python -c "import os,re; m=re.search(r'### City and State\s*\n\s*(.*?)(?=\n###|\Z)', os.environ['ISSUE_BODY'], re.S); print(m.group(1).strip() if m else '')")
+          export CITY
+          python add_city.py
+
+      - name: Open the Pull Request
+        id: pr
+        if: steps.city.outputs.count != '0'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          SLUG: ${{ steps.city.outputs.slug }}
+          REPORT: ${{ steps.city.outputs.report }}
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          BRANCH="add-city/${SLUG}-${{ github.event.issue.number }}-${{ github.run_id }}"
+          git checkout -b "$BRANCH"
+          git add venues.json urls.py
+          git commit -m "Add top venues for ${SLUG} (Issue #${{ github.event.issue.number }})"
+          git push origin "$BRANCH"
+          printf '%s\n\nCloses #%s\n' "$REPORT" "${{ github.event.issue.number }}" > "$RUNNER_TEMP/pr-body.md"
+          URL=$(gh pr create --base main --head "$BRANCH" --title "Add top venues: ${SLUG}" --body-file "$RUNNER_TEMP/pr-body.md")
+          echo "url=$URL" >> "$GITHUB_OUTPUT"
+
+      - name: Report on the Issue
+        if: always() && steps.city.outcome == 'success'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPORT: ${{ steps.city.outputs.report }}
+          PR_URL: ${{ steps.pr.outputs.url }}
+        run: |
+          if [ -n "$PR_URL" ]; then
+            gh issue comment ${{ github.event.issue.number }} --repo ${{ github.repository }} --body "Pull request opened for review: $PR_URL"
+          else
+            gh issue comment ${{ github.event.issue.number }} --repo ${{ github.repository }} --body "$REPORT"
+            gh issue close ${{ github.event.issue.number }} --repo ${{ github.repository }} || true
+          fi
+
+      - name: Report failure on the issue
+        if: failure()
+        run: |
+          gh issue comment ${{ github.event.issue.number }} --repo ${{ github.repository }} --body "Could not add this city. Run: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+        env:
+          GH_TOKEN: ${{ github.token }}

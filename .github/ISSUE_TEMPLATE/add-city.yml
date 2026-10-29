@@ -1,0 +1,13 @@
+name: Add a City
+description: Find a city's top restaurants and open a pull request with them for review
+title: "[New City]: "
+labels: ["add-city"]
+body:
+  - type: input
+    id: city
+    attributes:
+      label: City and State
+      description: "The top restaurants (by Google rating weighted by review count, at most 2 per cuisine) are looked up, priced, and proposed in a pull request. Nothing is added to the map until you merge it."
+      placeholder: "Wheaton, IL"
+    validations:
+      required: true
