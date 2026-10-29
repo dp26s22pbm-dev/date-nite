@@ -749,7 +749,7 @@
     .car-btn svg, .zoom-btn svg, .list-btn svg { width: 16.5px !important; height: 16.5px !important; fill: currentColor !important; pointer-events: none !important; }
 
     /* Phone layout: search across the top, the Menu as a row beneath it, and no Budget bar for now. The Cost
-       legend leaves the left rail and becomes a "?" button in the bottom row, next to the list button; pressing it opens a
+       legend leaves the left rail and becomes a four-dot color button in the bottom row, just left of the list button; pressing it opens a
        horizontal Cost explanation just above the row. The other round buttons each move over one slot to make room. */
     .cost-btn, .cost-pop { display: none; }
     @media (max-width: 480px) {
@@ -768,35 +768,29 @@
       #menu-panel .counter-actions { gap: 3px; }
       #menu-panel .counter-value { min-width: 12px; }
 
-      .list-btn { right: 102px !important; }
       .zoom-btn { right: 145px !important; }
       .car-btn { right: 188px !important; }
       .car-toast { right: 188px; }
 
       .cost-btn {
         position: fixed;
-        right: 59px;
+        right: 102px;
         bottom: var(--btn-base);
         width: 33px;
         height: 33px;
-        padding: 1px 0 0; /* the "?" glyph sits high in its line box; this seats its ink on the button's center */
+        padding: 0;
         border-radius: 50%;
         background: #161b22;
         border: 1px solid #ffffff;
-        color: #fb923c; /* a lighter take on the $150 tier's orange */
         display: flex;
         align-items: center;
         justify-content: center;
-        font: inherit;
-        font-size: 17px;
-        font-weight: 900;
-        -webkit-text-stroke: 0.3px currentColor; /* a touch heavier than the bold weight alone */
-        line-height: 1;
         cursor: pointer;
         box-shadow: 0 4px 18px rgba(0, 0, 0, 0.7);
         z-index: 1000;
         transition: all 0.2s ease;
       }
+      .cost-btn svg { width: 18px; height: 18px; display: block; pointer-events: none; }
       .cost-btn.active { box-shadow: 0 0 4px rgba(255, 255, 255, 0.8), 0 0 12px rgba(255, 255, 255, 0.45); }
 
       .cost-pop {
@@ -819,7 +813,7 @@
         visibility: hidden;
         transition: opacity 0.2s ease, visibility 0s linear 0.2s, bottom 0.2s ease;
       }
-      /* Pointer down to the ? button, like the tip under a venue card; the ? is 59px + 16.5px from the screen's right edge */
+      /* Pointer down to the cost button, like the tip under a venue card; its center is 102px + 16.5px from the screen's right edge */
       .cost-pop::before,
       .cost-pop::after {
         content: '';
@@ -829,14 +823,14 @@
       /* The outline is a larger triangle behind a fill triangle, so both edges stay crisp 45° lines (a rotated, bordered square blurs) */
       .cost-pop::before {
         bottom: -10px;
-        right: 48px;
+        right: 92px;
         width: 20px;
         height: 10px;
         background: rgba(255, 255, 255, 0.6);
       }
       .cost-pop::after {
         bottom: -9px;
-        right: 49px;
+        right: 93px;
         width: 18px;
         height: 10px;
         background: #161b22;
@@ -1182,8 +1176,8 @@
       <path class="row-3" d="M3 17h4v4H3v-4zm6 0h12v4H9v-4z"/>
     </g></svg>
   </button>
-  <!-- Phones only: the Cost legend as a "?" button in the bottom row beside the list button, opening a horizontal explanation above it -->
-  <button id="cost-toggle" class="cost-btn" onclick="toggleCostPop()" aria-label="What the colors cost" aria-expanded="false" aria-controls="cost-pop" title="What the colors cost">?</button>
+  <!-- Phones only: the Cost legend as a four-dot color button in the bottom row, left of the list button, opening a horizontal explanation above it -->
+  <button id="cost-toggle" class="cost-btn" onclick="toggleCostPop()" aria-label="What the colors cost" aria-expanded="false" aria-controls="cost-pop" title="What the colors cost"><svg viewBox="0 0 20 20" aria-hidden="true"><circle cx="6" cy="6" r="3.6" fill="#22c55e"/><circle cx="14" cy="6" r="3.6" fill="#eab308"/><circle cx="6" cy="14" r="3.6" fill="#f97316"/><circle cx="14" cy="14" r="3.6" fill="#ef4444"/></svg></button>
   <div id="cost-pop" class="cost-pop" role="region" aria-label="Cost">
     <div class="cost-pop-title">Cost</div>
     <div class="cost-pop-row">
@@ -3130,7 +3124,7 @@
       pushVenueBelowPanels();
     }
 
-    // Phones: the "?" button opens or closes the Cost explanation; a tap anywhere else closes it
+    // Phones: the color-dot button opens or closes the Cost explanation; a tap anywhere else closes it
     function toggleCostPop(force) {
       const open = typeof force === 'boolean' ? force : !document.getElementById('cost-pop').classList.contains('open');
       document.getElementById('cost-pop').classList.toggle('open', open);
