@@ -993,6 +993,37 @@
       transition: opacity 0.25s ease;
     }
     .car-toast.show { opacity: 1; }
+    /* Opening neon sign: huge lilac DATE NITE over the map, flickers, then blinks out for good. Taps pass through to the map. */
+    .neon-intro {
+      position: fixed;
+      inset: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      pointer-events: none;
+      z-index: 950; /* over the map and the bottom scrim, under the buttons, panels and venue list */
+      font-weight: 900;
+      letter-spacing: 0.04em;
+      line-height: 0.95;
+      font-size: min(30vw, 34vh); /* two stacked lines: DATE is about 2.7em wide, so 30vw keeps it inside the screen and 34vh keeps both lines inside the height */
+      color: transparent;
+      filter: drop-shadow(0 0 3px rgba(200, 162, 255, 0.9)) drop-shadow(0 0 14px rgba(160, 107, 255, 0.8)) drop-shadow(0 0 40px rgba(143, 85, 240, 0.6));
+      transition: opacity 0.04s linear;
+    }
+    .neon-intro.off { opacity: 0; }
+    .neon-intro.gone { display: none; }
+    .neon-intro span {
+      display: block;
+      /* A grid of tiny bulbs: bright cores with a lilac halo over a faint unlit letter, fixed pitch so bulbs stay small and dense on every screen size */
+      background:
+        radial-gradient(circle at center, #fff 0 20%, #eadcff 26%, #bd94ff 42%, rgba(130, 80, 230, 0.35) 56%, transparent 64%) 0 0 / 5px 5px,
+        linear-gradient(rgba(120, 75, 210, 0.35), rgba(120, 75, 210, 0.35));
+      -webkit-background-clip: text;
+      background-clip: text;
+    }
+    @media (prefers-reduced-motion: reduce) { .neon-intro { transition: opacity 0.8s ease; } }
+
   </style>
   <meta name="description" content="Find your next great date spot on the map." />
   <meta property="og:type" content="website" />
@@ -1014,6 +1045,7 @@
   <div id="map"></div>
   <canvas id="weather-fx" aria-hidden="true"></canvas>
   <div class="map-scrim" aria-hidden="true"></div>
+  <div class="neon-intro" id="neon-intro" aria-hidden="true"><div><span>DATE</span> <span>NITE</span></div></div>
 
   <!-- Right Side Menu Rail -->
   <div class="right-rail">
@@ -1157,6 +1189,47 @@
     </svg>
   </button>
 
+  <script>
+    // Opening sign: holds, then stutters like a failing fluorescent tube (partial dips and quick re-strikes, getting more frequent) before dying out.
+    (function () {
+      const el = document.getElementById('neon-intro');
+      if (!el) return;
+      const done = () => el.classList.add('gone');
+      if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+        setTimeout(() => { el.classList.add('off'); setTimeout(done, 900); }, 2500);
+        return;
+      }
+      const rand = (a, b) => a + Math.random() * (b - a);
+      const set = (at, opacity, fade) => setTimeout(() => {
+        el.style.transitionDuration = fade || '0.04s';
+        el.style.opacity = opacity;
+      }, at);
+      let t = rand(1200, 2200);
+      const bursts = 3 + Math.floor(Math.random() * 3);
+      for (let b = 0; b < bursts; b++) {
+        const dips = 2 + Math.floor(Math.random() * 3);
+        for (let k = 0; k < dips; k++) {
+          set(t, rand(0.1, 0.5).toFixed(2));   // tube sags
+          t += rand(25, 90);
+          set(t, 1);                           // re-strikes
+          t += rand(25, 110);
+        }
+        t += rand(250, 900) * (1 - b / bursts) + 120; // calm spells shorten as it fails
+      }
+      for (let k = 0; k < 4; k++) {            // last rapid stutter
+        set(t, rand(0.1, 0.4).toFixed(2));
+        t += rand(30, 80);
+        set(t, rand(0.7, 1).toFixed(2));
+        t += rand(30, 80);
+      }
+      set(t, 0.3);
+      t += rand(80, 160);
+      set(t, 0.7);
+      t += rand(40, 90);
+      set(t, 0, '0.4s');                       // dies with a short fade
+      setTimeout(done, t + 500);
+    })();
+  </script>
   <script src="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.js"></script>
   <script>
     const audio = document.getElementById('bg-audio');
