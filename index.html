@@ -291,7 +291,7 @@
     @media (prefers-reduced-motion: reduce) {
       .maplibregl-popup { transition: none; }
     }
-    /* Steady white glow, a bit longer than the focused search bar's (14px); on a pseudo-element so the card's text stays crisp */
+    /* The card's drop shadow, on a pseudo-element so the card's text stays crisp. No glow. */
     .maplibregl-popup-content::before {
       content: '';
       position: absolute;
@@ -299,7 +299,7 @@
       border-radius: 14px;
       pointer-events: none;
       z-index: -1;
-      box-shadow: 0 0 20px rgba(255, 255, 255, 0.55), 0 16px 36px rgba(0, 0, 0, 0.7);
+      box-shadow: 0 16px 36px rgba(0, 0, 0, 0.7);
     }
     .maplibregl-popup-content {
       background: #323943 !important;
@@ -308,7 +308,7 @@
       padding: 16px !important;
       color: #f0f6fc !important;
       border-color: #fff !important; /* full white, like the focused search bar */
-      /* The glow is drawn on ::before */
+      /* The shadow is drawn on ::before */
       box-shadow: none !important;
       isolation: isolate;
       -webkit-font-smoothing: antialiased;
