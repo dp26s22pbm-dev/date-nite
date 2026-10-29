@@ -78,12 +78,12 @@ def search_city(city, api_key):
             with urllib.request.urlopen(req, timeout=30) as resp:
                 data = json.load(resp)
         except urllib.error.HTTPError as e:
-            places_usage.record(FIELDS, e.code, payload["textQuery"])
+            places_usage.record(FIELDS, e.code)
             raise
         except Exception:
-            places_usage.record(FIELDS, 0, payload["textQuery"])
+            places_usage.record(FIELDS, 0)
             raise
-        places_usage.record(FIELDS, 200, payload["textQuery"])
+        places_usage.record(FIELDS, 200)
         places += data.get("places") or []
         token = data.get("nextPageToken")
         if not token:

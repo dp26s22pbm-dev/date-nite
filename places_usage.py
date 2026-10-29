@@ -39,13 +39,13 @@ def sku_for(field_mask):
     fields = {f.strip() for f in field_mask.split(",")}
     return "Text Search Enterprise" if fields & ENTERPRISE_FIELDS else "Text Search Pro"
 
-def record(field_mask, status, query):
+def record(field_mask, status):
     """Append one request to the run's log. `status` is the HTTP status, or 0 when no answer came back.
     Never raises: a logging problem must not stop a venue from being added."""
     try:
         entry = {
             "t": datetime.datetime.now(datetime.timezone.utc).isoformat(timespec="seconds"),
-            "sku": sku_for(field_mask), "status": status, "query": (query or "")[:80],
+            "sku": sku_for(field_mask), "status": status,
             "run": os.environ.get("GITHUB_RUN_ID", ""), "workflow": os.environ.get("GITHUB_WORKFLOW", "local"),
         }
         with open(log_path(), "a") as f:
@@ -172,7 +172,7 @@ def report(entries, recent=15):
     for e in sorted(entries, key=lambda e: e["when"], reverse=True)[:recent]:
         result = "ok" if e["status"] == 200 else f"failed ({e['status'] or 'no answer'}), not counted"
         source = f"{e['workflow']} run {e['run']}" if e["run"] else e["workflow"]
-        out.append(f"  {e['when']:%b %-d %-I:%M %p}  {e['sku']}  {result}  \"{e['query']}\"  [{source}]")
+        out.append(f"  {e['when']:%b %-d %-I:%M %p}  {e['sku']}  {result}  [{source}]")
     if not entries:
         out.append("  (nothing logged yet)")
     return "\n".join(out)

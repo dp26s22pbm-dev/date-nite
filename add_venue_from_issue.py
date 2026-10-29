@@ -973,10 +973,10 @@ def places_lookup(name, where):
         try:
             with urllib.request.urlopen(req, timeout=20) as resp:
                 places = json.load(resp).get("places") or []
-            places_usage.record(PLACES_FIELDS, 200, query)
+            places_usage.record(PLACES_FIELDS, 200)
             break
         except urllib.error.HTTPError as e:
-            places_usage.record(PLACES_FIELDS, e.code, query)
+            places_usage.record(PLACES_FIELDS, e.code)
             # Google explains a refusal in the body (which quota, which limit); the status line alone does not
             try:
                 detail = e.read().decode("utf-8", "ignore").strip().replace("\n", " ")[:400]
@@ -995,7 +995,7 @@ def places_lookup(name, where):
             print(f"Places API lookup failed: {e}: {detail}")
             return None
         except Exception as e:
-            places_usage.record(PLACES_FIELDS, 0, query)
+            places_usage.record(PLACES_FIELDS, 0)
             print(f"Places API lookup failed: {e}")
             return None
     tokens = [t for t in re.findall(r"[a-z0-9]+", name.lower()) if t not in NAME_STOPWORDS]
