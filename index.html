@@ -993,6 +993,29 @@
       transition: opacity 0.25s ease;
     }
     .car-toast.show { opacity: 1; }
+    /* Opening neon sign: huge lilac DATE NITE over the map, flickers, then blinks out for good. Taps pass through to the map. */
+    .neon-intro {
+      position: fixed;
+      inset: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      pointer-events: none;
+      z-index: 850; /* over the map and dots, under the scrim, buttons and venue list */
+      font-weight: 900;
+      letter-spacing: 0.04em;
+      line-height: 0.95;
+      font-size: min(21vw, 34vh);
+      color: #dcc8ff;
+      text-shadow: 0 0 6px #c8a2ff, 0 0 20px #b57cff, 0 0 48px #a06bff, 0 0 90px #8f55f0;
+      transition: opacity 0.12s linear;
+    }
+    .neon-intro.off { opacity: 0; }
+    .neon-intro.gone { display: none; }
+    @media (max-width: 700px) { .neon-intro span { display: block; } }
+    @media (prefers-reduced-motion: reduce) { .neon-intro { transition: opacity 0.8s ease; } }
+
   </style>
   <meta name="description" content="Find your next great date spot on the map." />
   <meta property="og:type" content="website" />
@@ -1014,6 +1037,7 @@
   <div id="map"></div>
   <canvas id="weather-fx" aria-hidden="true"></canvas>
   <div class="map-scrim" aria-hidden="true"></div>
+  <div class="neon-intro" id="neon-intro" aria-hidden="true"><div><span>DATE</span> <span>NITE</span></div></div>
 
   <!-- Right Side Menu Rail -->
   <div class="right-rail">
@@ -1157,6 +1181,31 @@
     </svg>
   </button>
 
+  <script>
+    // Opening neon sign: holds, flickers at random, then blinks out.
+    (function () {
+      const el = document.getElementById('neon-intro');
+      if (!el) return;
+      const done = () => el.classList.add('gone');
+      if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+        setTimeout(() => { el.classList.add('off'); setTimeout(done, 900); }, 2500);
+        return;
+      }
+      const rand = (a, b) => a + Math.random() * (b - a);
+      let t = rand(1200, 2200);
+      const steps = [];
+      const flickers = 6 + Math.floor(Math.random() * 6);
+      for (let i = 0; i < flickers; i++) {
+        steps.push([t, true]);                 // off
+        t += rand(30, 140);
+        steps.push([t, false]);                // back on
+        t += rand(60, i < flickers / 2 ? 700 : 300);
+      }
+      steps.push([t, true]);                   // final blink out
+      steps.forEach(([at, off]) => setTimeout(() => el.classList.toggle('off', off), at));
+      setTimeout(done, t + 300);
+    })();
+  </script>
   <script src="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.js"></script>
   <script>
     const audio = document.getElementById('bg-audio');
