@@ -996,7 +996,7 @@
     /* Opening neon sign: huge lilac DATE NITE over the map, flickers, then blinks out for good. Taps pass through to the map. */
     .neon-intro {
       position: fixed;
-      inset: 0;
+      inset: var(--neon-top, 0px) 0 var(--neon-bottom, 0px) 0; /* the band between the search bar and the venue strip, set by the script below */
       display: flex;
       align-items: center;
       justify-content: center;
@@ -1006,7 +1006,7 @@
       font-weight: 900;
       letter-spacing: 0.04em;
       line-height: 0.95;
-      font-size: min(30vw, 34vh); /* two stacked lines: DATE is about 2.7em wide, so 30vw keeps it inside the screen and 34vh keeps both lines inside the height */
+      font-size: min(30vw, calc(var(--neon-h, 100vh) * 0.42)); /* two stacked lines: DATE is about 2.7em wide, so 30vw keeps it inside the screen and 34vh keeps both lines inside the height */
       color: transparent;
       filter: drop-shadow(0 0 3px rgba(200, 162, 255, 0.9)) drop-shadow(0 0 14px rgba(160, 107, 255, 0.8)) drop-shadow(0 0 40px rgba(143, 85, 240, 0.6));
       transition: opacity 0.04s linear;
@@ -1195,6 +1195,21 @@
       const el = document.getElementById('neon-intro');
       if (!el) return;
       const done = () => el.classList.add('gone');
+      // Centers the sign in the band between the search bar (and the Menu row on phones) and the venue strip.
+      const fit = () => {
+        const bottomOf = (q) => { const n = document.querySelector(q); const r = n && n.getBoundingClientRect(); return r && r.height ? r.bottom : 0; };
+        const topOf = (q) => { const n = document.querySelector(q); const r = n && n.getBoundingClientRect(); return r && r.height && !n.classList.contains('hidden') ? r.top : 0; };
+        let top = Math.max(bottomOf('.search-bar'), window.innerWidth <= 480 ? bottomOf('#menu-panel') : 0);
+        top = (top || 16) + 12;
+        const strip = topOf('#venue-list');
+        const bottom = Math.max(0, window.innerHeight - (strip || window.innerHeight - 34) + 12);
+        el.style.setProperty('--neon-top', top + 'px');
+        el.style.setProperty('--neon-bottom', bottom + 'px');
+        el.style.setProperty('--neon-h', Math.max(120, window.innerHeight - top - bottom) + 'px');
+      };
+      fit();
+      [300, 1000].forEach((ms) => setTimeout(fit, ms)); // the search bar and venue list are built after this script runs
+      window.addEventListener('resize', fit);
       if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
         setTimeout(() => { el.classList.add('off'); setTimeout(done, 900); }, 2500);
         return;
