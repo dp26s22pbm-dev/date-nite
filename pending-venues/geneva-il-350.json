@@ -1,0 +1,77 @@
+[
+  {
+    "name": "Paixao Gaucha Brazilian Steakhouse",
+    "category": "Brazilian Steakhouse",
+    "website": "https://www.paixaogaucha.com/",
+    "coords": [
+      -88.308517,
+      41.882875
+    ],
+    "app": 12.0,
+    "casualMain": 19.0,
+    "premiumMain": 34.0,
+    "drink": 8.5,
+    "dessert": 8.0,
+    "tierColor": "#eab308"
+  },
+  {
+    "name": "Hacienda Real Geneva",
+    "category": "Elevated Mexican",
+    "website": "http://www.haciendaflavorsofmexico.com/",
+    "coords": [
+      -88.341351,
+      41.892631
+    ],
+    "app": 14.5,
+    "casualMain": 20.0,
+    "premiumMain": 29.0,
+    "drink": 17.5,
+    "dessert": 14.5,
+    "tierColor": "#eab308"
+  },
+  {
+    "name": "Tia Carmen Restaurant",
+    "category": "Mexican Cuisine",
+    "website": "https://tiacarmen.restaurant/",
+    "coords": [
+      -88.304962,
+      41.887337
+    ],
+    "app": 11.5,
+    "casualMain": 18.0,
+    "premiumMain": 26.0,
+    "drink": 14.0,
+    "dessert": 10.0,
+    "tierColor": "#eab308"
+  },
+  {
+    "name": "Barrel + Rye",
+    "category": "Modern American Bistro",
+    "website": "http://www.barrelandrye.com/",
+    "coords": [
+      -88.30881,
+      41.882871
+    ],
+    "app": 17.0,
+    "casualMain": 19.5,
+    "premiumMain": 44.0,
+    "drink": 14.0,
+    "dessert": 12.0,
+    "tierColor": "#f97316"
+  },
+  {
+    "name": "Riganato",
+    "category": "Greek",
+    "website": "http://riganato.com/",
+    "coords": [
+      -88.291719,
+      41.886624
+    ],
+    "app": 14.0,
+    "casualMain": 21.0,
+    "premiumMain": 35.0,
+    "drink": 10.5,
+    "dessert": 8.0,
+    "tierColor": "#eab308"
+  }
+]
