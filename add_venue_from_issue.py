@@ -1432,6 +1432,7 @@ def main():
     guessed = not (pricing and pricing.get("casualMains")) or str(pricing_source).startswith("a web search")
     needs_menu = guessed and not all(k in overrides for k in ("app", "casualMain", "premiumMain", "drink", "dessert"))
     set_output("needs_menu", "true" if needs_menu else "false")
+    set_output("prices_found", "true" if pricing and pricing.get("casualMains") else "false")  # false: only the typical defaults were saved
     warnings = price_sanity_warnings(app, casual_main, premium_main, drink, dessert, defaulted, estimated=guessed)
     set_output("needs_check", "true" if warnings else "false")
     final_coords = (venues[existing_idx] if existing_idx is not None else entry)["coords"]
