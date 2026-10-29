@@ -469,7 +469,7 @@
     .hint-brand { position: absolute; font-weight: 800; letter-spacing: 1px; white-space: pre; }
     .hint-brand span { display: inline-block; opacity: 0; animation-delay: calc(var(--i) * 0.05s); }
     /* On load the bar just reads "Search restaurants". After 10s the script adds .cycling and the 16s loop starts. */
-    .hint-text { position: absolute; color: #fff; opacity: 1; transition: opacity 0.3s ease; }
+    .hint-text { position: absolute; color: rgba(255, 255, 255, 0.8); opacity: 1; transition: opacity 0.3s ease; }
     .search-bar.cycling .hint-brand span { animation: hint-letter 16s ease-in-out infinite; animation-delay: calc(var(--i) * 0.05s); }
     .search-bar.cycling .hint-text { animation: hint-text 16s ease-in-out infinite; }
     @keyframes hint-letter {
@@ -494,7 +494,7 @@
     }
     @media (prefers-reduced-motion: reduce) {
       .search-hint { display: none; }
-      .search-input:not(:focus)::placeholder { color: #fff; }
+      .search-input:not(:focus)::placeholder { color: rgba(255, 255, 255, 0.8); }
     }
     /* Focused: the same glow a selected venue card has, in white; it dims back once the bar loses focus */
     .search-input { transition: box-shadow 0.2s ease, border-color 0.2s ease; }
