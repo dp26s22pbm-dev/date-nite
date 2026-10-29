@@ -2534,7 +2534,7 @@
       const total = cum[cum.length - 1];
       if (total < 1) return;
 
-      setCarRoute(path);
+      setCarRoute([...path, dest]); // the car stops short of the dot, but the trail still runs all the way to it
       carDriving = true;
       const driveTotal = total;
       let d = 0;
