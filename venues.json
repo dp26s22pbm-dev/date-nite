@@ -1276,5 +1276,85 @@
     "drink": 11.0,
     "dessert": 9.0,
     "tierColor": "#eab308"
+  },
+  {
+    "id": 79,
+    "name": "Lantern Pizza Co.",
+    "category": "Italian / Pizza",
+    "website": "http://lanternpizza.com/",
+    "coords": [
+      -88.020507,
+      41.808445
+    ],
+    "app": 13.5,
+    "casualMain": 21.0,
+    "premiumMain": 25.0,
+    "drink": 10.5,
+    "dessert": 15.0,
+    "tierColor": "#eab308"
+  },
+  {
+    "id": 80,
+    "name": "D'Capo's Gourmet Italian",
+    "category": "Italian",
+    "website": "http://dcaposdg.com/",
+    "coords": [
+      -88.037417,
+      41.793115
+    ],
+    "app": 6.0,
+    "casualMain": 12.0,
+    "premiumMain": 15.0,
+    "drink": 8.0,
+    "dessert": 6.0,
+    "tierColor": "#22c55e"
+  },
+  {
+    "id": 81,
+    "name": "Chama Ga\u00facha Brazilian Steakhouse - Chicago",
+    "category": "Brazilian Steakhouse",
+    "website": "https://www.chamagaucha.com/chicago",
+    "coords": [
+      -88.02621,
+      41.83241
+    ],
+    "app": 23.1,
+    "casualMain": 42.0,
+    "premiumMain": 69.95,
+    "drink": 21.0,
+    "dessert": 8.0,
+    "tierColor": "#ef4444"
+  },
+  {
+    "id": 82,
+    "name": "MISSION BBQ",
+    "category": "American BBQ",
+    "website": "http://mission-bbq.com/",
+    "coords": [
+      -88.025112,
+      41.834117
+    ],
+    "app": 3.54,
+    "casualMain": 9.99,
+    "premiumMain": 17.99,
+    "drink": 8.0,
+    "dessert": 8.0,
+    "tierColor": "#22c55e"
+  },
+  {
+    "id": 83,
+    "name": "The Foxtail",
+    "category": "Levantine",
+    "website": "http://www.thefoxtaildg.com/",
+    "coords": [
+      -88.00999,
+      41.791716
+    ],
+    "app": 17.0,
+    "casualMain": 20.0,
+    "premiumMain": 38.0,
+    "drink": 10.0,
+    "dessert": 8.0,
+    "tierColor": "#eab308"
   }
 ]
