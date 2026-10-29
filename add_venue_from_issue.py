@@ -581,6 +581,27 @@ def location_pages(page, site, hosts, where):
             pages.append(url)
     return list(dict.fromkeys(pages))[:3]
 
+IMG_TAG_RE = re.compile(r"(?is)<img\b[^>]*>")
+IMG_ATTR_RE = re.compile(r"(?is)(?<![\w-])(?:data-)?(?:lazy-)?src\s*=\s*[\"']([^\"']+)[\"']")
+IMG_ALT_RE = re.compile(r"(?is)(?<![\w-])alt\s*=\s*[\"']([^\"']*)[\"']")
+
+def menu_images_from_page(page, base_url):
+    """Menu pictures embedded on a page, by file name or alt text (Capri Sogno shows its whole dinner menu as one PNG
+    with no link to it). Returns image URLs, best first, for Gemini to read."""
+    page = re.sub(r"(?is)<script\b.*?</script>", "", page)
+    found = []
+    for tag in IMG_TAG_RE.findall(page):
+        alt = (IMG_ALT_RE.search(tag) or [None, ""])[1]
+        for src in IMG_ATTR_RE.findall(tag):
+            url = urllib.parse.urljoin(base_url, unescape(src).split("#")[0])
+            p = urllib.parse.urlparse(url)
+            text = (urllib.parse.unquote(p.path) + " " + alt).lower()
+            if (p.scheme in ("http", "https") and os.path.splitext(p.path.lower())[1] in IMAGE_TYPES
+                    and any(w in text for w in ("menu", "dinner", "food"))
+                    and not any(w in text for w in SKIP_MENU_WORDS)):
+                found.append((url, alt.lower()))
+    return [u for u, _ in sorted(dict.fromkeys(found), key=lambda c: -menu_link_score(*c))][:3]
+
 LOCATION_HUB_WORDS = ("location", "find-us", "findus", "restaurants", "local")
 
 def location_hubs(page, base_url, hosts):
@@ -699,6 +720,8 @@ def pricing_from_website_menu(site, where=""):
         if page:
             hosts = {_host(site), _host(url), _host(final)}
             links = [u for u, _ in sorted(dict.fromkeys(prefer_local_ordering(menu_links_from_page(page, final, hosts), where)), key=lambda c: -menu_link_score(*c))]
+            # A page that shows its menu as a picture has no prices to read as text; the picture goes first
+            links = menu_images_from_page(page, final) + links
             new = [u for u in links if u not in tried and u not in queue][:6]
             if new:
                 print(f"{url} has no prices; trying the menu links on it: {new}")
