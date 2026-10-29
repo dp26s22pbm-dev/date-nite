@@ -26,6 +26,15 @@ FIELDS = ",".join([
 
 COUNT = int(os.environ.get("VENUE_COUNT", "5"))
 MAX_PER_CUISINE = int(os.environ.get("MAX_PER_CUISINE", "2"))
+# National fast-food and fast-casual chains that never qualify. Higher-end fast casual (Shake Shack, Velvet Taco, local
+# taquerias) is allowed; a priced venue is dropped only when two people spend less than MIN_TOTAL_FOR_TWO on the
+# importer's standard order (appetizer, two mains, two drinks, dessert, plus tax and tip). A dropped venue is replaced by
+# the next-best candidate, up to MAX_PRICED venues priced per city.
+MIN_TOTAL_FOR_TWO = int(os.environ.get("MIN_TOTAL_FOR_TWO", "35"))
+MAX_PRICED = int(os.environ.get("MAX_PRICED", "10"))
+BLOCKED_CHAINS = re.compile(
+    r"\b(mcdonalds|burger king|wendys|chick fil a|chipotle|taco bell|subway|kfc|popeyes|arbys|sonic drive|"
+    r"panda express|qdoba|panera|jimmy johns|jersey mikes|dunkin|starbucks)\b", re.I)
 # A dinner place is open at DINNER_HOUR (24h clock) on at least DINNER_DAYS days of the week
 DINNER_HOUR = int(os.environ.get("DINNER_HOUR", "19"))
 DINNER_DAYS = int(os.environ.get("DINNER_DAYS", "3"))
@@ -154,6 +163,8 @@ def eligible(place, city_name, saved_names):
         return False
     if EXCLUDED_TYPES & set(place.get("types") or []) or place.get("primaryType") in EXCLUDED_TYPES:
         return False
+    if BLOCKED_CHAINS.search(re.sub(r"['\u2019]", "", name).replace("-", " ")):
+        return False
     # Places lists a golf course or hotel with a restaurant among its types; keep it only if eating is its main business
     primary = place.get("primaryType")
     if primary and "restaurant" not in primary and primary not in FOOD_PRIMARY_TYPES:
@@ -180,19 +191,18 @@ def rank(places):
         scored.append((p, v / (v + MIN_REVIEWS) * p["rating"] + MIN_REVIEWS / (v + MIN_REVIEWS) * mean))
     return sorted(scored, key=lambda s: s[1], reverse=True)
 
-def pick(ranked, count=COUNT, per_cuisine=MAX_PER_CUISINE):
-    """The first `count` of the ranked places, skipping any whose cuisine already has `per_cuisine` picks."""
-    chosen, used = [], {}
-    for place, score in ranked:
-        cuisine = cuisine_key(place)
-        if cuisine and used.get(cuisine, 0) >= per_cuisine:
-            continue
-        chosen.append((place, score))
-        if cuisine:
-            used[cuisine] = used.get(cuisine, 0) + 1
-        if len(chosen) == count:
-            break
-    return chosen
+def cap_reached(place, used, per_cuisine=MAX_PER_CUISINE):
+    """True when `per_cuisine` venues of this place's cuisine are already kept. Places with only a generic type never hit the cap."""
+    cuisine = cuisine_key(place)
+    return bool(cuisine) and used.get(cuisine, 0) >= per_cuisine
+
+def total_for_two(venue):
+    """The importer's standard order for two (appetizer, two mains, two drinks, dessert) with 30% tax and tip."""
+    return round((venue["app"] + venue["casualMain"] + venue["premiumMain"] + 2 * venue["drink"] + venue["dessert"]) * 1.30)
+
+def too_cheap(venue):
+    """True when a priced venue is so cheap (see MIN_TOTAL_FOR_TWO) that it is counter-service rather than a date spot."""
+    return total_for_two(venue) < MIN_TOTAL_FOR_TWO
 
 def issue_body(place):
     """The form text add_venue_from_issue.py reads. Coordinates and website come from Places; the cuisine label is
@@ -236,29 +246,46 @@ def main():
 
     places = search_city(city, api_key)
     candidates = [p for p in places if eligible(p, city_name, saved_names)]
-    chosen = pick(rank(candidates))
-    print(f"{len(places)} places found, {len(candidates)} eligible, {len(chosen)} chosen")
-    if not chosen:
+    ranked = rank(candidates)
+    print(f"{len(places)} places found, {len(candidates)} eligible")
+    if not ranked:
         set_output("count", 0)
         set_output("report", f"No restaurants in {city} qualified (open, with at least {MIN_REVIEWS} reviews, and not already on the map). "
                              "Check the spelling of the city and state.", multiline=True)
         return
 
-    sections, failed = [], 0
+    sections, skipped, failed, kept, used, priced = [], [], 0, 0, {}, 0
     with tempfile.TemporaryDirectory() as work_dir:
         # The importer numbers and checks new venues against this scratch copy; venues.json itself stays untouched
         venues_file = os.path.join(work_dir, "venues.json")
         with open(venues_file, "w") as f:
             json.dump(saved, f)
-        for rank_no, (place, score) in enumerate(chosen, 1):
+        for place, score in ranked:
+            if kept >= COUNT or priced >= MAX_PRICED:
+                break
+            if cap_reached(place, used):
+                continue
+            priced += 1
             name = place["displayName"]["text"]
-            print(f"\n=== {rank_no}. {name} (score {score:.2f}) ===")
-            outputs = add_venue(place, work_dir, rank_no, venues_file)
+            print(f"\n=== {name} (score {score:.2f}) ===")
+            outputs = add_venue(place, work_dir, priced, venues_file)
             if outputs.get("error") and not outputs.get("summary"):
                 failed += 1
-                sections.append(f"## {rank_no}. {name}\n\nCould not be added: {outputs['error']}")
+                skipped.append(f"- {name}: could not be added ({outputs['error']})")
                 continue
-            sections.append(f"## {rank_no}. {name}\n\nRanking score {score:.2f}\n\n{outputs.get('summary', '')}")
+            with open(venues_file) as f:
+                venues = json.load(f)
+            venue = venues[-1]
+            if too_cheap(venue):
+                with open(venues_file, "w") as f:
+                    json.dump(venues[:-1], f)
+                print(f"Dropped {name}: too cheap (about ${total_for_two(venue)} for two)")
+                skipped.append(f"- {name}: too cheap for a date spot (about ${total_for_two(venue)} for two)")
+                continue
+            kept += 1
+            if cuisine_key(place):
+                used[cuisine_key(place)] = used.get(cuisine_key(place), 0) + 1
+            sections.append(f"## {kept}. {name}\n\nRanking score {score:.2f}\n\n{outputs.get('summary', '')}")
 
         with open(venues_file) as f:
             added = json.load(f)[len(saved):]
@@ -275,11 +302,13 @@ def main():
     set_output("pending_file", pending_file)
     set_output("count", len(added))  # the workflow opens a pull request only when something was added
 
-    intro = (f"Top {len(chosen)} restaurants for {city}, ranked by Google rating weighted by review count "
-             f"(at least {MIN_REVIEWS} reviews, at most {MAX_PER_CUISINE} of one cuisine). Ratings were used only for the ranking and are not saved.\n\n"
+    intro = (f"Top {len(added)} restaurants for {city}, ranked by Google rating weighted by review count "
+             f"(at least {MIN_REVIEWS} reviews, at most {MAX_PER_CUISINE} of one cuisine, no national fast-food chains, nothing under ${MIN_TOTAL_FOR_TWO} for two). "
+             "Ratings were used only for the ranking and are not saved.\n\n"
              f"Review the prices and pins below before merging. The venues are in `{pending_file}`; delete an entry there to drop it. "
              "They get their ids and join `venues.json` automatically after the merge.")
-    set_output("report", intro + "\n\n" + "\n\n".join(sections), multiline=True)
+    tail = ("\n\n## Skipped\n\n" + "\n".join(skipped)) if skipped else ""
+    set_output("report", intro + "\n\n" + "\n\n".join(sections) + tail, multiline=True)
 
 if __name__ == "__main__":
     main()
