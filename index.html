@@ -291,12 +291,7 @@
     @media (prefers-reduced-motion: reduce) {
       .maplibregl-popup { transition: none; }
     }
-    /* Slow swell and ebb of the white halo, so it reads as light radiating out from the card; no flashing */
-    @keyframes popup-glow {
-      0%, 100% { box-shadow: 0 0 3px 1px rgba(255, 255, 255, 0.85), 0 0 8px rgba(255, 255, 255, 0.5), 0 0 16px rgba(255, 255, 255, 0.2), 0 16px 36px rgba(0, 0, 0, 0.7); }
-      50% { box-shadow: 0 0 6px 1px rgba(255, 255, 255, 0.85), 0 0 30px rgba(255, 255, 255, 0.45), 0 0 72px rgba(255, 255, 255, 0.22), 0 16px 36px rgba(0, 0, 0, 0.7); }
-    }
-    /* The glow animates on a pseudo-element so the card's text isn't re-rasterized every frame, which left it soft */
+    /* Steady white glow, a bit longer than the focused search bar's (14px); on a pseudo-element so the card's text stays crisp */
     .maplibregl-popup-content::before {
       content: '';
       position: absolute;
@@ -304,7 +299,7 @@
       border-radius: 14px;
       pointer-events: none;
       z-index: -1;
-      animation: popup-glow 2.6s ease-in-out infinite;
+      box-shadow: 0 0 20px rgba(255, 255, 255, 0.55), 0 16px 36px rgba(0, 0, 0, 0.7);
     }
     .maplibregl-popup-content {
       background: #252b33 !important;
@@ -313,7 +308,7 @@
       padding: 16px !important;
       color: #f0f6fc !important;
       border-color: #fff !important; /* full white, like the focused search bar */
-      /* The glow breathes outward and back on ::before, see popup-glow */
+      /* The glow is drawn on ::before */
       box-shadow: none !important;
       isolation: isolate;
       -webkit-font-smoothing: antialiased;
@@ -324,7 +319,6 @@
       width: 300px;
       max-width: calc(100vw - 32px);
     }
-    @media (prefers-reduced-motion: reduce) { .maplibregl-popup-content::before { animation: none; box-shadow: 0 0 3px 1px rgba(255, 255, 255, 0.85), 0 0 8px rgba(255, 255, 255, 0.5), 0 0 16px rgba(255, 255, 255, 0.2), 0 16px 36px rgba(0, 0, 0, 0.7); } }
     .maplibregl-popup-tip {
       display: block !important;
       width: 14px !important;
