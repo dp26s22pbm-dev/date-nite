@@ -882,8 +882,8 @@
       visibility: hidden;
       transition: opacity 0.25s ease, visibility 0s linear 0.25s;
     }
-    /* Until the first render has put cards in the strip, the list stays invisible (and the round buttons stay at rest) */
-    .venue-list.loading { opacity: 0; visibility: hidden; transition: none; }
+    /* Until the first render has put cards in the strip, the list stays invisible (and the round buttons stay at rest), then fades in */
+    .venue-list.loading { opacity: 0; visibility: hidden; } /* removing the class lets the normal 0.25s fade run */
     @media (prefers-reduced-motion: reduce) {
       .venue-list, .venue-list.hidden { transition: none; }
     }
