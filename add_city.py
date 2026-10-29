@@ -17,11 +17,18 @@ import places_usage
 PLACES_URL = "https://places.googleapis.com/v1/places:searchText"
 FIELDS = ",".join([
     "places.displayName", "places.formattedAddress", "places.location", "places.websiteUri", "places.rating",
-    "places.userRatingCount", "places.businessStatus", "places.primaryType", "places.types", "nextPageToken",
+    "places.userRatingCount", "places.businessStatus", "places.primaryType", "places.types", "places.regularOpeningHours",
+    "nextPageToken",
 ])
 
 COUNT = int(os.environ.get("VENUE_COUNT", "5"))
 MAX_PER_CUISINE = int(os.environ.get("MAX_PER_CUISINE", "2"))
+# A dinner place is open at DINNER_HOUR (24h clock) on at least DINNER_DAYS days of the week
+DINNER_HOUR = int(os.environ.get("DINNER_HOUR", "19"))
+DINNER_DAYS = int(os.environ.get("DINNER_DAYS", "3"))
+BREAKFAST_TYPES = {"breakfast_restaurant", "brunch_restaurant"}
+BREAKFAST_NAME = re.compile(r"\b(breakfast|brunch|pancakes?|waffles?|omelet|omelette|bagels?)\b", re.I)
+
 # Places returns 20 results per page and at most 3 pages; each page is one billed request
 MAX_PAGES = int(os.environ.get("MAX_PAGES", "3"))
 # A rating from a handful of reviews says little: the weighted score pulls such places toward the city average
@@ -97,6 +104,32 @@ def cuisine_key(place):
         return primary
     return None
 
+def serves_dinner(place):
+    """True when the place is open at DINNER_HOUR on at least DINNER_DAYS days a week, False when it is not, and None
+    when Places gives no opening hours (the caller then relies on the place types and name alone)."""
+    periods = (place.get("regularOpeningHours") or {}).get("periods")
+    if not periods:
+        return None
+    week = 7 * 1440
+    spans = []
+    for period in periods:
+        opened = period.get("open") or {}
+        if "day" not in opened:
+            continue
+        start = opened["day"] * 1440 + opened.get("hour", 0) * 60 + opened.get("minute", 0)
+        closed = period.get("close")
+        if not closed:  # open around the clock
+            return True
+        end = closed["day"] * 1440 + closed.get("hour", 0) * 60 + closed.get("minute", 0)
+        spans.append((start, end if end > start else end + week))
+    days = 0
+    for day in range(7):
+        moment = day * 1440 + DINNER_HOUR * 60
+        # a period that runs past Saturday night wraps into the next week
+        if any(s <= moment < e or s <= moment + week < e for s, e in spans):
+            days += 1
+    return days >= DINNER_DAYS
+
 def eligible(place, city_name, saved_names):
     loc = place.get("location") or {}
     name = (place.get("displayName") or {}).get("text", "")
@@ -109,6 +142,11 @@ def eligible(place, city_name, saved_names):
     # Places lists a golf course or hotel with a restaurant among its types; keep it only if eating is its main business
     primary = place.get("primaryType")
     if primary and "restaurant" not in primary and primary not in FOOD_PRIMARY_TYPES:
+        return False
+    # Breakfast and brunch places: by type, by name, or because they close before dinner
+    if BREAKFAST_TYPES & set(place.get("types") or []) or place.get("primaryType") in BREAKFAST_TYPES:
+        return False
+    if BREAKFAST_NAME.search(name) or serves_dinner(place) is False:
         return False
     # The search can spill into neighbouring towns; the formatted address names the city
     if city_name.lower() not in (place.get("formattedAddress") or "").lower():
