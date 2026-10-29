@@ -1276,5 +1276,85 @@
     "drink": 11.0,
     "dessert": 9.0,
     "tierColor": "#eab308"
+  },
+  {
+    "id": 79,
+    "name": "McWethy's Tavern",
+    "category": "Casual American",
+    "website": "https://www.mcwethystavern.com/",
+    "coords": [
+      -88.143343,
+      41.595394
+    ],
+    "app": 13.0,
+    "casualMain": 18.5,
+    "premiumMain": 38.0,
+    "drink": 14.5,
+    "dessert": 11.0,
+    "tierColor": "#eab308"
+  },
+  {
+    "id": 80,
+    "name": "White Fence Farm Main Restaurant",
+    "category": "American",
+    "website": "http://whitefencefarm-il.com/",
+    "coords": [
+      -88.057258,
+      41.675859
+    ],
+    "app": 6.21,
+    "casualMain": 24.79,
+    "premiumMain": 43.81,
+    "drink": 13.67,
+    "dessert": 6.84,
+    "tierColor": "#eab308"
+  },
+  {
+    "id": 81,
+    "name": "Wing Snob",
+    "category": "Casual American",
+    "website": "https://locations.wingsnob.com/locations/il/romeoville/482-n-weber-rd",
+    "coords": [
+      -88.125297,
+      41.641314
+    ],
+    "app": 4.79,
+    "casualMain": 10.96,
+    "premiumMain": 17.89,
+    "drink": 8.0,
+    "dessert": 8.0,
+    "tierColor": "#22c55e"
+  },
+  {
+    "id": 82,
+    "name": "Thaiway Thai Cuisine",
+    "category": "Thai Cuisine",
+    "website": "https://thaiwayromeovilleil.com/",
+    "coords": [
+      -88.123763,
+      41.641923
+    ],
+    "app": 7.95,
+    "casualMain": 17.45,
+    "premiumMain": 27.45,
+    "drink": 8.72,
+    "dessert": 8.0,
+    "tierColor": "#eab308"
+  },
+  {
+    "id": 83,
+    "name": "Sushi Train Japanese Restaurant",
+    "category": "Japanese Cuisine",
+    "website": "https://www.thesushitrain.com/",
+    "coords": [
+      -88.125917,
+      41.621596
+    ],
+    "app": 6.95,
+    "casualMain": 13.95,
+    "premiumMain": 28.45,
+    "drink": 8.0,
+    "dessert": 5.95,
+    "tierColor": "#22c55e"
   }
 ]
