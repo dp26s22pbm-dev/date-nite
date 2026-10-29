@@ -28,6 +28,8 @@ MIN_REVIEWS = int(os.environ.get("MIN_REVIEWS", "100"))
 EXCLUDED_TYPES = {"fast_food_restaurant", "coffee_shop", "cafe", "bakery", "ice_cream_shop", "meal_takeaway",
                   "convenience_store", "grocery_store", "gas_station"}
 # Types too broad to say what the cuisine is; such a place never counts against the per-cuisine cap
+# Primary types that are not named "..._restaurant" but are still places to eat
+FOOD_PRIMARY_TYPES = {"steak_house", "bar_and_grill", "pub", "gastropub", "brewpub", "wine_bar", "diner", "buffet"}
 GENERIC_TYPES = {"restaurant", "food", "establishment", "point_of_interest", "bar_and_grill", "bar", "meal_delivery"}
 
 def name_key(name):
@@ -93,6 +95,10 @@ def eligible(place, city_name, saved_names):
         return False
     if EXCLUDED_TYPES & set(place.get("types") or []) or place.get("primaryType") in EXCLUDED_TYPES:
         return False
+    # Places lists a golf course or hotel with a restaurant among its types; keep it only if eating is its main business
+    primary = place.get("primaryType")
+    if primary and "restaurant" not in primary and primary not in FOOD_PRIMARY_TYPES:
+        return False
     # The search can spill into neighbouring towns; the formatted address names the city
     if city_name.lower() not in (place.get("formattedAddress") or "").lower():
         return False
@@ -136,12 +142,13 @@ def issue_body(place):
     ]
     return "\n\n".join(f"### {label}\n\n{value or '_No response_'}" for label, value in fields)
 
-def add_venue(place, work_dir):
-    """Run the importer for one place. Returns its outputs dict (venue_name, summary, needs_menu, ...) or None on failure."""
-    out_path = os.path.join(work_dir, "output.txt")
+def add_venue(place, work_dir, number):
+    """Run the importer for one place. Returns its outputs dict (venue_name, summary, needs_menu, ...), or {"error": ...} on failure."""
+    out_path = os.path.join(work_dir, f"output-{number}.txt")
     open(out_path, "w").close()
+    # The importer reuses the prices in this file when it finds one, so every venue needs a file of its own
     env = {**os.environ, "ISSUE_BODY": issue_body(place), "ISSUE_TITLE": "", "GITHUB_OUTPUT": out_path,
-           "PRICING_CACHE_FILE": os.path.join(work_dir, "pricing.json")}
+           "PRICING_CACHE_FILE": os.path.join(work_dir, f"pricing-{number}.json")}
     here = os.path.dirname(os.path.abspath(__file__))
     result = subprocess.run([sys.executable, os.path.join(here, "add_venue_from_issue.py")], env=env)
     outputs = read_outputs(out_path)
@@ -176,7 +183,7 @@ def main():
         for rank_no, (place, score) in enumerate(chosen, 1):
             name = place["displayName"]["text"]
             print(f"\n=== {rank_no}. {name} (score {score:.2f}) ===")
-            outputs = add_venue(place, work_dir)
+            outputs = add_venue(place, work_dir, rank_no)
             if outputs.get("error") and not outputs.get("summary"):
                 failed += 1
                 sections.append(f"## {rank_no}. {name}\n\nCould not be added: {outputs['error']}")
