@@ -10,6 +10,9 @@ import json
 import subprocess
 import tempfile
 import urllib.request
+import urllib.error
+
+import places_usage
 
 PLACES_URL = "https://places.googleapis.com/v1/places:searchText"
 FIELDS = ",".join([
@@ -71,8 +74,16 @@ def search_city(city, api_key):
             payload["pageToken"] = token
         req = urllib.request.Request(PLACES_URL, data=json.dumps(payload).encode(), headers={
             "Content-Type": "application/json", "X-Goog-Api-Key": api_key, "X-Goog-FieldMask": FIELDS})
-        with urllib.request.urlopen(req, timeout=30) as resp:
-            data = json.load(resp)
+        try:
+            with urllib.request.urlopen(req, timeout=30) as resp:
+                data = json.load(resp)
+        except urllib.error.HTTPError as e:
+            places_usage.record(FIELDS, e.code)
+            raise
+        except Exception:
+            places_usage.record(FIELDS, 0)
+            raise
+        places_usage.record(FIELDS, 200)
         places += data.get("places") or []
         token = data.get("nextPageToken")
         if not token:

@@ -8,6 +8,7 @@ import statistics
 import urllib.request
 import urllib.parse
 from html import unescape
+import places_usage
 from google import genai
 from google.genai import types
 
@@ -942,6 +943,7 @@ def find_website_via_gemini(name, where):
 # Set when Google says the day's Places quota is used up: every further lookup would fail the same way
 places_quota_spent = False
 PLACES_URL = "https://places.googleapis.com/v1/places:searchText"
+PLACES_FIELDS = "places.displayName,places.formattedAddress,places.location,places.websiteUri"
 # Centered on Naperville; only a bias, so a more exact match elsewhere still wins
 PLACES_BIAS = {"circle": {"center": {"latitude": 41.75, "longitude": -88.15}, "radius": 30000.0}}
 
@@ -964,15 +966,17 @@ def places_lookup(name, where):
     req = urllib.request.Request(PLACES_URL, data=body, headers={
         "Content-Type": "application/json",
         "X-Goog-Api-Key": key,
-        "X-Goog-FieldMask": "places.displayName,places.formattedAddress,places.location,places.websiteUri",
+        "X-Goog-FieldMask": PLACES_FIELDS,
     })
     places = None
     for attempt in range(4):
         try:
             with urllib.request.urlopen(req, timeout=20) as resp:
                 places = json.load(resp).get("places") or []
+            places_usage.record(PLACES_FIELDS, 200)
             break
         except urllib.error.HTTPError as e:
+            places_usage.record(PLACES_FIELDS, e.code)
             # Google explains a refusal in the body (which quota, which limit); the status line alone does not
             try:
                 detail = e.read().decode("utf-8", "ignore").strip().replace("\n", " ")[:400]
@@ -991,6 +995,7 @@ def places_lookup(name, where):
             print(f"Places API lookup failed: {e}: {detail}")
             return None
         except Exception as e:
+            places_usage.record(PLACES_FIELDS, 0)
             print(f"Places API lookup failed: {e}")
             return None
     tokens = [t for t in re.findall(r"[a-z0-9]+", name.lower()) if t not in NAME_STOPWORDS]
