@@ -1318,12 +1318,19 @@ def main():
         if not menu_override:
             lines += ["", "If they are wrong, reply with the menu text (open the venue's menu page, select all, copy, paste) "
                           "and I will update them. If they are fine, close this issue."]
-    if neighbors:
-        listed = ", ".join(f"{n} ({m} m)" for n, m in neighbors)
-        lines += ["", "### 📍 Check the pin", "",
-                  f"{len(neighbors)} saved venue(s) sit within {NEARBY_VENUE_M} m, which may share a building or strip mall: {listed}. "
-                  "If they do, confirm the pin lines up with theirs."]
-    if not (needs_menu or warnings or neighbors):
+    # An address-level pin is a guess; so is any pin placed while Google's Places API could not be asked (daily quota spent)
+    pin_guessed = not coords_exact and not (existing_idx is not None and venues[existing_idx].get("coords"))
+    if neighbors or pin_guessed:
+        lines += ["", "### 📍 Check the pin", ""]
+        if pin_guessed:
+            why = ("Google's Places API ran out of lookups for today, so the pin was placed from the address instead of the Maps listing. "
+                   if places_quota_spent else "No exact Maps location was found, so the pin was placed from the address. ")
+            lines.append(why + "Open the map and confirm it sits on the restaurant, or send a share link of the place's page to fix it.")
+        if neighbors:
+            listed = ", ".join(f"{n} ({m} m)" for n, m in neighbors)
+            lines.append(f"{len(neighbors)} saved venue(s) sit within {NEARBY_VENUE_M} m, which may share a building or strip mall: {listed}. "
+                         "If they do, confirm the pin lines up with theirs.")
+    if not (needs_menu or warnings or neighbors or pin_guessed):
         lines += ["", "Nothing else is needed. Closing this issue."]
     experiment = maps_tool_experiment(name, place_text or address, final_coords)
     if experiment:
