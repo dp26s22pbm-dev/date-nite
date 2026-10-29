@@ -35,7 +35,9 @@ jobs:
           # Another run (or a venue added from an issue) may push first; start over from the new main and fold again
           for attempt in 1 2 3 4 5 6; do
             python fold_pending_venues.py
-            git add -A venues.json pending-venues
+            git add -A venues.json
+            # The folder is gone when an earlier run already folded everything; that is not an error
+            git add -A pending-venues 2>/dev/null || true
             git diff --cached --quiet && exit 0
             git commit -m "Add venues from pending-venues"
             git push && exit 0
