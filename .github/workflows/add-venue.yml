@@ -141,4 +141,6 @@ jobs:
       # Runners are wiped after each run, so the Places request log is saved to the places-usage branch
       - name: Save the Places request log
         if: always()
+        env:
+          GH_TOKEN: ${{ github.token }}
         run: python places_usage.py publish || true

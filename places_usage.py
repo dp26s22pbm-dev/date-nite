@@ -12,6 +12,7 @@ import os
 import sys
 import json
 import subprocess
+import math
 import tempfile
 import datetime
 from zoneinfo import ZoneInfo
@@ -26,6 +27,9 @@ DAILY_LIMIT = int(os.environ.get("PLACES_DAILY_LIMIT", "500"))
 # Check these tiers and the monthly free allowances below against Google's current pricing page; they have changed before.
 ENTERPRISE_FIELDS = {"places.websiteUri", "places.rating", "places.userRatingCount", "places.nationalPhoneNumber",
                      "places.internationalPhoneNumber", "places.regularOpeningHours", "places.priceLevel"}
+# Fractions of the daily limit that post a comment on the "Places usage alerts" issue when a run first crosses them
+ALERT_AT = (0.5, 0.9)
+ALERT_ISSUE = "Places usage alerts"
 FREE_MONTHLY = {"Text Search Pro": 5000, "Text Search Enterprise": 1000}
 
 def log_path():
@@ -48,6 +52,44 @@ def record(field_mask, status, query):
             f.write(json.dumps(entry) + "\n")
     except Exception as e:
         print(f"Could not log the Places request: {e}")
+
+def billed_today(lines):
+    """How many of these log lines are requests Google answered today (Pacific time)."""
+    today = datetime.datetime.now(PACIFIC).date()
+    count = 0
+    for line in lines:
+        try:
+            e = json.loads(line)
+            if e["status"] == 200 and datetime.datetime.fromisoformat(e["t"]).astimezone(PACIFIC).date() == today:
+                count += 1
+        except (ValueError, KeyError):
+            continue
+    return count
+
+def alert(before, after):
+    """Comment on the standing alert issue (opened if missing) when the day's count crossed 50% or 90% of the limit.
+    GitHub then notifies the repository owner by email and in the app. Never raises."""
+    crossed = [f for f in ALERT_AT if before < math.ceil(DAILY_LIMIT * f) <= after]
+    if not crossed:
+        return
+    try:
+        owner = os.environ.get("GITHUB_REPOSITORY_OWNER", "")
+        level = f"{round(max(crossed) * 100)}%"
+        body = (f"@{owner} " if owner else "") + (f"Google Places use passed {level} of today's budget: {after} of {DAILY_LIMIT} "
+                f"requests used, {max(DAILY_LIMIT - after, 0)} left. The day resets at midnight Pacific time. "
+                f"Details: {os.environ.get('GITHUB_SERVER_URL', 'https://github.com')}/{os.environ.get('GITHUB_REPOSITORY', '')}/actions/workflows/places-usage.yml")
+        found = subprocess.run(["gh", "issue", "list", "--state", "open", "--search", f'"{ALERT_ISSUE}" in:title',
+                                "--json", "number,title", "--limit", "10"], capture_output=True, text=True)
+        number = next((i["number"] for i in json.loads(found.stdout or "[]") if i["title"] == ALERT_ISSUE), None)
+        if number is None:
+            made = subprocess.run(["gh", "issue", "create", "--title", ALERT_ISSUE, "--body",
+                                   "Each comment here is a warning that the day's Google Places use passed 50% or 90% of its budget. "
+                                   "Subscribe to this issue to be notified."], capture_output=True, text=True, check=True)
+            number = made.stdout.strip().rsplit("/", 1)[-1]
+        subprocess.run(["gh", "issue", "comment", str(number), "--body", body], capture_output=True, text=True, check=True)
+        print(f"Posted the {level} Places usage alert on issue {number}.")
+    except Exception as e:
+        print(f"Could not post the Places usage alert: {e}")
 
 def git(*args, cwd=None):
     return subprocess.run(["git", *args], cwd=cwd, capture_output=True, text=True)
@@ -72,7 +114,12 @@ def publish():
             # First use: start a history of its own, holding nothing but the log
             git("checkout", "--orphan", BRANCH, cwd=work)
             git("rm", "-rf", "--quiet", ".", cwd=work)
-        with open(os.path.join(work, DATA_FILE), "a") as f:
+        data_path = os.path.join(work, DATA_FILE)
+        before = 0
+        if os.path.exists(data_path):
+            with open(data_path) as f:
+                before = billed_today(f.read().splitlines())
+        with open(data_path, "a") as f:
             f.write("\n".join(lines) + "\n")
         git("add", DATA_FILE, cwd=work)
         message = f"Log {len(lines)} Places request(s) from run {os.environ.get('GITHUB_RUN_ID', 'local')}"
@@ -82,6 +129,7 @@ def publish():
                 os.remove(path)
                 git("worktree", "remove", "--force", work)
                 print(f"Logged {len(lines)} Places request(s) to the {BRANCH} branch.")
+                alert(before, before + billed_today(lines))
                 return
             print(f"Push rejected (attempt {attempt}): {pushed.stderr.strip()[-200:]}")
         git("worktree", "remove", "--force", work)
