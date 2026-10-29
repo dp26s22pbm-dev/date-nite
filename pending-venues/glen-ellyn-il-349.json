@@ -45,21 +45,6 @@
     "tierColor": "#22c55e"
   },
   {
-    "name": "Wingstop",
-    "category": "American",
-    "website": "https://www.wingstop.com/location/wingstop-1770-glen-ellyn-il-60137/menu?y_source=1_NTUyMDcyMDUtNzE1LWxvY2F0aW9uLndlYnNpdGU%3D",
-    "coords": [
-      -88.059778,
-      41.859095
-    ],
-    "app": 5.09,
-    "casualMain": 9.49,
-    "premiumMain": 17.64,
-    "drink": 8.0,
-    "dessert": 2.79,
-    "tierColor": "#22c55e"
-  },
-  {
     "name": "Nemec Brother\u2019s Pizzeria",
     "category": "Italian / Pizza",
     "website": "https://nemecbrothers.com/",
