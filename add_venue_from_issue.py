@@ -996,8 +996,10 @@ def maps_tool_experiment(name, where, saved_coords):
 # Highest plausible dine-in price per category. Catering trays and per-pan prices land far above these.
 PRICE_CEILINGS = {"appetizer": 35, "casual main": 65, "premium main": 120, "drink": 25, "dessert": 25}
 
-def price_sanity_warnings(app, casual, premium, drink, dessert, defaulted=()):
-    """Reasons the saved prices may be off. A venue with any of these is left open for a second look."""
+def price_sanity_warnings(app, casual, premium, drink, dessert, defaulted=(), estimated=False):
+    """Reasons the saved prices may be off. A venue with any of these is left open for a second look. Prices from a
+    web search or defaults (estimated) get the lunch-price check; a menu read from the restaurant's own site, a PDF or
+    a paste is not second-guessed for a premium main close to the casual main (pizza and bar menus top out there)."""
     warnings = []
     for label, value in (("appetizer", app), ("casual main", casual), ("premium main", premium), ("drink", drink), ("dessert", dessert)):
         if value > PRICE_CEILINGS[label]:
@@ -1005,8 +1007,8 @@ def price_sanity_warnings(app, casual, premium, drink, dessert, defaulted=()):
                             "party-package prices were read")
     if defaulted:
         warnings.append("no menu price was found for the " + ", ".join(defaulted) + ", so a typical stand-in was saved")
-    if premium < casual * 1.5:
-        warnings.append(f"the premium main (${premium}) is within 50% of the casual main (${casual}), which often means "
+    if estimated and premium < casual * 1.25:
+        warnings.append(f"the premium main (${premium}) is within 25% of the casual main (${casual}), which often means "
                         "lunch or combo prices were read")
     for label, value in (("appetizer", app), ("drink", drink), ("dessert", dessert)):
         if value > casual * 1.1:
@@ -1321,7 +1323,7 @@ def main():
     guessed = not (pricing and pricing.get("casualMains")) or str(pricing_source).startswith("a web search")
     needs_menu = guessed and not all(k in overrides for k in ("app", "casualMain", "premiumMain", "drink", "dessert"))
     set_output("needs_menu", "true" if needs_menu else "false")
-    warnings = price_sanity_warnings(app, casual_main, premium_main, drink, dessert, defaulted)
+    warnings = price_sanity_warnings(app, casual_main, premium_main, drink, dessert, defaulted, estimated=guessed)
     set_output("needs_check", "true" if warnings else "false")
     final_coords = (venues[existing_idx] if existing_idx is not None else entry)["coords"]
     neighbors = nearby_venues(venues[existing_idx]["id"] if existing_idx is not None else entry["id"], final_coords, venues)
