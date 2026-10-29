@@ -514,12 +514,17 @@ MENU_PATHS = ("/menu", "/menus", "/our-menu", "/food-menu", "/food", "/dinner", 
 
 # Links to these are never the dinner menu. Catering and party menus carry tray prices, so reading one gives prices
 # several times too high.
-SKIP_MENU_WORDS = ("get.popmenu.com", "levelaccess.com", "/items/", "/item/", "catering", "kids", "kid-", "party", "banquet", "private", "gift", "event", "brunch", "lunch", "happy")
+SKIP_MENU_WORDS = ("get.popmenu.com", "levelaccess.com", "/items/", "/item/", "catering", "kids", "kid-", "party", "banquet", "private", "gift", "event")
+# A file name often says "lunch" for the restaurant's one menu (NWB's only menu link is nwb_..._lunch_menu_....pdf), so
+# these links go to the back of the queue instead of being dropped. The prompt tells Gemini to ignore lunch-only prices.
+SOFT_MENU_WORDS = ("brunch", "lunch", "happy")
 
 def menu_link_score(url, label=""):
-    """Rank a candidate menu link: dinner menus first, drink-only menus last."""
+    """Rank a candidate menu link: dinner menus first, drink-only and lunch-named menus last."""
     text = (url + " " + label).lower()
-    return (3 if "dinner" in text else 0) + (1 if "menu" in text else 0) - (2 if any(w in text for w in ("bar", "drink", "wine", "beer", "cocktail")) else 0)
+    return ((3 if "dinner" in text else 0) + (1 if "menu" in text else 0)
+            - (2 if any(w in text for w in ("bar", "drink", "wine", "beer", "cocktail")) else 0)
+            - (3 if any(w in text for w in SOFT_MENU_WORDS) else 0))
 
 # Chain sites open on a city picker whose menu sits a level down (/chicago/menu). Links to these are not location pages.
 LOCATION_SKIP_WORDS = ("site-map", "sitemap", "accessibility", "privacy", "terms", "career", "job", "press", "contact",
