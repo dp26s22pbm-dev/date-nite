@@ -1648,12 +1648,19 @@
         if (labelled) selectVenue(labelled.id);
       });
 
+      // A tap makes the browser fire an emulated mousemove just before the click. That is not a hover, and its label
+      // would flash (and linger) as the venue card opens.
+      let lastTouchAt = -Infinity;
+      map.getCanvas().addEventListener('touchstart', () => { lastTouchAt = performance.now(); }, { passive: true });
+      map.getCanvas().addEventListener('touchend', () => { lastTouchAt = performance.now(); }, { passive: true });
+
       map.on('mousemove', (e) => {
         const hits = venuesUnderPoint(e.point);
         const crowded = hits.length > 1 && map.getZoom() < CROWD_MAX_ZOOM - 0.5;
         const overLabel = hits.length === 0 && venueUnderLabel(e.point) !== null;
+        const fromTouch = performance.now() - lastTouchAt < 800;
         map.getCanvas().style.cursor = crowded ? 'zoom-in' : (hits.length > 0 || overLabel ? 'pointer' : '');
-        if (hits.length > 0 && !crowded && !map.isMoving()) showDotLabel(hits[0].venue);
+        if (hits.length > 0 && !crowded && !fromTouch && !map.isMoving()) showDotLabel(hits[0].venue);
         else hideDotLabel();
       });
       map.getCanvas().addEventListener('mouseleave', hideDotLabel);
