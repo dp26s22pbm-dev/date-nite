@@ -884,7 +884,14 @@
     }
     /* Until the first render has put cards in the strip, the list stays invisible (and the round buttons stay at rest), then fades in */
     .venue-list.loading { opacity: 0; visibility: hidden; } /* removing the class lets the normal 0.25s fade run */
+    /* The rest of the interface waits for the same moment, then fades in with the strip */
+    .search-bar { transition: opacity 0.25s ease; }
+    body.app-loading :is(.left-rail, .right-rail, .search-bar, .car-btn, .zoom-btn, .list-btn, .cost-btn, .audio-btn) {
+      opacity: 0 !important;
+      pointer-events: none !important;
+    }
     @media (prefers-reduced-motion: reduce) {
+      .search-bar { transition: none; }
       .venue-list, .venue-list.hidden { transition: none; }
     }
     /* App name and build number, bottom left under the card strip (attribution sits bottom right) */
@@ -1050,7 +1057,7 @@
   <meta name="twitter:description" content="Find your next great date spot on the map." />
   <meta name="twitter:image" content="https://datenite.us/og-image.png" />
 </head>
-<body>
+<body class="app-loading">
 
   <!-- Map Base Container -->
   <div id="map"></div>
@@ -1833,6 +1840,12 @@
     }
     if (window.ResizeObserver) new ResizeObserver(updateButtonLift).observe(listEl);
     updateButtonLift();
+    // If the venues never load, don't leave the interface hidden: reveal everything after a few seconds regardless
+    setTimeout(() => {
+      document.body.classList.remove('app-loading');
+      listEl.classList.remove('loading');
+      updateButtonLift();
+    }, 5000);
 
     function setListSort(mode) {
       // Without a location fix, proximity can't sort anything: ask for location again instead
@@ -1895,6 +1908,7 @@
       updateListFade();
       if (rawVenues.length && listEl.classList.contains('loading')) {
         listEl.classList.remove('loading');
+        document.body.classList.remove('app-loading');
         updateButtonLift();
       }
     }
