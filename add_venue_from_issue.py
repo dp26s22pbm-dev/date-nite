@@ -550,6 +550,18 @@ def menu_links_from_page(page, base_url, hosts):
             found.append((url, text))
     return found
 
+def prefer_local_ordering(links, where):
+    """Ordering-platform links often come one per location (NWB lists Toast pages "for Lisle" and "for Plainfield").
+    When one of them names this venue's city, drop the other ordering links so another location's menu is not read."""
+    if not where:
+        return links
+    _, cities = local_markers(where)
+    ordering = [l for l in links if any(h in urllib.parse.urlparse(l[0]).netloc.lower() for h in ORDERING_HOSTS)]
+    local = [l for l in ordering if any(c in (l[0] + " " + l[1]).lower() for c in cities)]
+    if not local:
+        return links
+    return [l for l in links if l not in ordering or l in local]
+
 def location_pages(page, site, hosts, where):
     """Links on the home page to the page for this venue's own city (not another city's), from the venue's address."""
     _, cities = local_markers(where)
@@ -586,7 +598,7 @@ def menu_page_candidates(site, where=""):
                     loc_page, loc_final = got
                     found += menu_links_from_page(loc_page, loc_final, hosts | {_host(loc_final)})
                 locations.append(loc.rstrip("/") + "/menu")
-    found = [u for u, _ in sorted(dict.fromkeys(found), key=lambda c: -menu_link_score(*c))]
+    found = [u for u, _ in sorted(dict.fromkeys(prefer_local_ordering(found, where)), key=lambda c: -menu_link_score(*c))]
     found += locations
     for path in MENU_PATHS:
         found.append(f"{parsed.scheme}://{parsed.netloc}{path}")
@@ -633,7 +645,7 @@ def pricing_from_website_menu(site, where=""):
         page, final = RENDERED_HTML.get(url) or ((html, url) if html else (None, None))
         if page:
             hosts = {_host(site), _host(url), _host(final)}
-            links = [u for u, _ in sorted(dict.fromkeys(menu_links_from_page(page, final, hosts)), key=lambda c: -menu_link_score(*c))]
+            links = [u for u, _ in sorted(dict.fromkeys(prefer_local_ordering(menu_links_from_page(page, final, hosts), where)), key=lambda c: -menu_link_score(*c))]
             new = [u for u in links if u not in tried and u not in queue][:6]
             if new:
                 print(f"{url} has no prices; trying the menu links on it: {new}")
