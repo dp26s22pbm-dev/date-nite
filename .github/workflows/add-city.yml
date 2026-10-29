@@ -1,7 +1,8 @@
 name: Add City on Issue
 
 # The Add a City form names a city. The top restaurants there are looked up on Google Places, added with the same
-# importer the Add Venue form uses, and committed to a branch; a pull request opens for review instead of changing main.
+# importer the Add Venue form uses, and saved without ids in pending-venues/ on a branch; a pull request opens for
+# review instead of changing main. After the merge, fold-venues.yml gives them ids and moves them into venues.json.
 on:
   issues:
     types: [opened, reopened]
@@ -28,7 +29,7 @@ jobs:
         with:
           ref: main
 
-      # City runs edit venues.json and share the Google quota with venue runs, so they take turns
+      # City runs share the Google quota with venue runs, so they take turns
       - name: Wait for earlier runs
         env:
           GH_TOKEN: ${{ github.token }}
@@ -53,6 +54,7 @@ jobs:
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
           GOOGLE_PLACES_API_KEY: ${{ secrets.GOOGLE_PLACES_API_KEY }}
           ISSUE_BODY: ${{ github.event.issue.body }}
+          ISSUE_NUMBER: ${{ github.event.issue.number }}
         run: |
           # The form's answer is the line under its "City and State" heading
           CITY=$(python -c "import os,re; m=re.search(r'### City and State\s*\n\s*(.*?)(?=\n###|\Z)', os.environ['ISSUE_BODY'], re.S); print(m.group(1).strip() if m else '')")
@@ -71,7 +73,7 @@ jobs:
           git config user.email "github-actions[bot]@users.noreply.github.com"
           BRANCH="add-city/${SLUG}-${{ github.event.issue.number }}-${{ github.run_id }}"
           git checkout -b "$BRANCH"
-          git add venues.json urls.py
+          git add pending-venues
           git commit -m "Add top venues for ${SLUG} (Issue #${{ github.event.issue.number }})"
           git push origin "$BRANCH"
           printf '%s\n\nCloses #%s\n' "$REPORT" "${{ github.event.issue.number }}" > "$RUNNER_TEMP/pr-body.md"
