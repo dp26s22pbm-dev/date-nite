@@ -1,0 +1,32 @@
+name: Places Usage
+
+# Run this from the Actions tab to see today's Google Places requests, what is left of the daily budget, and the
+# most recent calls. The log itself lives on the places-usage branch (see places_usage.py).
+on:
+  workflow_dispatch:
+    inputs:
+      recent:
+        description: Recent requests to list
+        default: "15"
+
+jobs:
+  report:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Show the Usage
+        env:
+          RECENT: ${{ inputs.recent }}
+        run: |
+          python places_usage.py report --recent "${RECENT:-15}" | tee usage.txt
+          { echo '```'; cat usage.txt; echo '```'; } >> "$GITHUB_STEP_SUMMARY"

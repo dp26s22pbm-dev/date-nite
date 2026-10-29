@@ -137,3 +137,8 @@ jobs:
           REASON: ${{ steps.add.outputs.error }}
         run: |
           gh issue comment ${{ github.event.issue.number }} --repo ${{ github.repository }} --body "Could not add this venue. ${REASON:-See the workflow run for details.} Run: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+
+      # Runners are wiped after each run, so the Places request log is saved to the places-usage branch
+      - name: Save the Places request log
+        if: always()
+        run: python places_usage.py publish || true
