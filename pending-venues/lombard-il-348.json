@@ -1,0 +1,77 @@
+[
+  {
+    "name": "Vasco\u2019s Peri Peri LOMBARD",
+    "category": "Portuguese",
+    "website": "https://vascosperiperi.com/",
+    "coords": [
+      -88.006834,
+      41.860973
+    ],
+    "app": 7.74,
+    "casualMain": 15.99,
+    "premiumMain": 19.99,
+    "drink": 8.0,
+    "dessert": 7.12,
+    "tierColor": "#22c55e"
+  },
+  {
+    "name": "Mighty Halal Fried Chicken & Shawarma",
+    "category": "Levantine",
+    "website": "http://www.mightyhalal.com/",
+    "coords": [
+      -88.019203,
+      41.858669
+    ],
+    "app": 6.24,
+    "casualMain": 12.24,
+    "premiumMain": 18.49,
+    "drink": 8.0,
+    "dessert": 8.0,
+    "tierColor": "#22c55e"
+  },
+  {
+    "name": "The Capital Grille",
+    "category": "Prime Steak & Seafood",
+    "website": "https://www.thecapitalgrille.com/locations/il/lombard/lombard/8026?cmpid=br:tcg_ag:ie_ch:loc_ca:TCGGMB_sn:gmb_gt:lombard-il-8026_pl:locurl_rd:1022",
+    "coords": [
+      -88.00802,
+      41.836839
+    ],
+    "app": 12.0,
+    "casualMain": 19.0,
+    "premiumMain": 34.0,
+    "drink": 8.5,
+    "dessert": 8.0,
+    "tierColor": "#eab308"
+  },
+  {
+    "name": "Babcock's Grove House",
+    "category": "Casual American",
+    "website": "http://www.babcocksgrove.com/",
+    "coords": [
+      -88.019935,
+      41.88672
+    ],
+    "app": 9.0,
+    "casualMain": 12.75,
+    "premiumMain": 17.0,
+    "drink": 8.0,
+    "dessert": 6.0,
+    "tierColor": "#22c55e"
+  },
+  {
+    "name": "Wing Zing - Wings Crafted with Passion I Zabiha Halal Wings & Smash Burgers in Lombard, IL",
+    "category": "Casual American",
+    "website": "https://www.wingzing.us/",
+    "coords": [
+      -87.998216,
+      41.860172
+    ],
+    "app": 2.45,
+    "casualMain": 12.45,
+    "premiumMain": 17.45,
+    "drink": 8.0,
+    "dessert": 8.0,
+    "tierColor": "#22c55e"
+  }
+]
