@@ -1,0 +1,76 @@
+[
+  {
+    "name": "Taj Restaurant and Banquet",
+    "category": "Pakistani & Indian Cuisine",
+    "website": "https://www.tajbanquet.com/",
+    "coords": [
+      -88.070121,
+      41.693331
+    ],
+    "app": 5.99,
+    "casualMain": 14.99,
+    "premiumMain": 16.99,
+    "drink": 8.0,
+    "dessert": 3.99,
+    "tierColor": "#22c55e"
+  },
+  {
+    "name": "Pier 9 Seafood and Bar",
+    "category": "Cajun Cuisine",
+    "website": "https://www.pier9seafoodandbar.com/",
+    "coords": [
+      -88.037156,
+      41.719605
+    ],
+    "app": 12.95,
+    "casualMain": 18.5,
+    "premiumMain": 24.0,
+    "drink": 9.25,
+    "dessert": 5.95,
+    "tierColor": "#eab308"
+  },
+  {
+    "name": "Taquer\u00eda El Valle",
+    "category": "Mexican Fast Casual",
+    "coords": [
+      -88.051094,
+      41.717338
+    ],
+    "app": 16.99,
+    "casualMain": 18.49,
+    "premiumMain": 29.99,
+    "drink": 9.24,
+    "dessert": 8.0,
+    "tierColor": "#eab308"
+  },
+  {
+    "name": "Poke Bros.",
+    "category": "Hawaiian Cuisine",
+    "website": "https://www.eatpokebros.com/",
+    "coords": [
+      -88.03719,
+      41.722904
+    ],
+    "app": 5.0,
+    "casualMain": 12.5,
+    "premiumMain": 14.25,
+    "drink": 8.0,
+    "dessert": 5.25,
+    "tierColor": "#22c55e"
+  },
+  {
+    "name": "Los Comales Bolingbrook",
+    "category": "Mexican Cuisine",
+    "website": "https://loscomalesbolingbrook.com/",
+    "coords": [
+      -88.125264,
+      41.690309
+    ],
+    "app": 4.5,
+    "casualMain": 13.75,
+    "premiumMain": 26.99,
+    "drink": 8.0,
+    "dessert": 4.5,
+    "tierColor": "#22c55e"
+  }
+]
