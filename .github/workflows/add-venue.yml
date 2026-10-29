@@ -73,6 +73,15 @@ jobs:
           echo "Could not push after 6 attempts" >&2
           exit 1
 
+      # The title is usually a placeholder ("[New Venue]") until the name is known, so rename the issue after the venue
+      - name: Name the issue after the venue
+        if: steps.add.outputs.venue_name != ''
+        env:
+          GH_TOKEN: ${{ github.token }}
+          VENUE_NAME: ${{ steps.add.outputs.venue_name }}
+        run: |
+          gh issue edit ${{ github.event.issue.number }} --repo ${{ github.repository }} --title "[New Venue]: $VENUE_NAME" || true
+
       # A reopened issue may still carry labels from an earlier run; drop the ones this run does not set
       - name: Clear stale labels
         env:

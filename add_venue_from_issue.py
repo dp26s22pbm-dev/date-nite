@@ -1021,13 +1021,16 @@ def save_pricing_cache(pricing, source):
     except Exception as e:
         print(f"Could not save the prices: {e}")
 
-def set_output(key, value):
-    """Hand a one-line result to the GitHub Actions workflow (used for the issue comment)."""
+def set_output(key, value, multiline=False):
+    """Hand a result to the GitHub Actions workflow (used for the issue comment and title)."""
     path = os.environ.get("GITHUB_OUTPUT")
     if path:
-        one_line = re.sub(r"[\r\n]+", " ", str(value))  # computed outside the f-string: Python 3.11 forbids backslashes inside one
         with open(path, "a") as f:
-            f.write(f"{key}={one_line}\n")
+            if multiline:
+                f.write(f"{key}<<EOF_{key}\n{value}\nEOF_{key}\n")
+            else:
+                one_line = re.sub(r"[\r\n]+", " ", str(value))  # computed outside the f-string: Python 3.11 forbids backslashes inside one
+                f.write(f"{key}={one_line}\n")
 
 def abort(message):
     print(f"ABORT: {message}")
@@ -1276,44 +1279,64 @@ def main():
 
     print(f"Added {name} (ID: {entry['id']}): Casual ${casual_main}, Prime ${premium_main}, Color: {tier_color}")
 
-    notes = [f"Cuisine: {category}" + (" (best guess, edit venues.json if it is off)" if category_guessed else "")]
-    notes.append("location exact" if coords_exact else "location approximate (from the address; send a share link of the place's page or exact coordinates to fix it)")
+    # The issue comment: a short headline, a details list, then only the follow-ups that apply
+    def sentence(text):
+        return text[:1].upper() + text[1:]
+
+    lines = [f"### ✅ {name} was added to the map", ""]
+    lines.append(f"- **Cuisine:** {category}" + (" (best guess; edit venues.json if it is off)" if category_guessed else ""))
+    lines.append("- **Location:** " + ("exact" if coords_exact else
+                 "approximate, from the address. Send a share link of the place's page or exact coordinates to fix it"))
     if website_found:
-        notes.append(f"website {website} ({website_source})")
+        lines.append(f"- **Website:** {website} ({website_source})")
     elif not (website or saved_site):
-        if maps_url:
-            notes.append("no website found, so the venue name links to your Google Maps link (add a website with the full form's Website URL field)")
-        else:
-            notes.append("no website found (add one with the full form's Website URL field)")
+        lines.append("- **Website:** none found, so the venue name links to your Google Maps link. Add one with the full form's Website URL field"
+                     if maps_url else "- **Website:** none found. Add one with the full form's Website URL field")
+    lines.append(f"- **Estimated total for two:** ${total_cost}")
+    lines.append("")
     if pricing and pricing.get("casualMains"):
-        notes.append(f"prices from {pricing_source}: appetizer ${app}, casual main ${casual_main}, premium main ${premium_main}, "
-                     f"drink ${drink}, dessert ${dessert}")
+        lines.append(f"**Prices used** (from {pricing_source}): appetizer ${app}, casual main ${casual_main}, "
+                     f"premium main ${premium_main}, drink ${drink}, dessert ${dessert}")
     else:
-        notes.append("prices could not be found, so typical defaults were used")
-    summary = f"✓ Added {name}. " + "; ".join(notes) + f". Estimated total ${total_cost}."
+        lines.append("**Prices used:** none could be found, so typical defaults were saved")
+
     # Prices that came from a web search (or defaults) are guesses unless every figure was typed in by hand
     guessed = not (pricing and pricing.get("casualMains")) or str(pricing_source).startswith("a web search")
     needs_menu = guessed and not all(k in overrides for k in ("app", "casualMain", "premiumMain", "drink", "dessert"))
-    if needs_menu:
-        summary += (" The prices are estimates. To fix them, reply to this issue with the menu: open the venue's menu page, "
-                    "select all, copy, and paste it here. I will update the prices and close this issue.")
     set_output("needs_menu", "true" if needs_menu else "false")
     warnings = price_sanity_warnings(app, casual_main, premium_main, drink, dessert, defaulted)
-    if warnings:
-        summary += " Double-check these prices: " + "; ".join(warnings) + "."
-        if not menu_override:
-            summary += (" If they are wrong, reply to this issue with the menu text (open the venue's menu page, select "
-                        "all, copy, paste) and I will update them; if they are fine, close this issue.")
     set_output("needs_check", "true" if warnings else "false")
     final_coords = (venues[existing_idx] if existing_idx is not None else entry)["coords"]
     neighbors = nearby_venues(venues[existing_idx]["id"] if existing_idx is not None else entry["id"], final_coords, venues)
-    if neighbors:
-        listed = ", ".join(f"{n} ({m} m)" for n, m in neighbors)
-        summary += f" Check the pin: {len(neighbors)} saved venue(s) within {NEARBY_VENUE_M} m, which may share a building or strip mall: {listed}. If they do, confirm the pin lines up with theirs."
+
+    if needs_menu:
+        lines += ["", "### 👉 Action needed: reply with the menu", "",
+                  "These prices are estimates. Open the venue's menu page, select all, copy, and paste it as a reply here. "
+                  "I will update the prices and close this issue."]
+    if warnings:
+        lines += ["", "### ⚠️ Double-check these prices", ""] + [f"- {sentence(w)}" for w in warnings]
+        if not menu_override:
+            lines += ["", "If they are wrong, reply with the menu text (open the venue's menu page, select all, copy, paste) "
+                          "and I will update them. If they are fine, close this issue."]
+    # An address-level pin is a guess; so is any pin placed while Google's Places API could not be asked (daily quota spent)
+    pin_guessed = not coords_exact and not (existing_idx is not None and venues[existing_idx].get("coords"))
+    if neighbors or pin_guessed:
+        lines += ["", "### 📍 Check the pin", ""]
+        if pin_guessed:
+            why = ("Google's Places API ran out of lookups for today, so the pin was placed from the address instead of the Maps listing. "
+                   if places_quota_spent else "No exact Maps location was found, so the pin was placed from the address. ")
+            lines.append(why + "Open the map and confirm it sits on the restaurant, or send a share link of the place's page to fix it.")
+        if neighbors:
+            listed = ", ".join(f"{n} ({m} m)" for n, m in neighbors)
+            lines.append(f"{len(neighbors)} saved venue(s) sit within {NEARBY_VENUE_M} m, which may share a building or strip mall: {listed}. "
+                         "If they do, confirm the pin lines up with theirs.")
+    if not (needs_menu or warnings or neighbors or pin_guessed):
+        lines += ["", "Nothing else is needed. Closing this issue."]
     experiment = maps_tool_experiment(name, place_text or address, final_coords)
     if experiment:
-        summary += " " + experiment
-    set_output("summary", summary)
+        lines += ["", f"<sub>{experiment}</sub>"]
+    set_output("venue_name", name)
+    set_output("summary", "\n".join(lines), multiline=True)
 
 if __name__ == "__main__":
     main()
