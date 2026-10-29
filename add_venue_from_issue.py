@@ -535,6 +535,8 @@ def menu_links_from_page(page, base_url, hosts):
     """(url, label) for each link on the page that looks like a menu or ordering link, on this site, a known ordering
     platform or a PDF."""
     found = []
+    # Links a script builds as text ("/menu/' + tmgmenu + '") sit inside <script> blocks and point nowhere real
+    page = re.sub(r"(?is)<script\b.*?</script>", "", page)
     for href, label in ANCHOR_RE.findall(page):
         text = re.sub(r"<[^>]+>", "", label).lower()
         if not (any(w in href.lower() for w in MENU_LINK_WORDS) or any(w in text for w in MENU_LINK_WORDS)):
@@ -579,6 +581,50 @@ def location_pages(page, site, hosts, where):
             pages.append(url)
     return list(dict.fromkeys(pages))[:3]
 
+LOCATION_HUB_WORDS = ("location", "find-us", "findus", "restaurants", "local")
+
+def location_hubs(page, base_url, hosts):
+    """Links on a page to a list of the chain's locations (Ted's: Order Online and Locations both go to /locations.html)."""
+    hubs = []
+    for href, label in ANCHOR_RE.findall(page):
+        text = re.sub(r"<[^>]+>", "", label).lower()
+        url = urllib.parse.urljoin(base_url, unescape(href).split("#")[0])
+        p = urllib.parse.urlparse(url)
+        path = p.path.lower()
+        if p.scheme not in ("http", "https") or p.netloc.lower().removeprefix("www.") not in hosts:
+            continue
+        if any(w in path for w in LOCATION_SKIP_WORDS):
+            continue
+        if any(w in path + " " + text for w in LOCATION_HUB_WORDS):
+            hubs.append(url)
+    return list(dict.fromkeys(hubs))[:2]
+
+def city_page_menu_links(home_page, home_url, hosts, where):
+    """(url, label) menu links for a venue whose city page is not linked from the home page. A chain's home page often
+    sends visitors to a list of locations, and only the venue's own city page links its menu (a PDF). Follows the
+    locations link, picks this venue's city page from the address, and collects the menu links on it, reading the page
+    in a browser when its links are drawn by script."""
+    links = []
+    for hub in location_hubs(home_page, home_url, hosts):
+        got = get_page(hub)
+        if not got:
+            continue
+        hub_page, hub_final = got
+        hub_hosts = hosts | {_host(hub_final)}
+        for city_url in location_pages(hub_page, hub_final, hub_hosts, where)[:2]:
+            city = get_page(city_url)
+            found = menu_links_from_page(city[0], city[1], hub_hosts | {_host(city[1])}) if city else []
+            if not any(u.lower().split("?")[0].endswith(".pdf") for u, _ in found):
+                rendered = render_page_html(city_url)
+                if rendered:
+                    found = menu_links_from_page(rendered[0], rendered[1], hub_hosts | {_host(rendered[1])}) + found
+            if found:
+                print(f"Found the menu links on the city page {city_url}: {[u for u, _ in found][:6]}")
+            links += found
+        if links:
+            break
+    return links
+
 def menu_page_candidates(site, where=""):
     """Menu pages for a restaurant: links on its home page that look like menu or ordering links (same site or a
     known ordering platform), links on the page for its own city when the home page is a city picker, then common
@@ -586,6 +632,7 @@ def menu_page_candidates(site, where=""):
     parsed = urllib.parse.urlparse(site)
     found = []
     locations = []
+    city_links = []
     home = get_page(site)
     if home:
         page, final = home
@@ -598,7 +645,13 @@ def menu_page_candidates(site, where=""):
                     loc_page, loc_final = got
                     found += menu_links_from_page(loc_page, loc_final, hosts | {_host(loc_final)})
                 locations.append(loc.rstrip("/") + "/menu")
+        if where and not locations:
+            city_links = city_page_menu_links(page, final, hosts, where)
     found = [u for u, _ in sorted(dict.fromkeys(prefer_local_ordering(found, where)), key=lambda c: -menu_link_score(*c))]
+    # On the venue's own city page a PDF is the menu itself; the other menu links are navigation back to the chain's pages
+    city_found = [u for u, _ in sorted(dict.fromkeys(city_links),
+                                       key=lambda c: -(menu_link_score(*c) + (2 if c[0].lower().split("?")[0].endswith(".pdf") else 0)))]
+    found = city_found + found
     found += locations
     for path in MENU_PATHS:
         found.append(f"{parsed.scheme}://{parsed.netloc}{path}")
