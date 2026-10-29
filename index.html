@@ -705,7 +705,10 @@
       pointer-events: none !important;
     }
 
-    /* Round map buttons in a row above the venue cards, right-aligned: car, cloud, sound, then the cards */
+    /* Round map buttons in a row above the venue cards, right-aligned: car, cloud, sound, then the cards
+       Names used for them (in the user's words -> class): car -> .car-btn, cloud -> .zoom-btn (zoom reset),
+       cost -> .cost-btn (phones only, four color dots), list -> .list-btn (venue list), audio/sound -> .audio-btn
+       Order, left to right: desktop is car, cloud, list, audio; phones are car, cloud, cost, list, audio */
     .car-btn, .zoom-btn, .list-btn {
       position: fixed !important;
       right: 16px !important;
@@ -750,7 +753,8 @@
 
     /* Phone layout: search across the top, the Menu as a row beneath it, and no Budget bar for now. The Cost
        legend leaves the left rail and becomes a four-dot color button in the bottom row, just left of the list button; pressing it opens a
-       horizontal Cost explanation just above the row. The other round buttons each move over one slot to make room. */
+       horizontal Cost explanation just above the row. The car and cloud buttons each move over one slot to make room;
+       the row is car (188px), cloud (145px), cost (102px), list (59px), audio (16px) from the right edge. */
     .cost-btn, .cost-pop { display: none; }
     @media (max-width: 480px) {
       .left-rail { display: none; } /* Cost and Budget */
