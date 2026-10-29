@@ -1,13 +1,16 @@
 """Propose the first venues for a new city: find its best restaurants on Google Places, rank them by rating weighted
 by review count (at most MAX_PER_CUISINE of one cuisine), then add each one with add_venue_from_issue.py.
 
-Ratings and review counts only decide the ranking; they are never written to venues.json. The workflow
-(add-city.yml) commits the result to a branch and opens a pull request for review."""
+Ratings and review counts only decide the ranking; they are never written to venues.json. The importer works on a
+scratch copy of venues.json, and the new venues are saved without ids to pending-venues/<city>-<issue>.json. The
+workflow (add-city.yml) commits that file to a branch and opens a pull request for review. After the PR merges,
+fold_pending_venues.py numbers the venues and moves them into venues.json, so two city PRs never collide."""
 import os
 import re
 import sys
 import json
 import subprocess
+import shutil
 import tempfile
 import urllib.request
 import urllib.error
@@ -41,6 +44,18 @@ EXCLUDED_TYPES = {"fast_food_restaurant", "coffee_shop", "cafe", "bakery", "ice_
 # Primary types that are not named "..._restaurant" but are still places to eat
 FOOD_PRIMARY_TYPES = {"steak_house", "bar_and_grill", "pub", "gastropub", "brewpub", "wine_bar", "diner", "buffet"}
 GENERIC_TYPES = {"restaurant", "food", "establishment", "point_of_interest", "bar_and_grill", "bar", "meal_delivery"}
+
+PENDING_DIR = "pending-venues"
+
+def load_pending():
+    """Venues waiting in pending-venues/ to be folded into venues.json, as a list."""
+    venues = []
+    if os.path.isdir(PENDING_DIR):
+        for name in sorted(os.listdir(PENDING_DIR)):
+            if name.endswith(".json"):
+                with open(os.path.join(PENDING_DIR, name)) as f:
+                    venues += json.load(f)
+    return venues
 
 def name_key(name):
     return re.sub(r"[^a-z0-9]", "", (name or "").lower())
@@ -191,13 +206,13 @@ def issue_body(place):
     ]
     return "\n\n".join(f"### {label}\n\n{value or '_No response_'}" for label, value in fields)
 
-def add_venue(place, work_dir, number):
+def add_venue(place, work_dir, number, venues_file):
     """Run the importer for one place. Returns its outputs dict (venue_name, summary, needs_menu, ...), or {"error": ...} on failure."""
     out_path = os.path.join(work_dir, f"output-{number}.txt")
     open(out_path, "w").close()
     # The importer reuses the prices in this file when it finds one, so every venue needs a file of its own
     env = {**os.environ, "ISSUE_BODY": issue_body(place), "ISSUE_TITLE": "", "GITHUB_OUTPUT": out_path,
-           "PRICING_CACHE_FILE": os.path.join(work_dir, f"pricing-{number}.json")}
+           "PRICING_CACHE_FILE": os.path.join(work_dir, f"pricing-{number}.json"), "VENUES_FILE": venues_file}
     here = os.path.dirname(os.path.abspath(__file__))
     result = subprocess.run([sys.executable, os.path.join(here, "add_venue_from_issue.py")], env=env)
     outputs = read_outputs(out_path)
@@ -215,35 +230,56 @@ def main():
     set_output("slug", slug)
 
     with open("venues.json") as f:
-        saved_names = {name_key(v["name"]) for v in json.load(f)}
+        saved = json.load(f)
+    saved += load_pending()  # venues from other city pull requests that have merged but are not folded in yet
+    saved_names = {name_key(v["name"]) for v in saved}
 
     places = search_city(city, api_key)
     candidates = [p for p in places if eligible(p, city_name, saved_names)]
     chosen = pick(rank(candidates))
     print(f"{len(places)} places found, {len(candidates)} eligible, {len(chosen)} chosen")
-    set_output("count", len(chosen))
     if not chosen:
+        set_output("count", 0)
         set_output("report", f"No restaurants in {city} qualified (open, with at least {MIN_REVIEWS} reviews, and not already on the map). "
                              "Check the spelling of the city and state.", multiline=True)
         return
 
     sections, failed = [], 0
     with tempfile.TemporaryDirectory() as work_dir:
+        # The importer numbers and checks new venues against this scratch copy; venues.json itself stays untouched
+        venues_file = os.path.join(work_dir, "venues.json")
+        with open(venues_file, "w") as f:
+            json.dump(saved, f)
         for rank_no, (place, score) in enumerate(chosen, 1):
             name = place["displayName"]["text"]
             print(f"\n=== {rank_no}. {name} (score {score:.2f}) ===")
-            outputs = add_venue(place, work_dir, rank_no)
+            outputs = add_venue(place, work_dir, rank_no, venues_file)
             if outputs.get("error") and not outputs.get("summary"):
                 failed += 1
                 sections.append(f"## {rank_no}. {name}\n\nCould not be added: {outputs['error']}")
                 continue
             sections.append(f"## {rank_no}. {name}\n\nRanking score {score:.2f}\n\n{outputs.get('summary', '')}")
 
+        with open(venues_file) as f:
+            added = json.load(f)[len(saved):]
+    # Ids are handed out when the pull request merges (fold_pending_venues.py), so none are saved here
+    for venue in added:
+        venue.pop("id", None)
+    pending_file = ""
+    if added:
+        os.makedirs(PENDING_DIR, exist_ok=True)
+        pending_file = os.path.join(PENDING_DIR, f"{slug}-{os.environ.get('ISSUE_NUMBER', '0')}.json")
+        with open(pending_file, "w") as f:
+            json.dump(added, f, indent=2)
+            f.write("\n")
+    set_output("pending_file", pending_file)
+    set_output("count", len(added))  # the workflow opens a pull request only when something was added
+
     intro = (f"Top {len(chosen)} restaurants for {city}, ranked by Google rating weighted by review count "
              f"(at least {MIN_REVIEWS} reviews, at most {MAX_PER_CUISINE} of one cuisine). Ratings were used only for the ranking and are not saved.\n\n"
-             "Review the prices and pins below before merging. Venues you don't want can be removed from `venues.json` in this branch.")
+             f"Review the prices and pins below before merging. The venues are in `{pending_file}`; delete an entry there to drop it. "
+             "They get their ids and join `venues.json` automatically after the merge.")
     set_output("report", intro + "\n\n" + "\n\n".join(sections), multiline=True)
-    set_output("added", len(chosen) - failed)
 
 if __name__ == "__main__":
     main()
