@@ -882,6 +882,8 @@
       visibility: hidden;
       transition: opacity 0.25s ease, visibility 0s linear 0.25s;
     }
+    /* Until the first render has put cards in the strip, the list stays invisible (and the round buttons stay at rest) */
+    .venue-list.loading { opacity: 0; visibility: hidden; transition: none; }
     @media (prefers-reduced-motion: reduce) {
       .venue-list, .venue-list.hidden { transition: none; }
     }
@@ -1179,7 +1181,7 @@
   <div id="car-toast" class="car-toast" role="status"></div>
 
   <!-- Venue list along the bottom -->
-  <div id="venue-list" class="venue-list">
+  <div id="venue-list" class="venue-list loading">
     <div class="list-head">
       <button class="sort-chip active" id="sort-cost" onclick="setListSort('cost')" aria-label="Sort by cost" title="Sort by cost">$</button>
       <button class="sort-chip" id="sort-near" onclick="setListSort('near')" aria-label="Sort by distance" title="Sort by distance"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2a7 7 0 0 0-7 7c0 5.25 7 13 7 13s7-7.75 7-13a7 7 0 0 0-7-7zm0 9.5A2.5 2.5 0 1 1 12 6.5a2.5 2.5 0 0 1 0 5z"/></svg></button>
@@ -1818,7 +1820,7 @@
     const BUTTON_GAP_PX = 12;
     const BUTTON_REST_PX = 20; // matches the --btn-base default in :root
     function updateButtonLift() {
-      if (listEl.classList.contains('hidden')) {
+      if (listEl.classList.contains('hidden') || listEl.classList.contains('loading')) {
         document.documentElement.style.setProperty('--btn-base', BUTTON_REST_PX + 'px');
         return;
       }
@@ -1891,6 +1893,10 @@
           <div class="card-foot"><span class="card-cost">$${total}</span>${listOrigin ? `<span class="card-dist">${miles.toFixed(1)} mi</span>` : ''}</div>
         </button>`).join('');
       updateListFade();
+      if (rawVenues.length && listEl.classList.contains('loading')) {
+        listEl.classList.remove('loading');
+        updateButtonLift();
+      }
     }
 
     // Fade the edge on each side that still has cards hidden past it
