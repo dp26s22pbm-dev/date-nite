@@ -1276,5 +1276,84 @@
     "drink": 11.0,
     "dessert": 9.0,
     "tierColor": "#eab308"
+  },
+  {
+    "id": 79,
+    "name": "Alice's Corner Bolivian Cuisine",
+    "category": "Bolivian Cuisine",
+    "website": "https://www.alicescorner.com/",
+    "coords": [
+      -88.315083,
+      41.759756
+    ],
+    "app": 4.0,
+    "casualMain": 16.0,
+    "premiumMain": 32.0,
+    "drink": 8.0,
+    "dessert": 6.0,
+    "tierColor": "#22c55e"
+  },
+  {
+    "id": 80,
+    "name": "Sushi Plus\u2069 Rotary Sushi Bar - Aurora",
+    "category": "Japanese Cuisine",
+    "website": "http://www.rotarysushi.com/",
+    "coords": [
+      -88.210983,
+      41.763107
+    ],
+    "app": 8.0,
+    "casualMain": 18.2,
+    "premiumMain": 21.97,
+    "drink": 9.1,
+    "dessert": 7.67,
+    "tierColor": "#22c55e"
+  },
+  {
+    "id": 81,
+    "name": "Tavern On Broadway",
+    "category": "Casual American",
+    "coords": [
+      -88.312513,
+      41.757891
+    ],
+    "app": 12.0,
+    "casualMain": 19.0,
+    "premiumMain": 34.0,
+    "drink": 8.5,
+    "dessert": 8.0,
+    "tierColor": "#eab308"
+  },
+  {
+    "id": 82,
+    "name": "Hardware Sustainable Gastropub and Brewery",
+    "category": "New American",
+    "website": "https://eathardware.com/",
+    "coords": [
+      -88.371613,
+      41.809508
+    ],
+    "app": 17.0,
+    "casualMain": 21.0,
+    "premiumMain": 38.0,
+    "drink": 7.0,
+    "dessert": 8.0,
+    "tierColor": "#eab308"
+  },
+  {
+    "id": 83,
+    "name": "Basil's Greek Dining",
+    "category": "Greek",
+    "website": "https://www.basilsdining.com/",
+    "coords": [
+      -88.218112,
+      41.758665
+    ],
+    "app": 11.0,
+    "casualMain": 22.5,
+    "premiumMain": 37.0,
+    "drink": 13.0,
+    "dessert": 12.0,
+    "tierColor": "#eab308"
   }
 ]
