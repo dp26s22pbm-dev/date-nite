@@ -996,9 +996,9 @@
     /* Opening neon sign: huge lilac DATE NITE over the map, flickers, then blinks out for good. Taps pass through to the map. */
     .neon-intro {
       position: fixed;
-      /* Fixed band between the search bar and the venue strip. Constants, not measured, so the sign never resizes or moves when the venue list loads or hides. */
+      /* Fixed band between the search bar (56px tall plus 12px air) and the top of the venue cards (115px up from the bottom, plus 12px air). Constants, not measured, so the sign never resizes or moves when the venue list loads or hides. */
       --neon-top: 68px;
-      --neon-bottom: 104px;
+      --neon-bottom: 127px;
       inset: var(--neon-top) 0 var(--neon-bottom) 0;
       display: flex;
       align-items: center;
