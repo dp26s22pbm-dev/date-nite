@@ -1,0 +1,77 @@
+[
+  {
+    "name": "Chef Abdul Mediterranean",
+    "category": "Levantine",
+    "website": "https://chefabdulmediterranean.com/",
+    "coords": [
+      -88.337919,
+      41.903516
+    ],
+    "app": 5.99,
+    "casualMain": 18.99,
+    "premiumMain": 25.49,
+    "drink": 9.49,
+    "dessert": 5.49,
+    "tierColor": "#22c55e"
+  },
+  {
+    "name": "Pomodoro E Mozzarella",
+    "category": "Italian / Pizza",
+    "website": "http://www.thepomodoroemozzarella.com/",
+    "coords": [
+      -88.336286,
+      41.913148
+    ],
+    "app": 9.5,
+    "casualMain": 15.5,
+    "premiumMain": 22.0,
+    "drink": 8.0,
+    "dessert": 7.25,
+    "tierColor": "#22c55e"
+  },
+  {
+    "name": "Mio Modo",
+    "category": "Italian",
+    "website": "https://www.miomodo.com/",
+    "coords": [
+      -88.314862,
+      41.911482
+    ],
+    "app": 15.0,
+    "casualMain": 28.0,
+    "premiumMain": 33.0,
+    "drink": 17.0,
+    "dessert": 8.0,
+    "tierColor": "#f97316"
+  },
+  {
+    "name": "VATAN Progressive Indian Kitchen",
+    "category": "Indian Cuisine",
+    "website": "https://vatanindiankitchen.com/",
+    "coords": [
+      -88.287062,
+      41.920913
+    ],
+    "app": 19.05,
+    "casualMain": 24.0,
+    "premiumMain": 52.0,
+    "drink": 12.0,
+    "dessert": 9.6,
+    "tierColor": "#f97316"
+  },
+  {
+    "name": "Rec Haus",
+    "category": "Casual American",
+    "website": "http://www.rec-haus.com/",
+    "coords": [
+      -88.31668,
+      41.913903
+    ],
+    "app": 12.0,
+    "casualMain": 19.0,
+    "premiumMain": 34.0,
+    "drink": 8.5,
+    "dessert": 8.0,
+    "tierColor": "#eab308"
+  }
+]
