@@ -509,7 +509,8 @@ def get_page(url):
     return None
 
 MENU_LINK_WORDS = ("menu", "food", "dine", "dining", "drink", "order", "eat", "lunch", "dinner", "brunch")
-ORDERING_HOSTS = ("toasttab.com", "chownow.com", "square.site", "olo.com", "popmenu.com", "order.online", "ordering.", "menus.")
+ORDERING_HOSTS = ("toasttab.com", "chownow.com", "square.site", "olo.com", "popmenu.com", "order.online", "ordering.", "menus.",
+                  "orderexperience.net", "alohaorderonline.com")
 MENU_PATHS = ("/menu", "/menus", "/our-menu", "/food-menu", "/food", "/dinner", "/dinner-menu", "/dining", "/order", "/order-online")
 
 # Links to these are never the dinner menu. Catering and party menus carry tray prices, so reading one gives prices
@@ -531,10 +532,33 @@ LOCATION_SKIP_WORDS = ("site-map", "sitemap", "accessibility", "privacy", "terms
                        "about", "gift", "event", "private", "catering", "franchise", "news", "blog", "login")
 ANCHOR_RE = re.compile(r"(?is)<a\b[^>]*?href=[\"']([^\"']+)[\"'][^>]*>(.*?)</a>")
 
+# Popmenu sites (Rock Bottom's among them) keep their nav menus as data in the page and draw a dropdown only on click, so
+# the "Order Online" links (one per location) are in a script block and not in any <a> tag.
+NAV_LINK_RE = re.compile(r'"__typename":"RestaurantNavLink"[^{}]*?"name":"([^"]*)"[^{}]*?"url":"(https?:[^"]+)"')
+# Delivery apps mark prices up, and these are not menus
+NON_MENU_HOSTS = ("opentable.com", "resy.com", "facebook.com", "instagram.com", "twitter.com", "x.com", "tiktok.com",
+                  "youtube.com", "linkedin.com", "yelp.com", "tripadvisor.com", "apple.com", "google.com", "doordash.com",
+                  "ubereats.com", "grubhub.com", "postmates.com")
+
+def embedded_nav_links(page):
+    """(url, label) for external links in a Popmenu-style nav menu held as data in the page, minus social, reservation
+    and delivery-app links."""
+    found = []
+    for name, url in NAV_LINK_RE.findall(page):
+        url = url.replace("\\/", "/").replace("\\u0026", "&").replace("\\u002F", "/")
+        host = urllib.parse.urlparse(url).netloc.lower()
+        label = unescape(name).lower()
+        # Loyalty sign-ins and gift cards sit in the same nav; keep ordering platforms and links that say menu or order
+        wanted = any(h in host for h in ORDERING_HOSTS) or any(w in (url + " " + label).lower() for w in ("menu", "order", "food"))
+        if host and wanted and not any(h in host for h in NON_MENU_HOSTS):
+            found.append((url, label))
+    return list(dict.fromkeys(found))
+
 def menu_links_from_page(page, base_url, hosts):
     """(url, label) for each link on the page that looks like a menu or ordering link, on this site, a known ordering
     platform or a PDF."""
-    found = []
+    found = [(u, label) for u, label in embedded_nav_links(page)
+             if not any(w in (u + " " + label).lower() for w in SKIP_MENU_WORDS)]
     # Links a script builds as text ("/menu/' + tmgmenu + '") sit inside <script> blocks and point nowhere real
     page = re.sub(r"(?is)<script\b.*?</script>", "", page)
     for href, label in ANCHOR_RE.findall(page):
