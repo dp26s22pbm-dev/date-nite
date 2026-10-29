@@ -1196,5 +1196,85 @@
     "drink": 13.0,
     "dessert": 12.0,
     "tierColor": "#f97316"
+  },
+  {
+    "id": 74,
+    "name": "Pa Lian Burmese Restaurant ( BYOB)",
+    "category": "Burmese Cuisine",
+    "website": "https://palianburmeserestaurant.dine.online/",
+    "coords": [
+      -88.104278,
+      41.886688
+    ],
+    "app": 17.99,
+    "casualMain": 18.99,
+    "premiumMain": 23.99,
+    "drink": 9.49,
+    "dessert": 8.99,
+    "tierColor": "#eab308"
+  },
+  {
+    "id": 75,
+    "name": "Avocado Theory Wheaton",
+    "category": "Casual American",
+    "website": "http://avotheory.com/",
+    "coords": [
+      -88.106824,
+      41.865123
+    ],
+    "app": 17.99,
+    "casualMain": 18.99,
+    "premiumMain": 23.99,
+    "drink": 9.49,
+    "dessert": 8.99,
+    "tierColor": "#eab308"
+  },
+  {
+    "id": 76,
+    "name": "Qcurrys Indian Kitchen",
+    "category": "Indian Cuisine",
+    "website": "https://www.qcurrys.com/",
+    "coords": [
+      -88.111261,
+      41.864558
+    ],
+    "app": 17.99,
+    "casualMain": 18.99,
+    "premiumMain": 23.99,
+    "drink": 9.49,
+    "dessert": 8.99,
+    "tierColor": "#eab308"
+  },
+  {
+    "id": 77,
+    "name": "Pita Zone Mediterranean Grill",
+    "category": "Levantine",
+    "website": "https://pitazone.com/wheaton",
+    "coords": [
+      -88.104172,
+      41.832016
+    ],
+    "app": 17.99,
+    "casualMain": 18.99,
+    "premiumMain": 23.99,
+    "drink": 9.49,
+    "dessert": 8.99,
+    "tierColor": "#eab308"
+  },
+  {
+    "id": 78,
+    "name": "Cantigny Golf",
+    "category": "American",
+    "website": "http://cantignygolf.com/",
+    "coords": [
+      -88.155278,
+      41.847222
+    ],
+    "app": 17.99,
+    "casualMain": 18.99,
+    "premiumMain": 23.99,
+    "drink": 9.49,
+    "dessert": 8.99,
+    "tierColor": "#eab308"
   }
 ]
