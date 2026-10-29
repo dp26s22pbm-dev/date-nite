@@ -1220,29 +1220,29 @@
         el.style.opacity = opacity;
       }, at);
       let t = rand(1200, 2200);
-      const bursts = 3 + Math.floor(Math.random() * 3);
+      const bursts = 1 + Math.floor(Math.random() * 2);
       for (let b = 0; b < bursts; b++) {
-        const dips = 2 + Math.floor(Math.random() * 3);
+        const dips = 2 + Math.floor(Math.random() * 2);
         for (let k = 0; k < dips; k++) {
           set(t, rand(0.1, 0.5).toFixed(2));   // tube sags
           t += rand(25, 90);
           set(t, 1);                           // re-strikes
           t += rand(25, 110);
         }
-        t += rand(250, 900) * (1 - b / bursts) + 120; // calm spells shorten as it fails
+        t += rand(120, 300) * (1 - b / bursts) + 60; // calm spells shorten as it fails
       }
-      for (let k = 0; k < 4; k++) {            // last rapid stutter
+      for (let k = 0; k < 2; k++) {            // last rapid stutter
         set(t, rand(0.1, 0.4).toFixed(2));
         t += rand(30, 80);
         set(t, rand(0.7, 1).toFixed(2));
         t += rand(30, 80);
       }
       set(t, 0.3);
-      t += rand(80, 160);
+      t += rand(60, 110);
       set(t, 0.7);
-      t += rand(40, 90);
-      set(t, 0, '0.4s');                       // dies with a short fade
-      setTimeout(done, t + 500);
+      t += rand(30, 60);
+      set(t, 0, '0.25s');                      // dies with a short fade
+      setTimeout(done, t + 350);
     })();
   </script>
   <script src="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.js"></script>
