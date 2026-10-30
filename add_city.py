@@ -228,6 +228,29 @@ def issue_body(place):
     ]
     return "\n\n".join(f"### {label}\n\n{value or '_No response_'}" for label, value in fields)
 
+# The importer's report is written for a single-venue issue, where it can close the issue and take a reply with the menu
+# text. In a city pull request neither happens, so these lines are reworded to match what the reviewer can do.
+REPORT_REWORDS = (
+    ("\n\n### 👉 Action needed: reply with the menu\n\n"
+     "These prices are estimates. Open the venue's menu page, select all, copy, and paste it as a reply here. "
+     "I will update the prices and close this issue.",
+     "\n\n### 👉 Prices are estimates\n\nCheck them against the venue's menu and correct the entry before merging."),
+    ("If they are wrong, reply with the menu text (open the venue's menu page, select all, copy, paste) "
+     "and I will update them. If they are fine, close this issue.",
+     "If they are wrong, correct the entry before merging."),
+    ("Nothing else is needed. Closing this issue.", "Nothing else is needed."),
+    ("(best guess; edit venues.json if it is off)", "(best guess; correct the entry if it is off)"),
+    ("Send a share link of the place's page or exact coordinates to fix it", "Correct the coordinates in the entry if the pin is off"),
+    ("or send a share link of the place's page to fix it", "or correct the coordinates in the entry"),
+    ("Add one with the full form's Website URL field", "Add a website to the entry if you have one"),
+)
+
+def reword_for_city_pr(summary):
+    """The importer's summary with its issue-only instructions replaced (see REPORT_REWORDS)."""
+    for old, new in REPORT_REWORDS:
+        summary = summary.replace(old, new)
+    return summary
+
 def add_venue(place, work_dir, number, venues_file):
     """Run the importer for one place. Returns its outputs dict (venue_name, summary, needs_menu, ...), or {"error": ...} on failure."""
     out_path = os.path.join(work_dir, f"output-{number}.txt")
@@ -305,7 +328,7 @@ def main():
             kept += 1
             if cuisine_key(place):
                 used[cuisine_key(place)] = used.get(cuisine_key(place), 0) + 1
-            sections.append(f"## {kept}. {name}\n\nRanking score {score:.2f}\n\n{outputs.get('summary', '')}")
+            sections.append(f"## {kept}. {name}\n\nRanking score {score:.2f}\n\n{reword_for_city_pr(outputs.get('summary', ''))}")
 
         with open(venues_file) as f:
             added = json.load(f)[len(saved):]
