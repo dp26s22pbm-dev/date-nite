@@ -34,7 +34,7 @@ MIN_TOTAL_FOR_TWO = int(os.environ.get("MIN_TOTAL_FOR_TWO", "35"))
 MAX_PRICED = int(os.environ.get("MAX_PRICED", "10"))
 BLOCKED_CHAINS = re.compile(
     r"\b(mcdonalds|burger king|wendys|chick fil a|chipotle|taco bell|subway|kfc|popeyes|arbys|sonic drive|"
-    r"panda express|qdoba|panera|jimmy johns|jersey mikes|dunkin|starbucks)\b", re.I)
+    r"panda express|qdoba|panera|jimmy johns|jersey mikes|dunkin|starbucks|wingstop)\b", re.I)
 # A dinner place is open at DINNER_HOUR (24h clock) on at least DINNER_DAYS days of the week
 DINNER_HOUR = int(os.environ.get("DINNER_HOUR", "19"))
 DINNER_DAYS = int(os.environ.get("DINNER_DAYS", "3"))
@@ -55,6 +55,9 @@ FOOD_PRIMARY_TYPES = {"steak_house", "bar_and_grill", "pub", "gastropub", "brewp
 GENERIC_TYPES = {"restaurant", "food", "establishment", "point_of_interest", "bar_and_grill", "bar", "meal_delivery"}
 
 PENDING_DIR = "pending-venues"
+# Venues someone decided to keep off the map: [{"name": ..., "city": optional, "reason": optional}]. Without a city,
+# the name is skipped everywhere; with one, only in that city. Matched the same way as names already saved.
+EXCLUDED_FILE = "excluded-venues.json"
 
 def load_pending():
     """Venues waiting in pending-venues/ to be folded into venues.json, as a list."""
@@ -65,6 +68,15 @@ def load_pending():
                 with open(os.path.join(PENDING_DIR, name)) as f:
                     venues += json.load(f)
     return venues
+
+def load_excluded(city_name):
+    """name_key()s of the excluded venues that apply to city_name."""
+    if not os.path.exists(EXCLUDED_FILE):
+        return set()
+    with open(EXCLUDED_FILE) as f:
+        entries = json.load(f)
+    return {name_key(e["name"]) for e in entries
+            if not e.get("city") or e["city"].strip().lower() == city_name.lower()}
 
 def name_key(name):
     return re.sub(r"[^a-z0-9]", "", (name or "").lower())
@@ -242,7 +254,7 @@ def main():
     with open("venues.json") as f:
         saved = json.load(f)
     saved += load_pending()  # venues from other city pull requests that have merged but are not folded in yet
-    saved_names = {name_key(v["name"]) for v in saved}
+    saved_names = {name_key(v["name"]) for v in saved} | load_excluded(city_name)
 
     places = search_city(city, api_key)
     candidates = [p for p in places if eligible(p, city_name, saved_names)]
