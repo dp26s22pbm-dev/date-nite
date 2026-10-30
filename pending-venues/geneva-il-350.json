@@ -22,12 +22,12 @@
       -88.341351,
       41.892631
     ],
-    "app": 14.5,
-    "casualMain": 20.0,
-    "premiumMain": 29.0,
+    "app": 16.0,
+    "casualMain": 21.0,
+    "premiumMain": 35.0,
     "drink": 17.5,
     "dessert": 14.5,
-    "tierColor": "#eab308"
+    "tierColor": "#f97316"
   },
   {
     "name": "Tia Carmen Restaurant",
@@ -37,10 +37,10 @@
       -88.304962,
       41.887337
     ],
-    "app": 11.5,
-    "casualMain": 18.0,
-    "premiumMain": 26.0,
-    "drink": 14.0,
+    "app": 11.0,
+    "casualMain": 17.0,
+    "premiumMain": 28.0,
+    "drink": 12.5,
     "dessert": 10.0,
     "tierColor": "#eab308"
   },
