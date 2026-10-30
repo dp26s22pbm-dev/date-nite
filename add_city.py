@@ -56,7 +56,8 @@ GENERIC_TYPES = {"restaurant", "food", "establishment", "point_of_interest", "ba
 
 PENDING_DIR = "pending-venues"
 # Venues someone decided to keep off the map: [{"name": ..., "city": optional, "reason": optional}]. Without a city,
-# the name is skipped everywhere; with one, only in that city. Matched the same way as names already saved.
+# the name is skipped everywhere; with one, only in that city. A place is skipped when its name starts with an entry's name
+# (case, spaces and punctuation ignored), so "Vasco's Peri Peri" also covers "Vasco's Peri Peri Lombard".
 EXCLUDED_FILE = "excluded-venues.json"
 
 def load_pending():
@@ -70,13 +71,13 @@ def load_pending():
     return venues
 
 def load_excluded(city_name):
-    """name_key()s of the excluded venues that apply to city_name."""
+    """name_key() prefixes of the excluded venues that apply to city_name."""
     if not os.path.exists(EXCLUDED_FILE):
         return set()
     with open(EXCLUDED_FILE) as f:
         entries = json.load(f)
     return {name_key(e["name"]) for e in entries
-            if not e.get("city") or e["city"].strip().lower() == city_name.lower()}
+            if name_key(e["name"]) and (not e.get("city") or e["city"].strip().lower() == city_name.lower())}
 
 def name_key(name):
     return re.sub(r"[^a-z0-9]", "", (name or "").lower())
@@ -166,7 +167,7 @@ def serves_dinner(place):
             days += 1
     return days >= DINNER_DAYS
 
-def eligible(place, city_name, saved_names):
+def eligible(place, city_name, saved_names, excluded=()):
     loc = place.get("location") or {}
     name = (place.get("displayName") or {}).get("text", "")
     if place.get("businessStatus") != "OPERATIONAL" or not name or "latitude" not in loc:
@@ -189,7 +190,7 @@ def eligible(place, city_name, saved_names):
     # The search can spill into neighbouring towns; the formatted address names the city
     if city_name.lower() not in (place.get("formattedAddress") or "").lower():
         return False
-    return name_key(name) not in saved_names
+    return name_key(name) not in saved_names and not name_key(name).startswith(tuple(excluded))
 
 def rank(places):
     """Places sorted by the weighted score (v/(v+m))*R + (m/(v+m))*C, best first. R is the rating, v the review count,
@@ -277,10 +278,11 @@ def main():
     with open("venues.json") as f:
         saved = json.load(f)
     saved += load_pending()  # venues from other city pull requests that have merged but are not folded in yet
-    saved_names = {name_key(v["name"]) for v in saved} | load_excluded(city_name)
+    saved_names = {name_key(v["name"]) for v in saved}
+    excluded = load_excluded(city_name)
 
     places = search_city(city, api_key)
-    candidates = [p for p in places if eligible(p, city_name, saved_names)]
+    candidates = [p for p in places if eligible(p, city_name, saved_names, excluded)]
     ranked = rank(candidates)
     print(f"{len(places)} places found, {len(candidates)} eligible")
     if not ranked:
