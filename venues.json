@@ -145,23 +145,6 @@
     "tierColor": "#ef4444"
   },
   {
-    "id": 10,
-    "name": "Taco Pros",
-    "category": "Mexican Fast Casual",
-    "website": "https://www.tacopros.com",
-    "coords": [
-      -88.20680666004706,
-      41.711688953512166
-    ],
-    "app": 6.95,
-    "casualMain": 9.69,
-    "premiumMain": 14.69,
-    "drink": 4.02,
-    "dessert": 5.5,
-    "isTaco": true,
-    "tierColor": "#22c55e"
-  },
-  {
     "id": 11,
     "name": "Traverso\u2019s",
     "category": "Italian",
@@ -1210,22 +1193,6 @@
     "drink": 10.5,
     "dessert": 15.0,
     "tierColor": "#eab308"
-  },
-  {
-    "id": 80,
-    "name": "D'Capo's Gourmet Italian",
-    "category": "Italian",
-    "website": "http://dcaposdg.com/",
-    "coords": [
-      -88.037417,
-      41.793115
-    ],
-    "app": 6.0,
-    "casualMain": 12.0,
-    "premiumMain": 15.0,
-    "drink": 8.0,
-    "dessert": 6.0,
-    "tierColor": "#22c55e"
   },
   {
     "id": 81,
