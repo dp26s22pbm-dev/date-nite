@@ -1,20 +1,5 @@
 [
   {
-    "name": "PIE LIFE Pizzeria",
-    "category": "Italian / Pizza",
-    "website": "https://www.facebook.com/profile.php?id=61553648155203&mibextid=ZbWKwL",
-    "coords": [
-      -88.071097,
-      41.859638
-    ],
-    "app": 2.75,
-    "casualMain": 5.0,
-    "premiumMain": 6.0,
-    "drink": 8.0,
-    "dessert": 8.0,
-    "tierColor": "#38bdf8"
-  },
-  {
     "name": "Maize + Mash",
     "category": "Modern American Bistro",
     "website": "https://www.maizeandmash.com/",
