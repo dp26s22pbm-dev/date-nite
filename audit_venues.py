@@ -137,6 +137,11 @@ def main():
     limit = int(os.environ.get("AUDIT_LIMIT") or 0)
     if limit:
         venues = venues[:limit]
+    # Each venue is one request, so refuse a run that would use more than what is left of today's budget
+    left = places_usage.remaining_today()
+    if len(venues) > left:
+        sys.exit(f"Not started: auditing {len(venues)} venues takes {len(venues)} Places requests, but only {left} of today's "
+                 f"{places_usage.DAILY_LIMIT} are left. Run again with a smaller limit, or after midnight Pacific time.")
     rows = audit(venues, api_key)
     columns = ["name", "match", "metres", "google_name", "primaryType", "priceLevel", "dineIn", "reservable", "takeout",
                "delivery", "servesBeer", "servesWine", *RULES]
