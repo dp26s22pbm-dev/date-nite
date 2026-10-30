@@ -288,11 +288,19 @@ def main():
             with open(venues_file) as f:
                 venues = json.load(f)
             venue = venues[-1]
-            if too_cheap(venue):
+            # A venue with no menu or web-search prices only has the importer's typical defaults, which look like real
+            # prices on the map. It is listed under Skipped instead; the Add Venue form can add it once someone has the menu.
+            if outputs.get("prices_found") == "false":
+                reason = "no prices could be found, so only typical defaults were possible. Add it with the Add Venue form and the menu text"
+            elif too_cheap(venue):
+                reason = f"too cheap for a date spot (about ${total_for_two(venue)} for two)"
+            else:
+                reason = None
+            if reason:
                 with open(venues_file, "w") as f:
                     json.dump(venues[:-1], f)
-                print(f"Dropped {name}: too cheap (about ${total_for_two(venue)} for two)")
-                skipped.append(f"- {name}: too cheap for a date spot (about ${total_for_two(venue)} for two)")
+                print(f"Dropped {name}: {reason}")
+                skipped.append(f"- {name}: {reason}")
                 continue
             kept += 1
             if cuisine_key(place):
@@ -315,7 +323,7 @@ def main():
     set_output("count", len(added))  # the workflow opens a pull request only when something was added
 
     intro = (f"Top {len(added)} restaurants for {city}, ranked by Google rating weighted by review count "
-             f"(at least {MIN_REVIEWS} reviews, at most {MAX_PER_CUISINE} of one cuisine, no national fast-food chains, nothing under ${MIN_TOTAL_FOR_TWO} for two). "
+             f"(at least {MIN_REVIEWS} reviews, at most {MAX_PER_CUISINE} of one cuisine, no national fast-food chains, nothing under ${MIN_TOTAL_FOR_TWO} for two, no venue without any prices found). "
              "Ratings were used only for the ranking and are not saved.\n\n"
              f"Review the prices and pins below before merging. The venues are in `{pending_file}`; delete an entry there to drop it. "
              "They get their ids and join `venues.json` automatically after the merge.")
