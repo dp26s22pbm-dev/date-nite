@@ -145,23 +145,6 @@
     "tierColor": "#ef4444"
   },
   {
-    "id": 10,
-    "name": "Taco Pros",
-    "category": "Mexican Fast Casual",
-    "website": "https://www.tacopros.com",
-    "coords": [
-      -88.20680666004706,
-      41.711688953512166
-    ],
-    "app": 6.95,
-    "casualMain": 9.69,
-    "premiumMain": 14.69,
-    "drink": 4.02,
-    "dessert": 5.5,
-    "isTaco": true,
-    "tierColor": "#22c55e"
-  },
-  {
     "id": 11,
     "name": "Traverso\u2019s",
     "category": "Italian",
@@ -386,22 +369,6 @@
     "tierColor": "#eab308"
   },
   {
-    "id": 25,
-    "name": "Shawarma Express",
-    "category": "Levantine",
-    "website": "https://order.toasttab.com/online/shawarma-express-naperville",
-    "coords": [
-      -88.167421,
-      41.695981
-    ],
-    "app": 5.49,
-    "casualMain": 10.49,
-    "premiumMain": 17.99,
-    "drink": 2.0,
-    "dessert": 5.5,
-    "tierColor": "#22c55e"
-  },
-  {
     "id": 26,
     "name": "Old Town Pour House",
     "category": "American",
@@ -447,23 +414,6 @@
     "premiumMain": 19.0,
     "drink": 7.0,
     "dessert": 11.5,
-    "tierColor": "#22c55e"
-  },
-  {
-    "id": 29,
-    "name": "Burrito Parrilla Mexicana - Naperville South",
-    "category": "Mexican Fast Casual",
-    "website": "https://burritopm.com",
-    "mapsUrl": "https://maps.app.goo.gl/NBzQhUyPtc8exp6h9",
-    "coords": [
-      -88.205072,
-      41.678486
-    ],
-    "app": 10.99,
-    "casualMain": 13.99,
-    "premiumMain": 26.99,
-    "drink": 3.12,
-    "dessert": 6.79,
     "tierColor": "#22c55e"
   },
   {
@@ -753,23 +703,6 @@
     "premiumMain": 19.55,
     "drink": 2.87,
     "dessert": 4.99,
-    "tierColor": "#22c55e"
-  },
-  {
-    "id": 48,
-    "name": "Vasco\u2019s PeriPeri Naperville",
-    "category": "Portuguese",
-    "website": "https://vascosperiperi.com",
-    "mapsUrl": "https://maps.app.goo.gl/pNY1YYfPLcR7fpFf7",
-    "coords": [
-      -88.204187,
-      41.70702
-    ],
-    "app": 5.99,
-    "casualMain": 11.99,
-    "premiumMain": 15.99,
-    "drink": 3.49,
-    "dessert": 5.99,
     "tierColor": "#22c55e"
   },
   {
@@ -1214,22 +1147,6 @@
     "tierColor": "#eab308"
   },
   {
-    "id": 75,
-    "name": "Avocado Theory Wheaton",
-    "category": "Casual American",
-    "website": "http://avotheory.com/",
-    "coords": [
-      -88.106824,
-      41.865123
-    ],
-    "app": 8.99,
-    "casualMain": 17.49,
-    "premiumMain": 26.0,
-    "drink": 8.74,
-    "dessert": 5.49,
-    "tierColor": "#22c55e"
-  },
-  {
     "id": 76,
     "name": "Qcurrys Indian Kitchen",
     "category": "Indian Cuisine",
@@ -1243,22 +1160,6 @@
     "premiumMain": 26.95,
     "drink": 8.97,
     "dessert": 4.95,
-    "tierColor": "#22c55e"
-  },
-  {
-    "id": 77,
-    "name": "Pita Zone Mediterranean Grill",
-    "category": "Levantine",
-    "website": "https://pitazone.com/wheaton",
-    "coords": [
-      -88.104172,
-      41.832016
-    ],
-    "app": 5.49,
-    "casualMain": 11.49,
-    "premiumMain": 15.99,
-    "drink": 8.0,
-    "dessert": 6.99,
     "tierColor": "#22c55e"
   },
   {
@@ -1292,22 +1193,6 @@
     "drink": 10.5,
     "dessert": 15.0,
     "tierColor": "#eab308"
-  },
-  {
-    "id": 80,
-    "name": "D'Capo's Gourmet Italian",
-    "category": "Italian",
-    "website": "http://dcaposdg.com/",
-    "coords": [
-      -88.037417,
-      41.793115
-    ],
-    "app": 6.0,
-    "casualMain": 12.0,
-    "premiumMain": 15.0,
-    "drink": 8.0,
-    "dessert": 6.0,
-    "tierColor": "#22c55e"
   },
   {
     "id": 81,
@@ -1453,22 +1338,6 @@
     "tierColor": "#eab308"
   },
   {
-    "id": 90,
-    "name": "Boss Dawgz",
-    "category": "Casual American",
-    "website": "https://bossdawgz.com/",
-    "coords": [
-      -88.074451,
-      41.784578
-    ],
-    "app": 5.99,
-    "casualMain": 5.99,
-    "premiumMain": 8.49,
-    "drink": 8.0,
-    "dessert": 8.0,
-    "tierColor": "#22c55e"
-  },
-  {
     "id": 91,
     "name": "Luigi's Pasta & Pizza",
     "category": "Italian / Pizza",
@@ -1531,22 +1400,6 @@
     "drink": 13.5,
     "dessert": 25.0,
     "tierColor": "#f97316"
-  },
-  {
-    "id": 95,
-    "name": "Wing Snob",
-    "category": "Casual American",
-    "website": "https://locations.wingsnob.com/locations/il/warrenville/2s723-rte-59",
-    "coords": [
-      -88.200746,
-      41.82859
-    ],
-    "app": 4.19,
-    "casualMain": 11.89,
-    "premiumMain": 26.19,
-    "drink": 8.0,
-    "dessert": 8.39,
-    "tierColor": "#22c55e"
   },
   {
     "id": 96,

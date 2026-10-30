@@ -1,1 +1,46 @@
-[]
+[
+  {
+    "name": "Shawarma Express",
+    "reason": "counter-service"
+  },
+  {
+    "name": "Pita Zone",
+    "reason": "counter-service"
+  },
+  {
+    "name": "Boss Dawgz",
+    "reason": "counter-service"
+  },
+  {
+    "name": "Wing Snob",
+    "reason": "counter-service"
+  },
+  {
+    "name": "Burrito Parrilla Mexicana",
+    "reason": "counter-service"
+  },
+  {
+    "name": "Vasco's Peri Peri",
+    "reason": "counter-service"
+  },
+  {
+    "name": "Avocado Theory",
+    "reason": "mostly breakfast and brunch, no dinner menu"
+  },
+  {
+    "name": "Taco Pros",
+    "reason": "fast casual"
+  },
+  {
+    "name": "D'Capo's",
+    "reason": "closes at 7pm and is closed three days a week, so it is not open for dinner"
+  },
+  {
+    "name": "Mighty Halal",
+    "reason": "counter-service"
+  },
+  {
+    "name": "Wing Zing",
+    "reason": "counter-service"
+  }
+]
