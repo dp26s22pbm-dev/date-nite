@@ -1,0 +1,49 @@
+name: Audit Venues
+
+# Run this from the Actions tab to look up every venue on the map in Google Places and see which ones a sit-down rule
+# would exclude (see audit_venues.py). It changes nothing in the repository; the report is in the run summary and in
+# the audit-venues artifact. Each venue is one Places request, so set "limit" to a small number for a first run.
+on:
+  workflow_dispatch:
+    inputs:
+      limit:
+        description: Audit only the first N venues (0 for all)
+        default: "0"
+
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    permissions:
+      actions: read
+      contents: write
+      issues: write
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Look Up the Venues
+        env:
+          GOOGLE_PLACES_API_KEY: ${{ secrets.GOOGLE_PLACES_API_KEY }}
+          AUDIT_LIMIT: ${{ inputs.limit }}
+        run: python audit_venues.py
+
+      - name: Keep the Table
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: audit-venues
+          path: audit-venues.csv
+          if-no-files-found: ignore
+
+      - name: Save the Places request log
+        if: always()
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: python places_usage.py publish || true

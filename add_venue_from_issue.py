@@ -1123,6 +1123,9 @@ def price_sanity_warnings(app, casual, premium, drink, dessert, defaulted=(), es
 
 # The workflows start over from the new main when a push is rejected, which runs this script again. Gemini does not
 # answer the same way twice, so the first prices are kept in this file (outside the repository) and reused.
+# Where saved venues are read and written; the Add City run points this at a scratch copy so it never touches venues.json
+VENUES_FILE = os.environ.get("VENUES_FILE", "venues.json")
+
 PRICING_CACHE_FILE = os.environ.get("PRICING_CACHE_FILE", "")
 
 def load_pricing_cache():
@@ -1229,7 +1232,7 @@ def main():
               "Paste a Google Maps share link of the restaurant's page, or 'lat, lon' coordinates.")
 
     # Cuisine label: use what the form gave, else keep an existing venue's label, else let Gemini guess
-    with open("venues.json", "r") as f:
+    with open(VENUES_FILE, "r") as f:
         venues = json.load(f)
     existing_idx = next((i for i, v in enumerate(venues) if name_key(v["name"]) == name_key(name)), None)
     category = clean_label(category)
@@ -1383,7 +1386,7 @@ def main():
     else:
         venues.append(entry)
 
-    with open("venues.json", "w") as f:
+    with open(VENUES_FILE, "w") as f:
         json.dump(venues, f, indent=2)
 
     # Register URL into urls.py so future batch runs can refresh it
@@ -1429,6 +1432,7 @@ def main():
     guessed = not (pricing and pricing.get("casualMains")) or str(pricing_source).startswith("a web search")
     needs_menu = guessed and not all(k in overrides for k in ("app", "casualMain", "premiumMain", "drink", "dessert"))
     set_output("needs_menu", "true" if needs_menu else "false")
+    set_output("prices_found", "true" if pricing and pricing.get("casualMains") else "false")  # false: only the typical defaults were saved
     warnings = price_sanity_warnings(app, casual_main, premium_main, drink, dessert, defaulted, estimated=guessed)
     set_output("needs_check", "true" if warnings else "false")
     final_coords = (venues[existing_idx] if existing_idx is not None else entry)["coords"]

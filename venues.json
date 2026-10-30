@@ -145,23 +145,6 @@
     "tierColor": "#ef4444"
   },
   {
-    "id": 10,
-    "name": "Taco Pros",
-    "category": "Mexican Fast Casual",
-    "website": "https://www.tacopros.com",
-    "coords": [
-      -88.20680666004706,
-      41.711688953512166
-    ],
-    "app": 6.95,
-    "casualMain": 9.69,
-    "premiumMain": 14.69,
-    "drink": 4.02,
-    "dessert": 5.5,
-    "isTaco": true,
-    "tierColor": "#22c55e"
-  },
-  {
     "id": 11,
     "name": "Traverso\u2019s",
     "category": "Italian",
@@ -386,22 +369,6 @@
     "tierColor": "#eab308"
   },
   {
-    "id": 25,
-    "name": "Shawarma Express",
-    "category": "Levantine",
-    "website": "https://order.toasttab.com/online/shawarma-express-naperville",
-    "coords": [
-      -88.167421,
-      41.695981
-    ],
-    "app": 5.49,
-    "casualMain": 10.49,
-    "premiumMain": 17.99,
-    "drink": 2.0,
-    "dessert": 5.5,
-    "tierColor": "#22c55e"
-  },
-  {
     "id": 26,
     "name": "Old Town Pour House",
     "category": "American",
@@ -447,23 +414,6 @@
     "premiumMain": 19.0,
     "drink": 7.0,
     "dessert": 11.5,
-    "tierColor": "#22c55e"
-  },
-  {
-    "id": 29,
-    "name": "Burrito Parrilla Mexicana - Naperville South",
-    "category": "Mexican Fast Casual",
-    "website": "https://burritopm.com",
-    "mapsUrl": "https://maps.app.goo.gl/NBzQhUyPtc8exp6h9",
-    "coords": [
-      -88.205072,
-      41.678486
-    ],
-    "app": 10.99,
-    "casualMain": 13.99,
-    "premiumMain": 26.99,
-    "drink": 3.12,
-    "dessert": 6.79,
     "tierColor": "#22c55e"
   },
   {
@@ -753,23 +703,6 @@
     "premiumMain": 19.55,
     "drink": 2.87,
     "dessert": 4.99,
-    "tierColor": "#22c55e"
-  },
-  {
-    "id": 48,
-    "name": "Vasco\u2019s PeriPeri Naperville",
-    "category": "Portuguese",
-    "website": "https://vascosperiperi.com",
-    "mapsUrl": "https://maps.app.goo.gl/pNY1YYfPLcR7fpFf7",
-    "coords": [
-      -88.204187,
-      41.70702
-    ],
-    "app": 5.99,
-    "casualMain": 11.99,
-    "premiumMain": 15.99,
-    "drink": 3.49,
-    "dessert": 5.99,
     "tierColor": "#22c55e"
   },
   {
@@ -1214,22 +1147,6 @@
     "tierColor": "#eab308"
   },
   {
-    "id": 75,
-    "name": "Avocado Theory Wheaton",
-    "category": "Casual American",
-    "website": "http://avotheory.com/",
-    "coords": [
-      -88.106824,
-      41.865123
-    ],
-    "app": 8.99,
-    "casualMain": 17.49,
-    "premiumMain": 26.0,
-    "drink": 8.74,
-    "dessert": 5.49,
-    "tierColor": "#22c55e"
-  },
-  {
     "id": 76,
     "name": "Qcurrys Indian Kitchen",
     "category": "Indian Cuisine",
@@ -1243,22 +1160,6 @@
     "premiumMain": 26.95,
     "drink": 8.97,
     "dessert": 4.95,
-    "tierColor": "#22c55e"
-  },
-  {
-    "id": 77,
-    "name": "Pita Zone Mediterranean Grill",
-    "category": "Levantine",
-    "website": "https://pitazone.com/wheaton",
-    "coords": [
-      -88.104172,
-      41.832016
-    ],
-    "app": 5.49,
-    "casualMain": 11.49,
-    "premiumMain": 15.99,
-    "drink": 8.0,
-    "dessert": 6.99,
     "tierColor": "#22c55e"
   },
   {
@@ -1276,5 +1177,483 @@
     "drink": 11.0,
     "dessert": 9.0,
     "tierColor": "#eab308"
+  },
+  {
+    "id": 79,
+    "name": "Lantern Pizza Co.",
+    "category": "Italian / Pizza",
+    "website": "http://lanternpizza.com/",
+    "coords": [
+      -88.020507,
+      41.808445
+    ],
+    "app": 13.5,
+    "casualMain": 21.0,
+    "premiumMain": 25.0,
+    "drink": 10.5,
+    "dessert": 15.0,
+    "tierColor": "#eab308"
+  },
+  {
+    "id": 81,
+    "name": "Chama Ga\u00facha Brazilian Steakhouse - Chicago",
+    "category": "Brazilian Steakhouse",
+    "website": "https://www.chamagaucha.com/chicago",
+    "coords": [
+      -88.02621,
+      41.83241
+    ],
+    "app": 23.1,
+    "casualMain": 42.0,
+    "premiumMain": 69.95,
+    "drink": 21.0,
+    "dessert": 8.0,
+    "tierColor": "#ef4444"
+  },
+  {
+    "id": 82,
+    "name": "MISSION BBQ",
+    "category": "American BBQ",
+    "website": "http://mission-bbq.com/",
+    "coords": [
+      -88.025112,
+      41.834117
+    ],
+    "app": 3.54,
+    "casualMain": 9.99,
+    "premiumMain": 17.99,
+    "drink": 8.0,
+    "dessert": 8.0,
+    "tierColor": "#22c55e"
+  },
+  {
+    "id": 83,
+    "name": "The Foxtail",
+    "category": "Levantine",
+    "website": "http://www.thefoxtaildg.com/",
+    "coords": [
+      -88.00999,
+      41.791716
+    ],
+    "app": 17.0,
+    "casualMain": 20.0,
+    "premiumMain": 38.0,
+    "drink": 10.0,
+    "dessert": 8.0,
+    "tierColor": "#eab308"
+  },
+  {
+    "id": 84,
+    "name": "Alice's Corner Bolivian Cuisine",
+    "category": "Bolivian Cuisine",
+    "website": "https://www.alicescorner.com/",
+    "coords": [
+      -88.315083,
+      41.759756
+    ],
+    "app": 4.0,
+    "casualMain": 16.0,
+    "premiumMain": 32.0,
+    "drink": 8.0,
+    "dessert": 6.0,
+    "tierColor": "#22c55e"
+  },
+  {
+    "id": 85,
+    "name": "Sushi Plus Rotary Sushi Bar - Aurora",
+    "category": "Japanese Cuisine",
+    "website": "http://www.rotarysushi.com/",
+    "coords": [
+      -88.210983,
+      41.763107
+    ],
+    "app": 8.0,
+    "casualMain": 18.2,
+    "premiumMain": 21.97,
+    "drink": 9.1,
+    "dessert": 7.67,
+    "tierColor": "#22c55e"
+  },
+  {
+    "id": 86,
+    "name": "Tavern On Broadway",
+    "category": "Casual American",
+    "coords": [
+      -88.312513,
+      41.757891
+    ],
+    "app": 12.0,
+    "casualMain": 19.0,
+    "premiumMain": 34.0,
+    "drink": 8.5,
+    "dessert": 8.0,
+    "tierColor": "#eab308"
+  },
+  {
+    "id": 87,
+    "name": "Hardware Sustainable Gastropub and Brewery",
+    "category": "New American",
+    "website": "https://eathardware.com/",
+    "coords": [
+      -88.371613,
+      41.809508
+    ],
+    "app": 17.0,
+    "casualMain": 21.0,
+    "premiumMain": 38.0,
+    "drink": 7.0,
+    "dessert": 8.0,
+    "tierColor": "#eab308"
+  },
+  {
+    "id": 88,
+    "name": "Basil's Greek Dining",
+    "category": "Greek",
+    "website": "https://www.basilsdining.com/",
+    "coords": [
+      -88.218112,
+      41.758665
+    ],
+    "app": 11.0,
+    "casualMain": 22.5,
+    "premiumMain": 37.0,
+    "drink": 13.0,
+    "dessert": 12.0,
+    "tierColor": "#eab308"
+  },
+  {
+    "id": 89,
+    "name": "LE BON BON GRILL",
+    "category": "Ivorian Cuisine",
+    "website": "https://lebonbongrill.square.site/",
+    "coords": [
+      -88.070455,
+      41.801921
+    ],
+    "app": 3.99,
+    "casualMain": 22.49,
+    "premiumMain": 34.99,
+    "drink": 11.24,
+    "dessert": 8.0,
+    "tierColor": "#eab308"
+  },
+  {
+    "id": 91,
+    "name": "Luigi's Pasta & Pizza",
+    "category": "Italian / Pizza",
+    "website": "https://luigiskitchen.partner-storefront.com/?utm_source=google_business_profile&utm_medium=button&utm_tracking_link_id=e52f7873-d340-405f-bcc9-ebecbf602f51",
+    "coords": [
+      -88.075018,
+      41.799265
+    ],
+    "app": 8.99,
+    "casualMain": 14.49,
+    "premiumMain": 21.99,
+    "drink": 8.0,
+    "dessert": 11.99,
+    "tierColor": "#22c55e"
+  },
+  {
+    "id": 92,
+    "name": "SubKO",
+    "category": "Casual American",
+    "website": "https://subko.online/?utm_source=google",
+    "coords": [
+      -88.082776,
+      41.786012
+    ],
+    "app": 6.49,
+    "casualMain": 12.99,
+    "premiumMain": 14.99,
+    "drink": 8.0,
+    "dessert": 9.99,
+    "tierColor": "#22c55e"
+  },
+  {
+    "id": 93,
+    "name": "Brasi's Pizzeria",
+    "category": "Italian / Pizza",
+    "website": "http://brasipizzeria.com/",
+    "coords": [
+      -88.075151,
+      41.788218
+    ],
+    "app": 8.95,
+    "casualMain": 16.95,
+    "premiumMain": 22.45,
+    "drink": 8.47,
+    "dessert": 5.95,
+    "tierColor": "#22c55e"
+  },
+  {
+    "id": 94,
+    "name": "A2B Indian Veg Restaurant - Illinois",
+    "category": "South Indian Cuisine",
+    "website": "https://www.a2billinois.com/",
+    "coords": [
+      -88.168205,
+      41.803716
+    ],
+    "app": 12.0,
+    "casualMain": 27.0,
+    "premiumMain": 31.0,
+    "drink": 13.5,
+    "dessert": 25.0,
+    "tierColor": "#f97316"
+  },
+  {
+    "id": 96,
+    "name": "Al's Pizza",
+    "category": "Italian / Pizza",
+    "website": "http://alspizzainc.com/",
+    "coords": [
+      -88.172125,
+      41.817444
+    ],
+    "app": 12.0,
+    "casualMain": 19.0,
+    "premiumMain": 34.0,
+    "drink": 8.5,
+    "dessert": 8.0,
+    "tierColor": "#eab308"
+  },
+  {
+    "id": 97,
+    "name": "Simply South - Indian Vegetarian Restaurant",
+    "category": "South Indian Cuisine",
+    "website": "https://simplysouth.us/warrenville?utm_source=google",
+    "coords": [
+      -88.172427,
+      41.803183
+    ],
+    "app": 12.0,
+    "casualMain": 17.0,
+    "premiumMain": 19.5,
+    "drink": 8.5,
+    "dessert": 10.0,
+    "tierColor": "#22c55e"
+  },
+  {
+    "id": 98,
+    "name": "Two Brothers Tap House",
+    "category": "Casual American",
+    "website": "https://www.twobrothersbrewing.com/restaurants-taphouse",
+    "coords": [
+      -88.211933,
+      41.824462
+    ],
+    "app": 13.49,
+    "casualMain": 18.49,
+    "premiumMain": 24.99,
+    "drink": 9.24,
+    "dessert": 8.0,
+    "tierColor": "#eab308"
+  },
+  {
+    "id": 99,
+    "name": "McWethy's Tavern",
+    "category": "Casual American",
+    "website": "https://www.mcwethystavern.com/",
+    "coords": [
+      -88.143343,
+      41.595394
+    ],
+    "app": 13.0,
+    "casualMain": 18.5,
+    "premiumMain": 38.0,
+    "drink": 14.5,
+    "dessert": 11.0,
+    "tierColor": "#eab308"
+  },
+  {
+    "id": 100,
+    "name": "White Fence Farm Main Restaurant",
+    "category": "American",
+    "website": "http://whitefencefarm-il.com/",
+    "coords": [
+      -88.057258,
+      41.675859
+    ],
+    "app": 6.21,
+    "casualMain": 24.79,
+    "premiumMain": 43.81,
+    "drink": 13.67,
+    "dessert": 6.84,
+    "tierColor": "#eab308"
+  },
+  {
+    "id": 101,
+    "name": "Thaiway Thai Cuisine",
+    "category": "Thai Cuisine",
+    "website": "https://thaiwayromeovilleil.com/",
+    "coords": [
+      -88.123763,
+      41.641923
+    ],
+    "app": 7.95,
+    "casualMain": 17.45,
+    "premiumMain": 27.45,
+    "drink": 8.72,
+    "dessert": 8.0,
+    "tierColor": "#eab308"
+  },
+  {
+    "id": 102,
+    "name": "Sushi Train Japanese Restaurant",
+    "category": "Japanese Cuisine",
+    "website": "https://www.thesushitrain.com/",
+    "coords": [
+      -88.125917,
+      41.621596
+    ],
+    "app": 6.95,
+    "casualMain": 13.95,
+    "premiumMain": 28.45,
+    "drink": 8.0,
+    "dessert": 5.95,
+    "tierColor": "#22c55e"
+  },
+  {
+    "id": 103,
+    "name": "BURMA O' CLOCK",
+    "category": "Burmese Cuisine",
+    "website": "http://burmaoclock.com/",
+    "coords": [
+      -88.10953,
+      41.864696
+    ],
+    "app": 7.99,
+    "casualMain": 17.99,
+    "premiumMain": 20.99,
+    "drink": 8.99,
+    "dessert": 7.99,
+    "tierColor": "#22c55e"
+  },
+  {
+    "id": 104,
+    "name": "302 Wheaton",
+    "category": "Casual American",
+    "website": "http://302wheaton.com/",
+    "coords": [
+      -88.110356,
+      41.864547
+    ],
+    "app": 6.0,
+    "casualMain": 8.5,
+    "premiumMain": 13.5,
+    "drink": 8.0,
+    "dessert": 6.0,
+    "tierColor": "#22c55e"
+  },
+  {
+    "id": 105,
+    "name": "Ditka's Grill",
+    "category": "American",
+    "website": "https://www.ditkasgrill.com/",
+    "coords": [
+      -88.109497,
+      41.864968
+    ],
+    "app": 14.5,
+    "casualMain": 22.0,
+    "premiumMain": 49.0,
+    "drink": 15.0,
+    "dessert": 8.0,
+    "tierColor": "#f97316"
+  },
+  {
+    "id": 106,
+    "name": "Positano Ristorante - Wheaton",
+    "category": "Italian",
+    "website": "http://positano-ristorante.com/",
+    "coords": [
+      -88.105674,
+      41.863962
+    ],
+    "app": 14.0,
+    "casualMain": 28.0,
+    "premiumMain": 39.0,
+    "drink": 15.0,
+    "dessert": 8.0,
+    "tierColor": "#f97316"
+  },
+  {
+    "id": 107,
+    "name": "Taj Restaurant and Banquet",
+    "category": "Pakistani & Indian Cuisine",
+    "website": "https://www.tajbanquet.com/",
+    "coords": [
+      -88.070121,
+      41.693331
+    ],
+    "app": 5.99,
+    "casualMain": 14.99,
+    "premiumMain": 16.99,
+    "drink": 8.0,
+    "dessert": 3.99,
+    "tierColor": "#22c55e"
+  },
+  {
+    "id": 108,
+    "name": "Pier 9 Seafood and Bar",
+    "category": "Cajun Cuisine",
+    "website": "https://www.pier9seafoodandbar.com/",
+    "coords": [
+      -88.037156,
+      41.719605
+    ],
+    "app": 12.95,
+    "casualMain": 18.5,
+    "premiumMain": 24.0,
+    "drink": 9.25,
+    "dessert": 5.95,
+    "tierColor": "#eab308"
+  },
+  {
+    "id": 109,
+    "name": "Taquer\u00eda El Valle",
+    "category": "Mexican Fast Casual",
+    "coords": [
+      -88.051094,
+      41.717338
+    ],
+    "app": 4.39,
+    "casualMain": 7.99,
+    "premiumMain": 10.99,
+    "drink": 8.0,
+    "dessert": 8.0,
+    "tierColor": "#22c55e"
+  },
+  {
+    "id": 110,
+    "name": "Poke Bros.",
+    "category": "Hawaiian Cuisine",
+    "website": "https://www.eatpokebros.com/",
+    "coords": [
+      -88.03719,
+      41.722904
+    ],
+    "app": 5.0,
+    "casualMain": 12.5,
+    "premiumMain": 14.25,
+    "drink": 8.0,
+    "dessert": 5.25,
+    "tierColor": "#22c55e"
+  },
+  {
+    "id": 111,
+    "name": "Los Comales Bolingbrook",
+    "category": "Mexican Cuisine",
+    "website": "https://loscomalesbolingbrook.com/",
+    "coords": [
+      -88.125264,
+      41.690309
+    ],
+    "app": 4.5,
+    "casualMain": 13.75,
+    "premiumMain": 26.99,
+    "drink": 8.0,
+    "dessert": 4.5,
+    "tierColor": "#22c55e"
   }
 ]
