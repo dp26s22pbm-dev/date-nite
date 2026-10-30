@@ -1,20 +1,5 @@
 [
   {
-    "name": "Vasco\u2019s Peri Peri LOMBARD",
-    "category": "Portuguese",
-    "website": "https://vascosperiperi.com/",
-    "coords": [
-      -88.006834,
-      41.860973
-    ],
-    "app": 7.74,
-    "casualMain": 15.99,
-    "premiumMain": 19.99,
-    "drink": 8.0,
-    "dessert": 7.12,
-    "tierColor": "#22c55e"
-  },
-  {
     "name": "Mighty Halal Fried Chicken & Shawarma",
     "category": "Levantine",
     "website": "http://www.mightyhalal.com/",
