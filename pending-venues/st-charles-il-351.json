@@ -22,11 +22,11 @@
       -88.336286,
       41.913148
     ],
-    "app": 9.5,
-    "casualMain": 15.5,
-    "premiumMain": 22.0,
-    "drink": 8.0,
-    "dessert": 7.25,
+    "app": 10.0,
+    "casualMain": 16.0,
+    "premiumMain": 20.0,
+    "drink": 3.5,
+    "dessert": 7.5,
     "tierColor": "#22c55e"
   },
   {
@@ -41,7 +41,7 @@
     "casualMain": 28.0,
     "premiumMain": 33.0,
     "drink": 17.0,
-    "dessert": 8.0,
+    "dessert": 13.0,
     "tierColor": "#f97316"
   },
   {
@@ -52,12 +52,12 @@
       -88.287062,
       41.920913
     ],
-    "app": 19.05,
+    "app": 21.0,
     "casualMain": 24.0,
-    "premiumMain": 52.0,
-    "drink": 12.0,
-    "dessert": 9.6,
-    "tierColor": "#f97316"
+    "premiumMain": 26.5,
+    "drink": 9.0,
+    "dessert": 8.5,
+    "tierColor": "#eab308"
   },
   {
     "name": "Rec Haus",
@@ -68,10 +68,10 @@
       41.913903
     ],
     "app": 12.0,
-    "casualMain": 19.0,
-    "premiumMain": 34.0,
+    "casualMain": 16.0,
+    "premiumMain": 18.0,
     "drink": 8.5,
-    "dessert": 8.0,
-    "tierColor": "#eab308"
+    "dessert": 12.0,
+    "tierColor": "#22c55e"
   }
 ]
