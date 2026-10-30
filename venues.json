@@ -1895,5 +1895,21 @@
     "drink": 8.5,
     "dessert": 12.0,
     "tierColor": "#22c55e"
+  },
+  {
+    "id": 127,
+    "name": "Remove Subko",
+    "category": "Casual American",
+    "website": "https://subko.online/",
+    "coords": [
+      -88.082776,
+      41.786012
+    ],
+    "app": 6.49,
+    "casualMain": 11.49,
+    "premiumMain": 21.99,
+    "drink": 8.0,
+    "dessert": 9.99,
+    "tierColor": "#22c55e"
   }
 ]
