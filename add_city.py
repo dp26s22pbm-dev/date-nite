@@ -21,6 +21,7 @@ PLACES_URL = "https://places.googleapis.com/v1/places:searchText"
 FIELDS = ",".join([
     "places.displayName", "places.formattedAddress", "places.location", "places.websiteUri", "places.rating",
     "places.userRatingCount", "places.businessStatus", "places.primaryType", "places.types", "places.regularOpeningHours",
+    "places.priceLevel", "places.dineIn", "places.reservable", "places.servesBeer", "places.servesWine",
     "nextPageToken",
 ])
 
@@ -32,6 +33,8 @@ MAX_PER_CUISINE = int(os.environ.get("MAX_PER_CUISINE", "2"))
 # the next-best candidate, up to MAX_PRICED venues priced per city.
 MIN_TOTAL_FOR_TWO = int(os.environ.get("MIN_TOTAL_FOR_TWO", "35"))
 MAX_PRICED = int(os.environ.get("MAX_PRICED", "10"))
+# Places gives signs of counter service (see counter_service()); such a place is listed under Skipped. Set to 0 to turn off.
+SKIP_COUNTER_SERVICE = os.environ.get("SKIP_COUNTER_SERVICE", "1") != "0"
 BLOCKED_CHAINS = re.compile(
     r"\b(mcdonalds|burger king|wendys|chick fil a|chipotle|taco bell|subway|kfc|popeyes|arbys|sonic drive|"
     r"panda express|qdoba|panera|jimmy johns|jersey mikes|dunkin|starbucks|wingstop)\b", re.I)
@@ -209,6 +212,15 @@ def cap_reached(place, used, per_cuisine=MAX_PER_CUISINE):
     cuisine = cuisine_key(place)
     return bool(cuisine) and used.get(cuisine, 0) >= per_cuisine
 
+def counter_service(place):
+    """True when Places shows signs of counter service: no dine-in, or a cheap place ($ price level) that takes no
+    reservations and serves neither beer nor wine. A field Places leaves out counts as unknown, never as false, so a place
+    with no price level is not caught by the second test. Tested against the venues on the map in the Audit Venues workflow."""
+    if place.get("dineIn") is False:
+        return True
+    return (place.get("priceLevel") == "PRICE_LEVEL_INEXPENSIVE" and place.get("reservable") is not True
+            and not (place.get("servesBeer") or place.get("servesWine")))
+
 def total_for_two(venue):
     """The importer's standard order for two (appetizer, two mains, two drinks, dessert) with 30% tax and tip."""
     return round((venue["app"] + venue["casualMain"] + venue["premiumMain"] + 2 * venue["drink"] + venue["dessert"]) * 1.30)
@@ -302,8 +314,14 @@ def main():
                 break
             if cap_reached(place, used):
                 continue
-            priced += 1
             name = place["displayName"]["text"]
+            # Checked before pricing, so a skipped place costs no importer or Gemini request
+            if SKIP_COUNTER_SERVICE and counter_service(place):
+                print(f"\nSkipped {name}: looks like counter service")
+                skipped.append(f"- {name}: looks like counter service (cheap, no reservations, no beer or wine, or no dine-in). "
+                               "Add it with the Add Venue form if it is a sit-down place")
+                continue
+            priced += 1
             print(f"\n=== {name} (score {score:.2f}) ===")
             outputs = add_venue(place, work_dir, priced, venues_file)
             if outputs.get("error") and not outputs.get("summary"):
@@ -348,7 +366,7 @@ def main():
     set_output("count", len(added))  # the workflow opens a pull request only when something was added
 
     intro = (f"Top {len(added)} restaurants for {city}, ranked by Google rating weighted by review count "
-             f"(at least {MIN_REVIEWS} reviews, at most {MAX_PER_CUISINE} of one cuisine, no national fast-food chains, nothing under ${MIN_TOTAL_FOR_TWO} for two, no venue without any prices found). "
+             f"(at least {MIN_REVIEWS} reviews, at most {MAX_PER_CUISINE} of one cuisine, no national fast-food chains, nothing under ${MIN_TOTAL_FOR_TWO} for two, no venue without any prices found, no counter-service places). "
              "Ratings were used only for the ranking and are not saved.\n\n"
              f"Review the prices and pins below before merging. The venues are in `{pending_file}`; delete an entry there to drop it. "
              "They get their ids and join `venues.json` automatically after the merge.")
