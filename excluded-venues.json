@@ -34,5 +34,13 @@
   {
     "name": "D'Capo's",
     "reason": "closes at 7pm and is closed three days a week, so it is not open for dinner"
+  },
+  {
+    "name": "Mighty Halal",
+    "reason": "counter-service"
+  },
+  {
+    "name": "Wing Zing",
+    "reason": "counter-service"
   }
 ]
