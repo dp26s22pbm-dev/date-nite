@@ -1170,7 +1170,7 @@
   <button id="car-toggle" class="car-btn" onclick="toggleCar()" aria-label="Show my car at my location" title="Show my car at my location">
     <svg viewBox="0 0 24 24"><path d="M18.92 6.01C18.72 5.42 18.16 5 17.5 5h-11c-.66 0-1.21.42-1.42 1.01L3 12v8c0 .55.45 1 1 1h1c.55 0 1-.45 1-1v-1h12v1c0 .55.45 1 1 1h1c.55 0 1-.45 1-1v-8l-2.08-5.99zM6.5 16c-.83 0-1.5-.67-1.5-1.5S5.67 13 6.5 13s1.5.67 1.5 1.5S7.33 16 6.5 16zm11 0c-.83 0-1.5-.67-1.5-1.5s.67-1.5 1.5-1.5 1.5.67 1.5 1.5-.67 1.5-1.5 1.5zM5 11l1.5-4.5h11L19 11H5z"/></svg>
   </button>
-  <button id="zoom-reset" class="zoom-btn" onclick="resetZoom()" aria-label="Zoom out to the starting view" title="Zoom out to the starting view">
+  <button id="zoom-reset" class="zoom-btn" onclick="resetZoom()" aria-label="Zoom out to the skies!" title="Zoom out to the skies!">
     <svg viewBox="0 0 24 24"><path d="M19.35 10.04C18.67 6.59 15.64 4 12 4 9.11 4 6.6 5.64 5.35 8.04 2.34 8.36 0 10.91 0 14c0 3.31 2.69 6 6 6h13c2.76 0 5-2.24 5-5 0-2.64-2.05-4.78-4.65-4.96z"/></svg>
   </button>
   <button id="list-toggle" class="list-btn active" onclick="toggleList()" aria-label="Show or hide the venue list" title="Show or hide the venue list">
@@ -1432,6 +1432,7 @@
     }
 
     const DEFAULT_ZOOM = 12.2; // the height the page loads at
+    const CLOUD_ZOOM = 11.5; // the height the cloud button zooms back out to
     const map = new maplibregl.Map({
       container: 'map',
       style: 'https://tiles.openfreemap.org/styles/dark',
@@ -1474,9 +1475,9 @@
       map.panBy([e.deltaX, e.deltaY], { animate: false });
     }, { capture: true, passive: false });
 
-    // The cloud button lights up white whenever the map is at the starting height
+    // The cloud button lights up white whenever the map is at the cloud height
     function updateZoomButton() {
-      document.getElementById('zoom-reset').classList.toggle('active', Math.abs(map.getZoom() - DEFAULT_ZOOM) < 0.1);
+      document.getElementById('zoom-reset').classList.toggle('active', Math.abs(map.getZoom() - CLOUD_ZOOM) < 0.1);
     }
     map.on('zoom', updateZoomButton);
     updateZoomButton();
@@ -2941,10 +2942,10 @@
       });
     }
 
-    // Cloud button: zoom back out to the height the page first loads at, over whatever is in view
+    // Cloud button: zoom back out to the cloud height, over whatever is in view
     function resetZoom() {
       map.easeTo({
-        zoom: DEFAULT_ZOOM,
+        zoom: CLOUD_ZOOM,
         duration: reducedMotion.matches ? 0 : 1000,
         easing: (x) => 0.5 - Math.cos(Math.PI * x) / 2
       });
