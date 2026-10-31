@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="robots" content="noindex, nofollow" />
+  <title>DATE NITE grid</title>
+  <link href="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.css" rel="stylesheet" />
+  <style>
+    * { box-sizing: border-box; }
+    html, body { margin: 0; height: 100%; background: #0d1117; color: #f0f6fc;
+      font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Segoe UI", Roboto, sans-serif; }
+    #map { position: absolute; inset: 0; }
+    .panel { position: absolute; top: 12px; left: 12px; z-index: 2; width: 250px; padding: 12px 14px;
+      background: rgba(13, 17, 23, 0.88); border: 1px solid rgba(255,255,255,0.15); border-radius: 10px; font-size: 13px; line-height: 1.45; }
+    .panel h1 { margin: 0 0 6px; font-size: 14px; letter-spacing: 0.06em; }
+    .panel .row { display: flex; align-items: center; gap: 8px; margin-top: 6px; }
+    .swatch { width: 14px; height: 14px; border-radius: 3px; flex: none; border: 1px solid rgba(255,255,255,0.3); }
+    .panel button { margin-top: 8px; width: 100%; padding: 7px 10px; font: inherit; color: #f0f6fc; cursor: pointer;
+      background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.25); border-radius: 6px; }
+    .panel button:hover { background: rgba(255,255,255,0.16); }
+    .panel button:disabled { opacity: 0.4; cursor: default; }
+    .muted { color: rgba(240,246,252,0.65); }
+    #selected { margin-top: 8px; padding-top: 8px; border-top: 1px solid rgba(255,255,255,0.15); }
+    .maplibregl-ctrl-attrib { background: rgba(13,17,23,0.7) !important; }
+    .maplibregl-ctrl-attrib a { color: #ccc; }
+  </style>
+</head>
+<body>
+  <div id="map"></div>
+  <div class="panel">
+    <h1>GRID <span class="muted" id="gridName"></span></h1>
+    <div class="row"><span class="swatch" style="background:rgba(255,255,255,0.04)"></span>0 venues</div>
+    <div class="row"><span class="swatch" style="background:rgba(56,139,253,0.35)"></span>1 to 4 venues</div>
+    <div class="row"><span class="swatch" style="background:rgba(245,158,11,0.45)"></span>5 or more: split it</div>
+    <div id="selected" class="muted">Click a cell to select it.</div>
+    <button id="splitBtn" disabled>Split selected cell</button>
+    <button id="copyBtn">Copy split list</button>
+    <div class="muted" style="margin-top:8px;font-size:12px">Splits are saved in this browser only. To keep them, paste the copied list into <code>split</code> in grid/grid.json.</div>
+  </div>
+
+  <script src="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.js"></script>
+  <script>
+    // Cells: columns are letters (A, B, ... AA), rows are numbers counted from the north edge. A split cell holds
+    // splitInto x splitInto children named a, b, c ... in rows from the north-west corner (A1-a is its north-west child).
+    const STORE_KEY = 'datenite-grid-splits';
+    let grid, venues = [], splits = new Set(), selectedId = null;
+
+    const colName = i => { let s = ''; i += 1; while (i > 0) { s = String.fromCharCode(65 + (i - 1) % 26) + s; i = Math.floor((i - 1) / 26); } return s; };
+    const childName = k => String.fromCharCode(97 + k);
+    const baseId = (c, r) => colName(c) + (r + 1);
+
+    // The id of the finest cell holding the point, or null when it falls outside the grid
+    function cellOf([lon, lat]) {
+      const fc = (lon - grid.origin.lon) / grid.dLon, fr = (grid.origin.lat - lat) / grid.dLat;
+      const c = Math.floor(fc), r = Math.floor(fr);
+      if (c < 0 || r < 0 || c >= grid.cols || r >= grid.rows) return null;
+      const id = baseId(c, r);
+      if (!splits.has(id)) return id;
+      const n = grid.splitInto;
+      const sc = Math.min(n - 1, Math.floor((fc - c) * n)), sr = Math.min(n - 1, Math.floor((fr - r) * n));
+      return id + '-' + childName(sr * n + sc);
+    }
+
+    function buildCells() {
+      const counts = {};
+      for (const v of venues) { const id = cellOf(v.coords); if (id) counts[id] = (counts[id] || 0) + 1; }
+      const cells = [];
+      const add = (id, c, r, sub, subCol, subRow) => {
+        const w = grid.dLon / sub, h = grid.dLat / sub;
+        const west = grid.origin.lon + c * grid.dLon + subCol * w, north = grid.origin.lat - r * grid.dLat - subRow * h;
+        const ring = [[west, north], [west + w, north], [west + w, north - h], [west, north - h], [west, north]];
+        const count = counts[id] || 0;
+        cells.push({ type: 'Feature', geometry: { type: 'Polygon', coordinates: [ring] },
+          properties: { id, count, level: count === 0 ? 0 : count < grid.fullAt ? 1 : 2, selected: id === selectedId,
+                        label: count ? `${id}\n${count}` : id, parent: baseId(c, r) } });
+      };
+      for (let r = 0; r < grid.rows; r++) for (let c = 0; c < grid.cols; c++) {
+        const id = baseId(c, r);
+        if (splits.has(id)) {
+          const n = grid.splitInto;
+          for (let k = 0; k < n * n; k++) add(id + '-' + childName(k), c, r, n, k % n, Math.floor(k / n));
+        } else add(id, c, r, 1, 0, 0);
+      }
+      return { type: 'FeatureCollection', features: cells };
+    }
+
+    function refresh() {
+      map.getSource('cells').setData(buildCells());
+      const sel = document.getElementById('selected'), btn = document.getElementById('splitBtn');
+      if (!selectedId) { sel.textContent = 'Click a cell to select it.'; btn.disabled = true; btn.textContent = 'Split selected cell'; return; }
+      const parent = selectedId.split('-')[0], isChild = selectedId.includes('-');
+      const count = venues.filter(v => cellOf(v.coords) === selectedId).length;
+      sel.innerHTML = `<b>${selectedId}</b><br>${count} venue${count === 1 ? '' : 's'}${count >= grid.fullAt ? ' (full)' : ''}`;
+      btn.disabled = false;
+      btn.textContent = isChild ? `Merge ${parent} back` : `Split ${parent} into ${grid.splitInto * grid.splitInto}`;
+    }
+
+    const saveSplits = () => localStorage.setItem(STORE_KEY, JSON.stringify([...splits]));
+
+    const map = new maplibregl.Map({
+      container: 'map',
+      style: 'https://tiles.openfreemap.org/styles/dark',
+      center: [-87.65, 41.84], zoom: 10.3, pitch: 0, attributionControl: false
+    });
+    map.addControl(new maplibregl.AttributionControl({ compact: true }));
+    map.addControl(new maplibregl.NavigationControl({ showCompass: false }), 'bottom-right');
+
+    map.on('load', async () => {
+      [grid, venues] = await Promise.all([
+        fetch('grid.json?v=' + Date.now()).then(r => r.json()),
+        fetch('../venues.json?v=' + Date.now()).then(r => r.json())
+      ]);
+      document.getElementById('gridName').textContent = grid.name;
+      splits = new Set([...grid.split, ...JSON.parse(localStorage.getItem(STORE_KEY) || '[]')]);
+
+      map.addSource('cells', { type: 'geojson', data: buildCells() });
+      map.addLayer({ id: 'cell-fill', type: 'fill', source: 'cells', paint: {
+        'fill-color': ['match', ['get', 'level'], 0, '#ffffff', 1, '#388bfd', '#f59e0b'],
+        'fill-opacity': ['match', ['get', 'level'], 0, 0.04, 1, 0.35, 0.45] } });
+      map.addLayer({ id: 'cell-selected', type: 'line', source: 'cells', filter: ['==', ['get', 'selected'], true],
+        paint: { 'line-color': '#ffffff', 'line-width': 3 } });
+      map.addLayer({ id: 'cell-line', type: 'line', source: 'cells', paint: {
+        'line-color': '#ffffff', 'line-opacity': 0.35, 'line-width': 1 } });
+      map.addLayer({ id: 'cell-label', type: 'symbol', source: 'cells', layout: {
+        'text-field': ['get', 'label'], 'text-font': ['Noto Sans Bold'],
+        'text-size': ['interpolate', ['linear'], ['zoom'], 9, 10, 13, 14], 'text-allow-overlap': false },
+        paint: { 'text-color': '#ffffff', 'text-halo-color': '#0d1117', 'text-halo-width': 1.5 } });
+      // The venue dots, in their own tier colors
+      map.addSource('venues', { type: 'geojson', data: { type: 'FeatureCollection', features: venues.map(v => ({
+        type: 'Feature', geometry: { type: 'Point', coordinates: v.coords }, properties: { color: v.tierColor || '#eab308', name: v.name } })) } });
+      map.addLayer({ id: 'venue-dots', type: 'circle', source: 'venues', paint: {
+        'circle-radius': 5, 'circle-color': ['get', 'color'], 'circle-stroke-width': 1.5, 'circle-stroke-color': '#ffffff' } });
+
+      map.on('click', e => {
+        const hit = map.queryRenderedFeatures(e.point, { layers: ['cell-fill'] })[0];
+        selectedId = hit ? hit.properties.id : null;
+        refresh();
+      });
+      map.on('mouseenter', 'cell-fill', () => map.getCanvas().style.cursor = 'pointer');
+      map.on('mouseleave', 'cell-fill', () => map.getCanvas().style.cursor = '');
+      refresh();
+    });
+
+    document.getElementById('splitBtn').addEventListener('click', () => {
+      if (!selectedId) return;
+      const parent = selectedId.split('-')[0];
+      // Splitting leaves nothing selected (the parent cell is gone); merging selects the parent again
+      if (splits.has(parent)) { splits.delete(parent); selectedId = parent; } else { splits.add(parent); selectedId = null; }
+      saveSplits();
+      refresh();
+    });
+    document.getElementById('copyBtn').addEventListener('click', async e => {
+      const text = JSON.stringify([...splits].sort());
+      try { await navigator.clipboard.writeText(text); e.target.textContent = 'Copied ' + text; }
+      catch { e.target.textContent = text; }
+    });
+  </script>
+</body>
+</html>
