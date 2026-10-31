@@ -32,11 +32,13 @@
     <h1>GRID <span class="muted" id="gridName"></span></h1>
     <div class="row"><span class="swatch" style="background:rgba(255,255,255,0.04)"></span>0 venues</div>
     <div class="row"><span class="swatch" style="background:rgba(56,139,253,0.35)"></span>1 to 4 venues</div>
-    <div class="row"><span class="swatch" style="background:rgba(245,158,11,0.45)"></span>5 or more: split it</div>
+    <div class="row"><span class="swatch" style="background:rgba(245,158,11,0.45)"></span>5 or more (full)</div>
+    <div class="row"><span class="swatch" style="border:2px solid #3fb950"></span>searched on Google Places</div>
     <div id="selected" class="muted">Click a cell to select it.</div>
     <button id="splitBtn" disabled>Split selected cell</button>
-    <button id="saveBtn" disabled>Save splits on GitHub</button>
-    <div class="muted" style="margin-top:8px;font-size:12px">Splits you make here are previews, kept in this browser only. Save them to open a GitHub issue that proposes them in a pull request.</div>
+    <button id="searchBtn" disabled>Search selected cell on GitHub</button>
+    <button id="saveBtn" disabled>Save changes on GitHub</button>
+    <div class="muted" style="margin-top:8px;font-size:12px">Splits and merges you make here are previews, kept in this browser only. Saving opens a GitHub issue that proposes them in a pull request. Searching opens an issue that looks for venues in the cell.</div>
   </div>
 
   <script src="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.js"></script>
@@ -44,8 +46,18 @@
     // Cells: columns are letters (A, B, ... AA), rows are numbers counted from the north edge. A split cell holds
     // splitInto x splitInto children named a, b, c ... in rows from the north-west corner (A1-a is its north-west child).
     const STORE_KEY = 'datenite-grid-splits';
-    const ISSUE_URL = 'https://github.com/dp26s22pbm-dev/date-nite/issues/new?template=add-split.yml';
-    let grid, venues = [], splits = new Set(), selectedId = null;
+    const NEW_ISSUE = 'https://github.com/dp26s22pbm-dev/date-nite/issues/new?template=';
+    // `splits` is what the page shows: the saved list in grid.json, minus merges and plus splits made in this browser
+    // that are not saved yet (localMerges, localSplits).
+    let grid, venues = [], splits = new Set(), localSplits = new Set(), localMerges = new Set(), selectedId = null;
+    let searched = new Set(), skipped = new Set();
+
+    function computeSplits() {
+      splits = new Set(grid.split.filter(id => !localMerges.has(id)));
+      localSplits.forEach(id => splits.add(id));
+    }
+    const storeLocal = () => localStorage.setItem(STORE_KEY, JSON.stringify({ splits: [...localSplits], merges: [...localMerges] }));
+    const pendingCount = () => localSplits.size + localMerges.size;
 
     const colName = i => { let s = ''; i += 1; while (i > 0) { s = String.fromCharCode(65 + (i - 1) % 26) + s; i = Math.floor((i - 1) / 26); } return s; };
     const childName = k => String.fromCharCode(97 + k);
@@ -68,13 +80,14 @@
       for (const v of venues) { const id = cellOf(v.coords); if (id) counts[id] = (counts[id] || 0) + 1; }
       const cells = [];
       const add = (id, c, r, sub, subCol, subRow) => {
+        if (skipped.has(baseId(c, r))) return; // open water: nothing to search
         const w = grid.dLon / sub, h = grid.dLat / sub;
         const west = grid.origin.lon + c * grid.dLon + subCol * w, north = grid.origin.lat - r * grid.dLat - subRow * h;
         const ring = [[west, north], [west + w, north], [west + w, north - h], [west, north - h], [west, north]];
         const count = counts[id] || 0;
         cells.push({ type: 'Feature', geometry: { type: 'Polygon', coordinates: [ring] },
           properties: { id, count, level: count === 0 ? 0 : count < grid.fullAt ? 1 : 2, selected: id === selectedId,
-                        label: count ? `${id}\n${count}` : id, parent: baseId(c, r) } });
+                        searched: searched.has(id), label: count ? `${id}\n${count}` : id, parent: baseId(c, r) } });
       };
       for (let r = 0; r < grid.rows; r++) for (let c = 0; c < grid.cols; c++) {
         const id = baseId(c, r);
@@ -86,26 +99,36 @@
       return { type: 'FeatureCollection', features: cells };
     }
 
+    // Can the workflows act on this cell as it stands in grid.json? A cell only exists there if its form (whole or split) matches
+    const savedAsShown = id => {
+      const base = id.split('-')[0], isChild = id.includes('-');
+      return grid.split.includes(base) === isChild;
+    };
+
     function refresh() {
       map.getSource('cells').setData(buildCells());
-      const sel = document.getElementById('selected'), btn = document.getElementById('splitBtn');
-      updateSaveButton();
-      if (!selectedId) { sel.textContent = 'Click a cell to select it.'; btn.disabled = true; btn.textContent = 'Split selected cell'; return; }
+      const sel = document.getElementById('selected');
+      const splitBtn = document.getElementById('splitBtn'), searchBtn = document.getElementById('searchBtn'), saveBtn = document.getElementById('saveBtn');
+      const n = pendingCount();
+      saveBtn.disabled = n === 0;
+      saveBtn.textContent = n ? `Save ${n} change${n === 1 ? '' : 's'} on GitHub` : 'Save changes on GitHub';
+      if (!selectedId) {
+        sel.textContent = 'Click a cell to select it.';
+        splitBtn.disabled = searchBtn.disabled = true;
+        splitBtn.textContent = 'Split selected cell'; searchBtn.textContent = 'Search selected cell on GitHub';
+        return;
+      }
       const parent = selectedId.split('-')[0], isChild = selectedId.includes('-');
       const count = venues.filter(v => cellOf(v.coords) === selectedId).length;
-      sel.innerHTML = `<b>${selectedId}</b><br>${count} venue${count === 1 ? '' : 's'}${count >= grid.fullAt ? ' (full)' : ''}`;
-      btn.disabled = false;
-      btn.textContent = isChild ? `Merge ${parent} back` : `Split ${parent} into ${grid.splitInto * grid.splitInto}`;
-    }
-
-    // Cells split in this browser but not yet in grid.json
-    const unsaved = () => [...splits].filter(id => !grid.split.includes(id)).sort();
-    // Previews only; a split already in grid.json is removed from there by editing the file
-    const saveSplits = () => localStorage.setItem(STORE_KEY, JSON.stringify(unsaved()));
-    function updateSaveButton() {
-      const n = unsaved().length, btn = document.getElementById('saveBtn');
-      btn.disabled = n === 0;
-      btn.textContent = n ? `Save ${n} split${n === 1 ? '' : 's'} on GitHub` : 'Save splits on GitHub';
+      const full = count >= grid.fullAt;
+      sel.innerHTML = `<b>${selectedId}</b><br>${count} venue${count === 1 ? '' : 's'}${full ? ' (full)' : ''}` +
+        `<br>${searched.has(selectedId) ? 'Searched on Google Places' : 'Not searched yet'}` +
+        (full && !isChild ? '<br>Split it to search in smaller cells.' : '');
+      splitBtn.disabled = false;
+      splitBtn.textContent = isChild ? `Merge ${parent} back` : `Split ${parent} into ${grid.splitInto * grid.splitInto}`;
+      // The search runs on grid.json as saved, so a cell whose split or merge is still a preview has to be saved first
+      searchBtn.disabled = full || !savedAsShown(selectedId);
+      searchBtn.textContent = !savedAsShown(selectedId) ? 'Save the split or merge first' : full ? 'Cell is full' : `Search ${selectedId} on GitHub`;
     }
 
     const map = new maplibregl.Map({
@@ -113,6 +136,8 @@
       style: 'https://tiles.openfreemap.org/styles/dark',
       center: [-87.65, 41.84], zoom: 10.3, pitch: 0, attributionControl: false
     });
+    // On a wide screen, keep the grid clear of the panel
+    if (window.innerWidth > 700) map.setPadding({ left: 270, top: 0, right: 0, bottom: 0 });
     map.addControl(new maplibregl.AttributionControl({ compact: true }));
     map.addControl(new maplibregl.NavigationControl({ showCompass: false }), 'bottom-right');
 
@@ -140,16 +165,27 @@
         fetch('../venues.json?v=' + Date.now()).then(r => r.json())
       ]);
       document.getElementById('gridName').textContent = grid.name;
-      // Previews that have since been saved to grid.json no longer need to live in the browser
-      const saved = new Set(grid.split);
-      const previews = JSON.parse(localStorage.getItem(STORE_KEY) || '[]').filter(id => !saved.has(id));
-      localStorage.setItem(STORE_KEY, JSON.stringify(previews));
-      splits = new Set([...saved, ...previews]);
+      // Fit the whole grid on screen (inside the padding set above, so it clears the panel)
+      map.fitBounds([[grid.origin.lon, grid.origin.lat - grid.rows * grid.dLat],
+                     [grid.origin.lon + grid.cols * grid.dLon, grid.origin.lat]], { padding: 20, duration: 0 });
+      searched = new Set(grid.searched || []);
+      skipped = new Set(grid.skip || []);
+      // Previews that have since been saved to grid.json no longer need to live in the browser. Older versions of this
+      // page stored a plain list of splits.
+      let stored = {};
+      try { stored = JSON.parse(localStorage.getItem(STORE_KEY) || '{}'); } catch { stored = {}; }
+      if (Array.isArray(stored)) stored = { splits: stored };
+      localSplits = new Set((stored.splits || []).filter(id => !grid.split.includes(id)));
+      localMerges = new Set((stored.merges || []).filter(id => grid.split.includes(id)));
+      storeLocal();
+      computeSplits();
 
       map.addSource('cells', { type: 'geojson', data: buildCells() });
       map.addLayer({ id: 'cell-fill', type: 'fill', source: 'cells', paint: {
         'fill-color': ['match', ['get', 'level'], 0, '#ffffff', 1, '#388bfd', '#f59e0b'],
         'fill-opacity': ['match', ['get', 'level'], 0, 0.04, 1, 0.35, 0.45] } });
+      map.addLayer({ id: 'cell-searched', type: 'line', source: 'cells', filter: ['==', ['get', 'searched'], true],
+        paint: { 'line-color': '#3fb950', 'line-width': 2.5 } });
       map.addLayer({ id: 'cell-selected', type: 'line', source: 'cells', filter: ['==', ['get', 'selected'], true],
         paint: { 'line-color': '#ffffff', 'line-width': 3 } });
       map.addLayer({ id: 'cell-line', type: 'line', source: 'cells', paint: {
@@ -177,14 +213,27 @@
     document.getElementById('splitBtn').addEventListener('click', () => {
       if (!selectedId) return;
       const parent = selectedId.split('-')[0];
-      // Splitting leaves nothing selected (the parent cell is gone); merging selects the parent again
-      if (splits.has(parent)) { splits.delete(parent); selectedId = parent; } else { splits.add(parent); selectedId = null; }
-      saveSplits();
+      if (splits.has(parent)) {
+        // Merging a split saved in grid.json is a change to propose; merging a preview just undoes it
+        if (grid.split.includes(parent)) localMerges.add(parent); else localSplits.delete(parent);
+        selectedId = parent;
+      } else {
+        if (localMerges.has(parent)) localMerges.delete(parent); else localSplits.add(parent);
+        selectedId = null; // the parent cell is gone
+      }
+      computeSplits();
+      storeLocal();
       refresh();
     });
+    document.getElementById('searchBtn').addEventListener('click', () => {
+      if (selectedId) window.open(`${NEW_ISSUE}search-cells.yml&cells=${encodeURIComponent(selectedId)}`, '_blank', 'noopener');
+    });
     document.getElementById('saveBtn').addEventListener('click', () => {
-      const cells = unsaved();
-      if (cells.length) window.open(`${ISSUE_URL}&cells=${encodeURIComponent(cells.join(', '))}`, '_blank', 'noopener');
+      if (!pendingCount()) return;
+      const params = [];
+      if (localSplits.size) params.push('cells=' + encodeURIComponent([...localSplits].sort().join(', ')));
+      if (localMerges.size) params.push('merge=' + encodeURIComponent([...localMerges].sort().join(', ')));
+      window.open(`${NEW_ISSUE}add-split.yml&${params.join('&')}`, '_blank', 'noopener');
     });
   </script>
 </body>

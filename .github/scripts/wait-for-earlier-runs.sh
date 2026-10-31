@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Wait until no earlier Add Venue, Add Menu or Add City run is queued or in progress, so the runs that edit venues.json go one
+# Wait until no earlier Add Venue, Add Menu, Add City or Search Grid Cells run is queued or in progress, so the runs that edit venues.json go one
 # at a time, first come first served. (GitHub's own "concurrency" setting keeps only one waiting run and cancels the
 # rest, which would drop a venue when three links arrive in a minute.)
 # Runs on a failed lookup or after WAIT_LIMIT_SECONDS rather than blocking forever.
@@ -14,7 +14,7 @@ mine=$(gh api "repos/$repo/actions/runs/$run_id" --jq .created_at) || { echo "Co
 waited=0
 while true; do
   rows=""
-  for workflow in add-venue.yml add-menu.yml add-city.yml; do
+  for workflow in add-venue.yml add-menu.yml add-city.yml search-cells.yml; do
     for status in queued in_progress; do
       got=$(gh api "repos/$repo/actions/workflows/$workflow/runs?status=$status&per_page=100" --jq '.workflow_runs[] | "\(.created_at) \(.id)"') || { echo "Could not list $workflow runs; not waiting."; exit 0; }
       rows+="$got"$'\n'

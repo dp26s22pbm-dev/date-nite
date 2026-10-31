@@ -1,0 +1,13 @@
+name: Search Grid Cells
+description: Look for date-night restaurants in cells of the grid page (datenite.us/grid/) and open a pull request with them
+title: "[Search Cells]: "
+labels: ["search-cells"]
+body:
+  - type: textarea
+    id: cells
+    attributes:
+      label: Cells to Search
+      description: "Cell ids from the grid page, separated by commas, spaces, or new lines (G4, or G4-b for a smaller cell of a split cell). Each cell is searched on Google Places and filled to 5 venues with the best qualifying restaurants. At most 5 cells per issue. A cell that already has 5 venues is not searched. Nothing is added to the map until you merge the pull request."
+      placeholder: "A6, B6"
+    validations:
+      required: true

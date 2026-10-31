@@ -1,5 +1,5 @@
 name: Split Grid Cells
-description: Split cells on the grid page (datenite.us/grid/) into smaller cells and open a pull request
+description: Split cells on the grid page (datenite.us/grid/) into smaller cells, or merge split cells back, and open a pull request
 title: "[Split Cells]: "
 labels: ["split-cells"]
 body:
@@ -7,7 +7,16 @@ body:
     id: cells
     attributes:
       label: Cells to Split
-      description: "Cell ids from the grid page, separated by commas, spaces, or new lines. Each cell splits into 16 smaller cells. Nothing changes until you merge the pull request."
+      description: "Cell ids from the grid page, separated by commas, spaces, or new lines. Each cell splits into 16 smaller cells. Leave blank if you are only merging. Nothing changes until you merge the pull request."
       placeholder: "G4, G5"
     validations:
-      required: true
+      required: false
+
+  - type: textarea
+    id: merge
+    attributes:
+      label: Cells to Merge Back
+      description: "Cells that are already split and should become one cell again (use the parent id, such as G4). Their smaller cells lose any searched mark. Venues are not affected."
+      placeholder: "G6"
+    validations:
+      required: false
