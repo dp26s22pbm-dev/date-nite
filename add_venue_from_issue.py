@@ -1057,48 +1057,6 @@ def nearby_venues(venue_id, coords, venues, radius_m=NEARBY_VENUE_M):
              if v.get("id") != venue_id and v.get("coords")]
     return sorted((n, round(m)) for n, m in found if m <= radius_m)
 
-def maps_tool_experiment(name, where, saved_coords):
-    """EXPERIMENT ONLY, never used for the saved location. Ask Gemini's Google Maps tool for the place's
-    coordinates, write everything it returns to the workflow log, and return a one-line note for the issue
-    comment (or None). The saved point is passed in only to measure how far off the answer is."""
-    try:
-        prompt = (
-            f'Use Google Maps to find the restaurant "{name}"' + (f' ({where})' if where else '')
-            + ' in the Naperville, IL area. Reply with only JSON like {"lat": 41.7, "lng": -88.2, "address": "..."} '
-            'giving the latitude and longitude of that restaurant, or {"lat": null, "lng": null} if you cannot tell.'
-        )
-        response = client.models.generate_content(
-            model="gemini-3.6-flash",
-            contents=prompt,
-            config=types.GenerateContentConfig(
-                tools=[types.Tool(google_maps=types.GoogleMaps())],
-                tool_config=types.ToolConfig(retrieval_config=types.RetrievalConfig(
-                    lat_lng=types.LatLng(latitude=saved_coords[1], longitude=saved_coords[0]))),
-                temperature=0.0
-            ),
-        )
-        text = (response.text or "").strip()
-        print(f"[maps-experiment] raw reply: {text[:500]}")
-        try:
-            grounding = response.candidates[0].grounding_metadata
-            for chunk in (getattr(grounding, "grounding_chunks", None) or []):
-                maps = getattr(chunk, "maps", None)
-                if maps:
-                    print(f"[maps-experiment] place: title={getattr(maps, 'title', None)} "
-                          f"uri={getattr(maps, 'uri', None)} place_id={getattr(maps, 'place_id', None)}")
-        except Exception as e:
-            print(f"[maps-experiment] no grounding details: {e}")
-        match = re.search(r'"lat"\s*:\s*(-?\d+(?:\.\d+)?)\s*,\s*"lng"\s*:\s*(-?\d+(?:\.\d+)?)', text)
-        if not match:
-            return "Experiment (not used): Gemini's Maps tool gave no coordinates."
-        lat, lng = float(match.group(1)), float(match.group(2))
-        metres = round(haversine_m([lng, lat], saved_coords))
-        print(f"[maps-experiment] answer {lat}, {lng} is {metres} m from the saved point")
-        return f"Experiment (not used): Gemini's Maps tool gave {lat:.5f}, {lng:.5f}, {metres} m from the saved point."
-    except Exception as e:
-        print(f"[maps-experiment] failed: {e}")
-        return None
-
 # Highest plausible dine-in price per category. Catering trays and per-pan prices land far above these.
 PRICE_CEILINGS = {"appetizer": 35, "casual main": 65, "premium main": 120, "drink": 25, "dessert": 25}
 
@@ -1461,9 +1419,6 @@ def main():
                          "If they do, confirm the pin lines up with theirs.")
     if not (needs_menu or warnings or neighbors or pin_guessed):
         lines += ["", "Nothing else is needed. Closing this issue."]
-    experiment = maps_tool_experiment(name, place_text or address, final_coords)
-    if experiment:
-        lines += ["", f"<sub>{experiment}</sub>"]
     set_output("venue_name", name)
     set_output("summary", "\n".join(lines), multiline=True)
 

@@ -55,6 +55,7 @@ jobs:
           GOOGLE_PLACES_API_KEY: ${{ secrets.GOOGLE_PLACES_API_KEY }}
           ISSUE_BODY: ${{ github.event.issue.body }}
           ISSUE_NUMBER: ${{ github.event.issue.number }}
+          GH_TOKEN: ${{ github.token }}
         run: |
           # The form's answer is the line under its "City and State" heading
           CITY=$(python -c "import os,re; m=re.search(r'### City and State\s*\n\s*(.*?)(?=\n###|\Z)', os.environ['ISSUE_BODY'], re.S); print(m.group(1).strip() if m else '')")
