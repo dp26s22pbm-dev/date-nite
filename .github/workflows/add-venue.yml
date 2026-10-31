@@ -8,10 +8,13 @@ jobs:
   add-venue:
     # The repository is public, so only run for the owner and collaborators; otherwise any stranger's issue
     # could write to venues.json and use the Gemini key
-    # Issues from the Add a City form are handled by add-city.yml
+    # Issues from the Add a City form are handled by add-city.yml, and "Remove ..." issues by remove-venue.yml
     if: >-
       contains(fromJSON('["OWNER","MEMBER","COLLABORATOR"]'), github.event.issue.author_association) &&
-      !contains(github.event.issue.labels.*.name, 'add-city')
+      !contains(github.event.issue.labels.*.name, 'add-city') &&
+      !startsWith(toLower(github.event.issue.title), 'remove') &&
+      !startsWith(toLower(github.event.issue.title), 'delete') &&
+      !contains(github.event.issue.labels.*.name, 'remove-venue')
     runs-on: ubuntu-latest
     # Waiting for an earlier run can take a while when several venues arrive together
     timeout-minutes: 90
