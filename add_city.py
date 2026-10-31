@@ -85,6 +85,21 @@ def load_excluded(city_name):
 def name_key(name):
     return re.sub(r"[^a-z0-9]", "", (name or "").lower())
 
+def open_city_prs(slug):
+    """URLs of open pull requests this workflow already made for the city (branches add-city/<slug>-...). Their venues
+    are not on main yet, so the saved-name check cannot see them and a repeat run would price the same places again.
+    Returns [] when gh is unavailable or fails, so a lookup problem never blocks a run."""
+    try:
+        out = subprocess.run(
+            ["gh", "pr", "list", "--state", "open", "--limit", "100", "--json", "url,headRefName"],
+            capture_output=True, text=True, timeout=60)
+        if out.returncode != 0:
+            return []
+        return [pr["url"] for pr in json.loads(out.stdout or "[]")
+                if pr.get("headRefName", "").startswith(f"add-city/{slug}-")]
+    except Exception:
+        return []
+
 def set_output(key, value, multiline=False):
     path = os.environ.get("GITHUB_OUTPUT")
     if path:
@@ -286,6 +301,15 @@ def main():
     city_name = city.split(",")[0].strip()
     slug = re.sub(r"[^a-z0-9]+", "-", city.lower()).strip("-")
     set_output("slug", slug)
+
+    # Checked before any Places or Gemini request. Close or merge the open pull request to run the city again.
+    existing = open_city_prs(slug)
+    if existing:
+        print(f"Open pull request already exists for {city}: {existing[0]}")
+        set_output("count", 0)
+        set_output("report", f"A pull request for {city} is already open: {existing[0]}. Merge or close it, then reopen "
+                             "this issue to run the city again. Nothing was looked up or priced.", multiline=True)
+        return
 
     with open("venues.json") as f:
         saved = json.load(f)
