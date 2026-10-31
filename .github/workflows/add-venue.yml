@@ -12,8 +12,8 @@ jobs:
     if: >-
       contains(fromJSON('["OWNER","MEMBER","COLLABORATOR"]'), github.event.issue.author_association) &&
       !contains(github.event.issue.labels.*.name, 'add-city') &&
-      !startsWith(toLower(github.event.issue.title), 'remove') &&
-      !startsWith(toLower(github.event.issue.title), 'delete') &&
+      !startsWith(github.event.issue.title, 'remove') &&
+      !startsWith(github.event.issue.title, 'delete') &&
       !contains(github.event.issue.labels.*.name, 'remove-venue')
     runs-on: ubuntu-latest
     # Waiting for an earlier run can take a while when several venues arrive together
