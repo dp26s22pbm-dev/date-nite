@@ -11,7 +11,9 @@
   "rows": 11,
   "splitInto": 4,
   "fullAt": 5,
-  "split": [],
+  "split": [
+    "G4"
+  ],
   "searched": [],
   "skip": [
     "G1",
