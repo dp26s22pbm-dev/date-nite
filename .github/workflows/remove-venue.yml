@@ -10,7 +10,7 @@ jobs:
   remove-venue:
     if: >-
       contains(fromJSON('["OWNER","MEMBER","COLLABORATOR"]'), github.event.issue.author_association) &&
-      (startsWith(toLower(github.event.issue.title), 'remove') || startsWith(toLower(github.event.issue.title), 'delete') ||
+      (startsWith(github.event.issue.title, 'remove') || startsWith(github.event.issue.title, 'delete') ||
        contains(github.event.issue.labels.*.name, 'remove-venue'))
     runs-on: ubuntu-latest
     timeout-minutes: 90
