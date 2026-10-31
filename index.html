@@ -1432,6 +1432,7 @@
     }
 
     const DEFAULT_ZOOM = 12.2; // the height the page loads at
+    const CLOUD_ZOOM = 11.5; // the height the cloud button zooms back out to
     const map = new maplibregl.Map({
       container: 'map',
       style: 'https://tiles.openfreemap.org/styles/dark',
@@ -1474,9 +1475,9 @@
       map.panBy([e.deltaX, e.deltaY], { animate: false });
     }, { capture: true, passive: false });
 
-    // The cloud button lights up white whenever the map is at the starting height
+    // The cloud button lights up white whenever the map is at the cloud height
     function updateZoomButton() {
-      document.getElementById('zoom-reset').classList.toggle('active', Math.abs(map.getZoom() - DEFAULT_ZOOM) < 0.1);
+      document.getElementById('zoom-reset').classList.toggle('active', Math.abs(map.getZoom() - CLOUD_ZOOM) < 0.1);
     }
     map.on('zoom', updateZoomButton);
     updateZoomButton();
@@ -2941,10 +2942,10 @@
       });
     }
 
-    // Cloud button: zoom back out to the height the page first loads at, over whatever is in view
+    // Cloud button: zoom back out to the cloud height, over whatever is in view
     function resetZoom() {
       map.easeTo({
-        zoom: DEFAULT_ZOOM,
+        zoom: CLOUD_ZOOM,
         duration: reducedMotion.matches ? 0 : 1000,
         easing: (x) => 0.5 - Math.cos(Math.PI * x) / 2
       });
