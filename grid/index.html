@@ -106,6 +106,24 @@
     map.addControl(new maplibregl.AttributionControl({ compact: true }));
     map.addControl(new maplibregl.NavigationControl({ showCompass: false }), 'bottom-right');
 
+    // Same touchpad handling as the main map: two-finger swipes pan, pinch (ctrlKey wheel) and mouse-wheel notches zoom.
+    // Browsers don't say which device sent a wheel event, so guess: touchpads send fractional, small, or sideways
+    // deltas, while mouse wheels send large whole-number steps (or line units in Firefox). Momentum from a swipe can
+    // produce big deltas, so a recent touchpad event keeps the mode latched.
+    const TOUCHPAD_LATCH_MS = 400;
+    let lastTouchpadWheel = 0;
+    map.getCanvasContainer().addEventListener('wheel', (e) => {
+      if (e.ctrlKey) return; // pinch-to-zoom: MapLibre already handles it
+      const looksLikeTouchpad = e.deltaMode === 0 &&
+        (e.deltaX !== 0 || !Number.isInteger(e.deltaY) || Math.abs(e.deltaY) < 40);
+      const now = performance.now();
+      if (looksLikeTouchpad) lastTouchpadWheel = now;
+      else if (now - lastTouchpadWheel > TOUCHPAD_LATCH_MS) return; // mouse wheel: let MapLibre zoom
+      e.preventDefault();
+      e.stopPropagation(); // keep MapLibre's scroll-zoom from also seeing it
+      map.panBy([e.deltaX, e.deltaY], { animate: false });
+    }, { capture: true, passive: false });
+
     map.on('load', async () => {
       [grid, venues] = await Promise.all([
         fetch('grid.json?v=' + Date.now()).then(r => r.json()),
