@@ -1350,7 +1350,7 @@
     let rawVenues = [];
     let currentPopup = null;
     const LABELS_MIN_ZOOM = 12.5; // from this zoom in, every dot shows its name
-    const LABELS_FADE_ZOOM = 0.4; // the names fade in over this much zoom just below it
+    const LABELS_FADE_ZOOM = 0.3; // the names fade in over this much zoom just below it, so they are gone at the cloud view (12.2)
     const LABELS_FULL_ZOOM = LABELS_MIN_ZOOM + 0.1; // a little past the fade, so rounding in the easing can't leave names dim
     const LABELS_DIM = 0.65; // while a venue's card is open, the other venues' names settle to this brightness
     const DOT_BLOCKER_PX = 28; // a little wider than the dot (26px with its outline) so names keep a gap; wider boxes crowd out a neighbour's name
