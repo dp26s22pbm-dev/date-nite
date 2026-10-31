@@ -13,7 +13,12 @@
     #map { position: absolute; inset: 0; }
     .panel { position: absolute; top: 12px; left: 12px; z-index: 2; width: 250px; padding: 12px 14px;
       background: rgba(13, 17, 23, 0.88); border: 1px solid rgba(255,255,255,0.15); border-radius: 10px; font-size: 13px; line-height: 1.45; }
-    .panel h1 { margin: 0 0 6px; font-size: 14px; letter-spacing: 0.06em; }
+    .panel h1 { margin: 0 0 6px; font-size: 14px; letter-spacing: 0.06em; display: flex; align-items: center; gap: 8px; }
+    .panel h1 .title { flex: 1; min-width: 0; }
+    .panel button.toggle { width: auto; margin: 0; padding: 3px 12px; font-size: 12px; flex: none; }
+    .panel.collapsed { width: auto; max-width: calc(100vw - 24px); }
+    .panel.collapsed h1 { margin: 0; }
+    .panel.collapsed #panelBody { display: none; }
     .panel .row { display: flex; align-items: center; gap: 8px; margin-top: 6px; }
     .swatch { width: 14px; height: 14px; border-radius: 3px; flex: none; border: 1px solid rgba(255,255,255,0.3); }
     .panel button { margin-top: 8px; width: 100%; padding: 7px 10px; font: inherit; color: #f0f6fc; cursor: pointer;
@@ -29,7 +34,9 @@
 <body>
   <div id="map"></div>
   <div class="panel">
-    <h1>GRID <span class="muted" id="gridName"></span></h1>
+    <h1><span class="title">GRID <span class="muted" id="gridName"></span><span id="headSel"></span></span>
+      <button class="toggle" id="panelToggle" aria-controls="panelBody">Hide</button></h1>
+    <div id="panelBody">
     <div class="row"><span class="swatch" style="background:rgba(255,255,255,0.04)"></span>0 venues</div>
     <div class="row"><span class="swatch" style="background:rgba(56,139,253,0.35)"></span>1 to 4 venues</div>
     <div class="row"><span class="swatch" style="background:rgba(245,158,11,0.45)"></span>5 or more (full)</div>
@@ -41,6 +48,7 @@
     <div id="submittedNote" class="muted" style="display:none;margin-top:8px;font-size:12px"></div>
     <button id="clearBtn" style="display:none">Clear submitted changes</button>
     <div class="muted" style="margin-top:8px;font-size:12px">Splits and merges you make here are previews, kept in this browser only. Saving opens a GitHub issue that proposes them in a pull request. Searching opens an issue that looks for venues in the cell.</div>
+    </div>
   </div>
 
   <script src="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.js"></script>
@@ -114,6 +122,8 @@
 
     function refresh() {
       map.getSource('cells').setData(buildCells());
+      // The selected cell stays visible in the title bar while the panel is folded
+      document.getElementById('headSel').textContent = selectedId ? ` \u00b7 ${selectedId}` : '';
       const sel = document.getElementById('selected');
       const splitBtn = document.getElementById('splitBtn'), searchBtn = document.getElementById('searchBtn'), saveBtn = document.getElementById('saveBtn');
       const n = pendingCount();
@@ -141,6 +151,20 @@
       searchBtn.disabled = full || !savedAsShown(selectedId);
       searchBtn.textContent = awaitingMerge(selectedId) ? 'Merge the pull request first' : !savedAsShown(selectedId) ? 'Save the split or merge first' : full ? 'Cell is full' : `Search ${selectedId} on GitHub`;
     }
+
+    // The panel folds down to its title bar so it does not cover the grid on a phone. It starts folded on a narrow screen
+    // the first time; after that it remembers the last choice.
+    const PANEL_KEY = 'datenite-grid-panel';
+    const panelEl = document.querySelector('.panel'), toggleBtn = document.getElementById('panelToggle');
+    function setCollapsed(collapsed) {
+      panelEl.classList.toggle('collapsed', collapsed);
+      toggleBtn.textContent = collapsed ? 'Show' : 'Hide';
+      toggleBtn.setAttribute('aria-expanded', String(!collapsed));
+      localStorage.setItem(PANEL_KEY, collapsed ? '1' : '0');
+    }
+    const savedPanel = localStorage.getItem(PANEL_KEY);
+    setCollapsed(savedPanel === null ? window.innerWidth <= 700 : savedPanel === '1');
+    toggleBtn.addEventListener('click', () => setCollapsed(!panelEl.classList.contains('collapsed')));
 
     const map = new maplibregl.Map({
       container: 'map',
