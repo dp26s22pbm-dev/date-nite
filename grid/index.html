@@ -35,8 +35,8 @@
     <div class="row"><span class="swatch" style="background:rgba(245,158,11,0.45)"></span>5 or more: split it</div>
     <div id="selected" class="muted">Click a cell to select it.</div>
     <button id="splitBtn" disabled>Split selected cell</button>
-    <button id="copyBtn">Copy split list</button>
-    <div class="muted" style="margin-top:8px;font-size:12px">Splits are saved in this browser only. To keep them, paste the copied list into <code>split</code> in grid/grid.json.</div>
+    <button id="saveBtn" disabled>Save splits on GitHub</button>
+    <div class="muted" style="margin-top:8px;font-size:12px">Splits you make here are previews, kept in this browser only. Save them to open a GitHub issue that proposes them in a pull request.</div>
   </div>
 
   <script src="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.js"></script>
@@ -44,6 +44,7 @@
     // Cells: columns are letters (A, B, ... AA), rows are numbers counted from the north edge. A split cell holds
     // splitInto x splitInto children named a, b, c ... in rows from the north-west corner (A1-a is its north-west child).
     const STORE_KEY = 'datenite-grid-splits';
+    const ISSUE_URL = 'https://github.com/dp26s22pbm-dev/date-nite/issues/new?template=add-split.yml';
     let grid, venues = [], splits = new Set(), selectedId = null;
 
     const colName = i => { let s = ''; i += 1; while (i > 0) { s = String.fromCharCode(65 + (i - 1) % 26) + s; i = Math.floor((i - 1) / 26); } return s; };
@@ -88,6 +89,7 @@
     function refresh() {
       map.getSource('cells').setData(buildCells());
       const sel = document.getElementById('selected'), btn = document.getElementById('splitBtn');
+      updateSaveButton();
       if (!selectedId) { sel.textContent = 'Click a cell to select it.'; btn.disabled = true; btn.textContent = 'Split selected cell'; return; }
       const parent = selectedId.split('-')[0], isChild = selectedId.includes('-');
       const count = venues.filter(v => cellOf(v.coords) === selectedId).length;
@@ -96,7 +98,15 @@
       btn.textContent = isChild ? `Merge ${parent} back` : `Split ${parent} into ${grid.splitInto * grid.splitInto}`;
     }
 
-    const saveSplits = () => localStorage.setItem(STORE_KEY, JSON.stringify([...splits]));
+    // Cells split in this browser but not yet in grid.json
+    const unsaved = () => [...splits].filter(id => !grid.split.includes(id)).sort();
+    // Previews only; a split already in grid.json is removed from there by editing the file
+    const saveSplits = () => localStorage.setItem(STORE_KEY, JSON.stringify(unsaved()));
+    function updateSaveButton() {
+      const n = unsaved().length, btn = document.getElementById('saveBtn');
+      btn.disabled = n === 0;
+      btn.textContent = n ? `Save ${n} split${n === 1 ? '' : 's'} on GitHub` : 'Save splits on GitHub';
+    }
 
     const map = new maplibregl.Map({
       container: 'map',
@@ -130,7 +140,11 @@
         fetch('../venues.json?v=' + Date.now()).then(r => r.json())
       ]);
       document.getElementById('gridName').textContent = grid.name;
-      splits = new Set([...grid.split, ...JSON.parse(localStorage.getItem(STORE_KEY) || '[]')]);
+      // Previews that have since been saved to grid.json no longer need to live in the browser
+      const saved = new Set(grid.split);
+      const previews = JSON.parse(localStorage.getItem(STORE_KEY) || '[]').filter(id => !saved.has(id));
+      localStorage.setItem(STORE_KEY, JSON.stringify(previews));
+      splits = new Set([...saved, ...previews]);
 
       map.addSource('cells', { type: 'geojson', data: buildCells() });
       map.addLayer({ id: 'cell-fill', type: 'fill', source: 'cells', paint: {
@@ -168,10 +182,9 @@
       saveSplits();
       refresh();
     });
-    document.getElementById('copyBtn').addEventListener('click', async e => {
-      const text = JSON.stringify([...splits].sort());
-      try { await navigator.clipboard.writeText(text); e.target.textContent = 'Copied ' + text; }
-      catch { e.target.textContent = text; }
+    document.getElementById('saveBtn').addEventListener('click', () => {
+      const cells = unsaved();
+      if (cells.length) window.open(`${ISSUE_URL}&cells=${encodeURIComponent(cells.join(', '))}`, '_blank', 'noopener');
     });
   </script>
 </body>

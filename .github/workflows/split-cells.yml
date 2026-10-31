@@ -1,0 +1,76 @@
+name: Split Grid Cells on Issue
+
+# The Split Grid Cells form lists cells from the grid page (datenite.us/grid/). They are added to "split" in
+# grid/grid.json on a branch, and a pull request opens for review instead of changing main.
+on:
+  issues:
+    types: [opened, reopened]
+
+jobs:
+  split-cells:
+    # Only the owner and collaborators. The label may not exist in the repository, so the form's title prefix counts too.
+    if: >-
+      contains(fromJSON('["OWNER","MEMBER","COLLABORATOR"]'), github.event.issue.author_association) &&
+      (startsWith(github.event.issue.title, '[Split Cells]') || contains(github.event.issue.labels.*.name, 'split-cells'))
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: write
+      issues: write
+      pull-requests: write
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+        with:
+          ref: main
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Add the Cells to grid.json
+        id: split
+        env:
+          ISSUE_BODY: ${{ github.event.issue.body }}
+        run: python split_cells.py
+
+      - name: Open the Pull Request
+        id: pr
+        if: steps.split.outputs.count != '0'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPORT: ${{ steps.split.outputs.report }}
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          BRANCH="split-cells/${{ github.event.issue.number }}-${{ github.run_id }}"
+          git checkout -b "$BRANCH"
+          git add grid/grid.json
+          git commit -m "Split grid cells (Issue #${{ github.event.issue.number }})"
+          git push origin "$BRANCH"
+          printf '%s\n\nCloses #%s\n' "$REPORT" "${{ github.event.issue.number }}" > "$RUNNER_TEMP/pr-body.md"
+          URL=$(gh pr create --base main --head "$BRANCH" --title "Split grid cells (#${{ github.event.issue.number }})" --body-file "$RUNNER_TEMP/pr-body.md")
+          echo "url=$URL" >> "$GITHUB_OUTPUT"
+
+      - name: Report on the Issue
+        if: always() && steps.split.outcome == 'success'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPORT: ${{ steps.split.outputs.report }}
+          PR_URL: ${{ steps.pr.outputs.url }}
+        run: |
+          if [ -n "$PR_URL" ]; then
+            gh issue comment ${{ github.event.issue.number }} --repo ${{ github.repository }} --body "Pull request opened for review: $PR_URL"
+          else
+            gh issue comment ${{ github.event.issue.number }} --repo ${{ github.repository }} --body "$REPORT"
+            gh issue close ${{ github.event.issue.number }} --repo ${{ github.repository }} || true
+          fi
+
+      - name: Report failure on the issue
+        if: failure()
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh issue comment ${{ github.event.issue.number }} --repo ${{ github.repository }} --body "Could not split these cells. Run: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
