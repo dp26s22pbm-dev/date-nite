@@ -1,0 +1,74 @@
+name: Remove Venue on Issue
+
+# An issue titled "Remove <restaurant name>" (typed in the GitHub app or on the web) takes that venue off the map and
+# adds it to excluded-venues.json. add-venue.yml skips these issues.
+on:
+  issues:
+    types: [opened, reopened]
+
+jobs:
+  remove-venue:
+    if: >-
+      contains(fromJSON('["OWNER","MEMBER","COLLABORATOR"]'), github.event.issue.author_association) &&
+      (startsWith(toLower(github.event.issue.title), 'remove') || startsWith(toLower(github.event.issue.title), 'delete') ||
+       contains(github.event.issue.labels.*.name, 'remove-venue'))
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    permissions:
+      actions: read
+      contents: write
+      issues: write
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+        with:
+          ref: main
+
+      # Venue runs edit the same files, so they take turns
+      - name: Wait for earlier runs
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          .github/scripts/wait-for-earlier-runs.sh
+          git fetch origin main
+          git reset --hard origin/main
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Remove Venue and Push
+        id: remove
+        env:
+          ISSUE_BODY: ${{ github.event.issue.body }}
+          ISSUE_TITLE: ${{ github.event.issue.title }}
+        run: |
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+          for attempt in 1 2 3 4 5 6; do
+            python remove_venue_from_issue.py || exit 1
+            git add venues.json urls.py excluded-venues.json
+            git commit -m "Remove venue via Issue #${{ github.event.issue.number }}" || exit 0
+            git push && exit 0
+            echo "Push rejected (attempt $attempt); resetting to origin/main and removing the venue again"
+            git fetch origin main
+            git reset --hard origin/main
+          done
+          echo "Could not push after 6 attempts" >&2
+          exit 1
+
+      - name: Close Issue
+        uses: peter-evans/close-issue@v3
+        with:
+          issue-number: ${{ github.event.issue.number }}
+          comment: ${{ steps.remove.outputs.summary || '✓ Venue removed.' }}
+
+      - name: Report failure on the issue
+        if: failure()
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REASON: ${{ steps.remove.outputs.error }}
+        run: |
+          gh issue comment ${{ github.event.issue.number }} --repo ${{ github.repository }} --body "Could not remove this venue. ${REASON:-See the workflow run for details.} Run: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"

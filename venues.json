@@ -1354,22 +1354,6 @@
     "tierColor": "#22c55e"
   },
   {
-    "id": 92,
-    "name": "SubKO",
-    "category": "Casual American",
-    "website": "https://subko.online/?utm_source=google",
-    "coords": [
-      -88.082776,
-      41.786012
-    ],
-    "app": 6.49,
-    "casualMain": 12.99,
-    "premiumMain": 14.99,
-    "drink": 8.0,
-    "dessert": 9.99,
-    "tierColor": "#22c55e"
-  },
-  {
     "id": 93,
     "name": "Brasi's Pizzeria",
     "category": "Italian / Pizza",
@@ -1894,22 +1878,6 @@
     "premiumMain": 18.0,
     "drink": 8.5,
     "dessert": 12.0,
-    "tierColor": "#22c55e"
-  },
-  {
-    "id": 127,
-    "name": "Remove Subko",
-    "category": "Casual American",
-    "website": "https://subko.online/",
-    "coords": [
-      -88.082776,
-      41.786012
-    ],
-    "app": 6.49,
-    "casualMain": 11.49,
-    "premiumMain": 21.99,
-    "drink": 8.0,
-    "dessert": 9.99,
     "tierColor": "#22c55e"
   }
 ]

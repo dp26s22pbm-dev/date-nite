@@ -42,5 +42,9 @@
   {
     "name": "Wing Zing",
     "reason": "counter-service"
+  },
+  {
+    "name": "SubKO",
+    "reason": "counter-service"
   }
 ]
