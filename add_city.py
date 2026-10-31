@@ -85,8 +85,8 @@ def load_excluded(city_name):
 def name_key(name):
     return re.sub(r"[^a-z0-9]", "", (name or "").lower())
 
-def open_city_prs(slug):
-    """URLs of open pull requests this workflow already made for the city (branches add-city/<slug>-...). Their venues
+def open_city_prs(slug, prefix="add-city"):
+    """URLs of open pull requests this workflow already made for the city (branches <prefix>/<slug>-...). Their venues
     are not on main yet, so the saved-name check cannot see them and a repeat run would price the same places again.
     Returns [] when gh is unavailable or fails, so a lookup problem never blocks a run."""
     try:
@@ -96,7 +96,7 @@ def open_city_prs(slug):
         if out.returncode != 0:
             return []
         return [pr["url"] for pr in json.loads(out.stdout or "[]")
-                if pr.get("headRefName", "").startswith(f"add-city/{slug}-")]
+                if pr.get("headRefName", "").startswith(f"{prefix}/{slug}-")]
     except Exception:
         return []
 
@@ -127,11 +127,17 @@ def read_outputs(path):
                 out[k] = v
     return out
 
-def search_city(city, api_key):
-    """Restaurants Places lists for the city, up to MAX_PAGES pages."""
+def search_city(city, api_key, rectangle=None):
+    """Restaurants Places lists for the city, up to MAX_PAGES pages. With `rectangle` (south, west, north, east) the
+    search is limited to that box instead (add_cell.py), and `city` is ignored."""
     places, token = [], None
     for _ in range(MAX_PAGES):
         payload = {"textQuery": f"restaurants in {city}", "includedType": "restaurant", "pageSize": 20}
+        if rectangle:
+            south, west, north, east = rectangle
+            payload["textQuery"] = "restaurants"
+            payload["locationRestriction"] = {"rectangle": {"low": {"latitude": south, "longitude": west},
+                                                            "high": {"latitude": north, "longitude": east}}}
         if token:
             payload["pageToken"] = token
         req = urllib.request.Request(PLACES_URL, data=json.dumps(payload).encode(), headers={
@@ -291,6 +297,54 @@ def add_venue(place, work_dir, number, venues_file):
     outputs = read_outputs(out_path)
     return outputs if result.returncode == 0 else {"error": outputs.get("error", "see the workflow log")}
 
+def price_and_keep(ranked, work_dir, venues_file, count=COUNT, max_priced=MAX_PRICED, number_start=0):
+    """Run the importer on the ranked (place, score) pairs, best first, until `count` venues are kept or `max_priced`
+    have been priced. Each kept venue is appended to venues_file (the scratch copy of venues.json); a venue dropped for
+    price or counter service is taken back out. `number_start` keeps the importer's per-venue files apart when this is
+    called more than once in one work_dir. Returns (sections, skipped, kept, priced): the report text for each kept
+    venue, the report lines for the skipped ones, and the two counts."""
+    sections, skipped, kept, used, priced = [], [], 0, {}, 0
+    for place, score in ranked:
+        if kept >= count or priced >= max_priced:
+            break
+        if cap_reached(place, used):
+            continue
+        name = place["displayName"]["text"]
+        # Checked before pricing, so a skipped place costs no importer or Gemini request
+        if SKIP_COUNTER_SERVICE and counter_service(place):
+            print(f"\nSkipped {name}: looks like counter service")
+            skipped.append(f"- {name}: looks like counter service (cheap, no reservations, no beer or wine, or no dine-in). "
+                           "Add it with the Add Venue form if it is a sit-down place")
+            continue
+        priced += 1
+        print(f"\n=== {name} (score {score:.2f}) ===")
+        outputs = add_venue(place, work_dir, number_start + priced, venues_file)
+        if outputs.get("error") and not outputs.get("summary"):
+            skipped.append(f"- {name}: could not be added ({outputs['error']})")
+            continue
+        with open(venues_file) as f:
+            venues = json.load(f)
+        venue = venues[-1]
+        # A venue with no menu or web-search prices only has the importer's typical defaults, which look like real
+        # prices on the map. It is listed under Skipped instead; the Add Venue form can add it once someone has the menu.
+        if outputs.get("prices_found") == "false":
+            reason = "no prices could be found, so only typical defaults were possible. Add it with the Add Venue form and the menu text"
+        elif too_cheap(venue):
+            reason = f"too cheap for a date spot (about ${total_for_two(venue)} for two)"
+        else:
+            reason = None
+        if reason:
+            with open(venues_file, "w") as f:
+                json.dump(venues[:-1], f)
+            print(f"Dropped {name}: {reason}")
+            skipped.append(f"- {name}: {reason}")
+            continue
+        kept += 1
+        if cuisine_key(place):
+            used[cuisine_key(place)] = used.get(cuisine_key(place), 0) + 1
+        sections.append(f"## {kept}. {name}\n\nRanking score {score:.2f}\n\n{reword_for_city_pr(outputs.get('summary', ''))}")
+    return sections, skipped, kept, priced
+
 def main():
     city = os.environ.get("CITY", "").strip()
     if not city:
@@ -327,53 +381,12 @@ def main():
                              "Check the spelling of the city and state.", multiline=True)
         return
 
-    sections, skipped, failed, kept, used, priced = [], [], 0, 0, {}, 0
     with tempfile.TemporaryDirectory() as work_dir:
         # The importer numbers and checks new venues against this scratch copy; venues.json itself stays untouched
         venues_file = os.path.join(work_dir, "venues.json")
         with open(venues_file, "w") as f:
             json.dump(saved, f)
-        for place, score in ranked:
-            if kept >= COUNT or priced >= MAX_PRICED:
-                break
-            if cap_reached(place, used):
-                continue
-            name = place["displayName"]["text"]
-            # Checked before pricing, so a skipped place costs no importer or Gemini request
-            if SKIP_COUNTER_SERVICE and counter_service(place):
-                print(f"\nSkipped {name}: looks like counter service")
-                skipped.append(f"- {name}: looks like counter service (cheap, no reservations, no beer or wine, or no dine-in). "
-                               "Add it with the Add Venue form if it is a sit-down place")
-                continue
-            priced += 1
-            print(f"\n=== {name} (score {score:.2f}) ===")
-            outputs = add_venue(place, work_dir, priced, venues_file)
-            if outputs.get("error") and not outputs.get("summary"):
-                failed += 1
-                skipped.append(f"- {name}: could not be added ({outputs['error']})")
-                continue
-            with open(venues_file) as f:
-                venues = json.load(f)
-            venue = venues[-1]
-            # A venue with no menu or web-search prices only has the importer's typical defaults, which look like real
-            # prices on the map. It is listed under Skipped instead; the Add Venue form can add it once someone has the menu.
-            if outputs.get("prices_found") == "false":
-                reason = "no prices could be found, so only typical defaults were possible. Add it with the Add Venue form and the menu text"
-            elif too_cheap(venue):
-                reason = f"too cheap for a date spot (about ${total_for_two(venue)} for two)"
-            else:
-                reason = None
-            if reason:
-                with open(venues_file, "w") as f:
-                    json.dump(venues[:-1], f)
-                print(f"Dropped {name}: {reason}")
-                skipped.append(f"- {name}: {reason}")
-                continue
-            kept += 1
-            if cuisine_key(place):
-                used[cuisine_key(place)] = used.get(cuisine_key(place), 0) + 1
-            sections.append(f"## {kept}. {name}\n\nRanking score {score:.2f}\n\n{reword_for_city_pr(outputs.get('summary', ''))}")
-
+        sections, skipped, kept, priced = price_and_keep(ranked, work_dir, venues_file)
         with open(venues_file) as f:
             added = json.load(f)[len(saved):]
     # Ids are handed out when the pull request merges (fold_pending_venues.py), so none are saved here

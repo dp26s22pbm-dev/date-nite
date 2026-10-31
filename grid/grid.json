@@ -1,6 +1,9 @@
 {
   "name": "Chicago test",
-  "origin": { "lat": 42.025, "lon": -87.945 },
+  "origin": {
+    "lat": 42.025,
+    "lon": -87.945
+  },
   "cellKm": 4,
   "dLat": 0.03593,
   "dLon": 0.04828,
@@ -8,5 +11,20 @@
   "rows": 11,
   "splitInto": 4,
   "fullAt": 5,
-  "split": []
+  "split": [],
+  "searched": [],
+  "skip": [
+    "G1",
+    "H1",
+    "H2",
+    "H3",
+    "H5",
+    "I1",
+    "I2",
+    "I3",
+    "I4",
+    "I5",
+    "I6",
+    "I7"
+  ]
 }
