@@ -1,0 +1,47 @@
+[
+  {
+    "name": "Warren's Ale House",
+    "category": "New American",
+    "website": "http://warrensalehouse.com/",
+    "coords": [
+      -88.101236,
+      41.835218
+    ],
+    "app": 11.95,
+    "casualMain": 16.95,
+    "premiumMain": 27.45,
+    "drink": 8.47,
+    "dessert": 7.95,
+    "tierColor": "#eab308"
+  },
+  {
+    "name": "Lu's Fine Asian Cuisine",
+    "category": "Chinese Cuisine",
+    "website": "https://www.luscuisine.com/",
+    "coords": [
+      -88.102044,
+      41.833541
+    ],
+    "app": 7.25,
+    "casualMain": 17.25,
+    "premiumMain": 35.0,
+    "drink": 8.62,
+    "dessert": 8.0,
+    "tierColor": "#eab308"
+  },
+  {
+    "name": "Sushi Ukai",
+    "category": "Japanese Cuisine",
+    "website": "https://order.toasttab.com/online/sushi-ukai-wheaton-281-rice-lake-square",
+    "coords": [
+      -88.097643,
+      41.831751
+    ],
+    "app": 10.95,
+    "casualMain": 15.95,
+    "premiumMain": 28.95,
+    "drink": 8.0,
+    "dessert": 8.0,
+    "tierColor": "#eab308"
+  }
+]
