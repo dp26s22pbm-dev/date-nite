@@ -51,9 +51,7 @@
     <button id="splitBtn" disabled>Split selected cell</button>
     <button id="searchBtn" disabled>Search selected cell on GitHub</button>
     <button id="saveBtn" disabled>Save changes on GitHub</button>
-    <div id="submittedNote" class="muted" style="display:none;margin-top:8px;font-size:12px"></div>
-    <button id="clearBtn" style="display:none">Clear submitted changes</button>
-    <div class="muted" style="margin-top:8px;font-size:12px">Splits and merges you make here are previews, kept in this browser only. Saving opens a GitHub issue that proposes them in a pull request. Searching opens an issue that looks for venues in the cell.</div>
+    <div class="muted" style="margin-top:8px;font-size:12px">Splits and merges you make here are previews that last until you reload the page. Saving opens a GitHub issue that proposes them in a pull request. Searching opens an issue that looks for venues in the cell.</div>
     </div>
   </div>
 
@@ -64,22 +62,16 @@
   <script>
     // Cells: columns are letters (A, B, ... AA), rows are numbers counted from the north edge. A split cell holds
     // splitInto x splitInto children named a, b, c ... in rows from the north-west corner (A1-a is its north-west child).
-    const STORE_KEY = 'datenite-grid-splits';
     const NEW_ISSUE = 'https://github.com/dp26s22pbm-dev/date-nite/issues/new?template=';
-    // `splits` is what the page shows: the saved list in grid.json, minus merges and plus splits made in this browser
-    // that are not saved yet (localMerges, localSplits). Once saved on GitHub they move to submittedMerges and
-    // submittedSplits and stay on the map until the pull request merges and grid.json has them.
+    // `splits` is what the page shows: the saved list in grid.json, minus merges and plus splits previewed on this page
+    // (localMerges, localSplits). Nothing is stored: a reload, or sending the previews to GitHub, returns to grid.json.
     let grid, venues = [], splits = new Set(), localSplits = new Set(), localMerges = new Set(), selectedId = null;
-    let submittedSplits = new Set(), submittedMerges = new Set();
     let searched = new Set(), skipped = new Set();
 
     function computeSplits() {
-      splits = new Set(grid.split.filter(id => !localMerges.has(id) && !submittedMerges.has(id)));
+      splits = new Set(grid.split.filter(id => !localMerges.has(id)));
       localSplits.forEach(id => splits.add(id));
-      submittedSplits.forEach(id => splits.add(id));
     }
-    const storeLocal = () => localStorage.setItem(STORE_KEY, JSON.stringify({
-      splits: [...localSplits], merges: [...localMerges], submittedSplits: [...submittedSplits], submittedMerges: [...submittedMerges] }));
     const pendingCount = () => localSplits.size + localMerges.size;
 
     const colName = i => { let s = ''; i += 1; while (i > 0) { s = String.fromCharCode(65 + (i - 1) % 26) + s; i = Math.floor((i - 1) / 26); } return s; };
@@ -123,10 +115,9 @@
     }
 
     // Can the workflows act on this cell as it stands in grid.json? A cell only exists there if its form (whole or split) matches
-    const awaitingMerge = id => submittedSplits.has(id.split('-')[0]) || submittedMerges.has(id.split('-')[0]);
     const savedAsShown = id => {
       const base = id.split('-')[0], isChild = id.includes('-');
-      return grid.split.includes(base) === isChild && !localMerges.has(base) && !awaitingMerge(id);
+      return grid.split.includes(base) === isChild && !localMerges.has(base);
     };
 
     function refresh() {
@@ -137,11 +128,6 @@
       const splitBtn = document.getElementById('splitBtn'), searchBtn = document.getElementById('searchBtn'), saveBtn = document.getElementById('saveBtn');
       const n = pendingCount();
       saveBtn.disabled = n === 0;
-      saveBtn.textContent = n ? `Save ${n} change${n === 1 ? '' : 's'} on GitHub` : 'Save changes on GitHub';
-      const waiting = [...submittedSplits].map(id => `split ${id}`).concat([...submittedMerges].map(id => `merge ${id}`));
-      const note = document.getElementById('submittedNote');
-      note.style.display = document.getElementById('clearBtn').style.display = waiting.length ? '' : 'none';
-      note.textContent = waiting.length ? `Submitted: ${waiting.join(', ')}. Merge the pull request on GitHub to apply it; the grid keeps showing it until then.` : '';
       if (!selectedId) {
         sel.textContent = 'Click a cell to select it.';
         splitBtn.disabled = searchBtn.disabled = true;
@@ -158,7 +144,7 @@
       splitBtn.textContent = isChild ? `Merge ${parent} back` : `Split ${parent} into ${grid.splitInto * grid.splitInto}`;
       // The search runs on grid.json as saved, so a cell whose split or merge is still a preview has to be saved first
       searchBtn.disabled = full || !savedAsShown(selectedId);
-      searchBtn.textContent = awaitingMerge(selectedId) ? 'Merge the pull request first' : !savedAsShown(selectedId) ? 'Save the split or merge first' : full ? 'Cell is full' : `Search ${selectedId} on GitHub`;
+      searchBtn.textContent = !savedAsShown(selectedId) ? 'Save the split or merge first' : full ? 'Cell is full' : `Search ${selectedId} on GitHub`;
     }
 
     // The panel folds down to its title bar so it does not cover the grid on a phone. It starts folded on a narrow screen
@@ -258,16 +244,6 @@
                      [grid.origin.lon + grid.cols * grid.dLon, grid.origin.lat]], { padding: 20, duration: 0 });
       searched = new Set(grid.searched || []);
       skipped = new Set(grid.skip || []);
-      // Previews that have since been saved to grid.json no longer need to live in the browser. Older versions of this
-      // page stored a plain list of splits.
-      let stored = {};
-      try { stored = JSON.parse(localStorage.getItem(STORE_KEY) || '{}'); } catch { stored = {}; }
-      if (Array.isArray(stored)) stored = { splits: stored };
-      localSplits = new Set((stored.splits || []).filter(id => !grid.split.includes(id)));
-      localMerges = new Set((stored.merges || []).filter(id => grid.split.includes(id)));
-      submittedSplits = new Set((stored.submittedSplits || []).filter(id => !grid.split.includes(id)));
-      submittedMerges = new Set((stored.submittedMerges || []).filter(id => grid.split.includes(id)));
-      storeLocal();
       computeSplits();
 
       map.addSource('cells', { type: 'geojson', data: buildCells() });
@@ -342,15 +318,14 @@
       if (!selectedId) return;
       const parent = selectedId.split('-')[0];
       if (splits.has(parent)) {
-        // Merging a split saved in grid.json is a change to propose; merging a preview or a submitted split just takes it back
-        if (grid.split.includes(parent)) localMerges.add(parent); else { localSplits.delete(parent); submittedSplits.delete(parent); }
+        // Merging a split saved in grid.json is a change to propose; merging a preview just takes it back
+        if (grid.split.includes(parent)) localMerges.add(parent); else { localSplits.delete(parent); }
         selectedId = parent;
       } else {
-        if (grid.split.includes(parent)) { localMerges.delete(parent); submittedMerges.delete(parent); } else localSplits.add(parent);
+        if (grid.split.includes(parent)) localMerges.delete(parent); else localSplits.add(parent);
         selectedId = null; // the parent cell is gone
       }
       computeSplits();
-      storeLocal();
       refresh();
     });
     document.getElementById('searchBtn').addEventListener('click', () => {
@@ -362,15 +337,9 @@
       if (localSplits.size) params.push('cells=' + encodeURIComponent([...localSplits].sort().join(', ')));
       if (localMerges.size) params.push('merge=' + encodeURIComponent([...localMerges].sort().join(', ')));
       window.open(`${NEW_ISSUE}add-split.yml&${params.join('&')}`, '_blank', 'noopener');
-      // The changes are with GitHub now: stop offering them again, but keep showing them until grid.json has them
-      localSplits.forEach(id => submittedSplits.add(id));
-      localMerges.forEach(id => submittedMerges.add(id));
-      localSplits = new Set(); localMerges = new Set();
-      computeSplits(); storeLocal(); refresh();
-    });
-    document.getElementById('clearBtn').addEventListener('click', () => {
-      submittedSplits = new Set(); submittedMerges = new Set(); selectedId = null;
-      computeSplits(); storeLocal(); refresh();
+      // The changes are with GitHub now: go back to the grid as grid.json has it
+      localSplits = new Set(); localMerges = new Set(); selectedId = null;
+      computeSplits(); refresh();
     });
   </script>
 </body>
