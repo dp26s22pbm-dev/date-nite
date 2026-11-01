@@ -14,7 +14,9 @@
   "split": [
     "G4"
   ],
-  "searched": [],
+  "searched": [
+    "A7"
+  ],
   "skip": [
     "G1",
     "H1",
