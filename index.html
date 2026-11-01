@@ -709,7 +709,7 @@
        Names used for them (in the user's words -> class): car -> .car-btn, cloud -> .zoom-btn (zoom reset),
        cost -> .cost-btn (phones only, four color dots), list -> .list-btn (venue list), audio/sound -> .audio-btn
        Order, left to right: desktop is car, cloud, list, audio; phones are car, cloud, cost, list, audio */
-    .car-btn, .zoom-btn, .list-btn {
+    .zoom-btn, .list-btn {
       position: fixed !important;
       right: 16px !important;
       bottom: var(--btn-base) !important;
@@ -730,16 +730,10 @@
     }
     .list-btn { right: 59px !important; }
     .zoom-btn { right: 102px !important; }
-    .car-btn { right: 145px !important; }
-    .car-btn.active {
-      color: #a78bfa !important;
-      box-shadow: 0 0 4px rgba(255, 255, 255, 0.8), 0 0 12px rgba(255, 255, 255, 0.45) !important;
-    }
     .zoom-btn { color: #38bdf8 !important; } /* the cloud stays blue on or off; the white glow shows it's on */
     .zoom-btn.active {
       box-shadow: 0 0 4px rgba(255, 255, 255, 0.8), 0 0 12px rgba(255, 255, 255, 0.45) !important;
     }
-    .car-btn.busy { opacity: 0.6; }
     .list-btn.active {
       color: #38bdf8 !important;
       box-shadow: 0 0 4px rgba(255, 255, 255, 0.8), 0 0 12px rgba(255, 255, 255, 0.45) !important;
@@ -749,7 +743,7 @@
     .list-btn.active .row-1 { fill: #22c55e; }
     .list-btn.active .row-2 { fill: #eab308; }
     .list-btn.active .row-3 { fill: #ef4444; }
-    .car-btn svg, .zoom-btn svg, .list-btn svg { width: 16.5px !important; height: 16.5px !important; fill: currentColor !important; pointer-events: none !important; }
+    .zoom-btn svg, .list-btn svg { width: 16.5px !important; height: 16.5px !important; fill: currentColor !important; pointer-events: none !important; }
 
     /* Phone layout: search across the top, the Menu as a row beneath it, and no Budget bar for now. The Cost
        legend leaves the left rail and becomes a four-dot color button in the bottom row, just left of the list button; pressing it opens a
@@ -773,7 +767,6 @@
       #menu-panel .counter-value { min-width: 12px; }
 
       .zoom-btn { right: 145px !important; }
-      .car-btn { right: 188px !important; }
       .car-toast { right: 188px; }
 
       .cost-btn {
@@ -885,17 +878,17 @@
     .venue-list.loading { opacity: 0; visibility: hidden; } /* removing the class lets the normal 0.25s fade run */
     /* The rest of the interface waits for the same moment, then fades in with the strip */
     .search-bar { transition: opacity 0.25s ease; }
-    body.app-loading :is(.left-rail, .right-rail, .search-bar, .car-btn, .zoom-btn, .list-btn, .cost-btn, .audio-btn) {
+    body.app-loading :is(.left-rail, .right-rail, .search-bar, .zoom-btn, .list-btn, .cost-btn, .audio-btn) {
       opacity: 0 !important;
       pointer-events: none !important;
     }
     /* For the moment the interface is revealed, everything fades over 0.6s (set by revealApp, then dropped) */
-    body.app-revealing :is(.left-rail, .right-rail, .search-bar, .car-btn, .zoom-btn, .list-btn, .cost-btn, .audio-btn) {
+    body.app-revealing :is(.left-rail, .right-rail, .search-bar, .zoom-btn, .list-btn, .cost-btn, .audio-btn) {
       transition: opacity 0.6s ease !important;
     }
     body.app-revealing .venue-list { transition: opacity 0.6s ease, visibility 0s linear 0s !important; }
     @media (prefers-reduced-motion: reduce) {
-      body.app-revealing :is(.left-rail, .right-rail, .search-bar, .car-btn, .zoom-btn, .list-btn, .cost-btn, .audio-btn, .venue-list) { transition: none !important; }
+      body.app-revealing :is(.left-rail, .right-rail, .search-bar, .zoom-btn, .list-btn, .cost-btn, .audio-btn, .venue-list) { transition: none !important; }
     }
     @media (prefers-reduced-motion: reduce) {
       .search-bar { transition: none; }
@@ -1166,10 +1159,6 @@
   </div>
   </div>
 
-  <!-- Car / location -->
-  <button id="car-toggle" class="car-btn" onclick="toggleCar()" aria-label="Show my car at my location" title="Show my car at my location">
-    <svg viewBox="0 0 24 24"><path d="M18.92 6.01C18.72 5.42 18.16 5 17.5 5h-11c-.66 0-1.21.42-1.42 1.01L3 12v8c0 .55.45 1 1 1h1c.55 0 1-.45 1-1v-1h12v1c0 .55.45 1 1 1h1c.55 0 1-.45 1-1v-8l-2.08-5.99zM6.5 16c-.83 0-1.5-.67-1.5-1.5S5.67 13 6.5 13s1.5.67 1.5 1.5S7.33 16 6.5 16zm11 0c-.83 0-1.5-.67-1.5-1.5s.67-1.5 1.5-1.5 1.5.67 1.5 1.5-.67 1.5-1.5 1.5zM5 11l1.5-4.5h11L19 11H5z"/></svg>
-  </button>
   <button id="zoom-reset" class="zoom-btn" onclick="resetZoom()" aria-label="Zoom out to the skies!" title="Zoom out to the skies!">
     <svg viewBox="0 0 24 24"><path d="M19.35 10.04C18.67 6.59 15.64 4 12 4 9.11 4 6.6 5.64 5.35 8.04 2.34 8.36 0 10.91 0 14c0 3.31 2.69 6 6 6h13c2.76 0 5-2.24 5-5 0-2.64-2.05-4.78-4.65-4.96z"/></svg>
   </button>
@@ -1667,21 +1656,8 @@
       map.on('zoom', () => { if (map.getZoom() >= LABELS_MIN_ZOOM - LABELS_FADE_ZOOM) hideDotLabel(); });
       map.on('click', () => hideDotLabel(true));
 
-      // The car is on by default. If location permission was already granted on an earlier visit, it appears at the
-      // user's location without a tap, and is not parked at the default origin first (it would visibly jump). It
-      // parks at the default origin right away otherwise, or if that location attempt fails. iOS browsers often report
-      // "prompt" for a permission that was already allowed, so a remembered successful fix counts as granted too.
-      const parkAtDefault = () => placeCar(DEFAULT_ORIGIN);
-      let locatedBefore = false;
-      try { locatedBefore = localStorage.getItem(LOCATED_KEY) === '1'; } catch (e) { /* storage unavailable */ }
-      try {
-        if (locatedBefore) locateUser({ fallbackToDefault: true });
-        else if (navigator.permissions?.query) {
-          navigator.permissions.query({ name: 'geolocation' })
-            .then((p) => { if (p.state === 'granted') locateUser({ fallbackToDefault: true }); else parkAtDefault(); })
-            .catch(parkAtDefault);
-        } else parkAtDefault();
-      } catch (e) { parkAtDefault(); /* permissions API unavailable */ }
+      // Location is always on: ask for it at startup. The orb parks at the default origin only if no usable fix comes back.
+      locateUser({ fallbackToDefault: true });
 
       // Ensure viewport dimensions calculate cleanly on load
       map.resize();
@@ -1870,7 +1846,7 @@
     function setListSort(mode) {
       // Without a location fix, proximity can't sort anything: ask for location again instead
       if (mode === 'near' && !listOrigin) {
-        if (!carBtn.classList.contains('busy')) locateUser({ forList: true });
+        if (!locating) locateUser({ forList: true });
         return;
       }
       const flipped = mode === listSort;
@@ -2019,7 +1995,6 @@
     });
 
     // ---------- Running car: shows the user's location and drives to clicked venues ----------
-    const carBtn = document.getElementById('car-toggle');
     const carToast = document.getElementById('car-toast');
     const MAP_CENTER = [-88.16632, 41.74594];
     const MAX_DISTANCE_FROM_MAP_M = 60000;
@@ -2041,8 +2016,8 @@
     let carRaf = null;
     let driveToken = 0;
     let toastTimer = null;
-    let carAlpha = 1; // 1 = fully visible; fades to 0 when the car button hides the car
     let carFadeRaf = null;
+    let locating = false; // a location request is in flight
     let carHiding = false; // the car is fading out; a drive in progress keeps going until the fade ends
     let carDriving = false;
     const CAR_FADE_MS = 400;
@@ -2082,153 +2057,41 @@
       return [carParkDest[0] + carParkOffsetPx[0] * mpp / mLon, carParkDest[1] + carParkOffsetPx[1] * mpp / 111320];
     }
 
-    // ---- 3-D car: real fill-extrusion geometry, so it tilts and rotates with the map ----
-    const CAR_PX_LENGTH = 34; // on-screen length; the car scales with zoom so it stays visible
-    const rect = (x1, x2, y1, y2) => [[x1, y1], [x2, y1], [x2, y2], [x1, y2]];
-    const chamfered = (hw, hl, c) => [
-      [-hw + c, -hl], [hw - c, -hl], [hw, -hl + c], [hw, hl - c],
-      [hw - c, hl], [-hw + c, hl], [-hw, hl - c], [-hw, -hl + c]
-    ];
-    // A wheel seen from the side is a circle, but an extrusion only rises straight up. So each wheel is a stack of thin
-    // slices, narrower toward the top and bottom, which steps out a circle of this radius and height.
-    const WHEEL_R = 0.065, WHEEL_H = 0.12, WHEEL_SLICES = 8;
-    const wheelSlices = (x1, x2, yc) => Array.from({ length: WHEEL_SLICES }, (_, k) => {
-      const dz = WHEEL_H / WHEEL_SLICES;
-      const off = (k + 0.5) * dz - WHEEL_H / 2;
-      const half = Math.sqrt(WHEEL_R * WHEEL_R - off * off);
-      return { color: '#6b7280', base: k * dz, top: (k + 1) * dz, wheel: true, ring: rect(x1, x2, yc - half, yc + half) };
-    });
-    // Local coordinates are in car lengths: x = right, y = forward; base/top are heights.
-    const CAR_PARTS = [
-      { color: '#a78bfa', base: 0.07, top: 0.20, ring: chamfered(0.23, 0.50, 0.10) },          // body
-      { color: '#1f2433', base: 0.20, top: 0.31, ring: rect(-0.20, 0.20, -0.10, 0.12) },       // windshield and side glass
-      { color: '#a78bfa', base: 0.20, top: 0.31, ring: rect(-0.20, 0.20, -0.155, -0.10) },     // lilac pillar behind the side glass
-      { color: '#1f2433', base: 0.20, top: 0.31, ring: rect(-0.152, 0.152, -0.27, -0.155) },   // rear window
-      { color: '#a78bfa', base: 0.20, top: 0.31, ring: rect(-0.20, -0.152, -0.27, -0.155) },  // lilac posts framing the rear window
-      { color: '#a78bfa', base: 0.20, top: 0.31, ring: rect(0.152, 0.20, -0.27, -0.155) },
-      { color: '#c4b5fd', base: 0.31, top: 0.34, ring: rect(-0.19, 0.19, -0.24, 0.08) },       // roof
-      ...wheelSlices(-0.265, -0.20, 0.335), ...wheelSlices(0.20, 0.265, 0.335),
-      ...wheelSlices(-0.265, -0.20, -0.335), ...wheelSlices(0.20, 0.265, -0.335),
-      { color: '#fff4be', base: 0.12, top: 0.165, ring: rect(-0.20, -0.12, 0.495, 0.52) },     // headlights
-      { color: '#fff4be', base: 0.12, top: 0.165, ring: rect(0.12, 0.20, 0.495, 0.52) },
-      { color: '#ff5d5d', base: 0.12, top: 0.16, ring: rect(-0.20, -0.12, -0.52, -0.495) },    // taillights
-      { color: '#ff5d5d', base: 0.12, top: 0.16, ring: rect(0.12, 0.20, -0.52, -0.495) }
-    ];
-    const CAR_BEAMS = [
-      [[-0.17, 0.50], [-0.30, 1.35], [-0.04, 1.35], [-0.08, 0.50]],
-      [[0.17, 0.50], [0.30, 1.35], [0.04, 1.35], [0.08, 0.50]]
-    ];
-    // Wipers on the windshield, in the body's lilac so they show against the dark glass. The glass is the front face of
-    // the cabin (y = 0.12, heights 0.20 to 0.31). A prism can only be extruded straight up, so each blade is a short
-    // row of small floating boxes standing just proud of the glass. Each blade pivots at the base of the glass, lies
-    // along it at rest, and swings up. Heavier weather sweeps faster; drizzle sweeps once, then pauses.
-    const WIPER_COLOR = '#a78bfa';
-    const WIPER_PIVOTS_X = [-0.17, 0];
-    const WIPER_BASE_Z = 0.21; // pivot height, a hair above the hood
-    const WIPER_LEN = 0.10, WIPER_SEGMENTS = 7, WIPER_HALF_W = 0.014, WIPER_THICK = 0.016;
-    const WIPER_Y = [0.122, 0.138]; // just in front of the glass
-    const WIPER_SWEEP = 95 * Math.PI / 180;
-    const WIPER_PAUSE_MS = 1800;
-    function wiperAngle(t) {
-      const wet = Math.max(weatherScene.rain, weatherScene.snow);
-      if (!wet) return null; // dry: wipers are not drawn
-      const period = 1500 - 700 * wet;
-      const pause = wet < 0.4 ? WIPER_PAUSE_MS : 0;
-      const u = (t % (period + pause)) / period;
-      return u >= 1 ? 0 : WIPER_SWEEP * (0.5 - 0.5 * Math.cos(2 * Math.PI * u));
-    }
-    function wiperBoxes(t) {
-      const a = wiperAngle(t);
-      if (a === null) return [];
-      const boxes = [];
-      for (const px of WIPER_PIVOTS_X) {
-        for (let i = 0; i < WIPER_SEGMENTS; i++) {
-          const d = (i + 0.5) * WIPER_LEN / WIPER_SEGMENTS;
-          const x = px + d * Math.cos(a), z = WIPER_BASE_Z + d * Math.sin(a);
-          boxes.push({
-            ring: rect(x - WIPER_HALF_W, x + WIPER_HALF_W, WIPER_Y[0], WIPER_Y[1]),
-            base: z - WIPER_THICK / 2, top: z + WIPER_THICK / 2
-          });
-        }
-      }
-      return boxes;
-    }
+    // ---- Location orb: a pulsing purple glow drawn as map circles (no 3-D geometry) ----
+    const ORB_COLOR = '#a78bfa';
     const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
     const emptyFC = { type: 'FeatureCollection', features: [] };
 
     function ensureCarLayers() {
       if (map.getSource('car-3d')) return;
-      // The body, beams and puffs share one source so a single setData moves them together. Separate sources load
-      // in the worker independently, and the lighter beam data could land a frame or more ahead of the body.
       map.addSource('car-3d', { type: 'geojson', data: emptyFC });
       map.addLayer({
-        id: 'car-beam-fill', type: 'fill', source: 'car-3d', filter: ['==', ['get', 'beam'], true],
-        paint: { 'fill-color': '#fff4be', 'fill-opacity': 0.25 }
-      });
-      map.addLayer({
-        id: 'car-puff-dot', type: 'circle', source: 'car-3d', filter: ['==', ['geometry-type'], 'Point'],
+        id: 'car-orb-halo', type: 'circle', source: 'car-3d',
         paint: {
-          'circle-radius': ['get', 'r'], 'circle-color': '#c8cdd7', 'circle-opacity': ['get', 'o'],
-          'circle-blur': 0.6, 'circle-pitch-alignment': 'map'
+          'circle-radius': ['get', 'haloR'], 'circle-color': ORB_COLOR, 'circle-opacity': ['get', 'haloO'],
+          'circle-blur': 0.8, 'circle-pitch-alignment': 'map'
         }
       });
       map.addLayer({
-        id: 'car-3d-body', type: 'fill-extrusion', source: 'car-3d', filter: ['!=', ['get', 'beam'], true],
+        id: 'car-orb-core', type: 'circle', source: 'car-3d',
         paint: {
-          'fill-extrusion-color': ['get', 'color'],
-          'fill-extrusion-height': ['get', 'top'],
-          'fill-extrusion-base': ['get', 'base'],
-          'fill-extrusion-opacity': 1,
-          'fill-extrusion-vertical-gradient': true
+          'circle-radius': ['get', 'coreR'], 'circle-color': '#c4b5fd', 'circle-opacity': 1,
+          'circle-stroke-width': 2, 'circle-stroke-color': '#ffffff', 'circle-stroke-opacity': 0.9,
+          'circle-blur': 0.15, 'circle-pitch-alignment': 'map'
         }
       });
     }
 
     function renderCar(t) {
       if (!carPos) return;
-      const rad = Math.PI / 180;
-      const calm = reducedMotion.matches;
-      const pos = carVisualPos();
-      const L = CAR_PX_LENGTH * metersPerPixel(pos[1]);
-      const s = Math.sin(carHeading * rad), c = Math.cos(carHeading * rad);
-      const mLat = 111320, mLon = 111320 * Math.cos(pos[1] * rad);
-      const toLL = (x, y) => [
-        pos[0] + (x * L * c + y * L * s) / mLon,
-        pos[1] + (-x * L * s + y * L * c) / mLat
-      ];
-      const ring = (pts) => { const r = pts.map(([x, y]) => toLL(x, y)); r.push(r[0]); return r; };
-
-      // Idling engine: the body shudders and bobs a little; the wheels stay planted
-      const bob = calm ? 0 : 0.006 * (0.5 + 0.5 * Math.sin(t / 55));
-      const shake = calm ? 0 : 0.008 * Math.sin(t / 41);
-
-      map.setPaintProperty('car-3d-body', 'fill-extrusion-opacity', carAlpha);
-      map.setPaintProperty('car-beam-fill', 'fill-opacity', (calm ? 0.25 : 0.2 + 0.1 * Math.sin(t / 260)) * carAlpha);
+      const pulse = reducedMotion.matches ? 0.5 : 0.5 + 0.5 * Math.sin(t / 450);
       map.getSource('car-3d').setData({
         type: 'FeatureCollection',
-        features: CAR_PARTS.map((p) => ({
+        features: [{
           type: 'Feature',
-          properties: {
-            color: p.color,
-            base: (p.base + (p.wheel ? 0 : bob)) * L,
-            top: (p.top + (p.wheel ? 0 : bob)) * L
-          },
-          geometry: { type: 'Polygon', coordinates: [ring(p.ring.map(([x, y]) => [x + (p.wheel ? 0 : shake), y]))] }
-        })).concat(wiperBoxes(t).map((w) => ({
-          type: 'Feature',
-          properties: { color: WIPER_COLOR, base: (w.base + bob) * L, top: (w.top + bob) * L },
-          geometry: { type: 'Polygon', coordinates: [ring(w.ring.map(([x, y]) => [x + shake, y]))] }
-        }))).concat(CAR_BEAMS.map((b) => ({
-          type: 'Feature', properties: { beam: true }, geometry: { type: 'Polygon', coordinates: [ring(b)] }
-        }))).concat(calm ? [] : [0, 0.5].map((offset, i) => {
-          // Exhaust puffs drift back and fade
-          const p = ((t / 1400) + offset) % 1;
-          return {
-            type: 'Feature',
-            properties: { r: 2 + p * 7, o: (1 - p) * 0.5 * carAlpha },
-            geometry: { type: 'Point', coordinates: toLL((i ? 0.07 : -0.07) + p * 0.04, -0.54 - p * 0.45) }
-          };
-        }))
+          properties: { haloR: 16 + pulse * 10, haloO: 0.55 - pulse * 0.3, coreR: 6 + pulse * 1.5 },
+          geometry: { type: 'Point', coordinates: carVisualPos() }
+        }]
       });
     }
 
@@ -2246,7 +2109,6 @@
       cancelAnimationFrame(carRaf);
       cancelAnimationFrame(carFadeRaf);
       carFadeRaf = null;
-      carAlpha = 1;
       carHiding = false;
       carDriving = false;
       driveToken++;
@@ -2254,52 +2116,7 @@
       ensureCarLayers();
       carPos = lngLat.slice();
       carParkDest = null;
-      carBtn.classList.add('active');
-      carBtn.setAttribute('aria-label', 'Hide my car');
-      carBtn.title = 'Hide my car';
       if (!carLoopRaf) carLoopRaf = requestAnimationFrame(carLoop);
-    }
-
-    // Fades the car out along with any dotted trail, then stops drawing it
-    function hideCar() {
-      carHiding = true;
-      carBtn.classList.remove('active');
-      carBtn.setAttribute('aria-label', 'Show my car at my location');
-      carBtn.title = 'Show my car at my location';
-      // A car that is mid-drive keeps following its track while it and the trail fade together
-      const ms = carDriving ? CAR_DRIVING_FADE_MS : CAR_FADE_MS;
-      fadeCarRoute(ms);
-      cancelAnimationFrame(carFadeRaf);
-      const finish = () => {
-        carFadeRaf = null;
-        carAlpha = 0;
-        carHiding = false;
-        carDriving = false;
-        cancelAnimationFrame(carRaf);
-        driveToken++; // ends the drive, if it is still going
-        cancelAnimationFrame(carLoopRaf);
-        carLoopRaf = null;
-        carPos = null;
-        carParkDest = null;
-        const src = map.getSource('car-3d');
-        if (src) src.setData(emptyFC);
-      };
-      if (reducedMotion.matches) { finish(); return; }
-      const from = carAlpha, t0 = performance.now();
-      const step = (now) => {
-        const k = Math.min(1, (now - t0) / ms);
-        carAlpha = from * (1 - k);
-        if (k < 1) carFadeRaf = requestAnimationFrame(step);
-        else finish();
-      };
-      carFadeRaf = requestAnimationFrame(step);
-    }
-
-    // First click fades the car out; the next click puts it back at the user's location
-    function toggleCar() {
-      if (carBtn.classList.contains('busy')) return;
-      if (carPos && carBtn.classList.contains('active')) hideCar();
-      else locateUser();
     }
 
     const LOCATED_KEY = 'datenite-located'; // set once a location fix has worked on this device
@@ -2316,10 +2133,10 @@
         fallback();
         return;
       }
-      carBtn.classList.add('busy');
+      locating = true;
       navigator.geolocation.getCurrentPosition(
         (pos) => {
-          carBtn.classList.remove('busy');
+          locating = false;
           // Desktop browsers often report a location from the IP address, miles off and flagged with a large
           // accuracy radius. That reading isn't trusted; the car starts at the default origin instead.
           const trusted = pos.coords.accuracy <= MAX_TRUSTED_ACCURACY_M;
@@ -2340,7 +2157,7 @@
             return;
           }
           if (haversineM(here, MAP_CENTER) > MAX_DISTANCE_FROM_MAP_M) {
-            showCarToast('You appear to be outside the Naperville area, so your car is not shown.');
+            showCarToast('You appear to be outside the Naperville area, so your location is not shown.');
             fallback();
             return;
           }
@@ -2349,10 +2166,10 @@
           map.flyTo({ center: here, zoom: Math.max(map.getZoom(), 13.5), duration: 1200 });
         },
         (err) => {
-          carBtn.classList.remove('busy');
+          locating = false;
           if (err.code === 1) rememberLocated(false);
           showCarToast(err.code === 1
-            ? 'Location permission was denied. Allow it in your browser settings to see your car and distances.'
+            ? 'Location permission was denied. Allow it in your browser settings to see your location and distances.'
             : 'Could not get your location. Try again.');
           fallback();
         },
