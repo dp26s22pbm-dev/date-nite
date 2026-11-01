@@ -1804,19 +1804,21 @@
   {
     "id": 109,
     "name": "Taquer\u00eda El Valle",
-    "category": "Mexican Fast Casual",
+    "category": "Mexican / Tacos",
     "city": "Bolingbrook",
     "state": "IL",
     "coords": [
       -88.051094,
       41.717338
     ],
-    "app": 4.39,
-    "casualMain": 7.99,
-    "premiumMain": 10.99,
+    "app": 4.99,
+    "casualMain": 5.99,
+    "premiumMain": 16.99,
     "drink": 8.0,
     "dessert": 8.0,
-    "tierColor": "#22c55e"
+    "tierColor": "#22c55e",
+    "website": "https://taqueria-el-valle.placejoys.com/",
+    "isTaco": true
   },
   {
     "id": 110,

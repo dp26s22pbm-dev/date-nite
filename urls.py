@@ -27,5 +27,6 @@ TARGET_URLS = {
     26: "https://www.oldtownpourhouse.com/locations/naperville/food-menu/",
     27: "https://places.singleplatform.com/red-arrow-eatery--self-pour---naperville/menu?ref=google",
     28: "https://www.kaijapanesekitchen.com/menu",
+    109: "https://taqueria-el-valle.placejoys.com/menu",
 }
   
