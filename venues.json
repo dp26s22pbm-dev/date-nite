@@ -825,26 +825,6 @@
     "tierColor": "#22c55e"
   },
   {
-    "id": 50,
-    "name": "Velvet Taco",
-    "category": "Mexican Fast Casual",
-    "city": "Naperville",
-    "state": "IL",
-    "website": "https://www.velvettaco.com/location/naperville/",
-    "mapsUrl": "https://maps.app.goo.gl/iMZ7czTxPDk4gyNc9",
-    "coords": [
-      -88.203798,
-      41.764395
-    ],
-    "app": 6.5,
-    "casualMain": 5.95,
-    "premiumMain": 13.25,
-    "drink": 2.75,
-    "dessert": 4.5,
-    "isTaco": true,
-    "tierColor": "#38bdf8"
-  },
-  {
     "id": 51,
     "name": "Yard House - Block 59",
     "category": "Casual American",
