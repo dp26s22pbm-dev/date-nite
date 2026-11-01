@@ -527,6 +527,9 @@
     .pop-name a { color: inherit; text-decoration: none; border-bottom: 1px dotted rgba(255, 255, 255, 0.45); }
     .pop-name a:hover { color: #c4b5fd; border-bottom-color: #c4b5fd; } /* same purple as the car's roof */
     .pop-cat { font-size: 11px; color: #c3cbd3; margin-top: 1px; }
+    .pop-loc { font-size: 11px; margin-top: 1px; }
+    .pop-loc a { color: #c3cbd3; text-decoration: none; border-bottom: 1px dotted rgba(195, 203, 211, 0.55); }
+    .pop-loc a:hover { color: #c4b5fd; border-bottom-color: #c4b5fd; }
 
     .pop-badge {
       display: flex;
@@ -3038,10 +3041,19 @@
         ? `<a href="${escapeHtml(siteUrl)}" target="_blank" rel="noopener noreferrer" title="${escapeHtml(linkTitle)}">${escapeHtml(venue.name)}</a>`
         : escapeHtml(venue.name);
 
+      // Town and state under the cuisine; clicking opens the restaurant in Google Maps (the saved Maps link when there is one)
+      const place = [venue.city, venue.state].filter(Boolean).join(', ');
+      const mapsHref = safeWebsiteUrl(venue.mapsUrl)
+        || `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(`${venue.name} ${place}`.trim())}`;
+      const locHtml = place
+        ? `<div class="pop-loc"><a href="${escapeHtml(mapsHref)}" target="_blank" rel="noopener noreferrer" title="Open ${escapeHtml(venue.name)} in Google Maps in a new tab">${escapeHtml(place)}</a></div>`
+        : '';
+
       const html = `
         <div class="pop-header">
           <div class="pop-name">${nameHtml}</div>
           <div class="pop-cat">${escapeHtml(venue.category || '')}</div>
+          ${locHtml}
         </div>
         <div class="pop-badge">
           <span class="pop-badge-label">Est. TOTAL (incl. tip and tax)</span>
