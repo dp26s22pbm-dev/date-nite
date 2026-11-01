@@ -510,7 +510,7 @@ def get_page(url):
     return None
 
 MENU_LINK_WORDS = ("menu", "food", "dine", "dining", "drink", "order", "eat", "lunch", "dinner", "brunch")
-ORDERING_HOSTS = ("toasttab.com", "chownow.com", "square.site", "olo.com", "popmenu.com", "order.online", "ordering.", "menus.",
+ORDERING_HOSTS = ("toasttab.com", "toast.app","chownow.com", "square.site", "olo.com", "popmenu.com", "order.online", "ordering.", "menus.",
                   "orderexperience.net", "alohaorderonline.com")
 MENU_PATHS = ("/menu", "/menus", "/our-menu", "/food-menu", "/food", "/dinner", "/dinner-menu", "/dining", "/order", "/order-online")
 
@@ -791,6 +791,11 @@ def pricing_from_gemini_reading_site(name, site):
     except Exception as e:
         print(f"Gemini site read error for {site}: {e}")
     return None
+
+def _is_google_search_url(url):
+    """True for a google.com results page (/search), as opposed to a Maps address."""
+    parsed = urllib.parse.urlparse((url or "").strip())
+    return (parsed.hostname or "").lower() in ("google.com", "www.google.com") and parsed.path.startswith("/search")
 
 def normalize_maps_url(value):
     """Return the link if it is a Google Maps address, else "". Used for the fallback link on the popup."""
@@ -1236,6 +1241,10 @@ def main():
     if not pricing and menu_url and menu_url.lower().split("?")[0].endswith(".pdf"):
         pricing = clean_pricing(fetch_pdf_pricing(menu_url))
         pricing_source = "the menu PDF"
+    elif not pricing and menu_url and _is_google_search_url(menu_url):
+        # Google's own Menu panel is not readable: Google answers automated requests with a CAPTCHA
+        print("The menu link is a Google search page, which cannot be read automatically; trying other sources. "
+              "Copy the text from Google's Menu panel and paste it into 'Menu text (Optional)' instead.")
     elif not pricing and menu_url:
         got = fetch_url(menu_url)
         if got and "pdf" not in got[1].lower():
