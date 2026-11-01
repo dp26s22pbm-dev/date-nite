@@ -8,12 +8,13 @@
       -88.20508847513958,
       41.76458551480787
     ],
-    "app": 10.85,
-    "casualMain": 18.98,
-    "premiumMain": 25.95,
-    "drink": 10.37,
-    "dessert": 10.7,
-    "tierColor": "#eab308"
+    "app": 9.95,
+    "casualMain": 17.2,
+    "premiumMain": 32.95,
+    "drink": 7.5,
+    "dessert": 9.35,
+    "tierColor": "#eab308",
+    "lastUpdated": "2026-11-01"
   },
   {
     "id": 2,
@@ -24,12 +25,13 @@
       -88.12242814486318,
       41.69276269813153
     ],
-    "app": 14.0,
-    "casualMain": 20.0,
-    "premiumMain": 36.0,
-    "drink": 16.0,
-    "dessert": 11.0,
-    "tierColor": "#eab308"
+    "app": 16.5,
+    "casualMain": 18.5,
+    "premiumMain": 35.0,
+    "drink": 17.5,
+    "dessert": 12.0,
+    "tierColor": "#f97316",
+    "lastUpdated": "2026-11-01"
   },
   {
     "id": 3,
@@ -41,11 +43,12 @@
       41.7531
     ],
     "app": 15.0,
-    "casualMain": 21.0,
-    "premiumMain": 43.0,
+    "casualMain": 21.5,
+    "premiumMain": 41.0,
     "drink": 13.0,
-    "dessert": 10.0,
-    "tierColor": "#f97316"
+    "dessert": 9.5,
+    "tierColor": "#eab308",
+    "lastUpdated": "2026-11-01"
   },
   {
     "id": 4,
@@ -56,13 +59,14 @@
       -88.16480217723856,
       41.76875789518576
     ],
-    "app": 14.45,
-    "casualMain": 24.95,
-    "premiumMain": 42.95,
+    "app": 12.95,
+    "casualMain": 18.95,
+    "premiumMain": 28.95,
     "drink": 12.0,
-    "dessert": 11.47,
+    "dessert": 11.5,
     "isTapas": true,
-    "tierColor": "#f97316"
+    "tierColor": "#eab308",
+    "lastUpdated": "2026-11-01"
   },
   {
     "id": 5,
@@ -73,12 +77,13 @@
       -88.15061940422304,
       41.7713795929344
     ],
-    "app": 16.0,
-    "casualMain": 20.0,
-    "premiumMain": 37.0,
-    "drink": 12.5,
-    "dessert": 12.0,
-    "tierColor": "#eab308"
+    "app": 14.0,
+    "casualMain": 18.5,
+    "premiumMain": 34.0,
+    "drink": 15.0,
+    "dessert": 11.0,
+    "tierColor": "#eab308",
+    "lastUpdated": "2026-11-01"
   },
   {
     "id": 6,
@@ -89,12 +94,13 @@
       -88.15090767538716,
       41.77149169607413
     ],
-    "app": 18.0,
-    "casualMain": 27.0,
-    "premiumMain": 47.5,
-    "drink": 16.0,
-    "dessert": 14.0,
-    "tierColor": "#f97316"
+    "app": 17.0,
+    "casualMain": 24.0,
+    "premiumMain": 49.0,
+    "drink": 14.0,
+    "dessert": 14.5,
+    "tierColor": "#f97316",
+    "lastUpdated": "2026-11-01"
   },
   {
     "id": 7,
@@ -105,12 +111,13 @@
       -88.14926916189474,
       41.77327109562595
     ],
-    "app": 19.0,
-    "casualMain": 27.5,
-    "premiumMain": 52.5,
-    "drink": 18.0,
+    "app": 18.5,
+    "casualMain": 28.5,
+    "premiumMain": 62.0,
+    "drink": 15.0,
     "dessert": 15.0,
-    "tierColor": "#f97316"
+    "tierColor": "#ef4444",
+    "lastUpdated": "2026-11-01"
   },
   {
     "id": 8,
@@ -121,12 +128,13 @@
       -88.20544700422381,
       41.75867088875935
     ],
-    "app": 17.0,
-    "casualMain": 25.0,
-    "premiumMain": 42.0,
-    "drink": 14.0,
-    "dessert": 9.5,
-    "tierColor": "#f97316"
+    "app": 14.0,
+    "casualMain": 21.0,
+    "premiumMain": 47.3,
+    "drink": 14.5,
+    "dessert": 12.1,
+    "tierColor": "#f97316",
+    "lastUpdated": "2026-11-01"
   },
   {
     "id": 9,
@@ -137,12 +145,13 @@
       -88.15026380422286,
       41.774403001046814
     ],
-    "app": 23.5,
-    "casualMain": 25.5,
-    "premiumMain": 67.0,
-    "drink": 16.5,
-    "dessert": 19.0,
-    "tierColor": "#ef4444"
+    "app": 22.0,
+    "casualMain": 23.0,
+    "premiumMain": 60.0,
+    "drink": 15.0,
+    "dessert": 19.25,
+    "tierColor": "#ef4444",
+    "lastUpdated": "2026-11-01"
   },
   {
     "id": 11,
@@ -154,11 +163,12 @@
       41.713476
     ],
     "app": 14.0,
-    "casualMain": 17.0,
-    "premiumMain": 28.0,
-    "drink": 11.25,
+    "casualMain": 23.0,
+    "premiumMain": 28.5,
+    "drink": 7.95,
     "dessert": 9.0,
-    "tierColor": "#eab308"
+    "tierColor": "#eab308",
+    "lastUpdated": "2026-11-01"
   },
   {
     "id": 12,
@@ -169,12 +179,13 @@
       -88.206962,
       41.712322
     ],
-    "app": 11.25,
-    "casualMain": 17.5,
-    "premiumMain": 22.5,
-    "drink": 12.0,
+    "app": 7.75,
+    "casualMain": 17.62,
+    "premiumMain": 24.0,
+    "drink": 11.25,
     "dessert": 9.0,
-    "tierColor": "#eab308"
+    "tierColor": "#eab308",
+    "lastUpdated": "2026-11-01"
   },
   {
     "id": 13,
@@ -185,12 +196,13 @@
       -88.20770230422656,
       41.71232936095906
     ],
-    "app": 17.4,
-    "casualMain": 19.15,
-    "premiumMain": 29.1,
-    "drink": 14.25,
-    "dessert": 13.05,
-    "tierColor": "#eab308"
+    "app": 16.35,
+    "casualMain": 19.02,
+    "premiumMain": 32.67,
+    "drink": 12.0,
+    "dessert": 13.6,
+    "tierColor": "#eab308",
+    "lastUpdated": "2026-11-01"
   },
   {
     "id": 14,
@@ -202,11 +214,12 @@
       41.803763
     ],
     "app": 16.45,
-    "casualMain": 21.64,
-    "premiumMain": 34.99,
-    "drink": 10.75,
-    "dessert": 13.25,
-    "tierColor": "#eab308"
+    "casualMain": 21.39,
+    "premiumMain": 34.29,
+    "drink": 11.0,
+    "dessert": 11.89,
+    "tierColor": "#eab308",
+    "lastUpdated": "2026-11-01"
   },
   {
     "id": 15,
@@ -217,12 +230,13 @@
       -88.207112,
       41.713996
     ],
-    "app": 14.0,
-    "casualMain": 18.0,
-    "premiumMain": 28.5,
-    "drink": 11.88,
-    "dessert": 10.5,
-    "tierColor": "#eab308"
+    "app": 14.38,
+    "casualMain": 17.38,
+    "premiumMain": 34.88,
+    "drink": 10.5,
+    "dessert": 8.75,
+    "tierColor": "#eab308",
+    "lastUpdated": "2026-11-01"
   },
   {
     "id": 16,
