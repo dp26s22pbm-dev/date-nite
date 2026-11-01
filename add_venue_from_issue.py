@@ -232,6 +232,23 @@ def geocode_via_nominatim(address):
     print(f"Nominatim: no building/address-level match for '{query}' (road-only and out-of-area results are rejected)")
     return None
 
+def reverse_geocode_town(coords):
+    """Town and two-letter state for [lon, lat] via Nominatim, for the line under the cuisine on the popup. ("", "") on failure."""
+    params = urllib.parse.urlencode({"format": "jsonv2", "zoom": 14, "addressdetails": 1, "lat": coords[1], "lon": coords[0]})
+    req = urllib.request.Request(
+        f"https://nominatim.openstreetmap.org/reverse?{params}",
+        headers={"User-Agent": "date-nite-venue-importer (github.com/dp26s22pbm-dev/date-nite)"}
+    )
+    try:
+        with urllib.request.urlopen(req, timeout=20) as resp:
+            addr = json.load(resp).get("address", {})
+    except Exception as e:
+        print(f"Nominatim reverse geocoding error: {e}")
+        return "", ""
+    town = next((addr[k] for k in ("city", "town", "village", "hamlet", "municipality") if addr.get(k)), "")
+    iso = addr.get("ISO3166-2-lvl4", "")
+    return town, (iso.split("-")[1] if iso.startswith("US-") else "")
+
 def fetch_pricing_via_gemini_search(venue_name, city="Naperville, IL"):
     """Query Gemini with Google Search Grounding to find live menu pricing."""
     try:
@@ -1353,12 +1370,15 @@ def main():
     tier_color = calculate_tier_color(total_cost)
 
     next_id = max([v.get("id", 0) for v in venues], default=0) + 1
+    town, state = reverse_geocode_town(coords)
 
     # Overwrite if restaurant already exists, else append
     entry = {
         "id": venues[existing_idx].get("id", next_id) if existing_idx is not None else next_id,
         "name": name,
         "category": category,
+        **({"city": town} if town else {}),
+        **({"state": state} if state else {}),
         **({"website": website} if website else {}),
         **({"mapsUrl": maps_url} if maps_url else {}),
         "coords": coords,

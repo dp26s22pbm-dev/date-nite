@@ -3,6 +3,8 @@
     "id": 1,
     "name": "Lazy Dog",
     "category": "Casual American",
+    "city": "Naperville",
+    "state": "IL",
     "website": "https://lazydogrestaurants.com/pages/naperville-il",
     "coords": [
       -88.20508847513958,
@@ -20,6 +22,8 @@
     "id": 2,
     "name": "Hacienda Real",
     "category": "Elevated Mexican",
+    "city": "Bolingbrook",
+    "state": "IL",
     "website": "https://www.haciendaflavorsofmexico.com/",
     "coords": [
       -88.12242814486318,
@@ -37,6 +41,8 @@
     "id": 3,
     "name": "VAI's Italian",
     "category": "Modern Italian",
+    "city": "Naperville",
+    "state": "IL",
     "website": "https://vaisnaperville.com",
     "coords": [
       -88.204,
@@ -54,6 +60,8 @@
     "id": 4,
     "name": "Mes\u00f3n Sabika",
     "category": "Spanish Tapas",
+    "city": "Naperville",
+    "state": "IL",
     "website": "https://www.mesonsabika.com",
     "coords": [
       -88.16480217723856,
@@ -72,6 +80,8 @@
     "id": 5,
     "name": "Santo Cielo",
     "category": "Latin Bistro",
+    "city": "Naperville",
+    "state": "IL",
     "website": "https://www.stcielo.com",
     "coords": [
       -88.15061940422304,
@@ -89,6 +99,8 @@
     "id": 6,
     "name": "Vasili's",
     "category": "Greek",
+    "city": "Naperville",
+    "state": "IL",
     "website": "https://vasiliskitchen.com",
     "coords": [
       -88.15090767538716,
@@ -106,6 +118,8 @@
     "id": 7,
     "name": "Ramsay's Kitchen",
     "category": "Modern American Bistro",
+    "city": "Naperville",
+    "state": "IL",
     "website": "https://www.gordonramsayrestaurants.com/en/us/ramsays-kitchen",
     "coords": [
       -88.14926916189474,
@@ -123,6 +137,8 @@
     "id": 8,
     "name": "Entourage",
     "category": "Steakhouse",
+    "city": "Naperville",
+    "state": "IL",
     "website": "https://entouragerestaurant.com/naperville/",
     "coords": [
       -88.20544700422381,
@@ -140,6 +156,8 @@
     "id": 9,
     "name": "Hugo's Frog Bar",
     "category": "Prime Steak & Seafood",
+    "city": "Naperville",
+    "state": "IL",
     "website": "https://hugosfrogbar.com/naperville/",
     "coords": [
       -88.15026380422286,
@@ -157,6 +175,8 @@
     "id": 11,
     "name": "Traverso\u2019s",
     "category": "Italian",
+    "city": "Naperville",
+    "state": "IL",
     "website": "https://traversosrestaurant.com",
     "coords": [
       -88.167041,
@@ -174,6 +194,8 @@
     "id": 12,
     "name": "Ancho & Agave",
     "category": "Mexican Upscale",
+    "city": "Naperville",
+    "state": "IL",
     "website": "https://www.anchoandagave.com",
     "coords": [
       -88.206962,
@@ -191,6 +213,8 @@
     "id": 13,
     "name": "Bar Louie",
     "category": "American Modern",
+    "city": "Naperville",
+    "state": "IL",
     "website": "https://barlouie.com",
     "coords": [
       -88.20770230422656,
@@ -208,6 +232,8 @@
     "id": 14,
     "name": "The White Chocolate Grill",
     "category": "American Modern",
+    "city": "Naperville",
+    "state": "IL",
     "website": "https://www.whitechocolategrill.com",
     "coords": [
       -88.126748,
@@ -225,6 +251,8 @@
     "id": 15,
     "name": "Biaggi's Ristorante Italiano",
     "category": "Italian",
+    "city": "Naperville",
+    "state": "IL",
     "website": "https://biaggis.com/locations/illinois-naperville/",
     "coords": [
       -88.207112,
@@ -242,6 +270,8 @@
     "id": 16,
     "name": "Freedom Brothers Pizzeria and Alehouse",
     "category": "American / Pizza",
+    "city": "Plainfield",
+    "state": "IL",
     "website": "https://freedombrotherspizza.com",
     "coords": [
       -88.20573714645731,
@@ -258,6 +288,8 @@
     "id": 17,
     "name": "Little Pops NY Pizzeria",
     "category": "Italian / Pizza",
+    "city": "Naperville",
+    "state": "IL",
     "website": "https://www.littlepopspizzeria.com/locations/naperville",
     "coords": [
       -88.099682,
@@ -274,6 +306,8 @@
     "id": 18,
     "name": "The Cheesecake Factory",
     "category": "American / International",
+    "city": "Naperville",
+    "state": "IL",
     "labelAbove": true,
     "website": "https://www.thecheesecakefactory.com",
     "coords": [
@@ -291,6 +325,8 @@
     "id": 19,
     "name": "Morton's The Steakhouse",
     "category": "Steakhouse",
+    "city": "Naperville",
+    "state": "IL",
     "website": "https://www.mortons.com/location/mortons-the-steakhouse-naperville-il/",
     "coords": [
       -88.126779,
@@ -307,6 +343,8 @@
     "id": 20,
     "name": "JoJo's Shake Bar",
     "category": "American",
+    "city": "Naperville",
+    "state": "IL",
     "website": "https://www.jojosshakebar.com",
     "coords": [
       -88.14831,
@@ -323,6 +361,8 @@
     "id": 21,
     "name": "Chop'd",
     "category": "Steakhouse",
+    "city": "Plainfield",
+    "state": "IL",
     "website": "https://www.thechopdlife.com",
     "coords": [
       -88.202364,
@@ -339,6 +379,8 @@
     "id": 22,
     "name": "Spartan Ale House",
     "category": "American",
+    "city": "Naperville",
+    "state": "IL",
     "website": "https://spartanalehouse.com",
     "coords": [
       -88.205853,
@@ -355,6 +397,8 @@
     "id": 23,
     "name": "Shahirizada Restaurant",
     "category": "Uzbek Cuisine",
+    "city": "Naperville",
+    "state": "IL",
     "coords": [
       -88.20418700422687,
       41.70654157610284
@@ -370,6 +414,8 @@
     "id": 24,
     "name": "Wu's House",
     "category": "Japanese Steakhouse",
+    "city": "Naperville",
+    "state": "IL",
     "website": "https://www.wushouse.com",
     "coords": [
       -88.200728,
@@ -386,6 +432,8 @@
     "id": 26,
     "name": "Old Town Pour House",
     "category": "American",
+    "city": "Naperville",
+    "state": "IL",
     "website": "https://www.oldtownpourhouse.com/locations/naperville/",
     "coords": [
       -88.126915,
@@ -402,6 +450,8 @@
     "id": 27,
     "name": "Tapville Social",
     "category": "American",
+    "city": "Naperville",
+    "state": "IL",
     "website": "https://www.tapvillesocial.com/naperville",
     "coords": [
       -88.147673,
@@ -418,6 +468,8 @@
     "id": 28,
     "name": "Kai Modern Japanese Kitchen",
     "category": "Modern Japanese",
+    "city": "Aurora",
+    "state": "IL",
     "website": "https://www.kaijapanesekitchen.com/",
     "coords": [
       -88.317275,
@@ -434,6 +486,8 @@
     "id": 30,
     "name": "Chai Ho Jai - The Tea Room.",
     "category": "South Asian Tea Room",
+    "city": "Naperville",
+    "state": "IL",
     "website": "https://chaihojai.com/",
     "mapsUrl": "https://maps.app.goo.gl/EhsCgzXBZVhFwVyv7",
     "coords": [
@@ -451,6 +505,8 @@
     "id": 31,
     "name": "GIA MIA Naperville",
     "category": "Italian / Pizza",
+    "city": "Naperville",
+    "state": "IL",
     "website": "https://www.giamiapizzabar.com",
     "mapsUrl": "https://maps.app.goo.gl/BN99tG9oAJT3MTkr5",
     "coords": [
@@ -468,6 +524,8 @@
     "id": 32,
     "name": "Wild Tuna Sushi + Grill",
     "category": "Modern Japanese",
+    "city": "Naperville",
+    "state": "IL",
     "website": "https://www.wildtunasushi.com/",
     "mapsUrl": "https://maps.app.goo.gl/Bkdh2uK3q2pTDADU9",
     "coords": [
@@ -485,6 +543,8 @@
     "id": 33,
     "name": "RH Rooftop Restaurant at RH Oak Brook",
     "category": "American",
+    "city": "Oak Brook",
+    "state": "IL",
     "website": "https://rh.com/us/en/oakbrook",
     "mapsUrl": "https://maps.app.goo.gl/pcsBSxJ7onhSNeEfA",
     "coords": [
@@ -502,6 +562,8 @@
     "id": 34,
     "name": "STK Steakhouse",
     "category": "Prime Steak & Seafood",
+    "city": "Oak Brook",
+    "state": "IL",
     "website": "https://stksteakhouse.com/en-us/location/oak-brook/",
     "mapsUrl": "https://maps.app.goo.gl/oRQMrKLa6c4rmHdy5",
     "coords": [
@@ -519,6 +581,8 @@
     "id": 35,
     "name": "Eddie Merlot's",
     "category": "Prime Steak & Seafood",
+    "city": "Warrenville",
+    "state": "IL",
     "website": "https://www.eddiemerlots.com/warrenville/",
     "mapsUrl": "https://maps.app.goo.gl/rubmj18foQmb3KhD6",
     "coords": [
@@ -536,6 +600,8 @@
     "id": 37,
     "name": "Coa",
     "category": "Spanish Tapas",
+    "city": "Oak Brook",
+    "state": "IL",
     "website": "https://coaoakbrook.com/",
     "mapsUrl": "https://maps.app.goo.gl/SgUWuNck6xvAjM7N6",
     "coords": [
@@ -553,6 +619,8 @@
     "id": 38,
     "name": "Rosebud Naperville",
     "category": "Italian",
+    "city": "Naperville",
+    "state": "IL",
     "website": "https://rosebudnaperville.com/",
     "mapsUrl": "https://maps.app.goo.gl/gTxjtWRcXgzz7qyA9",
     "coords": [
@@ -570,6 +638,8 @@
     "id": 39,
     "name": "Fat Rosie's Taco and Tequila Bar",
     "category": "Elevated Mexican",
+    "city": "Naperville",
+    "state": "IL",
     "website": "https://www.fatrosies.com/location/naperville/",
     "mapsUrl": "https://maps.app.goo.gl/KW5YMyZBdY1qDvKq7",
     "coords": [
@@ -587,6 +657,8 @@
     "id": 40,
     "name": "Piccolo Buco by Cooper's Hawk",
     "category": "Italian / Pizza",
+    "city": "Naperville",
+    "state": "IL",
     "website": "https://piccolobuco.coopershawk.com/locations/naperville",
     "mapsUrl": "https://maps.app.goo.gl/wgyubAXda82Gw7BT6",
     "coords": [
@@ -604,6 +676,8 @@
     "id": 41,
     "name": "Quiubo",
     "category": "Elevated Mexican",
+    "city": "Naperville",
+    "state": "IL",
     "website": "https://www.quiubomx.com/",
     "mapsUrl": "https://maps.app.goo.gl/gTcGSDUHUZPZbjC87",
     "coords": [
@@ -621,6 +695,8 @@
     "id": 42,
     "name": "Granite City Food & Brewery",
     "category": "Casual American",
+    "city": "Naperville",
+    "state": "IL",
     "website": "https://www.gcfb.com/location/naperville-illinois/",
     "mapsUrl": "https://maps.app.goo.gl/HTcYU93V4aLFcrw99",
     "coords": [
@@ -638,6 +714,8 @@
     "id": 43,
     "name": "Empire Burgers + Brew",
     "category": "Casual American",
+    "city": "Naperville",
+    "state": "IL",
     "website": "https://www.empireburgerbar.com/",
     "mapsUrl": "https://maps.app.goo.gl/pvwBSi4qfNMrmRc18",
     "coords": [
@@ -655,6 +733,8 @@
     "id": 44,
     "name": "Beatrix",
     "category": "Modern American Bistro",
+    "city": "Oak Brook",
+    "state": "IL",
     "website": "https://www.beatrixrestaurants.com/beatrix/oak-brook/",
     "mapsUrl": "https://maps.app.goo.gl/TVx66HDaYPefrZEU6",
     "coords": [
@@ -672,6 +752,8 @@
     "id": 45,
     "name": "Davanti Enoteca",
     "category": "Modern Italian",
+    "city": "Naperville",
+    "state": "IL",
     "website": "https://www.davantienoteca.com/location/davanti-enoteca-naperville/",
     "mapsUrl": "https://maps.app.goo.gl/6G4W6q9AnqQkwHM87",
     "coords": [
@@ -689,6 +771,8 @@
     "id": 46,
     "name": "Cooper\u2019s Hawk Winery & Restaurant",
     "category": "Modern American Bistro",
+    "city": "Naperville",
+    "state": "IL",
     "website": "https://chwinery.com/locations/naperville",
     "mapsUrl": "https://maps.app.goo.gl/nVrcRXrfECYBHnVP8",
     "coords": [
@@ -706,6 +790,8 @@
     "id": 47,
     "name": "Sara's Pakistani & Indian Cuisine",
     "category": "Pakistani & Indian Cuisine",
+    "city": "Naperville",
+    "state": "IL",
     "website": "https://saraspakistanicuisine.com/",
     "mapsUrl": "https://maps.app.goo.gl/Hggwqm5uR8BkpWHU6",
     "coords": [
@@ -723,6 +809,8 @@
     "id": 49,
     "name": "Szechuan House",
     "category": "Szechuan Cuisine",
+    "city": "Aurora",
+    "state": "IL",
     "website": "http://szechuan-house-aurora.keeq.io/",
     "mapsUrl": "https://maps.app.goo.gl/W1ECBt6Eh7iSS2pc8",
     "coords": [
@@ -740,6 +828,8 @@
     "id": 50,
     "name": "Velvet Taco",
     "category": "Mexican Fast Casual",
+    "city": "Naperville",
+    "state": "IL",
     "website": "https://www.velvettaco.com/location/naperville/",
     "mapsUrl": "https://maps.app.goo.gl/iMZ7czTxPDk4gyNc9",
     "coords": [
@@ -758,6 +848,8 @@
     "id": 51,
     "name": "Yard House - Block 59",
     "category": "Casual American",
+    "city": "Naperville",
+    "state": "IL",
     "website": "https://www.yardhouse.com/locations/il/naperville/naperville-fox-valley-mall/8404?cmpid=br:yh_ag:ie_ch:loc_ca:YHGMB_sn:gmb_gt:naperville-il-8404_pl:locurl_rd:1094",
     "mapsUrl": "https://maps.app.goo.gl/bZ4ZtwXEs4EzLgsE9",
     "coords": [
@@ -775,6 +867,8 @@
     "id": 52,
     "name": "Zuka Sushi-Hibachi & Chinese (Bolingbrook)",
     "category": "Japanese Steakhouse",
+    "city": "Bolingbrook",
+    "state": "IL",
     "website": "https://zukabolingbrook.com/",
     "mapsUrl": "https://maps.app.goo.gl/Xm8EkonnQnWQybT6A",
     "coords": [
@@ -792,6 +886,8 @@
     "id": 53,
     "name": "The Nest Bar & Grill",
     "category": "Casual American",
+    "city": "Bolingbrook",
+    "state": "IL",
     "website": "http://www.bolingbrookgolfclub.com/",
     "mapsUrl": "https://maps.app.goo.gl/kTrkNHyPvXtDnd5v5",
     "coords": [
@@ -809,6 +905,8 @@
     "id": 54,
     "name": "Uncle Julio's Naperville",
     "category": "Tex-Mex",
+    "city": "Naperville",
+    "state": "IL",
     "website": "https://unclejulios.com/",
     "mapsUrl": "https://maps.app.goo.gl/i5Z2SgYuSWzKEaM37",
     "coords": [
@@ -826,6 +924,8 @@
     "id": 55,
     "name": "Bullvino's Churrascaria Brazilian Steakhouse",
     "category": "Brazilian Steakhouse",
+    "city": "Bolingbrook",
+    "state": "IL",
     "website": "https://www.bullvinosillinois.com/",
     "mapsUrl": "https://maps.app.goo.gl/fCgfdg6ignVMPLb48",
     "coords": [
@@ -843,6 +943,8 @@
     "id": 56,
     "name": "GIA MIA Bolingbrook",
     "category": "Modern Italian",
+    "city": "Bolingbrook",
+    "state": "IL",
     "website": "https://www.giamiapizzabar.com/",
     "mapsUrl": "https://maps.app.goo.gl/1iftJ94GiHRsSEqY9",
     "coords": [
@@ -860,6 +962,8 @@
     "id": 57,
     "name": "Barrel & Vine",
     "category": "New American",
+    "city": "Plainfield",
+    "state": "IL",
     "website": "https://www.barrelvine.net/",
     "mapsUrl": "https://maps.app.goo.gl/oCDv4trkGCfgx4rA6",
     "coords": [
@@ -877,6 +981,8 @@
     "id": 58,
     "name": "Station One Smokehouse",
     "category": "Texas BBQ",
+    "city": "Plainfield",
+    "state": "IL",
     "website": "https://www.stationonesmokehouse.com/",
     "mapsUrl": "https://maps.app.goo.gl/no9SbTD4CcAotN539",
     "coords": [
@@ -894,6 +1000,8 @@
     "id": 59,
     "name": "Fuse'd",
     "category": "New American",
+    "city": "Plainfield",
+    "state": "IL",
     "website": "https://thefusedlife.com/",
     "mapsUrl": "https://maps.app.goo.gl/twB5kiMS8XAJvK9L9",
     "coords": [
@@ -911,6 +1019,8 @@
     "id": 60,
     "name": "MAGO - Bolingbrook",
     "category": "Elevated Mexican",
+    "city": "Bolingbrook",
+    "state": "IL",
     "website": "http://www.magogrill.com/",
     "mapsUrl": "https://maps.app.goo.gl/C88gV6q96wayL2t8A",
     "coords": [
@@ -928,6 +1038,8 @@
     "id": 61,
     "name": "Khaos Brewcade & Kitchen",
     "category": "Casual American",
+    "city": "Plainfield",
+    "state": "IL",
     "website": "https://www.khaosbrewing.com/",
     "mapsUrl": "https://maps.app.goo.gl/yqAx9yqJC4KdGzHq6",
     "coords": [
@@ -945,6 +1057,8 @@
     "id": 62,
     "name": "NWB Next Whiskey Bar Plainfield",
     "category": "Casual American",
+    "city": "Plainfield",
+    "state": "IL",
     "website": "http://www.nwbars.com/",
     "mapsUrl": "https://maps.app.goo.gl/amNHHkU7YkydmCCA9",
     "coords": [
@@ -962,6 +1076,8 @@
     "id": 63,
     "name": "Capri Sogno",
     "category": "Italian",
+    "city": "Plainfield",
+    "state": "IL",
     "website": "http://www.caprisogno.com/",
     "mapsUrl": "https://maps.app.goo.gl/jXwhBDR8pbThy4kq8",
     "coords": [
@@ -979,6 +1095,8 @@
     "id": 70,
     "name": "The Gage",
     "category": "New American",
+    "city": "Chicago",
+    "state": "IL",
     "website": "https://thegagechicago.com/",
     "mapsUrl": "https://maps.app.goo.gl/Qf6S9V5H3zB1P5218",
     "coords": [
@@ -996,6 +1114,8 @@
     "id": 64,
     "name": "Sweetwater Tavern & Grille (Michigan Plaza - Chicago)",
     "category": "Casual American",
+    "city": "Chicago",
+    "state": "IL",
     "website": "http://www.sweetwatertavernandgrille.com/",
     "mapsUrl": "https://maps.app.goo.gl/ZQzi3A6bZTGvnhRk8",
     "coords": [
@@ -1013,6 +1133,8 @@
     "id": 65,
     "name": "The Dearborn",
     "category": "New American",
+    "city": "Chicago",
+    "state": "IL",
     "website": "http://www.thedearborntavern.com/",
     "mapsUrl": "https://maps.app.goo.gl/m5uSxSbpaedui9kH6",
     "coords": [
@@ -1030,6 +1152,8 @@
     "id": 66,
     "name": "Carnivale Chicago",
     "category": "Pan-Latin",
+    "city": "Chicago",
+    "state": "IL",
     "website": "https://www.carnivalechicago.com/",
     "mapsUrl": "https://maps.app.goo.gl/T1Z9rumxMHhb5uhB8",
     "coords": [
@@ -1047,6 +1171,8 @@
     "id": 67,
     "name": "Girl & The Goat",
     "category": "New American",
+    "city": "Chicago",
+    "state": "IL",
     "website": "http://www.girlandthegoat.com/",
     "mapsUrl": "https://maps.app.goo.gl/mhcDmGy4m1xkC7VeA",
     "coords": [
@@ -1064,6 +1190,8 @@
     "id": 68,
     "name": "Mercadito",
     "category": "Elevated Mexican",
+    "city": "Chicago",
+    "state": "IL",
     "website": "https://www.mercaditorivernorth.com/",
     "mapsUrl": "https://maps.app.goo.gl/ihpUEc43Cv9GVN8m6",
     "coords": [
@@ -1081,6 +1209,8 @@
     "id": 69,
     "name": "RPM Italian",
     "category": "Modern Italian",
+    "city": "Chicago",
+    "state": "IL",
     "mapsUrl": "https://maps.app.goo.gl/DNpBtkxretoe7Gtx9",
     "coords": [
       -87.629989,
@@ -1097,6 +1227,8 @@
     "id": 71,
     "name": "Rock Bottom Restaurant & Brewery",
     "category": "Casual American",
+    "city": "Warrenville",
+    "state": "IL",
     "mapsUrl": "https://maps.app.goo.gl/4gpB3pEo6bcx4rhm8",
     "coords": [
       -88.171691,
@@ -1114,6 +1246,8 @@
     "id": 72,
     "name": "Fogo de Ch\u00e3o Brazilian Steakhouse",
     "category": "Brazilian Steakhouse",
+    "city": "Naperville",
+    "state": "IL",
     "website": "https://fogodechao.com/location/naperville/",
     "mapsUrl": "https://maps.app.goo.gl/JXrzJmFg9hucYucu7",
     "coords": [
@@ -1131,6 +1265,8 @@
     "id": 73,
     "name": "Ted's Montana Grill",
     "category": "Casual American",
+    "city": "Bolingbrook",
+    "state": "IL",
     "website": "https://www.tedsmontanagrill.com/tmg055.html",
     "mapsUrl": "https://maps.app.goo.gl/srJaFZ1UAG4wYwme9",
     "coords": [
@@ -1148,6 +1284,8 @@
     "id": 74,
     "name": "Pa Lian Burmese Restaurant",
     "category": "Burmese Cuisine",
+    "city": "Wheaton",
+    "state": "IL",
     "website": "https://palianburmeserestaurant.dine.online/",
     "coords": [
       -88.104278,
@@ -1164,6 +1302,8 @@
     "id": 76,
     "name": "Qcurrys Indian Kitchen",
     "category": "Indian Cuisine",
+    "city": "Wheaton",
+    "state": "IL",
     "website": "https://www.qcurrys.com/",
     "coords": [
       -88.111261,
@@ -1180,6 +1320,8 @@
     "id": 78,
     "name": "Molos Greek Taverna Restaurant",
     "category": "Greek",
+    "city": "Wheaton",
+    "state": "IL",
     "website": "https://molosgreekrestaurant.com/",
     "coords": [
       -88.089974,
@@ -1196,6 +1338,8 @@
     "id": 79,
     "name": "Lantern Pizza Co.",
     "category": "Italian / Pizza",
+    "city": "Downers Grove",
+    "state": "IL",
     "website": "http://lanternpizza.com/",
     "coords": [
       -88.020507,
@@ -1212,6 +1356,8 @@
     "id": 81,
     "name": "Chama Ga\u00facha Brazilian Steakhouse - Chicago",
     "category": "Brazilian Steakhouse",
+    "city": "Downers Grove",
+    "state": "IL",
     "website": "https://www.chamagaucha.com/chicago",
     "coords": [
       -88.02621,
@@ -1228,6 +1374,8 @@
     "id": 82,
     "name": "MISSION BBQ",
     "category": "American BBQ",
+    "city": "Downers Grove",
+    "state": "IL",
     "website": "http://mission-bbq.com/",
     "coords": [
       -88.025112,
@@ -1244,6 +1392,8 @@
     "id": 83,
     "name": "The Foxtail",
     "category": "Levantine",
+    "city": "Downers Grove",
+    "state": "IL",
     "website": "http://www.thefoxtaildg.com/",
     "coords": [
       -88.00999,
@@ -1260,6 +1410,8 @@
     "id": 84,
     "name": "Alice's Corner Bolivian Cuisine",
     "category": "Bolivian Cuisine",
+    "city": "Aurora",
+    "state": "IL",
     "website": "https://www.alicescorner.com/",
     "coords": [
       -88.315083,
@@ -1276,6 +1428,8 @@
     "id": 85,
     "name": "Sushi Plus Rotary Sushi Bar - Aurora",
     "category": "Japanese Cuisine",
+    "city": "Aurora",
+    "state": "IL",
     "website": "http://www.rotarysushi.com/",
     "coords": [
       -88.210983,
@@ -1292,6 +1446,8 @@
     "id": 86,
     "name": "Tavern On Broadway",
     "category": "Casual American",
+    "city": "Aurora",
+    "state": "IL",
     "coords": [
       -88.312513,
       41.757891
@@ -1307,6 +1463,8 @@
     "id": 87,
     "name": "Hardware Sustainable Gastropub and Brewery",
     "category": "New American",
+    "city": "North Aurora",
+    "state": "IL",
     "website": "https://eathardware.com/",
     "coords": [
       -88.371613,
@@ -1323,6 +1481,8 @@
     "id": 88,
     "name": "Basil's Greek Dining",
     "category": "Greek",
+    "city": "Aurora",
+    "state": "IL",
     "website": "https://www.basilsdining.com/",
     "coords": [
       -88.218112,
@@ -1339,6 +1499,8 @@
     "id": 89,
     "name": "LE BON BON GRILL",
     "category": "Ivorian Cuisine",
+    "city": "Lisle",
+    "state": "IL",
     "website": "https://lebonbongrill.square.site/",
     "coords": [
       -88.070455,
@@ -1355,6 +1517,8 @@
     "id": 91,
     "name": "Luigi's Pasta & Pizza",
     "category": "Italian / Pizza",
+    "city": "Lisle",
+    "state": "IL",
     "website": "https://luigiskitchen.partner-storefront.com/?utm_source=google_business_profile&utm_medium=button&utm_tracking_link_id=e52f7873-d340-405f-bcc9-ebecbf602f51",
     "coords": [
       -88.075018,
@@ -1371,6 +1535,8 @@
     "id": 93,
     "name": "Brasi's Pizzeria",
     "category": "Italian / Pizza",
+    "city": "Lisle",
+    "state": "IL",
     "website": "http://brasipizzeria.com/",
     "coords": [
       -88.075151,
@@ -1387,6 +1553,8 @@
     "id": 94,
     "name": "A2B Indian Veg Restaurant - Illinois",
     "category": "South Indian Cuisine",
+    "city": "Warrenville",
+    "state": "IL",
     "website": "https://www.a2billinois.com/",
     "coords": [
       -88.168205,
@@ -1403,6 +1571,8 @@
     "id": 96,
     "name": "Al's Pizza",
     "category": "Italian / Pizza",
+    "city": "Warrenville",
+    "state": "IL",
     "website": "http://alspizzainc.com/",
     "coords": [
       -88.172125,
@@ -1419,6 +1589,8 @@
     "id": 97,
     "name": "Simply South - Indian Vegetarian Restaurant",
     "category": "South Indian Cuisine",
+    "city": "Warrenville",
+    "state": "IL",
     "website": "https://simplysouth.us/warrenville?utm_source=google",
     "coords": [
       -88.172427,
@@ -1435,6 +1607,8 @@
     "id": 98,
     "name": "Two Brothers Tap House",
     "category": "Casual American",
+    "city": "Warrenville",
+    "state": "IL",
     "website": "https://www.twobrothersbrewing.com/restaurants-taphouse",
     "coords": [
       -88.211933,
@@ -1451,6 +1625,8 @@
     "id": 99,
     "name": "McWethy's Tavern",
     "category": "Casual American",
+    "city": "Romeoville",
+    "state": "IL",
     "website": "https://www.mcwethystavern.com/",
     "coords": [
       -88.143343,
@@ -1467,6 +1643,8 @@
     "id": 100,
     "name": "White Fence Farm Main Restaurant",
     "category": "American",
+    "city": "Romeoville",
+    "state": "IL",
     "website": "http://whitefencefarm-il.com/",
     "coords": [
       -88.057258,
@@ -1483,6 +1661,8 @@
     "id": 101,
     "name": "Thaiway Thai Cuisine",
     "category": "Thai Cuisine",
+    "city": "Romeoville",
+    "state": "IL",
     "website": "https://thaiwayromeovilleil.com/",
     "coords": [
       -88.123763,
@@ -1499,6 +1679,8 @@
     "id": 102,
     "name": "Sushi Train Japanese Restaurant",
     "category": "Japanese Cuisine",
+    "city": "Romeoville",
+    "state": "IL",
     "website": "https://www.thesushitrain.com/",
     "coords": [
       -88.125917,
@@ -1515,6 +1697,8 @@
     "id": 103,
     "name": "BURMA O' CLOCK",
     "category": "Burmese Cuisine",
+    "city": "Wheaton",
+    "state": "IL",
     "website": "http://burmaoclock.com/",
     "coords": [
       -88.10953,
@@ -1531,6 +1715,8 @@
     "id": 104,
     "name": "302 Wheaton",
     "category": "Casual American",
+    "city": "Wheaton",
+    "state": "IL",
     "website": "http://302wheaton.com/",
     "coords": [
       -88.110356,
@@ -1547,6 +1733,8 @@
     "id": 105,
     "name": "Ditka's Grill",
     "category": "American",
+    "city": "Wheaton",
+    "state": "IL",
     "website": "https://www.ditkasgrill.com/",
     "coords": [
       -88.109497,
@@ -1563,6 +1751,8 @@
     "id": 106,
     "name": "Positano Ristorante - Wheaton",
     "category": "Italian",
+    "city": "Wheaton",
+    "state": "IL",
     "website": "http://positano-ristorante.com/",
     "coords": [
       -88.105674,
@@ -1579,6 +1769,8 @@
     "id": 107,
     "name": "Taj Restaurant and Banquet",
     "category": "Pakistani & Indian Cuisine",
+    "city": "Bolingbrook",
+    "state": "IL",
     "website": "https://www.tajbanquet.com/",
     "coords": [
       -88.070121,
@@ -1595,6 +1787,8 @@
     "id": 108,
     "name": "Pier 9 Seafood and Bar",
     "category": "Cajun Cuisine",
+    "city": "Bolingbrook",
+    "state": "IL",
     "website": "https://www.pier9seafoodandbar.com/",
     "coords": [
       -88.037156,
@@ -1611,6 +1805,8 @@
     "id": 109,
     "name": "Taquer\u00eda El Valle",
     "category": "Mexican Fast Casual",
+    "city": "Bolingbrook",
+    "state": "IL",
     "coords": [
       -88.051094,
       41.717338
@@ -1626,6 +1822,8 @@
     "id": 110,
     "name": "Poke Bros.",
     "category": "Hawaiian Cuisine",
+    "city": "Bolingbrook",
+    "state": "IL",
     "website": "https://www.eatpokebros.com/",
     "coords": [
       -88.03719,
@@ -1642,6 +1840,8 @@
     "id": 111,
     "name": "Los Comales Bolingbrook",
     "category": "Mexican Cuisine",
+    "city": "Bolingbrook",
+    "state": "IL",
     "website": "https://loscomalesbolingbrook.com/",
     "coords": [
       -88.125264,
@@ -1658,6 +1858,8 @@
     "id": 112,
     "name": "The Capital Grille",
     "category": "Prime Steak & Seafood",
+    "city": "Lombard",
+    "state": "IL",
     "website": "https://www.thecapitalgrille.com/locations/il/lombard/lombard/8026?cmpid=br:tcg_ag:ie_ch:loc_ca:TCGGMB_sn:gmb_gt:lombard-il-8026_pl:locurl_rd:1022",
     "coords": [
       -88.00802,
@@ -1674,6 +1876,8 @@
     "id": 113,
     "name": "Babcock's Grove House",
     "category": "Casual American",
+    "city": "Lombard",
+    "state": "IL",
     "website": "http://www.babcocksgrove.com/",
     "coords": [
       -88.019935,
@@ -1690,6 +1894,8 @@
     "id": 114,
     "name": "Maize + Mash",
     "category": "Modern American Bistro",
+    "city": "Glen Ellyn",
+    "state": "IL",
     "website": "https://www.maizeandmash.com/",
     "coords": [
       -88.066901,
@@ -1706,6 +1912,8 @@
     "id": 115,
     "name": "Kizuna Sushi Bistro",
     "category": "Japanese Cuisine",
+    "city": "Glen Ellyn",
+    "state": "IL",
     "website": "https://www.kizunasushibistro.com/",
     "coords": [
       -88.029653,
@@ -1722,6 +1930,8 @@
     "id": 116,
     "name": "Nemec Brother\u2019s Pizzeria",
     "category": "Italian / Pizza",
+    "city": "Glen Ellyn",
+    "state": "IL",
     "website": "https://nemecbrothers.com/",
     "coords": [
       -88.065501,
@@ -1738,6 +1948,8 @@
     "id": 117,
     "name": "Paixao Gaucha Brazilian Steakhouse",
     "category": "Brazilian Steakhouse",
+    "city": "Geneva",
+    "state": "IL",
     "website": "https://www.paixaogaucha.com/",
     "coords": [
       -88.308517,
@@ -1754,6 +1966,8 @@
     "id": 118,
     "name": "Hacienda Real Geneva",
     "category": "Elevated Mexican",
+    "city": "Geneva",
+    "state": "IL",
     "website": "http://www.haciendaflavorsofmexico.com/",
     "coords": [
       -88.341351,
@@ -1770,6 +1984,8 @@
     "id": 119,
     "name": "Tia Carmen Restaurant",
     "category": "Mexican Cuisine",
+    "city": "Geneva",
+    "state": "IL",
     "website": "https://tiacarmen.restaurant/",
     "coords": [
       -88.304962,
@@ -1786,6 +2002,8 @@
     "id": 120,
     "name": "Barrel + Rye",
     "category": "Modern American Bistro",
+    "city": "Geneva",
+    "state": "IL",
     "website": "http://www.barrelandrye.com/",
     "coords": [
       -88.30881,
@@ -1802,6 +2020,8 @@
     "id": 121,
     "name": "Riganato",
     "category": "Greek",
+    "city": "Geneva",
+    "state": "IL",
     "website": "http://riganato.com/",
     "coords": [
       -88.291719,
@@ -1818,6 +2038,8 @@
     "id": 122,
     "name": "Chef Abdul Mediterranean",
     "category": "Levantine",
+    "city": "St. Charles",
+    "state": "IL",
     "website": "https://chefabdulmediterranean.com/",
     "coords": [
       -88.337919,
@@ -1834,6 +2056,8 @@
     "id": 123,
     "name": "Pomodoro E Mozzarella",
     "category": "Italian / Pizza",
+    "city": "St. Charles",
+    "state": "IL",
     "website": "http://www.thepomodoroemozzarella.com/",
     "coords": [
       -88.336286,
@@ -1850,6 +2074,8 @@
     "id": 124,
     "name": "Mio Modo",
     "category": "Italian",
+    "city": "St. Charles",
+    "state": "IL",
     "website": "https://www.miomodo.com/",
     "coords": [
       -88.314862,
@@ -1866,6 +2092,8 @@
     "id": 125,
     "name": "VATAN Progressive Indian Kitchen",
     "category": "Indian Cuisine",
+    "city": "St. Charles",
+    "state": "IL",
     "website": "https://vatanindiankitchen.com/",
     "coords": [
       -88.287062,
@@ -1882,6 +2110,8 @@
     "id": 126,
     "name": "Rec Haus",
     "category": "Casual American",
+    "city": "St. Charles",
+    "state": "IL",
     "website": "http://www.rec-haus.com/",
     "coords": [
       -88.31668,
@@ -1898,6 +2128,8 @@
     "id": 127,
     "name": "Nabuki",
     "category": "Modern Japanese",
+    "city": "Hinsdale",
+    "state": "IL",
     "website": "https://nabukihinsdale.com/",
     "coords": [
       -87.928361,
@@ -1914,6 +2146,8 @@
     "id": 128,
     "name": "Vistro Prime",
     "category": "Steakhouse",
+    "city": "Hinsdale",
+    "state": "IL",
     "website": "http://www.vistroprime.com/",
     "coords": [
       -87.929448,
@@ -1930,6 +2164,8 @@
     "id": 129,
     "name": "Giuliano's Pizza",
     "category": "Italian / Pizza",
+    "city": "Hinsdale",
+    "state": "IL",
     "website": "http://giulianospizza.com/",
     "coords": [
       -87.928472,
@@ -1946,6 +2182,8 @@
     "id": 130,
     "name": "DeNucci's Hinsdale",
     "category": "Italian / Pizza",
+    "city": "Hinsdale",
+    "state": "IL",
     "website": "https://denuccisitalian.com/",
     "coords": [
       -87.928794,
