@@ -406,7 +406,7 @@ TAB_KEEP_WORDS = ("dinner", "all day", "all-day", "food", "dessert", "dine", "be
 TAB_SKIP_WORDS = ("lunch", "brunch", "happy", "kid", "catering", "party", "private", "gift")
 
 # Each browser launch costs 10 to 45 seconds, so a run only opens a few
-BROWSER_LIMIT = 6
+BROWSER_LIMIT = 12
 browser_launches = 0
 # url -> (html, final_url) of pages the browser has read
 RENDERED_HTML = {}

@@ -235,12 +235,13 @@ def cap_reached(place, used, per_cuisine=MAX_PER_CUISINE):
     return bool(cuisine) and used.get(cuisine, 0) >= per_cuisine
 
 def counter_service(place):
-    """True when Places shows signs of counter service: no dine-in, or a cheap place ($ price level) that takes no
-    reservations and serves neither beer nor wine. A field Places leaves out counts as unknown, never as false, so a place
-    with no price level is not caught by the second test. Tested against the venues on the map in the Audit Venues workflow."""
+    """True when Places shows signs of counter service: no dine-in, or a cheap place ($ price level) that serves neither
+    beer nor wine. Reservations are not considered: Google marks some counter-service places reservable (Yummi Wraps).
+    A field Places leaves out counts as unknown, never as false, so a place with no price level is not caught by the
+    second test."""
     if place.get("dineIn") is False:
         return True
-    return (place.get("priceLevel") == "PRICE_LEVEL_INEXPENSIVE" and place.get("reservable") is not True
+    return (place.get("priceLevel") == "PRICE_LEVEL_INEXPENSIVE"
             and not (place.get("servesBeer") or place.get("servesWine")))
 
 def total_for_two(venue):
@@ -318,7 +319,7 @@ def price_and_keep(ranked, work_dir, venues_file, count=COUNT, max_priced=MAX_PR
         # Checked before pricing, so a skipped place costs no importer or Gemini request
         if SKIP_COUNTER_SERVICE and counter_service(place):
             print(f"\nSkipped {name}: looks like counter service")
-            skipped.append(f"- {name}: looks like counter service (cheap, no reservations, no beer or wine, or no dine-in). "
+            skipped.append(f"- {name}: looks like counter service (cheap with no beer or wine, or no dine-in). "
                            "Add it with the Add Venue form if it is a sit-down place")
             continue
         priced += 1
