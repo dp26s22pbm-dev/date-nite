@@ -10,6 +10,7 @@ import urllib.request
 import urllib.parse
 from html import unescape
 import places_usage
+import pricing_rules
 from google import genai
 from google.genai import types
 
@@ -1345,7 +1346,10 @@ def main():
         if "drink" in overrides: drink = overrides["drink"]
         if "dessert" in overrides: dessert = overrides["dessert"]
 
-    total_cost = round((app + (1 * casual_main) + (1 * premium_main) + (2 * drink) + dessert) * 1.30)
+    # A Mexican or taco place with per-taco prices: Casual means two tacos (the map page does the same)
+    is_taco = pricing_rules.is_taco_place(name, category) and pricing_rules.per_taco_prices(app, casual_main)
+    casual_count = 2 if is_taco else 1
+    total_cost = round((app + (casual_count * casual_main) + (1 * premium_main) + (2 * drink) + dessert) * 1.30)
     tier_color = calculate_tier_color(total_cost)
 
     next_id = max([v.get("id", 0) for v in venues], default=0) + 1
@@ -1363,7 +1367,8 @@ def main():
         "premiumMain": premium_main,
         "drink": drink,
         "dessert": dessert,
-        "tierColor": tier_color
+        "tierColor": tier_color,
+        **({"isTaco": True} if is_taco else {})
     }
 
     if existing_idx is not None:
@@ -1411,6 +1416,8 @@ def main():
         lines.append("- **Website:** none found, so the venue name links to your Google Maps link. Add one with the full form's Website URL field"
                      if maps_url else "- **Website:** none found. Add one with the full form's Website URL field")
     lines.append(f"- **Estimated total for two:** ${total_cost}")
+    if is_taco:
+        lines.append(f"- **Tacos:** the casual main (${casual_main}) looks like the price of one taco, so the total counts two")
     lines.append("")
     if pricing and pricing.get("casualMains"):
         lines.append(f"**Prices used** (from {pricing_source}): appetizer ${app}, casual main ${casual_main}, "
@@ -1423,7 +1430,7 @@ def main():
     needs_menu = guessed and not all(k in overrides for k in ("app", "casualMain", "premiumMain", "drink", "dessert"))
     set_output("needs_menu", "true" if needs_menu else "false")
     set_output("prices_found", "true" if pricing and pricing.get("casualMains") else "false")  # false: only the typical defaults were saved
-    warnings = price_sanity_warnings(app, casual_main, premium_main, drink, dessert, defaulted, estimated=guessed)
+    warnings = price_sanity_warnings(app, casual_main * casual_count, premium_main, drink, dessert, defaulted, estimated=guessed)
     set_output("needs_check", "true" if warnings else "false")
     final_coords = (venues[existing_idx] if existing_idx is not None else entry)["coords"]
     neighbors = nearby_venues(venues[existing_idx]["id"] if existing_idx is not None else entry["id"], final_coords, venues)
