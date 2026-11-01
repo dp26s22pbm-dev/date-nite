@@ -42,12 +42,10 @@
     <h1><span class="title">GRID <span class="muted" id="gridName"></span><span id="headSel"></span></span>
       <button class="toggle" id="panelToggle" aria-controls="panelBody">Hide</button></h1>
     <div id="panelBody">
-    <div class="row"><span class="swatch" style="background:rgba(255,255,255,0.04)"></span>0 venues</div>
-    <div class="row"><span class="swatch" style="background:rgba(56,139,253,0.35)"></span>1 to 2 venues</div>
-    <div class="row"><span class="swatch" style="background:rgba(245,158,11,0.45)"></span>3 or more (full)</div>
+    <div class="row"><span class="swatch" style="background:rgba(255,255,255,0.04)"></span>not searched, 0 venues</div>
     <div class="row"><span class="swatch" style="background:rgba(139,148,158,0.35)"></span>searched, 0 venues</div>
-    <div class="row"><span class="swatch" style="background:rgba(126,231,135,0.4)"></span>searched, 1 to 2 venues</div>
-    <div class="row"><span class="swatch" style="background:rgba(35,134,54,0.5)"></span>searched, 3 or more</div>
+    <div class="row"><span class="swatch" style="background:rgba(126,231,135,0.4)"></span>1 to 2 venues</div>
+    <div class="row"><span class="swatch" style="background:rgba(35,134,54,0.5)"></span>3 or more (full)</div>
     <div class="row"><span class="swatch" style="background:#c4b5fd;border:none;clip-path:polygon(50% 0%,61% 35%,98% 35%,68% 57%,79% 91%,50% 70%,21% 91%,32% 57%,2% 35%,39% 35%)"></span>you are here</div>
     <div id="selected" class="muted">Click a cell to select it.</div>
     <button id="splitBtn" disabled>Split selected cell</button>
@@ -250,12 +248,8 @@
 
       map.addSource('cells', { type: 'geojson', data: buildCells() });
       map.addLayer({ id: 'cell-fill', type: 'fill', source: 'cells', paint: {
-        'fill-color': ['case', ['get', 'searched'],
-          ['match', ['get', 'level'], 0, '#8b949e', 1, '#7ee787', '#238636'],
-          ['match', ['get', 'level'], 0, '#ffffff', 1, '#388bfd', '#f59e0b']],
-        'fill-opacity': ['case', ['get', 'searched'],
-          ['match', ['get', 'level'], 0, 0.35, 1, 0.4, 0.5],
-          ['match', ['get', 'level'], 0, 0.04, 1, 0.35, 0.45]] } });
+        'fill-color': ['match', ['get', 'level'], 0, ['case', ['get', 'searched'], '#8b949e', '#ffffff'], 1, '#7ee787', '#238636'],
+        'fill-opacity': ['match', ['get', 'level'], 0, ['case', ['get', 'searched'], 0.35, 0.04], 1, 0.4, 0.5] } });
       map.addLayer({ id: 'cell-selected', type: 'line', source: 'cells', filter: ['==', ['get', 'selected'], true],
         paint: { 'line-color': '#ffffff', 'line-width': 3 } });
       map.addLayer({ id: 'cell-line', type: 'line', source: 'cells', paint: {
