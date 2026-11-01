@@ -1,0 +1,95 @@
+name: Venue Review
+
+# A Search Grid Cells pull request lists its candidate venues in venue-review/cells-<issue>.json, with Approve / Deny
+# checkboxes in the description (see venue_review.py).
+#  - When it merges: approved venues are folded into venues.json, denied ones are dropped, and each venue left
+#    undecided gets a `venue-review` issue.
+#  - When you add the `approve-venue` label to one of those issues: that venue is folded into venues.json.
+# Pushes made with the workflow token do not start fold-venues.yml, so the fold runs here directly.
+on:
+  pull_request:
+    types: [closed]
+  issues:
+    types: [labeled]
+
+concurrency:
+  group: fold-venues
+  cancel-in-progress: false
+
+jobs:
+  merged-pr:
+    if: >-
+      github.event_name == 'pull_request' && github.event.pull_request.merged == true &&
+      startsWith(github.event.pull_request.head.ref, 'add-cell/')
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      issues: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Fold approved venues and open issues for held ones
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PR_BODY: ${{ github.event.pull_request.body }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          PR_URL: ${{ github.event.pull_request.html_url }}
+        run: |
+          gh label create venue-review --color FBCA04 --description "Venue held for review" 2>/dev/null || true
+          gh label create approve-venue --color 0E8A16 --description "Add this held venue to the map" 2>/dev/null || true
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          # Another run may push first; start over from the new main and fold again
+          for attempt in 1 2 3 4 5 6; do
+            python venue_review.py merge
+            git add -A venues.json venue-review pending-venues 2>/dev/null || true
+            git diff --cached --quiet && break
+            git commit -m "Add approved venues (PR #${{ github.event.pull_request.number }})"
+            git push && break
+            echo "Push rejected (attempt $attempt); starting over from origin/main"
+            git fetch origin main
+            git reset --hard origin/main
+            [ "$attempt" = 6 ] && { echo "Could not push after 6 attempts" >&2; exit 1; }
+          done
+          python venue_review.py issues
+
+  approved-issue:
+    if: >-
+      github.event_name == 'issues' && github.event.label.name == 'approve-venue' &&
+      contains(github.event.issue.labels.*.name, 'venue-review') &&
+      contains(fromJSON('["OWNER","MEMBER","COLLABORATOR"]'), github.event.issue.author_association)
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      issues: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Fold the venue into venues.json
+        env:
+          GH_TOKEN: ${{ github.token }}
+          ISSUE_BODY: ${{ github.event.issue.body }}
+          ISSUE_NUMBER: ${{ github.event.issue.number }}
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          for attempt in 1 2 3 4 5 6; do
+            python venue_review.py approve
+            git add -A venues.json pending-venues 2>/dev/null || true
+            git diff --cached --quiet && break
+            git commit -m "Add venue from review issue #${{ github.event.issue.number }}"
+            git push && break
+            echo "Push rejected (attempt $attempt); starting over from origin/main"
+            git fetch origin main
+            git reset --hard origin/main
+          done
+          gh issue comment "$ISSUE_NUMBER" --body "Approved. The venue is now in venues.json (or was already on the map)."
+          gh issue close "$ISSUE_NUMBER" --reason completed
