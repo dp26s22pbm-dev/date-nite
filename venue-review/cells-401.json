@@ -1,0 +1,47 @@
+[
+  {
+    "name": "Yummi Wraps",
+    "category": "Levantine",
+    "website": "https://yummiwraps.kwickmenu.com/",
+    "coords": [
+      -88.07071,
+      41.770259
+    ],
+    "app": 4.99,
+    "casualMain": 13.99,
+    "premiumMain": 19.99,
+    "drink": 8.0,
+    "dessert": 4.99,
+    "tierColor": "#22c55e"
+  },
+  {
+    "name": "Chef Soon Contemporary Sushi & Bar",
+    "category": "Modern Japanese",
+    "website": "http://chefsoon.com/",
+    "coords": [
+      -88.070548,
+      41.768867
+    ],
+    "app": 8.0,
+    "casualMain": 19.0,
+    "premiumMain": 30.0,
+    "drink": 9.5,
+    "dessert": 7.0,
+    "tierColor": "#eab308"
+  },
+  {
+    "name": "Tapri",
+    "category": "Indian Cuisine",
+    "website": "https://taprisocial.com/?utm_source=google",
+    "coords": [
+      -88.070565,
+      41.76897
+    ],
+    "app": 14.0,
+    "casualMain": 16.5,
+    "premiumMain": 19.0,
+    "drink": 8.25,
+    "dessert": 9.5,
+    "tierColor": "#22c55e"
+  }
+]
