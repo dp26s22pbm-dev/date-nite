@@ -2224,5 +2224,22 @@
     "drink": 8.0,
     "dessert": 8.0,
     "tierColor": "#eab308"
+  },
+  {
+    "id": 134,
+    "name": "M&W Thai Restaurant",
+    "category": "Thai Cuisine",
+    "state": "IL",
+    "website": "http://mwthairestaurant.com/",
+    "coords": [
+      -88.066179,
+      41.829186
+    ],
+    "app": 10.0,
+    "casualMain": 14.0,
+    "premiumMain": 20.0,
+    "drink": 8.0,
+    "dessert": 8.0,
+    "tierColor": "#22c55e"
   }
 ]
