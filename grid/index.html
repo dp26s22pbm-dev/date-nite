@@ -41,6 +41,7 @@
     <div class="row"><span class="swatch" style="background:rgba(56,139,253,0.35)"></span>1 to 2 venues</div>
     <div class="row"><span class="swatch" style="background:rgba(245,158,11,0.45)"></span>3 or more (full)</div>
     <div class="row"><span class="swatch" style="border:2px solid #3fb950"></span>searched on Google Places</div>
+    <div class="row"><span class="swatch" style="background:#c4b5fd;border-radius:50%;box-shadow:0 0 6px #a78bfa"></span>you are here</div>
     <div id="selected" class="muted">Click a cell to select it.</div>
     <button id="splitBtn" disabled>Split selected cell</button>
     <button id="searchBtn" disabled>Search selected cell on GitHub</button>
@@ -236,6 +237,31 @@
         type: 'Feature', geometry: { type: 'Point', coordinates: v.coords }, properties: { color: v.tierColor || '#eab308', name: v.name } })) } });
       map.addLayer({ id: 'venue-dots', type: 'circle', source: 'venues', paint: {
         'circle-radius': 5, 'circle-color': ['get', 'color'], 'circle-stroke-width': 1.5, 'circle-stroke-color': '#ffffff' } });
+
+      // Location is always on: a pulsing purple orb follows the user's position. Nothing is drawn until a fix arrives
+      // (or if permission is denied), and the view is left alone so the whole grid stays on screen.
+      map.addSource('me', { type: 'geojson', data: { type: 'FeatureCollection', features: [] } });
+      map.addLayer({ id: 'me-halo', type: 'circle', source: 'me', paint: {
+        'circle-radius': 20, 'circle-color': '#a78bfa', 'circle-opacity': 0.4, 'circle-blur': 0.8, 'circle-pitch-alignment': 'map' } });
+      map.addLayer({ id: 'me-core', type: 'circle', source: 'me', paint: {
+        'circle-radius': 6, 'circle-color': '#c4b5fd', 'circle-stroke-width': 2, 'circle-stroke-color': '#ffffff',
+        'circle-stroke-opacity': 0.9, 'circle-blur': 0.15, 'circle-pitch-alignment': 'map' } });
+      const calm = window.matchMedia('(prefers-reduced-motion: reduce)');
+      const pulseOrb = t => {
+        const k = calm.matches ? 0.5 : 0.5 + 0.5 * Math.sin(t / 450);
+        map.setPaintProperty('me-halo', 'circle-radius', 16 + k * 10);
+        map.setPaintProperty('me-halo', 'circle-opacity', 0.55 - k * 0.3);
+        map.setPaintProperty('me-core', 'circle-radius', 6 + k * 1.5);
+        requestAnimationFrame(pulseOrb);
+      };
+      requestAnimationFrame(pulseOrb);
+      if (navigator.geolocation) {
+        navigator.geolocation.watchPosition(
+          pos => map.getSource('me').setData({ type: 'Feature', properties: {},
+            geometry: { type: 'Point', coordinates: [pos.coords.longitude, pos.coords.latitude] } }),
+          () => map.getSource('me').setData({ type: 'FeatureCollection', features: [] }),
+          { enableHighAccuracy: true, maximumAge: 10000, timeout: 20000 });
+      }
 
       map.on('click', e => {
         const hit = map.queryRenderedFeatures(e.point, { layers: ['cell-fill'] })[0];
