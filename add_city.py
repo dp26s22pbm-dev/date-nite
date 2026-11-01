@@ -16,6 +16,7 @@ import urllib.request
 import urllib.error
 
 import places_usage
+import pricing_rules
 
 PLACES_URL = "https://places.googleapis.com/v1/places:searchText"
 FIELDS = ",".join([
@@ -37,7 +38,7 @@ MAX_PRICED = int(os.environ.get("MAX_PRICED", "10"))
 SKIP_COUNTER_SERVICE = os.environ.get("SKIP_COUNTER_SERVICE", "1") != "0"
 BLOCKED_CHAINS = re.compile(
     r"\b(mcdonalds|burger king|wendys|chick fil a|chipotle|taco bell|subway|kfc|popeyes|arbys|sonic drive|"
-    r"panda express|qdoba|panera|jimmy johns|jersey mikes|dunkin|starbucks|wingstop)\b", re.I)
+    r"panda express|qdoba|panera|jimmy johns|jersey mikes|dunkin|starbucks|wingstop|bibibop|sweetgreen|noodles (and|&) company|moes southwest|potbellys?|five guys|culvers|freddys|mod pizza|portillos|jets pizza|little caesars|domino s|dominos|pizza hut|papa johns|wendy s|rubio s|el pollo loco|del taco|taco john s|white castle|jack in the box|raising canes|zaxby s|firehouse subs|which wich|jasons deli|tropical smoothie|smoothie king|pei wei|buffalo wild wings)\b", re.I)
 # A dinner place is open at DINNER_HOUR (24h clock) on at least DINNER_DAYS days of the week
 DINNER_HOUR = int(os.environ.get("DINNER_HOUR", "19"))
 DINNER_DAYS = int(os.environ.get("DINNER_DAYS", "3"))
@@ -244,7 +245,7 @@ def counter_service(place):
 
 def total_for_two(venue):
     """The importer's standard order for two (appetizer, two mains, two drinks, dessert) with 30% tax and tip."""
-    return round((venue["app"] + venue["casualMain"] + venue["premiumMain"] + 2 * venue["drink"] + venue["dessert"]) * 1.30)
+    return round((venue["app"] + pricing_rules.casual_count(venue) * venue["casualMain"] + venue["premiumMain"] + 2 * venue["drink"] + venue["dessert"]) * 1.30)
 
 def too_cheap(venue):
     """True when a priced venue is so cheap (see MIN_TOTAL_FOR_TWO) that it is counter-service rather than a date spot."""
@@ -310,6 +311,10 @@ def price_and_keep(ranked, work_dir, venues_file, count=COUNT, max_priced=MAX_PR
         if cap_reached(place, used):
             continue
         name = place["displayName"]["text"]
+        # Shown in the log so a place that slips through can be traced to what Google reported (None means Google left it out)
+        print(f"\nPlaces data for {name}: primaryType={place.get('primaryType')} priceLevel={place.get('priceLevel')} "
+              f"dineIn={place.get('dineIn')} reservable={place.get('reservable')} servesBeer={place.get('servesBeer')} "
+              f"servesWine={place.get('servesWine')} types={place.get('types')}")
         # Checked before pricing, so a skipped place costs no importer or Gemini request
         if SKIP_COUNTER_SERVICE and counter_service(place):
             print(f"\nSkipped {name}: looks like counter service")
@@ -329,6 +334,9 @@ def price_and_keep(ranked, work_dir, venues_file, count=COUNT, max_priced=MAX_PR
         # prices on the map. It is listed under Skipped instead; the Add Venue form can add it once someone has the menu.
         if outputs.get("prices_found") == "false":
             reason = "no prices could be found, so only typical defaults were possible. Add it with the Add Venue form and the menu text"
+        elif pricing_rules.looks_like_counter_menu(venue):
+            reason = (f"looks like counter service: its most expensive entrees are about ${venue['premiumMain']}. "
+                      "Add it with the Add Venue form if it is a sit-down place")
         elif too_cheap(venue):
             reason = f"too cheap for a date spot (about ${total_for_two(venue)} for two)"
         else:

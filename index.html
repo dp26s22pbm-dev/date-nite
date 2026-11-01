@@ -1366,9 +1366,11 @@
       budgetOn: false // the slider stays rolled up until the Budget button is pressed, and then no budget applies
     };
 
-    // A taco place whose appetizer costs more than its Casual price sells tacos one at a time, so Casual means 2 tacos
+    // A taco place whose appetizer costs more than its Casual price, or whose Casual price is at most PER_TACO_MAX,
+    // sells tacos one at a time, so Casual means 2 tacos (keep PER_TACO_MAX in step with pricing_rules.py)
+    const PER_TACO_MAX = 7;
     function tacoAtATime(v) {
-      return !!v.isTaco && (v.app || 0) > (v.casualMain || 0);
+      return !!v.isTaco && ((v.app || 0) > (v.casualMain || 0) || (v.casualMain || 0) <= PER_TACO_MAX);
     }
 
     function calculateTotal(v) {
