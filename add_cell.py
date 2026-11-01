@@ -1,6 +1,6 @@
 """Find date-night restaurants inside grid cells (see grid_cells.py and datenite.us/grid/): search Google Places in
 each cell's rectangle, rank the places the same way add_city.py does, and add the best ones with the importer until the
-cell holds fullAt venues (5) or the candidates run out. A cell that already holds fullAt venues is reported as full and
+cell holds fullAt venues (3) or the candidates run out. A cell that already holds fullAt venues is reported as full and
 not searched, which is the cue to split it. Every cell that is searched is added to the "searched" list in
 grid/grid.json, so the grid page can tell a cell with no qualifying restaurants from one nobody has looked at.
 
