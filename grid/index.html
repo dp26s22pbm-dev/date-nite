@@ -27,6 +27,11 @@
     .panel button:disabled { opacity: 0.4; cursor: default; }
     .muted { color: rgba(240,246,252,0.65); }
     #selected { margin-top: 8px; padding-top: 8px; border-top: 1px solid rgba(255,255,255,0.15); }
+    .audio-btn { position: absolute; left: 12px; bottom: 28px; z-index: 2; width: 36px; height: 36px; padding: 0;
+      border-radius: 50%; background: rgba(13,17,23,0.88); border: 1px solid rgba(255,255,255,0.5); color: #8b949e;
+      display: flex; align-items: center; justify-content: center; cursor: pointer; }
+    .audio-btn.playing { color: #a78bfa; box-shadow: 0 0 4px rgba(255,255,255,0.8), 0 0 12px rgba(255,255,255,0.45); }
+    .audio-btn svg { width: 18px; height: 18px; fill: currentColor; pointer-events: none; }
     .maplibregl-ctrl-attrib { background: rgba(13,17,23,0.7) !important; }
     .maplibregl-ctrl-attrib a { color: #ccc; }
   </style>
@@ -41,7 +46,7 @@
     <div class="row"><span class="swatch" style="background:rgba(56,139,253,0.35)"></span>1 to 2 venues</div>
     <div class="row"><span class="swatch" style="background:rgba(245,158,11,0.45)"></span>3 or more (full)</div>
     <div class="row"><span class="swatch" style="border:2px solid #3fb950"></span>searched on Google Places</div>
-    <div class="row"><span class="swatch" style="background:#c4b5fd;border-radius:50%;box-shadow:0 0 6px #a78bfa"></span>you are here</div>
+    <div class="row"><span class="swatch" style="background:#c4b5fd;border:none;clip-path:polygon(50% 0%,61% 35%,98% 35%,68% 57%,79% 91%,50% 70%,21% 91%,32% 57%,2% 35%,39% 35%)"></span>you are here</div>
     <div id="selected" class="muted">Click a cell to select it.</div>
     <button id="splitBtn" disabled>Split selected cell</button>
     <button id="searchBtn" disabled>Search selected cell on GitHub</button>
@@ -51,6 +56,9 @@
     <div class="muted" style="margin-top:8px;font-size:12px">Splits and merges you make here are previews, kept in this browser only. Saving opens a GitHub issue that proposes them in a pull request. Searching opens an issue that looks for venues in the cell.</div>
     </div>
   </div>
+
+  <audio id="bg-audio" preload="auto"></audio>
+  <button id="audioBtn" class="audio-btn" aria-label="Turn music on" title="Turn music on"><svg viewBox="0 0 24 24" id="audioIcon"></svg></button>
 
   <script src="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.js"></script>
   <script>
@@ -167,6 +175,50 @@
     setCollapsed(savedPanel === null ? window.innerWidth <= 700 : savedPanel === '1');
     toggleBtn.addEventListener('click', () => setCollapsed(!panelEl.classList.contains('collapsed')));
 
+    // Music: a random Super Mario Bros 3 track from mp3/SM3 songs/, then another at random when it ends. It starts on
+    // its own; browsers block sound until the visitor interacts, so a blocked start waits for the first click, tap or key.
+    const MUSIC_DIR = '../mp3/SM3 songs/';
+    const TRACKS = ['World Map 1', 'World Map 2', 'World Map 4', 'World Map 7', 'Sky Theme']
+      .map(n => `Super Mario Bros 3 (NES) Music - ${n}.mp3`);
+    const audio = document.getElementById('bg-audio'), audioBtn = document.getElementById('audioBtn'), audioIcon = document.getElementById('audioIcon');
+    const ICON_ON = '<path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/>';
+    const ICON_OFF = '<path d="M16.5 12c0-1.77-1.02-3.29-2.5-4.03v2.21l2.45 2.45c.03-.2.05-.41.05-.63zm2.5 0c0 .94-.2 1.82-.54 2.64l1.51 1.51C20.63 14.91 21 13.5 21 12c0-4.28-2.99-7.86-7-8.77v2.06c2.89.86 5 3.54 5 6.71zM4.27 3L3 4.27l4.73 4.73H3v6h4l5 5v-6.73l4.25 4.25c-.67.52-1.42.93-2.25 1.18v2.06c1.38-.31 2.63-.95 3.69-1.81L19.73 21 21 19.73l-9-9L4.27 3zM12 4L9.91 6.09 12 8.18V4z"/>';
+    let currentTrack = -1, failedTracks = 0;
+    audio.volume = 0.2;
+    function loadRandomTrack() {
+      let next = Math.floor(Math.random() * TRACKS.length);
+      if (TRACKS.length > 1 && next === currentTrack) next = (next + 1 + Math.floor(Math.random() * (TRACKS.length - 1))) % TRACKS.length;
+      currentTrack = next;
+      audio.src = MUSIC_DIR + encodeURIComponent(TRACKS[next]);
+    }
+    function showAudioState(on) {
+      audioBtn.classList.toggle('playing', on);
+      audioIcon.innerHTML = on ? ICON_ON : ICON_OFF;
+      audioBtn.setAttribute('aria-label', on ? 'Turn music off' : 'Turn music on');
+      audioBtn.title = on ? 'Turn music off' : 'Turn music on';
+    }
+    const GESTURES = ['pointerdown', 'mousedown', 'pointerup', 'click', 'touchend', 'keydown'];
+    function onFirstGesture(e) {
+      if (e.target.closest && e.target.closest('#audioBtn')) return; // the button handles itself
+      startMusic().catch(() => {});
+    }
+    function startMusic() {
+      return audio.play().then(() => {
+        showAudioState(true);
+        GESTURES.forEach(ev => window.removeEventListener(ev, onFirstGesture, true));
+      });
+    }
+    audio.addEventListener('ended', () => { loadRandomTrack(); audio.play().catch(() => {}); });
+    audio.addEventListener('error', () => { if (++failedTracks < TRACKS.length) { loadRandomTrack(); audio.play().catch(() => {}); } });
+    audio.addEventListener('playing', () => { failedTracks = 0; });
+    audioBtn.addEventListener('click', () => {
+      if (audio.paused) { startMusic().catch(() => {}); }
+      else { audio.pause(); showAudioState(false); }
+    });
+    showAudioState(false);
+    loadRandomTrack();
+    startMusic().catch(() => GESTURES.forEach(ev => window.addEventListener(ev, onFirstGesture, true)));
+
     const map = new maplibregl.Map({
       container: 'map',
       style: 'https://tiles.openfreemap.org/styles/dark',
@@ -243,15 +295,28 @@
       map.addSource('me', { type: 'geojson', data: { type: 'FeatureCollection', features: [] } });
       map.addLayer({ id: 'me-halo', type: 'circle', source: 'me', paint: {
         'circle-radius': 20, 'circle-color': '#a78bfa', 'circle-opacity': 0.4, 'circle-blur': 0.8, 'circle-pitch-alignment': 'map' } });
-      map.addLayer({ id: 'me-core', type: 'circle', source: 'me', paint: {
-        'circle-radius': 6, 'circle-color': '#c4b5fd', 'circle-stroke-width': 2, 'circle-stroke-color': '#ffffff',
-        'circle-stroke-opacity': 0.9, 'circle-blur': 0.15, 'circle-pitch-alignment': 'map' } });
+      // The core is a five-point star, drawn once on a canvas and registered as a map image
+      const STAR_PX = 64;
+      const starCanvas = document.createElement('canvas');
+      starCanvas.width = starCanvas.height = STAR_PX;
+      const sctx = starCanvas.getContext('2d');
+      sctx.beginPath();
+      for (let k = 0; k < 10; k++) {
+        const r = (k % 2 ? 0.2 : 0.46) * STAR_PX, a = -Math.PI / 2 + k * Math.PI / 5;
+        sctx[k ? 'lineTo' : 'moveTo'](STAR_PX / 2 + r * Math.cos(a), STAR_PX / 2 + r * Math.sin(a) + STAR_PX * 0.03);
+      }
+      sctx.closePath();
+      sctx.fillStyle = '#c4b5fd'; sctx.fill();
+      sctx.lineWidth = 4; sctx.lineJoin = 'round'; sctx.strokeStyle = '#ffffff'; sctx.stroke();
+      map.addImage('me-star', sctx.getImageData(0, 0, STAR_PX, STAR_PX));
+      map.addLayer({ id: 'me-core', type: 'symbol', source: 'me', layout: {
+        'icon-image': 'me-star', 'icon-size': 0.5, 'icon-allow-overlap': true, 'icon-ignore-placement': true } });
       const calm = window.matchMedia('(prefers-reduced-motion: reduce)');
       const pulseOrb = t => {
         const k = calm.matches ? 0.5 : 0.5 + 0.5 * Math.sin(t / 450);
         map.setPaintProperty('me-halo', 'circle-radius', 16 + k * 10);
         map.setPaintProperty('me-halo', 'circle-opacity', 0.55 - k * 0.3);
-        map.setPaintProperty('me-core', 'circle-radius', 6 + k * 1.5);
+        map.setLayoutProperty('me-core', 'icon-size', 0.45 + k * 0.1);
         requestAnimationFrame(pulseOrb);
       };
       requestAnimationFrame(pulseOrb);
