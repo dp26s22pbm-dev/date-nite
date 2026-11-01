@@ -1,7 +1,7 @@
 name: Search Grid Cells on Issue
 
 # The Search Grid Cells form lists cells from the grid page (datenite.us/grid/). Each cell is searched on Google Places,
-# its best qualifying restaurants are added with the same importer the Add Venue form uses (up to 5 venues per cell), and
+# its best qualifying restaurants are added with the same importer the Add Venue form uses (up to 3 venues per cell), and
 # they are saved without ids in venue-review/ on a branch, along with the cells' "searched" marks in grid/grid.json. A
 # pull request opens for review instead of changing main. After the merge, venue-review.yml folds the approved venues in (with ids) and opens an issue for each undecided one.
 on:
