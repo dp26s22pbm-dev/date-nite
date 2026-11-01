@@ -4,6 +4,7 @@ import sys
 import time
 import json
 import math
+import ssl
 import statistics
 import urllib.request
 import urllib.parse
@@ -285,7 +286,15 @@ PRICE_RE = re.compile(r"\$\s?\d{1,3}(?:\.\d{2})?")
 BARE_PRICE_RE = re.compile(r"(?<![\d.,])\d{1,3}\.\d{2}")
 # Menus drawn by a widget often show "grilled dorade<tab>49": a whole-dollar price with no dollar sign
 TAB_PRICE_RE = re.compile(r"(?m)\S[^\n]*\t\d{1,3}(?:\.\d{2})?[ \t]*$")
+# Menus that print a price alone on the line under the dish name: "Edamame<newline>9<newline>Steamed soy beans"
+# (Nabuki). No dollar sign, decimal or tab, so the patterns above miss them. A stray number can match too (a page
+# number), which is why six are required and Gemini makes the final call on what is a price.
+LINE_PRICE_RE = re.compile(r"(?m)^[ \t]*\d{1,3}(?:\.\d{2})?[ \t]*$")
 MENU_TEXT_LIMIT = 60000
+
+def price_count(text):
+    """How many price-like numbers the text has, by whichever price style it uses most."""
+    return max(len(r.findall(text)) for r in (PRICE_RE, BARE_PRICE_RE, TAB_PRICE_RE, LINE_PRICE_RE))
 
 def clean_pricing(data):
     """Keep only sane numbers from a Gemini pricing reply. Returns None unless it has at least one casual main."""
@@ -311,7 +320,7 @@ def pricing_from_menu_text(text):
     if "\x00" in text or sum(1 for c in text[:5000] if c == "\ufffd" or (ord(c) < 32 and c not in "\n\r\t")) > 50:
         print("Menu text looks like binary data; not using it.")
         return None
-    if max(len(PRICE_RE.findall(text)), len(BARE_PRICE_RE.findall(text)), len(TAB_PRICE_RE.findall(text))) < 6:
+    if price_count(text) < 6:
         print("Menu text has too few prices to use.")
         return None
     try:
@@ -325,8 +334,12 @@ def pricing_from_menu_text(text):
         print(f"Menu text parse error: {e}")
         return None
 
-# Hosts that refused a plain request (401, 403, 429). A real browser often gets through where a script is turned away.
+# Hosts that refused a plain request (401, 403, 429) or dropped the connection during the TLS handshake. A real browser
+# often gets through where a script is turned away.
 BLOCKED_HOSTS = set()
+# Hosts whose TLS handshake failed once; plain requests to them are skipped (the same failure would repeat for every
+# guessed menu path) and the browser reads them instead
+TLS_FAILED_HOSTS = set()
 
 # Some sites set a cookie and redirect; without a cookie jar a script is bounced in a loop
 _opener = urllib.request.build_opener(urllib.request.HTTPCookieProcessor())
@@ -337,6 +350,8 @@ def _host(url):
 def fetch_url(url, limit=2000000, with_url=False):
     """GET a page. Returns (bytes, content_type), or (bytes, content_type, final_url) with with_url, or None when it
     is blocked or fails."""
+    if _host(url) in TLS_FAILED_HOSTS:
+        return None
     try:
         req = urllib.request.Request(url, headers={"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64)"})
         with _opener.open(req, timeout=15) as resp:
@@ -351,6 +366,14 @@ def fetch_url(url, limit=2000000, with_url=False):
         print(f"Could not fetch {url}: {e}")
         return None
     except Exception as e:
+        # A handshake or connection the server drops on a script (Hinsdale Prime ends every urllib TLS handshake with
+        # an unexpected EOF) may still work in a browser
+        if isinstance(e, ssl.SSLError) or isinstance(getattr(e, "reason", None), (ssl.SSLError, ConnectionError)) \
+                or isinstance(e, ConnectionError):
+            BLOCKED_HOSTS.add(_host(url))
+            TLS_FAILED_HOSTS.add(_host(url))
+            print(f"Could not fetch {url}: {e}; this site will be read through a browser.")
+            return None
         print(f"Could not fetch {url}: {e}")
         return None
 
