@@ -2645,12 +2645,16 @@
     async function driveCarTo(dest, zoom = map.getZoom()) {
       if (!carPos || carHiding) return;
       const token = ++driveToken;
-      const gapM = PARK_GAP_PX * metersPerPixelAt(dest[1], zoom);
-      const downRad = (map.getBearing() + 180) * Math.PI / 180; // ground direction of "down the screen"
-      const park = [
-        dest[0] + Math.sin(downRad) * gapM / (111320 * Math.cos(dest[1] * Math.PI / 180)),
-        dest[1] + Math.cos(downRad) * gapM / 111320
-      ];
+      // The stopping point for a given zoom and bearing: PARK_GAP_PX straight down the screen from the dot
+      const parkAt = (z, bearing) => {
+        const gapM = PARK_GAP_PX * metersPerPixelAt(dest[1], z);
+        const downRad = (bearing + 180) * Math.PI / 180; // ground direction of "down the screen"
+        return [
+          dest[0] + Math.sin(downRad) * gapM / (111320 * Math.cos(dest[1] * Math.PI / 180)),
+          dest[1] + Math.cos(downRad) * gapM / 111320
+        ];
+      };
+      const park = parkAt(zoom, map.getBearing());
       const requestedFrom = carVisualPos().slice();
       const road = await fetchDrivingRoute(requestedFrom, park);
       if (token !== driveToken) return; // a newer click or a re-locate superseded this drive
@@ -2667,7 +2671,7 @@
 
       setCarRoute([...path, dest]); // the car stops short of the dot, but the trail still runs all the way to it
       carDriving = true;
-      const driveTotal = total;
+      let driveTotal = total;
       let d = 0;
       const t0 = performance.now();
       let last = t0;
@@ -2676,6 +2680,12 @@
         if (token !== driveToken) return;
         const dt = Math.min(0.1, (now - last) / 1000); // cap so a background tab does not teleport the car
         last = now;
+
+        // Re-aim the stopping point at the zoom and bearing the map has now, so zooming mid-drive
+        // cannot leave the car parked farther from (or closer to) the dot than PARK_GAP_PX on screen
+        path[path.length - 1] = parkAt(map.getZoom(), map.getBearing());
+        cum[cum.length - 1] = cum[cum.length - 2] + haversineM(path[path.length - 2], path[path.length - 1]);
+        driveTotal = cum[cum.length - 1];
 
         // Speed in meters per second that equals a steady on-screen pixel speed at the current zoom
         const mpp = metersPerPixel(carPos[1]);
@@ -2695,7 +2705,7 @@
         const pos = pointAtDistance(path, cum, d);
         carPos = pos;
 
-        const ahead = pointAtDistance(path, cum, Math.min(total, d + Math.min(25, Math.max(5, 14 * mpp))));
+        const ahead = pointAtDistance(path, cum, Math.min(driveTotal, d + Math.min(25, Math.max(5, 14 * mpp))));
         if (haversineM(pos, ahead) > 1) {
           const target = bearingDeg(pos, ahead);
           const diff = ((target - carHeading + 540) % 360) - 180; // shortest turn
