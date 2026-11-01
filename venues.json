@@ -1879,5 +1879,69 @@
     "drink": 8.5,
     "dessert": 12.0,
     "tierColor": "#22c55e"
+  },
+  {
+    "id": 127,
+    "name": "Nabuki",
+    "category": "Modern Japanese",
+    "website": "https://nabukihinsdale.com/",
+    "coords": [
+      -87.928361,
+      41.801411
+    ],
+    "app": 10.0,
+    "casualMain": 18.0,
+    "premiumMain": 36.0,
+    "drink": 15.0,
+    "dessert": 8.0,
+    "tierColor": "#eab308"
+  },
+  {
+    "id": 128,
+    "name": "Vistro Prime",
+    "category": "Steakhouse",
+    "website": "http://www.vistroprime.com/",
+    "coords": [
+      -87.929448,
+      41.801096
+    ],
+    "app": 15.0,
+    "casualMain": 19.0,
+    "premiumMain": 48.0,
+    "drink": 17.0,
+    "dessert": 8.0,
+    "tierColor": "#f97316"
+  },
+  {
+    "id": 129,
+    "name": "Giuliano's Pizza",
+    "category": "Italian / Pizza",
+    "website": "http://giulianospizza.com/",
+    "coords": [
+      -87.928472,
+      41.802143
+    ],
+    "app": 6.0,
+    "casualMain": 16.25,
+    "premiumMain": 19.5,
+    "drink": 8.12,
+    "dessert": 8.0,
+    "tierColor": "#22c55e"
+  },
+  {
+    "id": 130,
+    "name": "DeNucci's Hinsdale",
+    "category": "Italian / Pizza",
+    "website": "https://denuccisitalian.com/",
+    "coords": [
+      -87.928794,
+      41.801406
+    ],
+    "app": 16.0,
+    "casualMain": 23.5,
+    "premiumMain": 30.0,
+    "drink": 15.0,
+    "dessert": 12.0,
+    "tierColor": "#eab308"
   }
 ]
