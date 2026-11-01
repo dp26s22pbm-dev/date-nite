@@ -1,0 +1,47 @@
+[
+  {
+    "name": "B'n chingon Mexican Restaurant & Catering",
+    "category": "Mexican Cuisine",
+    "website": "http://bnchingonmex-restaurant.com/",
+    "coords": [
+      -88.123757,
+      41.741089
+    ],
+    "app": 3.99,
+    "casualMain": 4.0,
+    "premiumMain": 20.0,
+    "drink": 10.0,
+    "dessert": 6.0,
+    "tierColor": "#22c55e"
+  },
+  {
+    "name": "Burger City",
+    "category": "Casual American",
+    "website": "http://www.theburgercity.com/",
+    "coords": [
+      -88.099444,
+      41.768245
+    ],
+    "app": 5.49,
+    "casualMain": 9.99,
+    "premiumMain": 11.49,
+    "drink": 8.0,
+    "dessert": 8.0,
+    "tierColor": "#22c55e"
+  },
+  {
+    "name": "BIBIBOP Asian Grill",
+    "category": "Korean Cuisine",
+    "website": "https://order.bibibop.com/menu/bibibop-naperville-il-market-meadows/",
+    "coords": [
+      -88.116778,
+      41.749221
+    ],
+    "app": 3.79,
+    "casualMain": 11.49,
+    "premiumMain": 17.24,
+    "drink": 8.0,
+    "dessert": 1.89,
+    "tierColor": "#22c55e"
+  }
+]
