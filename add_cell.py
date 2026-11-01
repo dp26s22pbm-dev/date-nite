@@ -5,8 +5,10 @@ not searched, which is the cue to split it. Every cell that is searched is added
 grid/grid.json, so the grid page can tell a cell with no qualifying restaurants from one nobody has looked at.
 
 Cells come from the Search Grid Cells form (ISSUE_BODY, the lines under its "Cells to Search" heading). As with cities,
-the new venues are saved without ids to pending-venues/cells-<issue>.json; the workflow (add-cell.yml) commits that
-file and grid.json to a branch and opens a pull request, and fold_pending_venues.py numbers them after the merge."""
+the new venues are saved without ids to venue-review/cells-<issue>.json; the workflow (search-cells.yml) commits that
+file and grid.json to a branch and opens a pull request whose description has Approve / Deny checkboxes per venue.
+When the pull request merges, venue_review.py folds the approved venues into venues.json and opens an issue for each
+venue left undecided."""
 import os
 import re
 import json
@@ -19,6 +21,7 @@ from split_cells import parse_field, set_output
 
 MAX_CELLS = int(os.environ.get("MAX_CELLS", "5"))
 PR_TITLE_PREFIX = "Add venues for cells: "
+REVIEW_DIR = "venue-review"
 
 def open_cell_prs():
     """{cell id: pull request url} for open pull requests this workflow made (titles "Add venues for cells: G4, G5 (#12)").
@@ -130,8 +133,8 @@ def main():
 
     pending_file = ""
     if added:
-        os.makedirs(ac.PENDING_DIR, exist_ok=True)
-        pending_file = os.path.join(ac.PENDING_DIR, f"cells-{os.environ.get('ISSUE_NUMBER', '0')}.json")
+        os.makedirs(REVIEW_DIR, exist_ok=True)
+        pending_file = os.path.join(REVIEW_DIR, f"cells-{os.environ.get('ISSUE_NUMBER', '0')}.json")
         with open(pending_file, "w") as f:
             json.dump(added, f, indent=2)
             f.write("\n")
@@ -151,11 +154,17 @@ def main():
                  f"Google rating weighted by review count (at least {ac.MIN_REVIEWS} reviews, at most {ac.MAX_PER_CUISINE} "
                  f"of one cuisine, no national fast-food chains, nothing under ${ac.MIN_TOTAL_FOR_TWO} for two, no venue "
                  "without any prices found, no counter-service places). Ratings were used only for the ranking and are not saved.\n\n"
-                 f"Review the prices and pins below before merging. The venues are in `{pending_file or 'no file (none added)'}`; "
-                 "delete an entry there to drop it. They get their ids and join `venues.json` automatically after the merge. "
-                 "Every searched cell is also recorded in `grid/grid.json`, so the grid page shows it as searched.")
+                 f"Review the prices and pins below, then tick Approve or Deny for each venue under Decisions at the bottom. "
+                 f"The candidates are in `{pending_file or 'no file (none added)'}`. When you merge, approved venues join "
+                 "`venues.json` (with ids) automatically, denied venues are dropped, and a venue with neither box ticked gets "
+                 "its own `venue-review` issue to approve later. Every searched cell is also recorded in `grid/grid.json`, "
+                 "so the grid page shows it as searched.")
     notes_text = ("\n\n## Not searched\n\n" + "\n".join(notes)) if notes else ""
-    report = intro + "\n\n" + "\n\n".join(sections) + notes_text
+    decisions = ""
+    if added:
+        from venue_review import decision_block
+        decisions = "\n\n" + decision_block(added)
+    report = intro + "\n\n" + "\n\n".join(sections) + notes_text + decisions
     print(report)
     set_output("report", report, multiline=True)
 
