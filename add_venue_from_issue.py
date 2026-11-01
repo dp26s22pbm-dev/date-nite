@@ -249,6 +249,21 @@ def reverse_geocode_town(coords):
     iso = addr.get("ISO3166-2-lvl4", "")
     return town, (iso.split("-")[1] if iso.startswith("US-") else "")
 
+# (title, url) of the pages the last web search consulted, shown in the report so the estimates can be checked by hand
+search_sources = []
+
+def grounding_sources(response, limit=5):
+    """The pages Gemini's search grounding consulted, as unique (title, url) pairs. These are the pages it read, not
+    proof of where each figure came from, and the urls are often Google redirect links that open the page."""
+    found = []
+    for cand in getattr(response, "candidates", None) or []:
+        meta = getattr(cand, "grounding_metadata", None)
+        for chunk in getattr(meta, "grounding_chunks", None) or []:
+            web = getattr(chunk, "web", None)
+            if web and web.uri and web.uri not in [u for _, u in found]:
+                found.append((web.title or web.uri, web.uri))
+    return found[:limit]
+
 def fetch_pricing_via_gemini_search(venue_name, city="Naperville, IL"):
     """Query Gemini with Google Search Grounding to find live menu pricing."""
     try:
@@ -261,6 +276,7 @@ def fetch_pricing_via_gemini_search(venue_name, city="Naperville, IL"):
                 temperature=0.1
             ),
         )
+        search_sources[:] = grounding_sources(response)
         raw_text = response.text.strip()
         if raw_text.startswith("```"):
             raw_text = raw_text.strip("`").removeprefix("json").strip()
@@ -406,7 +422,7 @@ TAB_KEEP_WORDS = ("dinner", "all day", "all-day", "food", "dessert", "dine", "be
 TAB_SKIP_WORDS = ("lunch", "brunch", "happy", "kid", "catering", "party", "private", "gift")
 
 # Each browser launch costs 10 to 45 seconds, so a run only opens a few
-BROWSER_LIMIT = 6
+BROWSER_LIMIT = 12
 browser_launches = 0
 # url -> (html, final_url) of pages the browser has read
 RENDERED_HTML = {}
@@ -1442,6 +1458,13 @@ def main():
     if pricing and pricing.get("casualMains"):
         lines.append(f"**Prices used** (from {pricing_source}): appetizer ${app}, casual main ${casual_main}, "
                      f"premium main ${premium_main}, drink ${drink}, dessert ${dessert}")
+        if str(pricing_source).startswith("a web search") and not reused_pricing:
+            if search_sources:
+                lines.append("")
+                lines.append("**Pages the web search consulted:** " + "; ".join(f"[{t}]({u})" for t, u in search_sources))
+            else:
+                lines.append("")
+                lines.append("**Pages the web search consulted:** none were returned")
     else:
         lines.append("**Prices used:** none could be found, so typical defaults were saved")
 
