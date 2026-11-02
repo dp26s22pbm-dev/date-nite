@@ -174,8 +174,8 @@ def menu():
                                 "like `app: 17.99`.")
             sys.exit(1)
         casual = round(statistics.median(pricing["casualMains"]), 2)
-        defaulted = [label for key, label in (("premiumMains", "premium main"), ("apps", "appetizer"), ("desserts", "dessert"))
-                     if not pricing.get(key)]
+        defaulted = [label for key, label in (("premiumMains", "premium main"), ("apps", "appetizer"), ("drinks", "drink"),
+                                              ("desserts", "dessert")) if not pricing.get(key)]
         premium = round(statistics.median(pricing.get("premiumMains") or [round(casual * 1.6, 2)]), 2)
         app = round(statistics.median(pricing.get("apps") or [round(casual * 0.55, 2)]), 2)
         drink = round(statistics.median(pricing.get("drinks") or [max(8.00, round(casual * 0.5, 2))]), 2)
@@ -199,6 +199,9 @@ def menu():
                f"drink ${drink:g}, dessert ${dessert:g} (about ${total} for two).")
     if defaulted:
         summary += " No menu price was found for the " + ", ".join(defaulted) + ", so a typical stand-in was used."
+    if premium < casual:
+        summary += (f" Check the tiers: the premium main (${premium:g}) is lower than the casual main (${casual:g}), so the "
+                    "dishes may have been sorted wrongly. Reply with lines like `casualMain: 27.70` to correct it.")
     summary += f" Add the `{APPROVE_LABEL}` label to put the venue on the map."
     set_output("summary", summary)
     print(summary)

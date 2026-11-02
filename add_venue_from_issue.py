@@ -1223,7 +1223,11 @@ def price_sanity_warnings(app, casual, premium, drink, dessert, defaulted=(), es
                             "party-package prices were read")
     if defaulted:
         warnings.append("no menu price was found for the " + ", ".join(defaulted) + ", so a typical stand-in was saved")
-    if estimated and premium < casual * 1.25:
+    if premium < casual:
+        # Never right whatever the source: the tiers were probably sorted wrongly (a seafood plate read as casual, say)
+        warnings.append(f"the premium main (${premium}) is lower than the casual main (${casual}), so the dishes may have "
+                        "been sorted into the wrong tiers")
+    elif estimated and premium < casual * 1.25:
         warnings.append(f"the premium main (${premium}) is within 25% of the casual main (${casual}), which often means "
                         "lunch or combo prices were read")
     for label, value in (("appetizer", app), ("drink", drink), ("dessert", dessert)):
