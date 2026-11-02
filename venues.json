@@ -2347,5 +2347,23 @@
     "drink": 18.5,
     "dessert": 8.0,
     "tierColor": "#ef4444"
+  },
+  {
+    "id": 141,
+    "name": "Grand Duke's Restaurant",
+    "category": "Lithuanian Cuisine",
+    "city": "Downers Grove",
+    "state": "IL",
+    "website": "http://granddukesrestaurant.com/",
+    "coords": [
+      -88.008256,
+      41.751832
+    ],
+    "app": 17.99,
+    "casualMain": 17.99,
+    "premiumMain": 26.99,
+    "drink": 12.0,
+    "dessert": 10.99,
+    "tierColor": "#eab308"
   }
 ]
