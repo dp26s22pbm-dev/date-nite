@@ -280,6 +280,11 @@ def grounding_summary(response):
 search_ungrounded = False
 # True when Claude's web search supplied the prices because Gemini's search had no sources or no prices
 search_by_claude = False
+# Set when Gemini had no sources and Claude gave no usable sourced prices, so the report can say what happened:
+# "ran" (Claude searched and found nothing; claude_found_nothing_pages is how many pages it consulted) or "not run"
+# (no API key, or the request failed before it searched). None means Claude was not needed.
+claude_backup_result = None
+claude_found_nothing_pages = 0
 
 def fetch_pricing_via_gemini_search(venue_name, city="Naperville, IL"):
     """Query Gemini with Google Search Grounding to find live menu pricing. A response with no source pages means
@@ -353,30 +358,48 @@ def claude_search_pricing(venue_name, city, website=""):
                 break
             messages.append({"role": "assistant", "content": response.content})
         print(f"Claude web search for {venue_name}: stop_reason={response.stop_reason} source pages={len(sources)}")
+        claude_pages[0] = len(sources)
         if response.stop_reason == "refusal":
+            print(f"Claude web search for {venue_name} was refused, so there are no prices from it.")
             return None, []
         text = "".join(b.text for b in response.content if b.type == "text")
         start, end = text.find("{"), text.rfind("}")
         pricing = clean_pricing(json.loads(text[start:end + 1])) if start != -1 and end > start else None
+        if not pricing:
+            # Without this the log cannot say whether Claude found no prices or answered in a form the parser rejected
+            print(f"Claude's reply for {venue_name} had no usable prices. Its reply was: {text[:1500]!r}")
         return pricing, sources[:5]
     except Exception as e:
         print(f"Claude web search error for {venue_name}: {e}")
         return None, []
 
+claude_pages = [None]  # pages the last Claude search consulted; None until a search ran. A list so claude_search_pricing can set it
+
 def fetch_pricing_via_web_search(venue_name, city, website=""):
     """Gemini's web search first. When it returns no source pages (so its prices may be from memory) or no prices, Claude
-    searches instead. Claude's prices replace Gemini's only when it found source pages, or when Gemini found nothing."""
-    global search_ungrounded, search_by_claude
+    searches instead, and its prices are used only when it found source pages. If Gemini had no sources and Claude gives no
+    sourced prices either, nothing is returned: Gemini's unsourced prices are not kept, so the venue counts as having no
+    prices found (the cell and city imports skip it, and the Add Venue form asks for the menu)."""
+    global search_ungrounded, search_by_claude, claude_backup_result, claude_found_nothing_pages
     search_by_claude = False
+    claude_backup_result = None
+    claude_found_nothing_pages = 0
+    claude_pages[0] = None
     pricing = fetch_pricing_via_gemini_search(venue_name, city)
     if search_ungrounded or not pricing:
-        print("Gemini's web search had no sources; asking Claude to search.")
+        print("Gemini's web search had no usable sourced prices; asking Claude to search.")
         claude_pricing, sources = claude_search_pricing(venue_name, city, website)
-        if claude_pricing and (sources or not pricing):
+        if claude_pricing and sources:
             pricing = claude_pricing
             search_sources[:] = sources
-            search_ungrounded = not sources
+            search_ungrounded = False
             search_by_claude = True
+        elif search_ungrounded:
+            print("Claude found no sourced prices either, so Gemini's unsourced prices are being dropped.")
+            pricing = None
+            search_sources.clear()
+            claude_backup_result = "not run" if claude_pages[0] is None else "ran"
+            claude_found_nothing_pages = claude_pages[0] or 0
     return pricing
 
 IMAGE_TYPES = {".png": "image/png", ".jpg": "image/jpeg", ".jpeg": "image/jpeg", ".webp": "image/webp"}
@@ -1567,12 +1590,22 @@ def main():
                 lines.append("")
                 lines.append("**Pages the web search consulted:** none were returned, even on a second try")
     else:
+        if claude_backup_result == "ran":
+            lines.append(f"**Claude-backup deployed**, but it found no usable prices ({claude_found_nothing_pages} pages checked). "
+                         "Gemini's search returned no sources, so its unsourced prices were not kept.")
+            lines.append("")
+        elif claude_backup_result == "not run":
+            lines.append("**Claude-backup did not run** (no API key, or the request failed; see the job log). "
+                         "Gemini's search returned no sources, so its unsourced prices were not kept.")
+            lines.append("")
         lines.append("**Prices used:** none could be found, so typical defaults were saved")
 
     # Prices that came from a web search (or defaults) are guesses unless every figure was typed in by hand
     guessed = not (pricing and pricing.get("casualMains")) or str(pricing_source).startswith("a web search")
     needs_menu = guessed and not all(k in overrides for k in ("app", "casualMain", "premiumMain", "drink", "dessert"))
     set_output("needs_menu", "true" if needs_menu else "false")
+    if claude_backup_result:
+        set_output("claude_backup", f"{claude_backup_result}:{claude_found_nothing_pages}")  # read by add_city.py for its Skipped lines
     set_output("prices_found", "true" if pricing and pricing.get("casualMains") else "false")  # false: only the typical defaults were saved
     warnings = price_sanity_warnings(app, casual_main * casual_count, premium_main, drink, dessert, defaulted, estimated=guessed)
     if str(pricing_source).startswith("a web search") and not reused_pricing and search_ungrounded:

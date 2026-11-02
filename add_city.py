@@ -335,6 +335,13 @@ def price_and_keep(ranked, work_dir, venues_file, count=COUNT, max_priced=MAX_PR
         # prices on the map. It is listed under Skipped instead; the Add Venue form can add it once someone has the menu.
         if outputs.get("prices_found") == "false":
             reason = "no prices could be found, so only typical defaults were possible. Add it with the Add Venue form and the menu text"
+            backup = outputs.get("claude_backup", "")
+            if backup.startswith("ran:"):
+                reason = (f"**Claude-backup deployed**, but it found no usable prices ({backup.split(':', 1)[1]} pages checked) and "
+                          "Gemini's search had no sources. Add it with the Add Venue form and the menu text")
+            elif backup.startswith("not run"):
+                reason = ("**Claude-backup did not run** (no API key, or the request failed; see the job log) and Gemini's search "
+                          "had no sources. Add it with the Add Venue form and the menu text")
         elif pricing_rules.looks_like_counter_menu(venue):
             reason = (f"looks like counter service: its most expensive entrees are about ${venue['premiumMain']}. "
                       "Add it with the Add Venue form if it is a sit-down place")
