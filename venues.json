@@ -2331,5 +2331,21 @@
     "drink": 8.0,
     "dessert": 5.0,
     "tierColor": "#22c55e"
+  },
+  {
+    "id": 140,
+    "name": "Hinsdale Prime Steak & Seafood",
+    "category": "Prime Steak & Seafood",
+    "website": "https://hinsdaleprimesteakhouse.com/",
+    "coords": [
+      -87.92743,
+      41.80269
+    ],
+    "app": 26.0,
+    "casualMain": 26.5,
+    "premiumMain": 78.0,
+    "drink": 18.5,
+    "dessert": 8.0,
+    "tierColor": "#ef4444"
   }
 ]
