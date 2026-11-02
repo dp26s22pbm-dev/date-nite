@@ -278,6 +278,8 @@ def grounding_summary(response):
 
 # True when the last web search returned no source pages even after a retry, so its prices may come from Gemini's memory
 search_ungrounded = False
+# True when Claude's web search supplied the prices because Gemini's search had no sources or no prices
+search_by_claude = False
 
 def fetch_pricing_via_gemini_search(venue_name, city="Naperville, IL"):
     """Query Gemini with Google Search Grounding to find live menu pricing. A response with no source pages means
@@ -364,7 +366,8 @@ def claude_search_pricing(venue_name, city, website=""):
 def fetch_pricing_via_web_search(venue_name, city, website=""):
     """Gemini's web search first. When it returns no source pages (so its prices may be from memory) or no prices, Claude
     searches instead. Claude's prices replace Gemini's only when it found source pages, or when Gemini found nothing."""
-    global search_ungrounded
+    global search_ungrounded, search_by_claude
+    search_by_claude = False
     pricing = fetch_pricing_via_gemini_search(venue_name, city)
     if search_ungrounded or not pricing:
         print("Gemini's web search had no sources; asking Claude to search.")
@@ -373,6 +376,7 @@ def fetch_pricing_via_web_search(venue_name, city, website=""):
             pricing = claude_pricing
             search_sources[:] = sources
             search_ungrounded = not sources
+            search_by_claude = True
     return pricing
 
 IMAGE_TYPES = {".png": "image/png", ".jpg": "image/jpeg", ".jpeg": "image/jpeg", ".webp": "image/webp"}
@@ -1553,6 +1557,9 @@ def main():
         lines.append(f"**Prices used** (from {pricing_source}): appetizer ${app}, casual main ${casual_main}, "
                      f"premium main ${premium_main}, drink ${drink}, dessert ${dessert}")
         if str(pricing_source).startswith("a web search") and not reused_pricing:
+            if search_by_claude:
+                lines.append("")
+                lines.append("**Claude-backup deployed**")
             if search_sources:
                 lines.append("")
                 lines.append("**Pages the web search consulted:** " + "; ".join(f"[{t}]({u})" for t, u in search_sources))
