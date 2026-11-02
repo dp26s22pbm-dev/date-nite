@@ -311,6 +311,70 @@ def fetch_pricing_via_gemini_search(venue_name, city="Naperville, IL"):
         print(f"Gemini Search Grounding error for {venue_name}: {e}")
         return None
 
+CLAUDE_SEARCH_MODEL = os.environ.get("CLAUDE_SEARCH_MODEL", "claude-sonnet-5-5")
+
+def claude_search_pricing(venue_name, city, website=""):
+    """Backup for Gemini's web search: ask Claude, with Anthropic's web search and web fetch tools, for the same pricing
+    JSON. Returns (pricing, sources) where sources is a list of (title, url) for the pages it searched or fetched, or
+    (None, []) when there is no key, the request fails, or no prices come back."""
+    api_key = os.environ.get("ANTHROPIC_API_KEY", "").strip()
+    if not api_key:
+        print("ANTHROPIC_API_KEY is not set; skipping the Claude web search.")
+        return None, []
+    try:
+        import anthropic
+        claude = anthropic.Anthropic(api_key=api_key)
+        prompt = SEARCH_PRICING_PROMPT.format(venue_name=venue_name, city=city, scope_rules=SCOPE_RULES)
+        prompt += ("\nSearch the web for this restaurant's own menu, or a menu page from an ordering platform that shows its "
+                   "prices. Use only dish prices printed on a menu page you found, never a typical price you remember. "
+                   "If you find no real dish prices, return empty lists.\n")
+        if website:
+            prompt += f"The restaurant's website is {website}. Fetch its menu pages if they show prices.\n"
+        tools = [{"type": "web_search_20260209", "name": "web_search", "max_uses": 5},
+                 {"type": "web_fetch_20260209", "name": "web_fetch", "max_uses": 5}]
+        messages = [{"role": "user", "content": prompt}]
+        sources = []
+        for _ in range(4):  # a server-side tool loop that runs long comes back paused; send it back to continue
+            response = claude.messages.create(model=CLAUDE_SEARCH_MODEL, max_tokens=8000, tools=tools, messages=messages)
+            for block in response.content:
+                found = []
+                if block.type == "web_search_tool_result" and isinstance(block.content, list):
+                    found = [(getattr(r, "title", None), getattr(r, "url", None)) for r in block.content]
+                elif block.type == "web_fetch_tool_result":
+                    found = [(None, getattr(block.content, "url", None))]
+                elif block.type == "text":
+                    found = [(getattr(c, "title", None), getattr(c, "url", None)) for c in getattr(block, "citations", None) or []]
+                for title, url in found:
+                    if url and url not in [u for _, u in sources]:
+                        sources.append((title or url, url))
+            if response.stop_reason != "pause_turn":
+                break
+            messages.append({"role": "assistant", "content": response.content})
+        print(f"Claude web search for {venue_name}: stop_reason={response.stop_reason} source pages={len(sources)}")
+        if response.stop_reason == "refusal":
+            return None, []
+        text = "".join(b.text for b in response.content if b.type == "text")
+        start, end = text.find("{"), text.rfind("}")
+        pricing = clean_pricing(json.loads(text[start:end + 1])) if start != -1 and end > start else None
+        return pricing, sources[:5]
+    except Exception as e:
+        print(f"Claude web search error for {venue_name}: {e}")
+        return None, []
+
+def fetch_pricing_via_web_search(venue_name, city, website=""):
+    """Gemini's web search first. When it returns no source pages (so its prices may be from memory) or no prices, Claude
+    searches instead. Claude's prices replace Gemini's only when it found source pages, or when Gemini found nothing."""
+    global search_ungrounded
+    pricing = fetch_pricing_via_gemini_search(venue_name, city)
+    if search_ungrounded or not pricing:
+        print("Gemini's web search had no sources; asking Claude to search.")
+        claude_pricing, sources = claude_search_pricing(venue_name, city, website)
+        if claude_pricing and (sources or not pricing):
+            pricing = claude_pricing
+            search_sources[:] = sources
+            search_ungrounded = not sources
+    return pricing
+
 IMAGE_TYPES = {".png": "image/png", ".jpg": "image/jpeg", ".jpeg": "image/jpeg", ".webp": "image/webp"}
 
 def menu_file_mime(url, content_type=""):
@@ -1344,7 +1408,7 @@ def main():
         pricing = pricing_from_gemini_reading_site(name, website or saved_site)
         pricing_source = "Gemini reading the restaurant's own menu pages"
     if not pricing:
-        pricing = fetch_pricing_via_gemini_search(name, place_text or address or "Naperville, IL")
+        pricing = fetch_pricing_via_web_search(name, place_text or address or "Naperville, IL", website or saved_site or "")
         pricing_source = "a web search (estimates)"
     if not reused_pricing:
         save_pricing_cache(pricing, pricing_source)

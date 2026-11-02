@@ -43,6 +43,7 @@ jobs:
       - name: Run Batch Price Updater
         env:
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
           TARGET_VENUE: ${{ github.event.inputs.target }}
           VENUE_LIMIT: ${{ github.event.inputs.limit }}
         run: |
