@@ -4,7 +4,7 @@ search-cells.yml saves the candidate venues in venue-review/cells-<issue>.json a
 decision_block) at the bottom of the pull request description, two task-list items per venue. After the pull request
 merges, the venue-review workflow runs `merge`:
   - Approve ticked        -> the venue is folded into venues.json (fold_pending_venues.py gives it an id)
-  - Deny ticked           -> dropped
+  - Deny ticked           -> dropped and added to excluded-venues.json so later searches skip it
   - neither (or both)     -> held: a `venue-review` issue is opened with the venue's data
 Adding the `approve-venue` label to such an issue runs `approve`, which folds that venue in; closing the issue without
 the label leaves the venue off the map.
@@ -100,11 +100,13 @@ def merge():
     decisions = parse_decisions(body, len(venues))
     approved = [v for v, d in zip(venues, decisions) if d == "approve"]
     held = [v for v, d in zip(venues, decisions) if d == "hold"]
+    denied = [v for v, d in zip(venues, decisions) if d == "deny"]
     print(f"{len(approved)} approved, {len(held)} held, {decisions.count('deny')} denied.")
     if approved:
         write_pending(f"cells-{m.group(1)}.json", approved)
     os.remove(path)
     fold.main()
+    exclude(denied, "denied in venue review")
     with open(HELD_FILE, "w") as f:
         json.dump(held, f)
 
@@ -124,21 +126,32 @@ def approve():
     write_pending(f"review-{os.environ['ISSUE_NUMBER']}.json", [venue])
     fold.main()
 
-def deny():
-    """Put the venue on excluded-venues.json so later searches skip it. The reason is the optional DENY_REASON."""
+def exclude(venues, reason):
+    """Put each venue on excluded-venues.json so later searches skip it. Venues already listed (same name key) are left
+    alone, so a rerun after a rejected push does not add duplicates."""
     import add_city
-    venue = parse_issue_venue(os.environ["ISSUE_BODY"])
-    reason = (os.environ.get("DENY_REASON") or "").strip() or "denied in venue review"
+    if not venues:
+        return
     with open(EXCLUDED_FILE) as f:
         excluded = json.load(f)
-    if any(add_city.name_key(e["name"]) == add_city.name_key(venue["name"]) for e in excluded):
-        print(f"{venue['name']} is already on {EXCLUDED_FILE}.")
-        return
-    excluded.append({"name": venue["name"], "reason": reason})
+    known = {add_city.name_key(e["name"]) for e in excluded}
+    for v in venues:
+        key = add_city.name_key(v["name"])
+        if key in known:
+            print(f"{v['name']} is already on {EXCLUDED_FILE}.")
+            continue
+        known.add(key)
+        excluded.append({"name": v["name"], "reason": reason})
+        print(f"Added {v['name']} to {EXCLUDED_FILE} ({reason}).")
     with open(EXCLUDED_FILE, "w") as f:
         json.dump(excluded, f, indent=2, ensure_ascii=False)
         f.write("\n")
-    print(f"Added {venue['name']} to {EXCLUDED_FILE} ({reason}).")
+
+def deny():
+    """Put the venue on excluded-venues.json so later searches skip it. The reason is the optional DENY_REASON."""
+    venue = parse_issue_venue(os.environ["ISSUE_BODY"])
+    reason = (os.environ.get("DENY_REASON") or "").strip() or "denied in venue review"
+    exclude([venue], reason)
 
 def set_output(key, value):
     path = os.environ.get("GITHUB_OUTPUT")
