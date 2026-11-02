@@ -23,8 +23,11 @@
     .swatch { width: 14px; height: 14px; border-radius: 3px; flex: none; border: 1px solid rgba(255,255,255,0.3); }
     .panel button { margin-top: 8px; width: 100%; padding: 7px 10px; font: inherit; color: #f0f6fc; cursor: pointer;
       background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.25); border-radius: 6px; }
-    .panel button:hover { background: rgba(255,255,255,0.16); }
+    .panel a.btn { display: block; margin-top: 8px; width: 100%; padding: 7px 10px; font: inherit; color: #f0f6fc; cursor: pointer;
+      text-align: center; text-decoration: none; background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.25); border-radius: 6px; }
+    .panel button:hover, .panel a.btn:hover { background: rgba(255,255,255,0.16); }
     .panel button:disabled { opacity: 0.4; cursor: default; }
+    .panel a.btn:not([href]) { opacity: 0.4; cursor: default; pointer-events: none; }
     .muted { color: rgba(240,246,252,0.65); }
     #selected { margin-top: 8px; padding-top: 8px; border-top: 1px solid rgba(255,255,255,0.15); }
     .audio-btn { position: absolute; left: 12px; bottom: 28px; z-index: 2; width: 36px; height: 36px; padding: 0;
@@ -49,8 +52,8 @@
     <div class="row"><span class="swatch" style="background:#c4b5fd;border:none;clip-path:polygon(50% 0%,61% 35%,98% 35%,68% 57%,79% 91%,50% 70%,21% 91%,32% 57%,2% 35%,39% 35%)"></span>you are here</div>
     <div id="selected" class="muted">Click a cell to select it.</div>
     <button id="splitBtn" disabled>Split selected cell</button>
-    <button id="searchBtn" disabled>Search selected cell on GitHub</button>
-    <button id="saveBtn" disabled>Save changes on GitHub</button>
+    <a id="searchBtn" class="btn" target="_blank" rel="noopener">Search selected cell on GitHub</a>
+    <a id="saveBtn" class="btn" target="_blank" rel="noopener">Save changes on GitHub</a>
     <div class="muted" style="margin-top:8px;font-size:12px">Splits and merges you make here are previews that last until you reload the page. Saving opens a GitHub issue that proposes them in a pull request. Searching opens an issue that looks for venues in the cell.</div>
     </div>
   </div>
@@ -120,6 +123,15 @@
       return grid.split.includes(base) === isChild && !localMerges.has(base);
     };
 
+    // Search and Save are real links (not window.open) so a phone can hand the tap to the GitHub app. href is unset while disabled.
+    function setLink(a, href) { if (href) a.setAttribute('href', href); else a.removeAttribute('href'); }
+    function saveUrl() {
+      const params = [];
+      if (localSplits.size) params.push('cells=' + encodeURIComponent([...localSplits].sort().join(', ')));
+      if (localMerges.size) params.push('merge=' + encodeURIComponent([...localMerges].sort().join(', ')));
+      return `${NEW_ISSUE}add-split.yml&${params.join('&')}`;
+    }
+
     function refresh() {
       map.getSource('cells').setData(buildCells());
       // The selected cell stays visible in the title bar while the panel is folded
@@ -127,10 +139,10 @@
       const sel = document.getElementById('selected');
       const splitBtn = document.getElementById('splitBtn'), searchBtn = document.getElementById('searchBtn'), saveBtn = document.getElementById('saveBtn');
       const n = pendingCount();
-      saveBtn.disabled = n === 0;
+      setLink(saveBtn, n ? saveUrl() : null);
       if (!selectedId) {
         sel.textContent = 'Click a cell to select it.';
-        splitBtn.disabled = searchBtn.disabled = true;
+        splitBtn.disabled = true; setLink(searchBtn, null);
         splitBtn.textContent = 'Split selected cell'; searchBtn.textContent = 'Search selected cell on GitHub';
         return;
       }
@@ -143,7 +155,7 @@
       splitBtn.disabled = false;
       splitBtn.textContent = isChild ? `Merge ${parent} back` : `Split ${parent} into ${grid.splitInto * grid.splitInto}`;
       // The search runs on grid.json as saved, so a cell whose split or merge is still a preview has to be saved first
-      searchBtn.disabled = full || !savedAsShown(selectedId);
+      setLink(searchBtn, full || !savedAsShown(selectedId) ? null : `${NEW_ISSUE}search-cells.yml&cells=${encodeURIComponent(selectedId)}`);
       searchBtn.textContent = !savedAsShown(selectedId) ? 'Save the split or merge first' : full ? 'Cell is full' : `Search ${selectedId} on GitHub`;
     }
 
@@ -326,18 +338,10 @@
       computeSplits();
       refresh();
     });
-    document.getElementById('searchBtn').addEventListener('click', () => {
-      if (selectedId) window.open(`${NEW_ISSUE}search-cells.yml&cells=${encodeURIComponent(selectedId)}`, '_blank', 'noopener');
-    });
     document.getElementById('saveBtn').addEventListener('click', () => {
       if (!pendingCount()) return;
-      const params = [];
-      if (localSplits.size) params.push('cells=' + encodeURIComponent([...localSplits].sort().join(', ')));
-      if (localMerges.size) params.push('merge=' + encodeURIComponent([...localMerges].sort().join(', ')));
-      window.open(`${NEW_ISSUE}add-split.yml&${params.join('&')}`, '_blank', 'noopener');
-      // The changes are with GitHub now: go back to the grid as grid.json has it
-      localSplits = new Set(); localMerges = new Set(); selectedId = null;
-      computeSplits(); refresh();
+      // The link has already been followed by this click. The changes are with GitHub now: go back to the grid as grid.json has it
+      setTimeout(() => { localSplits = new Set(); localMerges = new Set(); selectedId = null; computeSplits(); refresh(); }, 0);
     });
   </script>
 </body>
