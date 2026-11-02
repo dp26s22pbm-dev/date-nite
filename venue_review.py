@@ -16,7 +16,7 @@ Usage: python venue_review.py merge | issues | approve | menu
   merge:   PR_BODY                               (reads venue-review/cells-<N>.json, N from "Closes #N" in PR_BODY)
   issues:  PR_URL, PR_NUMBER                     (opens an issue for each venue merge left on hold)
   approve: ISSUE_BODY, ISSUE_NUMBER
-  menu:    ISSUE_BODY, ISSUE_NUMBER, COMMENT_BODY, GEMINI_API_KEY"""
+  menu:    ISSUE_BODY, ISSUE_NUMBER, COMMENT_BODY, GEMINI_API_KEY  (a comment of `app: 17.99`-style lines sets prices directly)"""
 import os
 import re
 import sys
@@ -127,6 +127,21 @@ def set_output(key, value):
             one_line = re.sub(r"[\r\n]+", " ", str(value))  # outside the f-string: Python 3.11 forbids backslashes inside one
             f.write(f"{key}={one_line}\n")
 
+PRICE_KEYS = ("app", "casualMain", "premiumMain", "drink", "dessert")
+OVERRIDE_LINE = re.compile(r"^\s*(app|casualMain|premiumMain|drink|dessert)\s*:\s*\$?\s*(\d+(?:\.\d+)?)\s*$", re.I)
+
+def parse_price_overrides(text):
+    """Return {key: price} when every non-blank line of the comment is a `key: price` line, else {} (a pasted menu)."""
+    lines = [l for l in (text or "").splitlines() if l.strip()]
+    found = {}
+    for line in lines:
+        m = OVERRIDE_LINE.match(line)
+        if not m:
+            return {}
+        key = next(k for k in PRICE_KEYS if k.lower() == m.group(1).lower())
+        found[key] = float(m.group(2))
+    return found
+
 def menu():
     """Read prices from a menu pasted into a comment and write them into the venue data block of the issue body.
     The venue is not added to the map; add the `approve-venue` label afterward to do that."""
@@ -137,20 +152,35 @@ def menu():
 
     number = os.environ["ISSUE_NUMBER"]
     body = os.environ["ISSUE_BODY"]
+    comment = os.environ.get("COMMENT_BODY", "")
     venue = parse_issue_venue(body)
-    pricing = add.pricing_from_menu_text(os.environ.get("COMMENT_BODY", ""))
-    if not pricing:
-        set_output("error", "I could not read prices from that text. Reply with the full menu page (open it, select all, "
-                            "copy, paste); it needs at least a handful of dish prices like $12.99.")
-        sys.exit(1)
-
-    casual = round(statistics.median(pricing["casualMains"]), 2)
-    defaulted = [label for key, label in (("premiumMains", "premium main"), ("apps", "appetizer"), ("desserts", "dessert"))
-                 if not pricing.get(key)]
-    premium = round(statistics.median(pricing.get("premiumMains") or [round(casual * 1.6, 2)]), 2)
-    app = round(statistics.median(pricing.get("apps") or [round(casual * 0.55, 2)]), 2)
-    drink = round(statistics.median(pricing.get("drinks") or [max(8.00, round(casual * 0.5, 2))]), 2)
-    dessert = round(statistics.median(pricing.get("desserts") or [8.00]), 2)
+    overrides = parse_price_overrides(comment)
+    defaulted = []
+    if overrides:
+        # A comment of "app: 17.99" style lines sets those prices directly; any price left out keeps its saved value
+        merged = {k: overrides.get(k, venue.get(k)) for k in PRICE_KEYS}
+        missing = [k for k in PRICE_KEYS if merged[k] is None]
+        if missing:
+            set_output("error", "Those prices leave out " + ", ".join(missing) + ", and the venue has no saved value for "
+                                "it. Include all five: app, casualMain, premiumMain, drink, dessert.")
+            sys.exit(1)
+        app, casual, premium, drink, dessert = (merged[k] for k in PRICE_KEYS)
+        source = "the prices you gave"
+    else:
+        pricing = add.pricing_from_menu_text(comment)
+        if not pricing:
+            set_output("error", "I could not read prices from that text. Reply with the full menu page (open it, select all, "
+                                "copy, paste); it needs at least a handful of dish prices like $12.99. Or reply with lines "
+                                "like `app: 17.99`.")
+            sys.exit(1)
+        casual = round(statistics.median(pricing["casualMains"]), 2)
+        defaulted = [label for key, label in (("premiumMains", "premium main"), ("apps", "appetizer"), ("desserts", "dessert"))
+                     if not pricing.get(key)]
+        premium = round(statistics.median(pricing.get("premiumMains") or [round(casual * 1.6, 2)]), 2)
+        app = round(statistics.median(pricing.get("apps") or [round(casual * 0.55, 2)]), 2)
+        drink = round(statistics.median(pricing.get("drinks") or [max(8.00, round(casual * 0.5, 2))]), 2)
+        dessert = round(statistics.median(pricing.get("desserts") or [8.00]), 2)
+        source = "your menu"
 
     is_taco = pricing_rules.is_taco_place(venue.get("name", ""), venue.get("category", "")) \
         and pricing_rules.per_taco_prices(app, casual)
@@ -165,7 +195,7 @@ def menu():
     m = re.match(r"Held from (.*?) for later review\.", body)
     gh("issue", "edit", number, "--body", issue_body(venue, m.group(1) if m else "an earlier search"))
 
-    summary = (f"Prices updated from your menu: appetizer ${app:g}, casual main ${casual:g}, premium main ${premium:g}, "
+    summary = (f"Prices updated from {source}: appetizer ${app:g}, casual main ${casual:g}, premium main ${premium:g}, "
                f"drink ${drink:g}, dessert ${dessert:g} (about ${total} for two).")
     if defaulted:
         summary += " No menu price was found for the " + ", ".join(defaulted) + ", so a typical stand-in was used."
