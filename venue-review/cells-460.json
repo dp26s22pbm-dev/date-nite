@@ -1,0 +1,53 @@
+[
+  {
+    "name": "Shinto Japanese Steakhouse & Sushi Lounge",
+    "category": "Japanese Steakhouse",
+    "city": "Naperville",
+    "state": "IL",
+    "website": "http://shintorestaurants.com/",
+    "coords": [
+      -88.20451,
+      41.779656
+    ],
+    "app": 11.0,
+    "casualMain": 16.0,
+    "premiumMain": 42.0,
+    "drink": 10.0,
+    "dessert": 8.0,
+    "tierColor": "#eab308"
+  },
+  {
+    "name": "Sushi Naper",
+    "category": "Japanese Cuisine",
+    "city": "Naperville",
+    "state": "IL",
+    "website": "http://www.sushinaper.com/",
+    "coords": [
+      -88.204101,
+      41.790499
+    ],
+    "app": 6.0,
+    "casualMain": 12.95,
+    "premiumMain": 19.95,
+    "drink": 8.0,
+    "dessert": 3.95,
+    "tierColor": "#22c55e"
+  },
+  {
+    "name": "CityGate Grille",
+    "category": "Steakhouse",
+    "city": "Naperville",
+    "state": "IL",
+    "website": "http://www.citygategrille.com/",
+    "coords": [
+      -88.201907,
+      41.805295
+    ],
+    "app": 14.0,
+    "casualMain": 17.0,
+    "premiumMain": 30.0,
+    "drink": 8.5,
+    "dessert": 8.0,
+    "tierColor": "#eab308"
+  }
+]
