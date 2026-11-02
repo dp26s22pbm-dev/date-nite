@@ -1,0 +1,53 @@
+name: Venue Review Menu
+
+# Pasting a menu (select all on the menu page, copy, paste) into a comment on a `venue-review` issue reads the prices
+# from it and updates the venue data in the issue body. The venue is added to the map only when the `approve-venue`
+# label is applied (see venue-review.yml). Nothing is pushed here, so this is a separate workflow: venue-review.yml
+# shares a concurrency group that keeps only one waiting run, which could drop a comment.
+on:
+  issue_comment:
+    types: [created]
+
+jobs:
+  menu:
+    # Only the owner and collaborators, only on issues (not pull requests) held for review, never the bot's own comments
+    if: >-
+      !github.event.issue.pull_request &&
+      contains(github.event.issue.labels.*.name, 'venue-review') &&
+      contains(fromJSON('["OWNER","MEMBER","COLLABORATOR"]'), github.event.comment.author_association) &&
+      github.event.comment.user.type != 'Bot'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      issues: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Install Dependencies
+        run: pip install -r requirements.txt
+      - name: Read the prices from the pasted menu
+        id: menu
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          ISSUE_BODY: ${{ github.event.issue.body }}
+          ISSUE_NUMBER: ${{ github.event.issue.number }}
+          COMMENT_BODY: ${{ github.event.comment.body }}
+        run: python venue_review.py menu
+      - name: Reply on the issue
+        if: success()
+        env:
+          GH_TOKEN: ${{ github.token }}
+          SUMMARY: ${{ steps.menu.outputs.summary }}
+        run: gh issue comment ${{ github.event.issue.number }} --repo ${{ github.repository }} --body "$SUMMARY"
+      - name: Report failure on the issue
+        if: failure()
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REASON: ${{ steps.menu.outputs.error }}
+        run: |
+          gh issue comment ${{ github.event.issue.number }} --repo ${{ github.repository }} --body "Could not update the prices. ${REASON:-See the workflow run for details.} Run: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
