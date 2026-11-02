@@ -447,8 +447,9 @@ def price_count(text):
     """How many price-like numbers the text has, by whichever price style it uses most."""
     return max(len(r.findall(text)) for r in (PRICE_RE, BARE_PRICE_RE, TAB_PRICE_RE, LINE_PRICE_RE))
 
-def clean_pricing(data):
-    """Keep only sane numbers from a Gemini pricing reply. Returns None unless it has at least one casual main."""
+def clean_pricing(data, require_main=True):
+    """Keep only sane numbers from a Gemini pricing reply. Returns None unless it has at least one casual main, or, with
+    require_main=False (a partial menu such as a dessert-only page), unless it has a price in any category."""
     if not isinstance(data, dict):
         return None
     out = {}
@@ -462,10 +463,13 @@ def clean_pricing(data):
             if 0 < f < 500:
                 values.append(round(f, 2))
         out[key] = values
-    return out if out["casualMains"] else None
+    if require_main:
+        return out if out["casualMains"] else None
+    return out if any(out.values()) else None
 
-def pricing_from_menu_text(text):
-    """Parse menu prices out of plain text (a pasted menu or a restaurant's menu page) with Gemini."""
+def pricing_from_menu_text(text, require_main=True):
+    """Parse menu prices out of plain text (a pasted menu or a restaurant's menu page) with Gemini. With
+    require_main=False a partial menu (desserts only, say) is returned with the other categories empty."""
     text = (text or "").strip()
     # Image and other binary bytes decoded as text contain digit patterns that look like prices
     if "\x00" in text or sum(1 for c in text[:5000] if c == "\ufffd" or (ord(c) < 32 and c not in "\n\r\t")) > 50:
@@ -480,7 +484,7 @@ def pricing_from_menu_text(text):
             contents=[PDF_PROMPT, "Menu text:\n" + text[:MENU_TEXT_LIMIT]],
         )
         clean = response.text.strip().replace("```json", "").replace("```", "")
-        return clean_pricing(json.loads(clean))
+        return clean_pricing(json.loads(clean), require_main)
     except Exception as e:
         print(f"Menu text parse error: {e}")
         return None

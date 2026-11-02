@@ -4,7 +4,7 @@ search-cells.yml saves the candidate venues in venue-review/cells-<issue>.json a
 decision_block) at the bottom of the pull request description, two task-list items per venue. After the pull request
 merges, the venue-review workflow runs `merge`:
   - Approve ticked        -> the venue is folded into venues.json (fold_pending_venues.py gives it an id)
-  - Deny ticked           -> dropped
+  - Deny ticked           -> dropped and added to excluded-venues.json so later searches skip it
   - neither (or both)     -> held: a `venue-review` issue is opened with the venue's data
 Adding the `approve-venue` label to such an issue runs `approve`, which folds that venue in; closing the issue without
 the label leaves the venue off the map.
@@ -100,11 +100,13 @@ def merge():
     decisions = parse_decisions(body, len(venues))
     approved = [v for v, d in zip(venues, decisions) if d == "approve"]
     held = [v for v, d in zip(venues, decisions) if d == "hold"]
+    denied = [v for v, d in zip(venues, decisions) if d == "deny"]
     print(f"{len(approved)} approved, {len(held)} held, {decisions.count('deny')} denied.")
     if approved:
         write_pending(f"cells-{m.group(1)}.json", approved)
     os.remove(path)
     fold.main()
+    exclude(denied, "denied in venue review")
     with open(HELD_FILE, "w") as f:
         json.dump(held, f)
 
@@ -124,21 +126,32 @@ def approve():
     write_pending(f"review-{os.environ['ISSUE_NUMBER']}.json", [venue])
     fold.main()
 
-def deny():
-    """Put the venue on excluded-venues.json so later searches skip it. The reason is the optional DENY_REASON."""
+def exclude(venues, reason):
+    """Put each venue on excluded-venues.json so later searches skip it. Venues already listed (same name key) are left
+    alone, so a rerun after a rejected push does not add duplicates."""
     import add_city
-    venue = parse_issue_venue(os.environ["ISSUE_BODY"])
-    reason = (os.environ.get("DENY_REASON") or "").strip() or "denied in venue review"
+    if not venues:
+        return
     with open(EXCLUDED_FILE) as f:
         excluded = json.load(f)
-    if any(add_city.name_key(e["name"]) == add_city.name_key(venue["name"]) for e in excluded):
-        print(f"{venue['name']} is already on {EXCLUDED_FILE}.")
-        return
-    excluded.append({"name": venue["name"], "reason": reason})
+    known = {add_city.name_key(e["name"]) for e in excluded}
+    for v in venues:
+        key = add_city.name_key(v["name"])
+        if key in known:
+            print(f"{v['name']} is already on {EXCLUDED_FILE}.")
+            continue
+        known.add(key)
+        excluded.append({"name": v["name"], "reason": reason})
+        print(f"Added {v['name']} to {EXCLUDED_FILE} ({reason}).")
     with open(EXCLUDED_FILE, "w") as f:
         json.dump(excluded, f, indent=2, ensure_ascii=False)
         f.write("\n")
-    print(f"Added {venue['name']} to {EXCLUDED_FILE} ({reason}).")
+
+def deny():
+    """Put the venue on excluded-venues.json so later searches skip it. The reason is the optional DENY_REASON."""
+    venue = parse_issue_venue(os.environ["ISSUE_BODY"])
+    reason = (os.environ.get("DENY_REASON") or "").strip() or "denied in venue review"
+    exclude([venue], reason)
 
 def set_output(key, value):
     path = os.environ.get("GITHUB_OUTPUT")
@@ -175,7 +188,7 @@ def menu():
     comment = os.environ.get("COMMENT_BODY", "")
     venue = parse_issue_venue(body)
     overrides = parse_price_overrides(comment)
-    defaulted = []
+    defaulted, kept = [], []
     if overrides:
         # A comment of "app: 17.99" style lines sets those prices directly; any price left out keeps its saved value
         merged = {k: overrides.get(k, venue.get(k)) for k in PRICE_KEYS}
@@ -187,19 +200,38 @@ def menu():
         app, casual, premium, drink, dessert = (merged[k] for k in PRICE_KEYS)
         source = "the prices you gave"
     else:
-        pricing = add.pricing_from_menu_text(comment)
+        # A partial menu (a dessert-only page, say) updates only the categories it has prices for
+        pricing = add.pricing_from_menu_text(comment, require_main=False)
         if not pricing:
             set_output("error", "I could not read prices from that text. Reply with the full menu page (open it, select all, "
                                 "copy, paste); it needs at least a handful of dish prices like $12.99. Or reply with lines "
                                 "like `app: 17.99`.")
             sys.exit(1)
-        casual = round(statistics.median(pricing["casualMains"]), 2)
-        defaulted = [label for key, label in (("premiumMains", "premium main"), ("apps", "appetizer"), ("drinks", "drink"),
-                                              ("desserts", "dessert")) if not pricing.get(key)]
-        premium = round(statistics.median(pricing.get("premiumMains") or [round(casual * 1.6, 2)]), 2)
-        app = round(statistics.median(pricing.get("apps") or [round(casual * 0.55, 2)]), 2)
-        drink = round(statistics.median(pricing.get("drinks") or [max(8.00, round(casual * 0.5, 2))]), 2)
-        dessert = round(statistics.median(pricing.get("desserts") or [8.00]), 2)
+
+        def found(pricing_key):
+            return round(statistics.median(pricing[pricing_key]), 2) if pricing.get(pricing_key) else None
+
+        casual = found("casualMains") or venue.get("casualMain")
+        if casual is None:
+            set_output("error", "That text has no main course prices and the venue has no saved casual main. Paste the "
+                                "dinner menu, or reply with a line like `casualMain: 27.70`.")
+            sys.exit(1)
+        # For each category: the menu's median, else the saved value, else a stand-in based on the casual main
+        stand_ins = {"premiumMains": ("premiumMain", round(casual * 1.6, 2), "premium main"),
+                     "apps": ("app", round(casual * 0.55, 2), "appetizer"),
+                     "drinks": ("drink", max(8.00, round(casual * 0.5, 2)), "drink"),
+                     "desserts": ("dessert", 8.00, "dessert")}
+        values, kept, defaulted = {}, [], []
+        for pricing_key, (venue_key, stand_in, label) in stand_ins.items():
+            values[venue_key] = found(pricing_key)
+            if values[venue_key] is None:
+                if venue.get(venue_key) is not None:
+                    values[venue_key] = venue[venue_key]
+                    kept.append(label)
+                else:
+                    values[venue_key] = stand_in
+                    defaulted.append(label)
+        premium, app, drink, dessert = values["premiumMain"], values["app"], values["drink"], values["dessert"]
         source = "your menu"
 
     is_taco = pricing_rules.is_taco_place(venue.get("name", ""), venue.get("category", "")) \
@@ -217,6 +249,8 @@ def menu():
 
     summary = (f"Prices updated from {source}: appetizer ${app:g}, casual main ${casual:g}, premium main ${premium:g}, "
                f"drink ${drink:g}, dessert ${dessert:g} (about ${total} for two).")
+    if kept:
+        summary += " Your menu had no " + (", ".join(kept)) + " prices, so the saved " + ("value was" if len(kept) == 1 else "values were") + " kept."
     if defaulted:
         summary += " No menu price was found for the " + ", ".join(defaulted) + ", so a typical stand-in was used."
     if premium < casual:

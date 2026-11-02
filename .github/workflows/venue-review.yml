@@ -2,7 +2,8 @@ name: Venue Review
 
 # A Search Grid Cells pull request lists its candidate venues in venue-review/cells-<issue>.json, with Approve / Deny
 # checkboxes in the description (see venue_review.py).
-#  - When it merges: approved venues are folded into venues.json, denied ones are dropped, and each venue left
+#  - When it merges: approved venues are folded into venues.json, denied ones are dropped and added to
+#    excluded-venues.json (so later searches skip them), and each venue left
 #    undecided gets a `venue-review` issue.
 #  - When you add the `approve-venue` label to one of those issues: that venue is folded into venues.json.
 #    The check is on who applied the label (only the repo owner), not on who opened the issue, because the
@@ -49,7 +50,7 @@ jobs:
           # Another run may push first; start over from the new main and fold again
           for attempt in 1 2 3 4 5 6; do
             python venue_review.py merge
-            git add -A venues.json venue-review pending-venues 2>/dev/null || true
+            git add -A venues.json venue-review pending-venues excluded-venues.json 2>/dev/null || true
             git diff --cached --quiet && break
             git commit -m "Add approved venues (PR #${{ github.event.pull_request.number }})"
             git push && break
