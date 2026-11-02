@@ -48,7 +48,7 @@ BREAKFAST_NAME = re.compile(r"\b(breakfast|brunch|pancakes?|waffles?|omelet|omel
 # Places returns 20 results per page and at most 3 pages; each page is one billed request
 MAX_PAGES = int(os.environ.get("MAX_PAGES", "3"))
 # A rating from a handful of reviews says little: the weighted score pulls such places toward the city average
-MIN_REVIEWS = int(os.environ.get("MIN_REVIEWS", "100"))
+MIN_REVIEWS = int(os.environ.get("MIN_REVIEWS", "50"))
 
 # Place types that are not sit-down restaurants
 EXCLUDED_TYPES = {"fast_food_restaurant", "coffee_shop", "cafe", "bakery", "ice_cream_shop", "meal_takeaway",
