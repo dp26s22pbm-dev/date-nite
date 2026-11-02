@@ -9,10 +9,14 @@ merges, the venue-review workflow runs `merge`:
 Adding the `approve-venue` label to such an issue runs `approve`, which folds that venue in; closing the issue without
 the label leaves the venue off the map.
 
-Usage: python venue_review.py merge | issues | approve
+Pasting a menu into a comment on such an issue runs `menu`, which reads the prices from it and rewrites the data block
+in the issue body (the venue is still added only when the label is applied).
+
+Usage: python venue_review.py merge | issues | approve | menu
   merge:   PR_BODY                               (reads venue-review/cells-<N>.json, N from "Closes #N" in PR_BODY)
   issues:  PR_URL, PR_NUMBER                     (opens an issue for each venue merge left on hold)
-  approve: ISSUE_BODY, ISSUE_NUMBER"""
+  approve: ISSUE_BODY, ISSUE_NUMBER
+  menu:    ISSUE_BODY, ISSUE_NUMBER, COMMENT_BODY, GEMINI_API_KEY"""
 import os
 import re
 import sys
@@ -116,5 +120,58 @@ def approve():
     write_pending(f"review-{os.environ['ISSUE_NUMBER']}.json", [venue])
     fold.main()
 
+def set_output(key, value):
+    path = os.environ.get("GITHUB_OUTPUT")
+    if path:
+        with open(path, "a") as f:
+            one_line = re.sub(r"[\r\n]+", " ", str(value))  # outside the f-string: Python 3.11 forbids backslashes inside one
+            f.write(f"{key}={one_line}\n")
+
+def menu():
+    """Read prices from a menu pasted into a comment and write them into the venue data block of the issue body.
+    The venue is not added to the map; add the `approve-venue` label afterward to do that."""
+    # Imported here because it creates a Gemini client on import and the other commands do not need one
+    import statistics
+    import add_venue_from_issue as add
+    import pricing_rules
+
+    number = os.environ["ISSUE_NUMBER"]
+    body = os.environ["ISSUE_BODY"]
+    venue = parse_issue_venue(body)
+    pricing = add.pricing_from_menu_text(os.environ.get("COMMENT_BODY", ""))
+    if not pricing:
+        set_output("error", "I could not read prices from that text. Reply with the full menu page (open it, select all, "
+                            "copy, paste); it needs at least a handful of dish prices like $12.99.")
+        sys.exit(1)
+
+    casual = round(statistics.median(pricing["casualMains"]), 2)
+    defaulted = [label for key, label in (("premiumMains", "premium main"), ("apps", "appetizer"), ("desserts", "dessert"))
+                 if not pricing.get(key)]
+    premium = round(statistics.median(pricing.get("premiumMains") or [round(casual * 1.6, 2)]), 2)
+    app = round(statistics.median(pricing.get("apps") or [round(casual * 0.55, 2)]), 2)
+    drink = round(statistics.median(pricing.get("drinks") or [max(8.00, round(casual * 0.5, 2))]), 2)
+    dessert = round(statistics.median(pricing.get("desserts") or [8.00]), 2)
+
+    is_taco = pricing_rules.is_taco_place(venue.get("name", ""), venue.get("category", "")) \
+        and pricing_rules.per_taco_prices(app, casual)
+    total = round((app + (2 if is_taco else 1) * casual + premium + 2 * drink + dessert) * 1.30)
+    venue.update({"app": app, "casualMain": casual, "premiumMain": premium, "drink": drink, "dessert": dessert,
+                  "tierColor": add.calculate_tier_color(total)})
+    if is_taco:
+        venue["isTaco"] = True
+    else:
+        venue.pop("isTaco", None)
+
+    m = re.match(r"Held from (.*?) for later review\.", body)
+    gh("issue", "edit", number, "--body", issue_body(venue, m.group(1) if m else "an earlier search"))
+
+    summary = (f"Prices updated from your menu: appetizer ${app:g}, casual main ${casual:g}, premium main ${premium:g}, "
+               f"drink ${drink:g}, dessert ${dessert:g} (about ${total} for two).")
+    if defaulted:
+        summary += " No menu price was found for the " + ", ".join(defaulted) + ", so a typical stand-in was used."
+    summary += f" Add the `{APPROVE_LABEL}` label to put the venue on the map."
+    set_output("summary", summary)
+    print(summary)
+
 if __name__ == "__main__":
-    {"merge": merge, "issues": issues, "approve": approve}[sys.argv[1]]()
+    {"merge": merge, "issues": issues, "approve": approve, "menu": menu}[sys.argv[1]]()
