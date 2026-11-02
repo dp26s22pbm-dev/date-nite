@@ -2595,5 +2595,23 @@
     "drink": 8.0,
     "dessert": 3.95,
     "tierColor": "#22c55e"
+  },
+  {
+    "id": 156,
+    "name": "CityGate Grille",
+    "category": "Steakhouse",
+    "city": "Naperville",
+    "state": "IL",
+    "website": "http://www.citygategrille.com/",
+    "coords": [
+      -88.201907,
+      41.805295
+    ],
+    "app": 14.0,
+    "casualMain": 17.0,
+    "premiumMain": 30.0,
+    "drink": 8.5,
+    "dessert": 13.0,
+    "tierColor": "#eab308"
   }
 ]
