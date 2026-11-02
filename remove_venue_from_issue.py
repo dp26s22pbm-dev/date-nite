@@ -54,7 +54,10 @@ def main():
         with open(URLS_FILE, "w") as f:
             f.writelines(l for l in lines if not re.match(r"\s*%d:\s" % venue["id"], l))
 
-    reason = re.sub(r"\s+", " ", os.environ.get("ISSUE_BODY") or "").strip() or "removed by request"
+    # The Remove a Venue form wraps the reason in a "### Reason (Optional)" heading and fills "_No response_" when blank
+    body = re.sub(r"^###[^\n]*\n", "", os.environ.get("ISSUE_BODY") or "", flags=re.MULTILINE)
+    body = re.sub(r"^_No response_$", "", body, flags=re.MULTILINE)
+    reason = re.sub(r"\s+", " ", body).strip() or "removed by request"
     with open(EXCLUDED_FILE) as f:
         excluded = json.load(f)
     if not any(name_key(e["name"]) == name_key(venue["name"]) for e in excluded):
