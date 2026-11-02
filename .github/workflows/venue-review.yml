@@ -43,6 +43,7 @@ jobs:
         run: |
           gh label create venue-review --color FBCA04 --description "Venue held for review" 2>/dev/null || true
           gh label create approve-venue --color 0E8A16 --description "Add this held venue to the map" 2>/dev/null || true
+          gh label create deny-venue --color B60205 --description "Blacklist this held venue" 2>/dev/null || true
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
           # Another run may push first; start over from the new main and fold again
@@ -95,3 +96,41 @@ jobs:
           done
           gh issue comment "$ISSUE_NUMBER" --body "Approved. The venue is now in venues.json (or was already on the map)."
           gh issue close "$ISSUE_NUMBER" --reason completed
+
+  denied-issue:
+    if: >-
+      github.event_name == 'issues' && github.event.label.name == 'deny-venue' &&
+      contains(github.event.issue.labels.*.name, 'venue-review') &&
+      github.event.sender.login == github.repository_owner
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      issues: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Add the venue to excluded-venues.json
+        env:
+          GH_TOKEN: ${{ github.token }}
+          ISSUE_BODY: ${{ github.event.issue.body }}
+          ISSUE_NUMBER: ${{ github.event.issue.number }}
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          for attempt in 1 2 3 4 5 6; do
+            python venue_review.py deny
+            git add excluded-venues.json
+            git diff --cached --quiet && break
+            git commit -m "Exclude venue from review issue #${{ github.event.issue.number }}"
+            git push && break
+            echo "Push rejected (attempt $attempt); starting over from origin/main"
+            git fetch origin main
+            git reset --hard origin/main
+            [ "$attempt" = 6 ] && { echo "Could not push after 6 attempts" >&2; exit 1; }
+          done
+          gh issue comment "$ISSUE_NUMBER" --body "Denied. The venue is on excluded-venues.json, so later searches skip it."
+          gh issue close "$ISSUE_NUMBER" --reason "not planned"
