@@ -41,7 +41,7 @@ Module 54 input `existingFlags` is `{{23.`22`}}` (with backticks) and module 27 
 
 ## Settings you may want to change
 
-At the top of module 38: `REQUIRE_IL_HQ`, `ALLOWED_SIZES`, `MIN_SCORE`, `RESEARCH_LIMIT`, `OUTREACH_LIMIT`. The size bands (middle_market is 50 to 500 employees) are in the module 30 prompt and match the ranges already in your old code. Module 45 repeats `MIN_SCORE` and `OUTREACH_LIMIT`, so change both together.
+At the top of module 38: `REQUIRE_IL_HQ`, `ALLOWED_SIZES`, `MIN_SCORE`, `RESEARCH_LIMIT`, `OUTREACH_LIMIT`. The size bands (middle_market is 50 to 1,000 employees) are in the module 30 prompt and match the ranges already in your old code. Module 45 repeats `MIN_SCORE` and `OUTREACH_LIMIT`, so change both together.
 
 ## Verified in Make (replay of one weekly docket email)
 

@@ -27,7 +27,7 @@ function normalizeSizeBand(value) {
   if (normalized === 'small') return 'small';
   if (normalized === 'middle_market' || /mid.?market|mid.?size|\b(50|51)\s*(-|to)\s*(200|500)|201\s*(-|to)\s*500/.test(normalized)) return 'middle_market';
   if (normalized === 'national' || /national|publicly traded|enterprise|fortune/.test(normalized)) return 'national';
-  if (normalized === 'large' || /large|501\+|over 500|more than 500/.test(normalized)) return 'large';
+  if (normalized === 'large' || /large|1,?001\+|over 1,?000|more than 1,?000/.test(normalized)) return 'large';
   return 'unknown';
 }
 
@@ -65,7 +65,7 @@ function employeeCount(text) {
 
 function bandFromCount(n) {
   if (n < 50) return 'micro';
-  if (n <= 500) return 'middle_market';
+  if (n <= 1000) return 'middle_market';
   if (n <= 10000) return 'large';
   return 'national';
 }
