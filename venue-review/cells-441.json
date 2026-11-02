@@ -1,0 +1,53 @@
+[
+  {
+    "name": "Q Restaurant",
+    "category": "Vietnamese & Thai Cuisine",
+    "city": "Lemont",
+    "state": "IL",
+    "website": "http://qrestaurantlemont.com/",
+    "coords": [
+      -88.001508,
+      41.659696
+    ],
+    "app": 14.0,
+    "casualMain": 22.0,
+    "premiumMain": 35.0,
+    "drink": 11.0,
+    "dessert": 8.0,
+    "tierColor": "#eab308"
+  },
+  {
+    "name": "Tap House Grill",
+    "category": "Casual American",
+    "city": "Lemont Township",
+    "state": "IL",
+    "website": "http://www.taphousegrills.com/",
+    "coords": [
+      -87.99836,
+      41.654218
+    ],
+    "app": 15.0,
+    "casualMain": 17.0,
+    "premiumMain": 25.5,
+    "drink": 11.0,
+    "dessert": 8.0,
+    "tierColor": "#eab308"
+  },
+  {
+    "name": "KITARO GRILL & SUSHI LOUNGE",
+    "category": "Japanese Cuisine",
+    "city": "Lemont",
+    "state": "IL",
+    "website": "http://www.gokitaro.com/",
+    "coords": [
+      -88.001521,
+      41.654741
+    ],
+    "app": 14.0,
+    "casualMain": 18.0,
+    "premiumMain": 35.5,
+    "drink": 7.99,
+    "dessert": 8.0,
+    "tierColor": "#eab308"
+  }
+]
