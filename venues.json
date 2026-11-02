@@ -2541,5 +2541,23 @@
     "drink": 8.0,
     "dessert": 8.0,
     "tierColor": "#22c55e"
+  },
+  {
+    "id": 153,
+    "name": "The Town Bar & Grill",
+    "category": "Casual American",
+    "city": "Aurora",
+    "state": "IL",
+    "website": "http://www.thetownbar.com/",
+    "coords": [
+      -88.251085,
+      41.758163
+    ],
+    "app": 11.0,
+    "casualMain": 13.0,
+    "premiumMain": 15.0,
+    "drink": 8.0,
+    "dessert": 9.0,
+    "tierColor": "#22c55e"
   }
 ]
