@@ -2435,5 +2435,21 @@
     "drink": 8.5,
     "dessert": 9.0,
     "tierColor": "#22c55e"
+  },
+  {
+    "id": 146,
+    "name": "Chef Soon Contemporary Sushi & Bar",
+    "category": "Modern Japanese",
+    "website": "http://chefsoon.com/",
+    "coords": [
+      -88.070548,
+      41.768867
+    ],
+    "app": 9.0,
+    "casualMain": 15.0,
+    "premiumMain": 28.0,
+    "drink": 8.0,
+    "dessert": 8.0,
+    "tierColor": "#22c55e"
   }
 ]
