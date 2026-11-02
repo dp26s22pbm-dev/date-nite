@@ -1800,24 +1800,6 @@
     "website": "https://taqueria-el-valle.placejoys.com/"
   },
   {
-    "id": 110,
-    "name": "Poke Bros.",
-    "category": "Hawaiian Cuisine",
-    "city": "Bolingbrook",
-    "state": "IL",
-    "website": "https://www.eatpokebros.com/",
-    "coords": [
-      -88.03719,
-      41.722904
-    ],
-    "app": 5.0,
-    "casualMain": 12.5,
-    "premiumMain": 14.25,
-    "drink": 8.0,
-    "dessert": 5.25,
-    "tierColor": "#22c55e"
-  },
-  {
     "id": 111,
     "name": "Los Comales Bolingbrook",
     "category": "Mexican Cuisine",
