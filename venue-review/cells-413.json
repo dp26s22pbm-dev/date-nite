@@ -1,0 +1,54 @@
+[
+  {
+    "name": "At's A Nice Pizza",
+    "category": "Italian / Pizza",
+    "city": "Romeoville",
+    "state": "IL",
+    "website": "http://nicepizzaromeoville.com/",
+    "coords": [
+      -88.082488,
+      41.639518
+    ],
+    "app": 7.95,
+    "casualMain": 12.95,
+    "premiumMain": 16.7,
+    "drink": 8.0,
+    "dessert": 5.97,
+    "tierColor": "#22c55e"
+  },
+  {
+    "name": "Mariscos El Coste\u00f1o Restaurant and Bar",
+    "category": "Mexican Cuisine",
+    "city": "Romeoville",
+    "state": "IL",
+    "website": "https://www.mariscoselcostenoromeoville.com/",
+    "coords": [
+      -88.082405,
+      41.639329
+    ],
+    "app": 11.99,
+    "casualMain": 11.97,
+    "premiumMain": 24.95,
+    "drink": 12.0,
+    "dessert": 8.0,
+    "tierColor": "#eab308",
+    "isTaco": true
+  },
+  {
+    "name": "Las Islas Marias",
+    "category": "Mexican Cuisine",
+    "city": "Romeoville",
+    "state": "IL",
+    "website": "https://luerry.com/las-islas-marias",
+    "coords": [
+      -88.081141,
+      41.653693
+    ],
+    "app": 11.3,
+    "casualMain": 17.75,
+    "premiumMain": 32.08,
+    "drink": 8.88,
+    "dessert": 7.42,
+    "tierColor": "#eab308"
+  }
+]
