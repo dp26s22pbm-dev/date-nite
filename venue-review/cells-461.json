@@ -1,0 +1,53 @@
+[
+  {
+    "name": "Ach-N-Lou's Pizza Pub",
+    "category": "Italian / Pizza",
+    "city": "Aurora",
+    "state": "IL",
+    "website": "http://achnlouspizza.com/",
+    "coords": [
+      -88.282385,
+      41.789779
+    ],
+    "app": 5.95,
+    "casualMain": 10.45,
+    "premiumMain": 19.0,
+    "drink": 6.0,
+    "dessert": 8.0,
+    "tierColor": "#22c55e"
+  },
+  {
+    "name": "Sorella by Giada",
+    "category": "Modern Italian",
+    "city": "Aurora",
+    "state": "IL",
+    "website": "https://www.pennentertainment.com/hollywood-aurora/dining/sorella-by-giada",
+    "coords": [
+      -88.282951,
+      41.805948
+    ],
+    "app": 9.0,
+    "casualMain": 12.0,
+    "premiumMain": 19.0,
+    "drink": 10.0,
+    "dessert": 6.0,
+    "tierColor": "#22c55e"
+  },
+  {
+    "name": "Lady T's Sports Bar",
+    "category": "American / Pizza",
+    "city": "Aurora",
+    "state": "IL",
+    "website": "https://www.ladytssportsbar.com/",
+    "coords": [
+      -88.282271,
+      41.792489
+    ],
+    "app": 12.0,
+    "casualMain": 14.0,
+    "premiumMain": 17.0,
+    "drink": 8.0,
+    "dessert": 8.0,
+    "tierColor": "#22c55e"
+  }
+]
