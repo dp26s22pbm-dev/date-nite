@@ -1,0 +1,18 @@
+name: Remove a Venue
+description: Take a restaurant off the map and keep it from coming back
+title: "Remove: "
+labels: ["remove-venue"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Type the restaurant's name after "Remove:" in the title box above, exactly as it appears on the map. The venue is removed from the map and added to the excluded list so the Add a City importer does not bring it back.
+
+  - type: textarea
+    id: reason
+    attributes:
+      label: Reason (Optional)
+      description: "Saved with the venue in excluded-venues.json."
+      placeholder: "e.g., Permanently closed"
+    validations:
+      required: false
