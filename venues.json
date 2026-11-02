@@ -2383,5 +2383,23 @@
     "drink": 8.0,
     "dessert": 6.99,
     "tierColor": "#eab308"
+  },
+  {
+    "id": 143,
+    "name": "Las Islas Marias",
+    "category": "Mexican Cuisine",
+    "city": "Romeoville",
+    "state": "IL",
+    "website": "https://luerry.com/las-islas-marias",
+    "coords": [
+      -88.081141,
+      41.653693
+    ],
+    "app": 17.45,
+    "casualMain": 27.7,
+    "premiumMain": 31.45,
+    "drink": 12.0,
+    "dessert": 8.0,
+    "tierColor": "#eab308"
   }
 ]
