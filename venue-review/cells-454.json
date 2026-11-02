@@ -1,0 +1,36 @@
+[
+  {
+    "name": "The Town Bar & Grill",
+    "category": "Casual American",
+    "city": "Aurora",
+    "state": "IL",
+    "website": "http://www.thetownbar.com/",
+    "coords": [
+      -88.251085,
+      41.758163
+    ],
+    "app": 11.0,
+    "casualMain": 13.0,
+    "premiumMain": 15.0,
+    "drink": 8.0,
+    "dessert": 9.0,
+    "tierColor": "#22c55e"
+  },
+  {
+    "name": "Rosati's Pizza",
+    "category": "Italian / Pizza",
+    "city": "Aurora",
+    "state": "IL",
+    "website": "https://myrosatispizza.com/locations/aurora-ogden/?utm_source=google&utm_medium=organic&utm_campaign=google_business_profile&utm_term=aurora",
+    "coords": [
+      -88.243436,
+      41.742166
+    ],
+    "app": 7.49,
+    "casualMain": 11.99,
+    "premiumMain": 16.65,
+    "drink": 8.0,
+    "dessert": 8.62,
+    "tierColor": "#22c55e"
+  }
+]
