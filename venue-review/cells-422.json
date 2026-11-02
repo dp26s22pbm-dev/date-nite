@@ -1,0 +1,53 @@
+[
+  {
+    "name": "Corner Stone Tavern",
+    "category": "Casual American",
+    "city": "Lemont",
+    "state": "IL",
+    "website": "http://cornerstonelemont.com/",
+    "coords": [
+      -87.998789,
+      41.675582
+    ],
+    "app": 8.0,
+    "casualMain": 16.0,
+    "premiumMain": 19.0,
+    "drink": 14.0,
+    "dessert": 8.0,
+    "tierColor": "#eab308"
+  },
+  {
+    "name": "Matt's Barbecue and Bourbon Bar",
+    "category": "Texas BBQ",
+    "city": "Lemont",
+    "state": "IL",
+    "website": "https://mattsbarbecuelemont.com/",
+    "coords": [
+      -87.999898,
+      41.674433
+    ],
+    "app": 5.0,
+    "casualMain": 11.0,
+    "premiumMain": 20.5,
+    "drink": 8.0,
+    "dessert": 5.0,
+    "tierColor": "#22c55e"
+  },
+  {
+    "name": "La Dolce Vita of Lemont",
+    "category": "Italian",
+    "city": "Lemont",
+    "state": "IL",
+    "website": "http://www.ladolcevitalemont.com/",
+    "coords": [
+      -87.998698,
+      41.675329
+    ],
+    "app": 13.75,
+    "casualMain": 26.45,
+    "premiumMain": 50.95,
+    "drink": 13.22,
+    "dessert": 7.75,
+    "tierColor": "#f97316"
+  }
+]
