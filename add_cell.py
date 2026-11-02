@@ -156,7 +156,7 @@ def main():
                  "without any prices found, no counter-service places). Ratings were used only for the ranking and are not saved.\n\n"
                  f"Review the prices and pins below, then tick Approve or Deny for each venue under Decisions at the bottom. "
                  f"The candidates are in `{pending_file or 'no file (none added)'}`. When you merge, approved venues join "
-                 "`venues.json` (with ids) automatically, denied venues are dropped, and a venue with neither box ticked gets "
+                 "`venues.json` (with ids) automatically, denied venues are dropped and added to `excluded-venues.json` so later searches skip them, and a venue with neither box ticked gets "
                  "its own `venue-review` issue to approve later. Every searched cell is also recorded in `grid/grid.json`, "
                  "so the grid page shows it as searched.")
     notes_text = ("\n\n## Not searched\n\n" + "\n".join(notes)) if notes else ""
