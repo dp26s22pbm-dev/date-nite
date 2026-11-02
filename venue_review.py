@@ -175,7 +175,7 @@ def menu():
     comment = os.environ.get("COMMENT_BODY", "")
     venue = parse_issue_venue(body)
     overrides = parse_price_overrides(comment)
-    defaulted = []
+    defaulted, kept = [], []
     if overrides:
         # A comment of "app: 17.99" style lines sets those prices directly; any price left out keeps its saved value
         merged = {k: overrides.get(k, venue.get(k)) for k in PRICE_KEYS}
@@ -187,19 +187,38 @@ def menu():
         app, casual, premium, drink, dessert = (merged[k] for k in PRICE_KEYS)
         source = "the prices you gave"
     else:
-        pricing = add.pricing_from_menu_text(comment)
+        # A partial menu (a dessert-only page, say) updates only the categories it has prices for
+        pricing = add.pricing_from_menu_text(comment, require_main=False)
         if not pricing:
             set_output("error", "I could not read prices from that text. Reply with the full menu page (open it, select all, "
                                 "copy, paste); it needs at least a handful of dish prices like $12.99. Or reply with lines "
                                 "like `app: 17.99`.")
             sys.exit(1)
-        casual = round(statistics.median(pricing["casualMains"]), 2)
-        defaulted = [label for key, label in (("premiumMains", "premium main"), ("apps", "appetizer"), ("drinks", "drink"),
-                                              ("desserts", "dessert")) if not pricing.get(key)]
-        premium = round(statistics.median(pricing.get("premiumMains") or [round(casual * 1.6, 2)]), 2)
-        app = round(statistics.median(pricing.get("apps") or [round(casual * 0.55, 2)]), 2)
-        drink = round(statistics.median(pricing.get("drinks") or [max(8.00, round(casual * 0.5, 2))]), 2)
-        dessert = round(statistics.median(pricing.get("desserts") or [8.00]), 2)
+
+        def found(pricing_key):
+            return round(statistics.median(pricing[pricing_key]), 2) if pricing.get(pricing_key) else None
+
+        casual = found("casualMains") or venue.get("casualMain")
+        if casual is None:
+            set_output("error", "That text has no main course prices and the venue has no saved casual main. Paste the "
+                                "dinner menu, or reply with a line like `casualMain: 27.70`.")
+            sys.exit(1)
+        # For each category: the menu's median, else the saved value, else a stand-in based on the casual main
+        stand_ins = {"premiumMains": ("premiumMain", round(casual * 1.6, 2), "premium main"),
+                     "apps": ("app", round(casual * 0.55, 2), "appetizer"),
+                     "drinks": ("drink", max(8.00, round(casual * 0.5, 2)), "drink"),
+                     "desserts": ("dessert", 8.00, "dessert")}
+        values, kept, defaulted = {}, [], []
+        for pricing_key, (venue_key, stand_in, label) in stand_ins.items():
+            values[venue_key] = found(pricing_key)
+            if values[venue_key] is None:
+                if venue.get(venue_key) is not None:
+                    values[venue_key] = venue[venue_key]
+                    kept.append(label)
+                else:
+                    values[venue_key] = stand_in
+                    defaulted.append(label)
+        premium, app, drink, dessert = values["premiumMain"], values["app"], values["drink"], values["dessert"]
         source = "your menu"
 
     is_taco = pricing_rules.is_taco_place(venue.get("name", ""), venue.get("category", "")) \
@@ -217,6 +236,8 @@ def menu():
 
     summary = (f"Prices updated from {source}: appetizer ${app:g}, casual main ${casual:g}, premium main ${premium:g}, "
                f"drink ${drink:g}, dessert ${dessert:g} (about ${total} for two).")
+    if kept:
+        summary += " Your menu had no " + (", ".join(kept)) + " prices, so the saved " + ("value was" if len(kept) == 1 else "values were") + " kept."
     if defaulted:
         summary += " No menu price was found for the " + ", ".join(defaulted) + ", so a typical stand-in was used."
     if premium < casual:
