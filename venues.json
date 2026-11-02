@@ -2241,5 +2241,23 @@
     "drink": 8.0,
     "dessert": 8.0,
     "tierColor": "#22c55e"
+  },
+  {
+    "id": 135,
+    "name": "At's A Nice Pizza",
+    "category": "Italian / Pizza",
+    "city": "Romeoville",
+    "state": "IL",
+    "website": "http://nicepizzaromeoville.com/",
+    "coords": [
+      -88.082488,
+      41.639518
+    ],
+    "app": 7.95,
+    "casualMain": 12.95,
+    "premiumMain": 16.7,
+    "drink": 8.0,
+    "dessert": 5.97,
+    "tierColor": "#22c55e"
   }
 ]
