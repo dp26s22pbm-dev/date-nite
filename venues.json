@@ -2419,5 +2419,21 @@
     "drink": 9.98,
     "dessert": 8.0,
     "tierColor": "#eab308"
+  },
+  {
+    "id": 145,
+    "name": "Tapri",
+    "category": "Indian Cuisine",
+    "website": "https://taprisocial.com/?utm_source=google",
+    "coords": [
+      -88.070565,
+      41.76897
+    ],
+    "app": 11.5,
+    "casualMain": 17.0,
+    "premiumMain": 22.0,
+    "drink": 8.5,
+    "dessert": 9.0,
+    "tierColor": "#22c55e"
   }
 ]
