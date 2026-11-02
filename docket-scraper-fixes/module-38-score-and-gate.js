@@ -49,6 +49,27 @@ function normalizeState(value) {
   return n.toUpperCase();
 }
 
+// Employee count read from the size evidence. The model's band is only trusted when no count is found.
+function employeeCount(text) {
+  const t = String(text || '').toLowerCase().replace(/(\d),(\d)/g, '$1$2');
+  const unit = '(?:full[- ]time |total |paid |regular )?(?:employees|employee|staff|people|workers|team members)';
+  const counts = [];
+  for (const m of t.matchAll(new RegExp('(\\d+)\\s*(?:-|\u2013|to)\\s*(\\d+)\\+?\\s*' + unit, 'g'))) counts.push(Number(m[2]));
+  for (const m of t.matchAll(new RegExp('(\\d+)\\s*\\+?\\s*' + unit, 'g'))) counts.push(Number(m[1]));
+  for (const m of t.matchAll(new RegExp(unit + '[^\\d]{0,25}?(\\d+)', 'g'))) {
+    const n = Number(m[1]);
+    if (n < 1990 || n > 2039) counts.push(n);
+  }
+  return counts.length ? Math.max(...counts) : null;
+}
+
+function bandFromCount(n) {
+  if (n < 50) return 'micro';
+  if (n <= 500) return 'middle_market';
+  if (n <= 10000) return 'large';
+  return 'national';
+}
+
 function scoreCase(raw) {
   const c = {
     ...raw,
@@ -59,6 +80,13 @@ function scoreCase(raw) {
   const flags = [];
   const hq = normalizeState(c.hqState);
   const ops = c.hasIllinoisOperations;
+  const count = employeeCount(c.sizeEvidence);
+  if (count !== null) {
+    c.sizeBand = bandFromCount(count);
+  } else if (c.sizeBand === 'middle_market') {
+    c.sizeBand = 'unknown';
+    flags.push('Employee count not found');
+  }
   const size = c.sizeBand;
   const ownershipType = normalizeOwnership(c.ownership);
   const cls = c.isClassAction;
@@ -149,4 +177,9 @@ for (const c of scored) {
   delete c._insufficientProfile;
 }
 
-return { cases: scored, researchCases: topFive };
+// Module 39 iterates this list, so it must never be empty or the scenario stops before the sheet writes.
+const researchFeed = topFive.length
+  ? topFive
+  : [{ docketNumber: 'NO-CANDIDATES', corporateDefendant: 'NO-CANDIDATES', resolvedEntity: '', parentCompany: '', hqState: '', researchCandidate: false }];
+
+return { cases: scored, researchCases: topFive, researchFeed };
