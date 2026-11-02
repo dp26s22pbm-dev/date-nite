@@ -12,10 +12,11 @@ the label leaves the venue off the map.
 Pasting a menu into a comment on such an issue runs `menu`, which reads the prices from it and rewrites the data block
 in the issue body (the venue is still added only when the label is applied).
 
-Usage: python venue_review.py merge | issues | approve | menu
+Usage: python venue_review.py merge | issues | approve | deny | menu
   merge:   PR_BODY                               (reads venue-review/cells-<N>.json, N from "Closes #N" in PR_BODY)
   issues:  PR_URL, PR_NUMBER                     (opens an issue for each venue merge left on hold)
   approve: ISSUE_BODY, ISSUE_NUMBER
+  deny:    ISSUE_BODY                            (adds the venue to excluded-venues.json; DENY_REASON optional)
   menu:    ISSUE_BODY, ISSUE_NUMBER, COMMENT_BODY, GEMINI_API_KEY  (a comment of `app: 17.99`-style lines sets prices directly)"""
 import os
 import re
@@ -28,6 +29,8 @@ import fold_pending_venues as fold
 REVIEW_DIR = "venue-review"
 LABEL = "venue-review"
 APPROVE_LABEL = "approve-venue"
+DENY_LABEL = "deny-venue"
+EXCLUDED_FILE = "excluded-venues.json"
 HELD_FILE = os.path.join(os.environ.get("RUNNER_TEMP", "/tmp"), "held-venues.json")
 DATA_START = "<!-- venue-data"
 DATA_END = "venue-data -->"
@@ -61,7 +64,8 @@ def issue_body(venue, source_url):
     return (f"Held from {source_url} for later review.\n\n"
             f"- **Cuisine:** {venue.get('category', '?')}\n- **Website:** {venue.get('website', 'none')}\n"
             f"- **Prices:** {prices}\n\n"
-            f"Add the `{APPROVE_LABEL}` label to put this venue on the map. Close the issue to leave it off. "
+            f"Add the `{APPROVE_LABEL}` label to put this venue on the map. Add the `{DENY_LABEL}` label to leave it off and keep "
+            "it from coming back in later searches. Close the issue to leave it off without blacklisting it. "
             "Fix the prices or cuisine first by editing the JSON below.\n\n"
             f"{DATA_START}\n{data}\n{DATA_END}")
 
@@ -119,6 +123,22 @@ def approve():
     venue = parse_issue_venue(os.environ["ISSUE_BODY"])
     write_pending(f"review-{os.environ['ISSUE_NUMBER']}.json", [venue])
     fold.main()
+
+def deny():
+    """Put the venue on excluded-venues.json so later searches skip it. The reason is the optional DENY_REASON."""
+    import add_city
+    venue = parse_issue_venue(os.environ["ISSUE_BODY"])
+    reason = (os.environ.get("DENY_REASON") or "").strip() or "denied in venue review"
+    with open(EXCLUDED_FILE) as f:
+        excluded = json.load(f)
+    if any(add_city.name_key(e["name"]) == add_city.name_key(venue["name"]) for e in excluded):
+        print(f"{venue['name']} is already on {EXCLUDED_FILE}.")
+        return
+    excluded.append({"name": venue["name"], "reason": reason})
+    with open(EXCLUDED_FILE, "w") as f:
+        json.dump(excluded, f, indent=2, ensure_ascii=False)
+        f.write("\n")
+    print(f"Added {venue['name']} to {EXCLUDED_FILE} ({reason}).")
 
 def set_output(key, value):
     path = os.environ.get("GITHUB_OUTPUT")
@@ -207,4 +227,4 @@ def menu():
     print(summary)
 
 if __name__ == "__main__":
-    {"merge": merge, "issues": issues, "approve": approve, "menu": menu}[sys.argv[1]]()
+    {"merge": merge, "issues": issues, "approve": approve, "deny": deny, "menu": menu}[sys.argv[1]]()
