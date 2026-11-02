@@ -2313,5 +2313,23 @@
     "drink": 13.22,
     "dessert": 7.75,
     "tierColor": "#f97316"
+  },
+  {
+    "id": 139,
+    "name": "Home Run Inn Pizza",
+    "category": "Italian / Pizza",
+    "city": "Darien",
+    "state": "IL",
+    "website": "https://www.homeruninnpizza.com/location/darien/",
+    "coords": [
+      -88.010897,
+      41.749961
+    ],
+    "app": 12.0,
+    "casualMain": 15.0,
+    "premiumMain": 21.0,
+    "drink": 8.0,
+    "dessert": 5.0,
+    "tierColor": "#22c55e"
   }
 ]
