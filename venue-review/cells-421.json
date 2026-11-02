@@ -1,0 +1,53 @@
+[
+  {
+    "name": "Crab King Cajun Boil & Bar",
+    "category": "Cajun Cuisine",
+    "city": "Downers Grove",
+    "state": "IL",
+    "website": "http://www.crabkingusa.com/",
+    "coords": [
+      -88.019807,
+      41.751502
+    ],
+    "app": 7.1,
+    "casualMain": 17.49,
+    "premiumMain": 23.99,
+    "drink": 8.74,
+    "dessert": 8.99,
+    "tierColor": "#22c55e"
+  },
+  {
+    "name": "Grand Duke's Restaurant",
+    "category": "Lithuanian Cuisine",
+    "city": "Downers Grove",
+    "state": "IL",
+    "website": "http://granddukesrestaurant.com/",
+    "coords": [
+      -88.008256,
+      41.751832
+    ],
+    "app": 8.99,
+    "casualMain": 21.99,
+    "premiumMain": 29.49,
+    "drink": 26.0,
+    "dessert": 10.99,
+    "tierColor": "#f97316"
+  },
+  {
+    "name": "Home Run Inn Pizza",
+    "category": "Italian / Pizza",
+    "city": "Darien",
+    "state": "IL",
+    "website": "https://www.homeruninnpizza.com/location/darien/",
+    "coords": [
+      -88.010897,
+      41.749961
+    ],
+    "app": 12.0,
+    "casualMain": 15.0,
+    "premiumMain": 21.0,
+    "drink": 8.0,
+    "dessert": 5.0,
+    "tierColor": "#22c55e"
+  }
+]
