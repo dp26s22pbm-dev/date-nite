@@ -311,7 +311,7 @@ def fetch_pricing_via_gemini_search(venue_name, city="Naperville, IL"):
         print(f"Gemini Search Grounding error for {venue_name}: {e}")
         return None
 
-CLAUDE_SEARCH_MODEL = os.environ.get("CLAUDE_SEARCH_MODEL", "claude-opus-5-5")
+CLAUDE_SEARCH_MODEL = os.environ.get("CLAUDE_SEARCH_MODEL", "claude-sonnet-5-5")
 
 def claude_search_pricing(venue_name, city, website=""):
     """Backup for Gemini's web search: ask Claude, with Anthropic's web search and web fetch tools, for the same pricing
