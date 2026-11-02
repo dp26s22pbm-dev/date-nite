@@ -2649,5 +2649,41 @@
     "drink": 8.0,
     "dessert": 8.0,
     "tierColor": "#22c55e"
+  },
+  {
+    "id": 159,
+    "name": "Nori Sushi & Grill",
+    "category": "Japanese Cuisine",
+    "city": "Oswego",
+    "state": "IL",
+    "website": "https://norisushieats.com/",
+    "coords": [
+      -88.314174,
+      41.699721
+    ],
+    "app": 5.12,
+    "casualMain": 14.25,
+    "premiumMain": 21.95,
+    "drink": 8.0,
+    "dessert": 4.99,
+    "tierColor": "#22c55e"
+  },
+  {
+    "id": 160,
+    "name": "Sakamoto Japanese Grill and Sushi",
+    "category": "Japanese Cuisine",
+    "city": "Oswego",
+    "state": "IL",
+    "website": "https://www.sakamotofun.com/",
+    "coords": [
+      -88.319842,
+      41.695859
+    ],
+    "app": 8.97,
+    "casualMain": 19.0,
+    "premiumMain": 28.0,
+    "drink": 9.5,
+    "dessert": 7.5,
+    "tierColor": "#eab308"
   }
 ]
