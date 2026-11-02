@@ -264,19 +264,45 @@ def grounding_sources(response, limit=5):
                 found.append((web.title or web.uri, web.uri))
     return found[:limit]
 
+def grounding_summary(response):
+    """What Google's search grounding reported, for the job log: the queries Gemini ran and how many source pages came
+    back. No queries means Gemini did not search at all."""
+    queries, chunks = [], 0
+    for cand in getattr(response, "candidates", None) or []:
+        meta = getattr(cand, "grounding_metadata", None)
+        if meta is None:
+            return "no grounding metadata in the response"
+        queries += list(getattr(meta, "web_search_queries", None) or [])
+        chunks += len(getattr(meta, "grounding_chunks", None) or [])
+    return f"search queries={queries} source pages={chunks}"
+
+# True when the last web search returned no source pages even after a retry, so its prices may come from Gemini's memory
+search_ungrounded = False
+
 def fetch_pricing_via_gemini_search(venue_name, city="Naperville, IL"):
-    """Query Gemini with Google Search Grounding to find live menu pricing."""
+    """Query Gemini with Google Search Grounding to find live menu pricing. A response with no source pages means
+    Gemini may not have searched, so it is asked once more; if that is empty too, search_ungrounded is set."""
+    global search_ungrounded
+    search_ungrounded = False
+    search_sources.clear()
     try:
         prompt = SEARCH_PRICING_PROMPT.format(venue_name=venue_name, city=city, scope_rules=SCOPE_RULES)
-        response = client.models.generate_content(
-            model="gemini-3.6-flash",
-            contents=prompt,
-            config=types.GenerateContentConfig(
-                tools=[types.Tool(google_search=types.GoogleSearch())],
-                temperature=0.1
-            ),
-        )
-        search_sources[:] = grounding_sources(response)
+        retry_note = ("\nYou must run a Google Search for this restaurant's menu and base the prices on the pages you find. "
+                      "Do not answer from memory.\n")
+        for attempt in (1, 2):
+            response = client.models.generate_content(
+                model="gemini-3.6-flash",
+                contents=prompt + (retry_note if attempt == 2 else ""),
+                config=types.GenerateContentConfig(
+                    tools=[types.Tool(google_search=types.GoogleSearch())],
+                    temperature=0.1
+                ),
+            )
+            search_sources[:] = grounding_sources(response)
+            print(f"Web search for {venue_name} (attempt {attempt}): {grounding_summary(response)}")
+            if search_sources:
+                break
+        search_ungrounded = not search_sources
         raw_text = response.text.strip()
         if raw_text.startswith("```"):
             raw_text = raw_text.strip("`").removeprefix("json").strip()
@@ -1464,7 +1490,7 @@ def main():
                 lines.append("**Pages the web search consulted:** " + "; ".join(f"[{t}]({u})" for t, u in search_sources))
             else:
                 lines.append("")
-                lines.append("**Pages the web search consulted:** none were returned")
+                lines.append("**Pages the web search consulted:** none were returned, even on a second try")
     else:
         lines.append("**Prices used:** none could be found, so typical defaults were saved")
 
@@ -1474,6 +1500,8 @@ def main():
     set_output("needs_menu", "true" if needs_menu else "false")
     set_output("prices_found", "true" if pricing and pricing.get("casualMains") else "false")  # false: only the typical defaults were saved
     warnings = price_sanity_warnings(app, casual_main * casual_count, premium_main, drink, dessert, defaulted, estimated=guessed)
+    if str(pricing_source).startswith("a web search") and not reused_pricing and search_ungrounded:
+        warnings.append("the web search returned no source pages, so these prices may come from Gemini's memory rather than from a menu")
     set_output("needs_check", "true" if warnings else "false")
     final_coords = (venues[existing_idx] if existing_idx is not None else entry)["coords"]
     neighbors = nearby_venues(venues[existing_idx]["id"] if existing_idx is not None else entry["id"], final_coords, venues)
