@@ -1,0 +1,19 @@
+[
+  {
+    "name": "McBride's Pub & Grille",
+    "category": "Casual American",
+    "city": "Joliet",
+    "state": "IL",
+    "website": "http://plainfield.mcbridespubandgrille.com/",
+    "coords": [
+      -88.257357,
+      41.56382
+    ],
+    "app": 16.0,
+    "casualMain": 17.0,
+    "premiumMain": 19.0,
+    "drink": 8.5,
+    "dessert": 9.0,
+    "tierColor": "#eab308"
+  }
+]
