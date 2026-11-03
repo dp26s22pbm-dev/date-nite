@@ -2972,5 +2972,23 @@
     "drink": 14.99,
     "dessert": 8.0,
     "tierColor": "#f97316"
+  },
+  {
+    "id": 177,
+    "name": "Texas Roadhouse",
+    "category": "Steakhouse",
+    "city": "Joliet",
+    "state": "IL",
+    "website": "https://www.texasroadhouse.com/locations/illinois/joliet?utm_source=listing&utm_medium=search",
+    "coords": [
+      -88.162542,
+      41.577971
+    ],
+    "app": 8.1,
+    "casualMain": 14.0,
+    "premiumMain": 37.0,
+    "drink": 8.0,
+    "dessert": 9.0,
+    "tierColor": "#eab308"
   }
 ]
