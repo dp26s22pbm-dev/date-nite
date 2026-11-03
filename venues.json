@@ -2955,5 +2955,22 @@
     "drink": 8.0,
     "dessert": 8.0,
     "tierColor": "#22c55e"
+  },
+  {
+    "id": 176,
+    "name": "El Sabor Latino",
+    "category": "Pan-Latin",
+    "city": "Joliet",
+    "state": "IL",
+    "coords": [
+      -88.159073,
+      41.56484
+    ],
+    "app": 16.49,
+    "casualMain": 27.59,
+    "premiumMain": 41.0,
+    "drink": 14.99,
+    "dessert": 8.0,
+    "tierColor": "#f97316"
   }
 ]
