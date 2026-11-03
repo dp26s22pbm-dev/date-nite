@@ -1,0 +1,54 @@
+[
+  {
+    "name": "Oasis Mexican Kitchen & Bar",
+    "category": "Mexican Cuisine",
+    "city": "Lockport",
+    "state": "IL",
+    "website": "https://www.oasismexicankitchenbar.com/",
+    "coords": [
+      -88.030062,
+      41.59809
+    ],
+    "app": 10.0,
+    "casualMain": 16.0,
+    "premiumMain": 37.0,
+    "drink": 8.0,
+    "dessert": 8.0,
+    "tierColor": "#eab308"
+  },
+  {
+    "name": "TORRO MEXICAN CUISINE",
+    "category": "Mexican Cuisine",
+    "city": "Lockport",
+    "state": "IL",
+    "website": "https://www.torrorestaurant.com/",
+    "coords": [
+      -88.023361,
+      41.5961
+    ],
+    "app": 15.99,
+    "casualMain": 4.25,
+    "premiumMain": 13.99,
+    "drink": 8.0,
+    "dessert": 8.0,
+    "tierColor": "#22c55e",
+    "isTaco": true
+  },
+  {
+    "name": "Coom's Corner Sports Grill",
+    "category": "Casual American",
+    "city": "Lockport",
+    "state": "IL",
+    "website": "https://www.coomscorner.com/",
+    "coords": [
+      -88.031567,
+      41.596831
+    ],
+    "app": 13.0,
+    "casualMain": 15.0,
+    "premiumMain": 20.0,
+    "drink": 8.0,
+    "dessert": 9.0,
+    "tierColor": "#22c55e"
+  }
+]
