@@ -2793,5 +2793,41 @@
     "drink": 8.38,
     "dessert": 8.0,
     "tierColor": "#22c55e"
+  },
+  {
+    "id": 167,
+    "name": "Riverside Pizza & Pub - Oswego",
+    "category": "American / Pizza",
+    "city": "Oswego",
+    "state": "IL",
+    "website": "https://oswego.riversidepizzapub.com/",
+    "coords": [
+      -88.31601,
+      41.704303
+    ],
+    "app": 10.0,
+    "casualMain": 14.49,
+    "premiumMain": 20.0,
+    "drink": 8.0,
+    "dessert": 6.0,
+    "tierColor": "#22c55e"
+  },
+  {
+    "id": 168,
+    "name": "Anchor Bar Oswego",
+    "category": "Casual American",
+    "city": "Oswego",
+    "state": "IL",
+    "website": "https://anchorbar.com/locations/oswego-il/",
+    "coords": [
+      -88.307719,
+      41.703546
+    ],
+    "app": 10.99,
+    "casualMain": 14.99,
+    "premiumMain": 18.49,
+    "drink": 8.0,
+    "dessert": 8.0,
+    "tierColor": "#22c55e"
   }
 ]
