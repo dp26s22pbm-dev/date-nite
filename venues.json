@@ -2757,5 +2757,23 @@
     "drink": 8.0,
     "dessert": 9.0,
     "tierColor": "#22c55e"
+  },
+  {
+    "id": 165,
+    "name": "TORRO MEXICAN CUISINE",
+    "category": "Mexican Cuisine",
+    "city": "Lockport",
+    "state": "IL",
+    "website": "https://www.torrorestaurant.com/",
+    "coords": [
+      -88.023361,
+      41.5961
+    ],
+    "app": 15.99,
+    "casualMain": 18.99,
+    "premiumMain": 29.49,
+    "drink": 9.49,
+    "dessert": 10.99,
+    "tierColor": "#eab308"
   }
 ]
