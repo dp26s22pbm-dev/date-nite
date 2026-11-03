@@ -2937,5 +2937,23 @@
     "drink": 15.5,
     "dessert": 14.0,
     "tierColor": "#f97316"
+  },
+  {
+    "id": 175,
+    "name": "Metro Grill & Bar",
+    "category": "New American",
+    "city": "Joliet",
+    "state": "IL",
+    "website": "http://www.metrojoliet.com/",
+    "coords": [
+      -88.161882,
+      41.558787
+    ],
+    "app": 13.99,
+    "casualMain": 15.99,
+    "premiumMain": 16.99,
+    "drink": 8.0,
+    "dessert": 8.0,
+    "tierColor": "#22c55e"
   }
 ]
