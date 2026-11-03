@@ -1,0 +1,36 @@
+[
+  {
+    "name": "Jefa Tacos",
+    "category": "Mexican Cuisine",
+    "city": "Aurora",
+    "state": "IL",
+    "website": "https://www.jefatacos.com/",
+    "coords": [
+      -88.275559,
+      41.813124
+    ],
+    "app": 4.5,
+    "casualMain": 11.5,
+    "premiumMain": 15.65,
+    "drink": 8.0,
+    "dessert": 5.0,
+    "tierColor": "#22c55e"
+  },
+  {
+    "name": "Black Pepper Lounge",
+    "category": "Kerala Cuisine",
+    "city": "Aurora",
+    "state": "IL",
+    "website": "http://www.blackpepperlounge.com/",
+    "coords": [
+      -88.277343,
+      41.81283
+    ],
+    "app": 8.99,
+    "casualMain": 17.49,
+    "premiumMain": 21.99,
+    "drink": 8.74,
+    "dessert": 7.99,
+    "tierColor": "#22c55e"
+  }
+]
