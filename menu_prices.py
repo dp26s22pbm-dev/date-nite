@@ -60,7 +60,11 @@ def main():
         warnings.append(f"the premium main (${premium}) is under ${pricing_rules.COUNTER_MENU_PREMIUM_MAX:g}, "
                         "which looks like a counter-service menu rather than a date spot")
 
+    # The block to paste into the issue's "Manual Pricing Overrides" field (parsed by main() in the importer)
+    override = "\n".join(f"{k}: {v:.2f}" for k, v in (("app", app), ("casualMain", casual), ("premiumMain", premium),
+                                                      ("drink", drink), ("dessert", dessert)))
     print(json.dumps({
+        "override": override,
         "app": app, "casualMain": casual, "premiumMain": premium, "drink": drink, "dessert": dessert,
         "totalCost": total, "tierColor": importer.calculate_tier_color(total),
         "tacoAtATime": is_taco, "defaulted": defaulted, "warnings": warnings,
