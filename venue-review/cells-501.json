@@ -1,0 +1,53 @@
+[
+  {
+    "name": "Berger Bros Pub",
+    "category": "Casual American",
+    "city": "Winfield",
+    "state": "IL",
+    "website": "http://www.bergerbrospub.com/",
+    "coords": [
+      -88.158681,
+      41.870663
+    ],
+    "app": 15.0,
+    "casualMain": 20.0,
+    "premiumMain": 36.0,
+    "drink": 10.0,
+    "dessert": 9.0,
+    "tierColor": "#eab308"
+  },
+  {
+    "name": "Caliendo's Restaurant & Bar",
+    "category": "Italian / Pizza",
+    "city": "Winfield",
+    "state": "IL",
+    "website": "http://www.caliendos.com/",
+    "coords": [
+      -88.158555,
+      41.871056
+    ],
+    "app": 8.75,
+    "casualMain": 12.5,
+    "premiumMain": 21.0,
+    "drink": 8.0,
+    "dessert": 7.0,
+    "tierColor": "#22c55e"
+  },
+  {
+    "name": "Cooper's Corner",
+    "category": "Casual American",
+    "city": "Winfield",
+    "state": "IL",
+    "website": "http://cooperscorner.com/",
+    "coords": [
+      -88.150128,
+      41.857539
+    ],
+    "app": 13.99,
+    "casualMain": 19.99,
+    "premiumMain": 25.99,
+    "drink": 9.99,
+    "dessert": 8.0,
+    "tierColor": "#eab308"
+  }
+]
