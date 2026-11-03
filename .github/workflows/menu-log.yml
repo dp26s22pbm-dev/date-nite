@@ -1,0 +1,32 @@
+name: Menu Import Log
+
+# Run this from the Actions tab to see which menus the importer could not read: the problem sites, the most common
+# failure reasons, and venues still without a real menu. The log itself lives on the menu-log branch (see menu_log.py).
+on:
+  workflow_dispatch:
+    inputs:
+      recent:
+        description: Recent imports to list
+        default: "15"
+
+jobs:
+  report:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Show the Log
+        env:
+          RECENT: ${{ inputs.recent }}
+        run: |
+          python menu_log.py report --recent "${RECENT:-15}" | tee report.txt
+          { echo '```'; cat report.txt; echo '```'; } >> "$GITHUB_STEP_SUMMARY"
