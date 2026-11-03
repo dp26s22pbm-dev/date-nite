@@ -2703,5 +2703,23 @@
     "drink": 9.75,
     "dessert": 8.0,
     "tierColor": "#eab308"
+  },
+  {
+    "id": 162,
+    "name": "Black Pepper Lounge",
+    "category": "Kerala Cuisine",
+    "city": "Aurora",
+    "state": "IL",
+    "website": "http://www.blackpepperlounge.com/",
+    "coords": [
+      -88.277343,
+      41.81283
+    ],
+    "app": 8.99,
+    "casualMain": 17.49,
+    "premiumMain": 21.99,
+    "drink": 8.74,
+    "dessert": 7.99,
+    "tierColor": "#22c55e"
   }
 ]
