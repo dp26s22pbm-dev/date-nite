@@ -2901,5 +2901,41 @@
     "drink": 8.5,
     "dessert": 9.0,
     "tierColor": "#eab308"
+  },
+  {
+    "id": 173,
+    "name": "Taco Loco Bar & Grill",
+    "category": "Mexican Cuisine",
+    "city": "Plainfield",
+    "state": "IL",
+    "website": "https://www.tacolocobar.com/",
+    "coords": [
+      -88.203531,
+      41.590012
+    ],
+    "app": 9.35,
+    "casualMain": 17.0,
+    "premiumMain": 30.0,
+    "drink": 8.5,
+    "dessert": 8.0,
+    "tierColor": "#eab308"
+  },
+  {
+    "id": 174,
+    "name": "La Dolce Vita per tutti",
+    "category": "Italian",
+    "city": "Plainfield",
+    "state": "IL",
+    "website": "https://ladolcevitaplainfield.com/",
+    "coords": [
+      -88.203506,
+      41.589634
+    ],
+    "app": 19.0,
+    "casualMain": 31.0,
+    "premiumMain": 50.0,
+    "drink": 15.5,
+    "dessert": 14.0,
+    "tierColor": "#f97316"
   }
 ]
