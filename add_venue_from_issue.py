@@ -10,6 +10,7 @@ import urllib.request
 import urllib.parse
 from html import unescape
 import places_usage
+import menu_log
 import pricing_rules
 from google import genai
 from google.genai import types
@@ -310,12 +311,15 @@ def fetch_pricing_via_gemini_search(venue_name, city="Naperville, IL"):
             if search_sources:
                 break
         search_ungrounded = not search_sources
+        if search_ungrounded:
+            menu_log.step("search_gemini", "no_sources", detail=grounding_summary(response))
         raw_text = response.text.strip()
         if raw_text.startswith("```"):
             raw_text = raw_text.strip("`").removeprefix("json").strip()
         return json.loads(raw_text)
     except Exception as e:
         print(f"Gemini Search Grounding error for {venue_name}: {e}")
+        menu_log.step("search_gemini", "error", detail=e)
         return None
 
 CLAUDE_SEARCH_MODEL = os.environ.get("CLAUDE_SEARCH_MODEL", "claude-sonnet-5-5")
@@ -327,6 +331,7 @@ def claude_search_pricing(venue_name, city, website=""):
     api_key = os.environ.get("ANTHROPIC_API_KEY", "").strip()
     if not api_key:
         print("ANTHROPIC_API_KEY is not set; skipping the Claude web search.")
+        menu_log.step("search_claude", "no_key")
         return None, []
     try:
         import anthropic
@@ -361,6 +366,7 @@ def claude_search_pricing(venue_name, city, website=""):
         claude_pages[0] = len(sources)
         if response.stop_reason == "refusal":
             print(f"Claude web search for {venue_name} was refused, so there are no prices from it.")
+            menu_log.step("search_claude", "refused", pages=len(sources))
             return None, []
         text = "".join(b.text for b in response.content if b.type == "text")
         start, end = text.find("{"), text.rfind("}")
@@ -368,9 +374,12 @@ def claude_search_pricing(venue_name, city, website=""):
         if not pricing:
             # Without this the log cannot say whether Claude found no prices or answered in a form the parser rejected
             print(f"Claude's reply for {venue_name} had no usable prices. Its reply was: {text[:1500]!r}")
+        menu_log.step("search_claude", "ok" if pricing else "no_prices", pages=len(sources),
+                      sources=[menu_log.host_of(u) for _, u in sources[:5]] or None)
         return pricing, sources[:5]
     except Exception as e:
         print(f"Claude web search error for {venue_name}: {e}")
+        menu_log.step("search_claude", "error", detail=e)
         return None, []
 
 claude_pages = [None]  # pages the last Claude search consulted; None until a search ran. A list so claude_search_pricing can set it
@@ -427,9 +436,14 @@ def fetch_pdf_pricing(url, mime="application/pdf"):
             ]
         )
         clean = response.text.strip().replace("```json", "").replace("```", "")
-        return json.loads(clean)
+        data = json.loads(clean)
+        found = clean_pricing(data)
+        menu_log.step("pdf", "ok" if found else "no_prices", url=url, mime=mime,
+                      n=sum(len(v) for v in found.values()) if found else 0)
+        return data
     except Exception as e:
         print(f"PDF or image fetch/parse error: {e}")
+        menu_log.step("pdf", "download_or_parse_error", url=url, detail=e, mime=mime)
         return None
 
 PRICE_RE = re.compile(r"\$\s?\d{1,3}(?:\.\d{2})?")
@@ -467,16 +481,21 @@ def clean_pricing(data, require_main=True):
         return out if out["casualMains"] else None
     return out if any(out.values()) else None
 
-def pricing_from_menu_text(text, require_main=True):
+def pricing_from_menu_text(text, require_main=True, where="pasted_text", url=None):
     """Parse menu prices out of plain text (a pasted menu or a restaurant's menu page) with Gemini. With
     require_main=False a partial menu (desserts only, say) is returned with the other categories empty."""
     text = (text or "").strip()
+    # where: "pasted_text", "page_html" (plain request) or "page_browser" (rendered), for the menu log
+    seen = {"url": url, "chars": len(text), "platform": menu_log.platform_of(url or "", text) if url else None}
     # Image and other binary bytes decoded as text contain digit patterns that look like prices
     if "\x00" in text or sum(1 for c in text[:5000] if c == "\ufffd" or (ord(c) < 32 and c not in "\n\r\t")) > 50:
         print("Menu text looks like binary data; not using it.")
+        menu_log.step(where, "binary", **seen)
         return None
-    if price_count(text) < 6:
+    prices = price_count(text)
+    if prices < 6:
         print("Menu text has too few prices to use.")
+        menu_log.step(where, "too_few_prices", n=prices, **seen)
         return None
     try:
         response = client.models.generate_content(
@@ -484,9 +503,12 @@ def pricing_from_menu_text(text, require_main=True):
             contents=[PDF_PROMPT, "Menu text:\n" + text[:MENU_TEXT_LIMIT]],
         )
         clean = response.text.strip().replace("```json", "").replace("```", "")
-        return clean_pricing(json.loads(clean), require_main)
+        pricing = clean_pricing(json.loads(clean), require_main)
+        menu_log.step(where, "ok" if pricing else "no_casual_main", n=prices, **seen)
+        return pricing
     except Exception as e:
         print(f"Menu text parse error: {e}")
+        menu_log.step(where, "gemini_error", detail=e, n=prices, **seen)
         return None
 
 # Hosts that refused a plain request (401, 403, 429) or dropped the connection during the TLS handshake. A real browser
@@ -506,11 +528,13 @@ def fetch_url(url, limit=2000000, with_url=False):
     """GET a page. Returns (bytes, content_type), or (bytes, content_type, final_url) with with_url, or None when it
     is blocked or fails."""
     if _host(url) in TLS_FAILED_HOSTS:
+        menu_log.step("fetch", "skipped_tls_host", url=url)
         return None
     try:
         req = urllib.request.Request(url, headers={"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64)"})
         with _opener.open(req, timeout=15) as resp:
             if resp.status != 200:
+                menu_log.step("fetch", f"http_{resp.status}", url=url)
                 return None
             data, ctype = resp.read(limit), resp.headers.get("Content-Type", "")
             return (data, ctype, resp.geturl()) if with_url else (data, ctype)
@@ -519,6 +543,7 @@ def fetch_url(url, limit=2000000, with_url=False):
         if e.code in (401, 403, 429, 301, 302, 303, 307, 308):
             BLOCKED_HOSTS.add(_host(url))
         print(f"Could not fetch {url}: {e}")
+        menu_log.step("fetch", f"http_{e.code}", url=url)
         return None
     except Exception as e:
         # A handshake or connection the server drops on a script (Hinsdale Prime ends every urllib TLS handshake with
@@ -528,8 +553,10 @@ def fetch_url(url, limit=2000000, with_url=False):
             BLOCKED_HOSTS.add(_host(url))
             TLS_FAILED_HOSTS.add(_host(url))
             print(f"Could not fetch {url}: {e}; this site will be read through a browser.")
+            menu_log.step("fetch", "tls_failed" if isinstance(e, ssl.SSLError) or isinstance(getattr(e, "reason", None), ssl.SSLError) else "connection_failed", url=url, detail=e)
             return None
         print(f"Could not fetch {url}: {e}")
+        menu_log.step("fetch", "fetch_error", url=url, detail=e)
         return None
 
 def html_to_text(html):
@@ -553,9 +580,11 @@ def _use_browser():
     global browser_launches
     if sync_playwright is None:
         print("playwright is not installed; skipping the browser read.")
+        menu_log.step("browser", "unavailable")
         return False
     if browser_launches >= BROWSER_LIMIT:
         print("Browser limit reached for this run; skipping the browser read.")
+        menu_log.step("browser", "limit")
         return False
     browser_launches += 1
     return True
@@ -625,11 +654,14 @@ def render_page_html(url):
                     pass
                 html = page.content()
                 print(f"Browser read {url} -> {page.url}: {len(html)} characters of HTML, {len(ANCHOR_RE.findall(html))} links")
+                menu_log.step("browser", "ok", url=url, chars=len(html), links=len(ANCHOR_RE.findall(html)),
+                              platform=menu_log.platform_of(page.url, html))
                 return html, page.url
             finally:
                 browser.close()
     except Exception as e:
         print(f"Browser read failed for {url}: {e}")
+        menu_log.step("browser", "failed", url=url, detail=e)
         return None
 
 def render_page_text(url, timeout_ms=45000):
@@ -671,11 +703,15 @@ def render_page_text(url, timeout_ms=45000):
                     pass
                 text = "\n".join(parts)
                 print(f"Browser read {url} -> {page.url}: {len(text)} characters of text, {len(PRICE_RE.findall(text))} dollar prices")
+                menu_log.step("browser", "ok", url=url, chars=len(text), n=len(PRICE_RE.findall(text)),
+                              frames=len(page.frames) - 1 or None, tabs=len(labels) or None,
+                              platform=menu_log.platform_of(page.url, RENDERED_HTML.get(url, ("", ""))[0]))
                 return text
             finally:
                 browser.close()
     except Exception as e:
         print(f"Browser read failed for {url}: {e}")
+        menu_log.step("browser", "failed", url=url, detail=e)
         return None
 
 def get_page(url):
@@ -900,24 +936,29 @@ def pricing_from_website_menu(site, where=""):
             # A PDF or an image of the menu (a flyer with no prices simply returns nothing)
             pricing = clean_pricing(fetch_pdf_pricing(url, mime))
             if pricing and sum(len(v) for v in pricing.values()) < 6:
+                menu_log.step("pdf", "too_few_prices", url=url, n=sum(len(v) for v in pricing.values()))
                 pricing = None
         elif got and got[1] and not re.search(r"text|html|xml|json", got[1], re.I):
             print(f"Skipping {url}: {got[1]} is not a page.")
+            menu_log.step("fetch", "not_a_page", url=url, detail=got[1])
             continue
         elif got:
             html = got[0].decode("utf-8", "ignore")
             text = html_to_text(html)
-            pricing = pricing_from_menu_text(text)
+            pricing = pricing_from_menu_text(text, where="page_html", url=url)
+            if MORE_RE.search(text):
+                menu_log.step("page", "load_more", url=url)
             if not pricing or MORE_RE.search(text):
                 # Too few prices in the HTML usually means JavaScript draws the menu; a "Load more" control means the
                 # page lists only some of the dishes until it is clicked
                 rendered = render_page_text(url)
-                pricing = (pricing_from_menu_text(rendered) if rendered else None) or pricing
+                pricing = (pricing_from_menu_text(rendered, where="page_browser", url=url) if rendered else None) or pricing
         elif _host(url) in BLOCKED_HOSTS:
             # The site turns away plain requests; a browser may not be
             rendered = render_page_text(url)
-            pricing = pricing_from_menu_text(rendered) if rendered else None
+            pricing = pricing_from_menu_text(rendered, where="page_browser", url=url) if rendered else None
         if pricing:
+            menu_log.step("site_pages", "ok", url=url, n=len(tried))
             return pricing, url
         page, final = RENDERED_HTML.get(url) or ((html, url) if html else (None, None))
         if page:
@@ -928,7 +969,9 @@ def pricing_from_website_menu(site, where=""):
             new = [u for u in links if u not in tried and u not in queue][:6]
             if new:
                 print(f"{url} has no prices; trying the menu links on it: {new}")
+                menu_log.step("page", "no_prices_links_followed", url=url, links=len(new), platform=menu_log.platform_of(final, page))
                 queue = new + queue
+    menu_log.step("site_pages", "no_menu_page_found", url=site, n=len(tried))
     return None, None
 
 def _gemini_read_site(name, site, hint=""):
@@ -963,11 +1006,15 @@ def pricing_from_gemini_reading_site(name, site):
                 pricing = retry
             else:
                 print("Premium mains still look low; keeping the first read.")
+                menu_log.step("site_gemini", "lunch_prices_suspected", url=site)
         if pricing and sum(len(v) for v in pricing.values()) >= 6:
+            menu_log.step("site_gemini", "ok", url=site, n=sum(len(v) for v in pricing.values()))
             return pricing
         print("Gemini could not read enough real prices from the restaurant's site.")
+        menu_log.step("site_gemini", "too_few_prices", url=site, n=sum(len(v) for v in pricing.values()) if pricing else 0)
     except Exception as e:
         print(f"Gemini site read error for {site}: {e}")
+        menu_log.step("site_gemini", "error", url=site, detail=e)
     return None
 
 def _is_google_search_url(url):
@@ -1412,10 +1459,19 @@ def main():
     reused_pricing = bool(pricing)
     if reused_pricing:
         print(f"Reusing the prices from the first attempt ({pricing_source}).")
+    if not reused_pricing:
+        # A retry after a rejected push reuses the first attempt's prices and was logged then
+        if website_found:
+            website_status = "maps_listing" if "Maps" in website_source else "found"
+        else:
+            website_status = "given" if website else ("saved" if saved_site else "none")
+        menu_log.start(venue=name, website=website or saved_site or "", website_status=website_status,
+                       menu_url=menu_url, reply=bool(menu_override))
     if not pricing and menu_text:
         pricing = pricing_from_menu_text(menu_text)
         pricing_source = "your pasted menu"
         if not pricing and menu_override:
+            menu_log.finish("reply_unreadable", source=pricing_source)
             abort("I could not read prices from that text. Reply again with the full menu page (open it, select all, copy, "
                   "paste); it needs at least a handful of dish prices like $12.99.")
         if not pricing:
@@ -1427,13 +1483,15 @@ def main():
         # Google's own Menu panel is not readable: Google answers automated requests with a CAPTCHA
         print("The menu link is a Google search page, which cannot be read automatically; trying other sources. "
               "Copy the text from Google's Menu panel and paste it into 'Menu text (Optional)' instead.")
+        menu_log.step("menu_link", "google_search_url", url=menu_url)
     elif not pricing and menu_url:
         got = fetch_url(menu_url)
         if got and "pdf" not in got[1].lower():
-            pricing = pricing_from_menu_text(html_to_text(got[0].decode("utf-8", "ignore")))
+            link_html = got[0].decode("utf-8", "ignore")
+            pricing = pricing_from_menu_text(html_to_text(link_html), where="page_html", url=menu_url)
             if not pricing:
                 rendered = render_page_text(menu_url)
-                pricing = pricing_from_menu_text(rendered) if rendered else None
+                pricing = pricing_from_menu_text(rendered, where="page_browser", url=menu_url) if rendered else None
             pricing_source = "the menu link"
     if not pricing and (website or saved_site):
         where_text = (listing or {}).get("address") or place_text or address or ""
@@ -1611,6 +1669,14 @@ def main():
     if claude_backup_result:
         set_output("claude_backup", f"{claude_backup_result}:{claude_found_nothing_pages}")  # read by add_city.py for its Skipped lines
     set_output("prices_found", "true" if pricing and pricing.get("casualMains") else "false")  # false: only the typical defaults were saved
+    # The menu log: what was read, from where, and what the importer had to invent. See menu_log.py.
+    found_prices = bool(pricing and pricing.get("casualMains"))
+    from_search = str(pricing_source).startswith("a web search")
+    menu_log.finish(("web_search_only" if from_search else ("menu_read_partial" if defaulted else "menu_read")) if found_prices else "none",
+                    source=pricing_source, defaulted=defaulted, pricing=pricing if found_prices else None,
+                    venue_id=entry["id"], category=category, needs_menu=needs_menu,
+                    final={"app": app, "casualMain": casual_main, "premiumMain": premium_main, "drink": drink, "dessert": dessert},
+                    claude_backup=claude_backup_result, claude_pages=claude_found_nothing_pages if claude_backup_result else None)
     warnings = price_sanity_warnings(app, casual_main * casual_count, premium_main, drink, dessert, defaulted, estimated=guessed)
     if str(pricing_source).startswith("a web search") and not reused_pricing and search_ungrounded:
         warnings.append("the web search returned no source pages, so these prices may come from Gemini's memory rather than from a menu")

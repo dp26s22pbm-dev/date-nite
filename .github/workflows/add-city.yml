@@ -109,3 +109,10 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: python places_usage.py publish || true
+
+      # Which menu sources worked or failed for each venue, kept on the menu-log branch (see menu_log.py)
+      - name: Save the menu import log
+        if: always()
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: python menu_log.py publish || true
