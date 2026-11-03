@@ -2721,5 +2721,41 @@
     "drink": 8.74,
     "dessert": 7.99,
     "tierColor": "#22c55e"
+  },
+  {
+    "id": 163,
+    "name": "Oasis Mexican Kitchen & Bar",
+    "category": "Mexican Cuisine",
+    "city": "Lockport",
+    "state": "IL",
+    "website": "https://www.oasismexicankitchenbar.com/",
+    "coords": [
+      -88.030062,
+      41.59809
+    ],
+    "app": 10.0,
+    "casualMain": 16.0,
+    "premiumMain": 37.0,
+    "drink": 8.0,
+    "dessert": 8.0,
+    "tierColor": "#eab308"
+  },
+  {
+    "id": 164,
+    "name": "Coom's Corner Sports Grill",
+    "category": "Casual American",
+    "city": "Lockport",
+    "state": "IL",
+    "website": "https://www.coomscorner.com/",
+    "coords": [
+      -88.031567,
+      41.596831
+    ],
+    "app": 13.0,
+    "casualMain": 15.0,
+    "premiumMain": 20.0,
+    "drink": 8.0,
+    "dessert": 9.0,
+    "tierColor": "#22c55e"
   }
 ]
