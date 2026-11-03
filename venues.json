@@ -2775,5 +2775,23 @@
     "drink": 9.49,
     "dessert": 10.99,
     "tierColor": "#eab308"
+  },
+  {
+    "id": 166,
+    "name": "Poor Boy's Pub",
+    "category": "Casual American",
+    "city": "Montgomery",
+    "state": "IL",
+    "website": "http://www.poorboyspub.net/",
+    "coords": [
+      -88.321359,
+      41.726788
+    ],
+    "app": 10.75,
+    "casualMain": 16.75,
+    "premiumMain": 21.55,
+    "drink": 8.38,
+    "dessert": 8.0,
+    "tierColor": "#22c55e"
   }
 ]
