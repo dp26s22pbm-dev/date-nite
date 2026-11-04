@@ -1,0 +1,46 @@
+name: Weekly Menu Import Report
+
+# Every Saturday morning: reads the menu-log branch, looks at the last 7 days of menu imports, and opens an issue that groups the
+# failures into patterns and recommends importer changes (see menu_report.py). Run it by hand from the Actions tab too.
+on:
+  schedule:
+    - cron: "17 13 * * 6"
+  workflow_dispatch:
+    inputs:
+      days:
+        description: Days to cover
+        default: "7"
+
+jobs:
+  report:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      issues: write
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install Dependencies
+        run: pip install anthropic
+
+      - name: Build the Report
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          DAYS: ${{ inputs.days }}
+        run: |
+          python menu_report.py --days "${DAYS:-7}" --out weekly-report.md
+          cat weekly-report.md >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Open the Issue
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh label create menu-report --color 0e8a16 --description "Weekly menu import report" 2>/dev/null || true
+          gh issue create --title "Menu import report, week of $(date -u +%F)" --label menu-report --body-file weekly-report.md

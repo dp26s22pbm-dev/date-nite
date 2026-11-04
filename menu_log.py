@@ -5,7 +5,8 @@ and finish() once it knows the outcome. That writes one JSON line per venue. The
 each run ends with `python menu_log.py publish`, which appends its lines to menu-log.jsonl on the menu-log branch (kept
 off main so it never triggers a site rebuild; the same arrangement as places_usage.py). Read it back with:
 
-    python menu_log.py report [--recent N]     problem sites, failure reasons and venues still without a menu
+    python menu_log.py report [--recent N] [--days D]
+                                               problem sites, failure reasons and venues still without a menu
     python menu_log.py export                  every record as JSON lines, for analysis elsewhere
 
 One record per venue per importer run:
@@ -224,6 +225,15 @@ def load_entries():
 
 # ---------------------------------------------------------------- the report
 
+def within_days(entries, days, now=None, offset=0):
+    """Records from the `days` days ending `offset` days before now. offset=days gives the period before that."""
+    now = now or datetime.datetime.now(datetime.timezone.utc)
+    end = now - datetime.timedelta(days=offset)
+    start = end - datetime.timedelta(days=days)
+    fmt = lambda d: d.strftime("%Y-%m-%dT%H:%M:%S")
+    return [e for e in entries if fmt(start) <= (e.get("t") or "")[:19] < fmt(end)]
+
+
 def _failures(entry):
     """(step, result) for every attempt in a record that did not succeed or merely note something."""
     return [(s["step"], s["result"]) for s in entry.get("steps", []) if s.get("result") not in ("ok",)]
@@ -319,7 +329,10 @@ def main():
         publish()
     elif command == "report":
         recent = int(sys.argv[sys.argv.index("--recent") + 1]) if "--recent" in sys.argv else 15
-        print(report(load_entries(), recent))
+        entries = load_entries()
+        if "--days" in sys.argv:
+            entries = within_days(entries, int(sys.argv[sys.argv.index("--days") + 1]))
+        print(report(entries, recent))
     elif command == "export":
         for e in load_entries():
             print(json.dumps(e, ensure_ascii=False))
