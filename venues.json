@@ -3080,5 +3080,58 @@
     "drink": 8.0,
     "dessert": 8.0,
     "tierColor": "#22c55e"
+  },
+  {
+    "id": 183,
+    "name": "Mamma Onesta's Italian Restaurant",
+    "category": "Italian",
+    "city": "Lockport",
+    "state": "IL",
+    "website": "http://www.mammaonesta.com/",
+    "coords": [
+      -88.058179,
+      41.587081
+    ],
+    "app": 9.0,
+    "casualMain": 24.0,
+    "premiumMain": 36.0,
+    "drink": 12.0,
+    "dessert": 8.0,
+    "tierColor": "#eab308"
+  },
+  {
+    "id": 184,
+    "name": "Tallgrass Restaurant",
+    "category": "French Cuisine",
+    "city": "Lockport",
+    "state": "IL",
+    "website": "https://www.tallgrassrestaurant.com/",
+    "coords": [
+      -88.057775,
+      41.588036
+    ],
+    "app": 16.0,
+    "casualMain": 32.5,
+    "premiumMain": 58.0,
+    "drink": 16.25,
+    "dessert": 8.0,
+    "tierColor": "#f97316"
+  },
+  {
+    "id": 185,
+    "name": "Paradise Bay Bar and Grill",
+    "category": "Casual American",
+    "city": "Lockport",
+    "state": "IL",
+    "coords": [
+      -88.058369,
+      41.588305
+    ],
+    "app": 9.96,
+    "casualMain": 16.68,
+    "premiumMain": 18.98,
+    "drink": 8.34,
+    "dessert": 8.0,
+    "tierColor": "#22c55e"
   }
 ]
