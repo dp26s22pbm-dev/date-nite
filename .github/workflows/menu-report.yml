@@ -1,10 +1,10 @@
 name: Weekly Menu Import Report
 
-# Every Monday: reads the menu-log branch, looks at the last 7 days of menu imports, and opens an issue that groups the
+# Every Saturday morning: reads the menu-log branch, looks at the last 7 days of menu imports, and opens an issue that groups the
 # failures into patterns and recommends importer changes (see menu_report.py). Run it by hand from the Actions tab too.
 on:
   schedule:
-    - cron: "17 13 * * 1"
+    - cron: "17 13 * * 6"
   workflow_dispatch:
     inputs:
       days:
