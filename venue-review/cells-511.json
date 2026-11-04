@@ -1,0 +1,53 @@
+[
+  {
+    "name": "Saffron Restaurant",
+    "category": "Indian Cuisine",
+    "city": "Westmont",
+    "state": "IL",
+    "website": "https://saffronrestaurantil.com/?utm_source=google",
+    "coords": [
+      -87.982925,
+      41.77284
+    ],
+    "app": 19.5,
+    "casualMain": 19.99,
+    "premiumMain": 21.99,
+    "drink": 9.99,
+    "dessert": 8.0,
+    "tierColor": "#eab308"
+  },
+  {
+    "name": "Chuck's Southern Comforts Cafe & Banquets",
+    "category": "Southern Cuisine",
+    "city": "Darien",
+    "state": "IL",
+    "website": "http://www.chuckscafe.com/",
+    "coords": [
+      -87.97271,
+      41.741395
+    ],
+    "app": 12.99,
+    "casualMain": 16.99,
+    "premiumMain": 22.99,
+    "drink": 8.49,
+    "dessert": 8.99,
+    "tierColor": "#eab308"
+  },
+  {
+    "name": "Zazzo's Pizza & Bar - Darien",
+    "category": "Italian / Pizza",
+    "city": "Darien",
+    "state": "IL",
+    "website": "https://zazzospizza.com/",
+    "coords": [
+      -87.945772,
+      41.75457
+    ],
+    "app": 11.0,
+    "casualMain": 19.5,
+    "premiumMain": 21.62,
+    "drink": 9.75,
+    "dessert": 8.0,
+    "tierColor": "#eab308"
+  }
+]
