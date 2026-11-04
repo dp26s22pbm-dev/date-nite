@@ -3062,5 +3062,23 @@
     "drink": 9.99,
     "dessert": 8.0,
     "tierColor": "#eab308"
+  },
+  {
+    "id": 182,
+    "name": "La Jaivita Restaurant & Slots",
+    "category": "Mexican Cuisine",
+    "city": "North Aurora",
+    "state": "IL",
+    "website": "https://la-jaivita-restaurant.square.site/",
+    "coords": [
+      -88.323695,
+      41.796579
+    ],
+    "app": 7.5,
+    "casualMain": 16.0,
+    "premiumMain": 28.0,
+    "drink": 8.0,
+    "dessert": 8.0,
+    "tierColor": "#22c55e"
   }
 ]
