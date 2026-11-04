@@ -2427,10 +2427,22 @@
     // WMO weather codes -> amounts
     const RAIN_BY_CODE = { 51: 0.2, 53: 0.3, 55: 0.45, 56: 0.3, 57: 0.45, 61: 0.45, 63: 0.7, 65: 1, 66: 0.5, 67: 0.9, 80: 0.5, 81: 0.75, 82: 1 };
     const SNOW_BY_CODE = { 71: 0.35, 73: 0.65, 75: 1, 77: 0.35, 85: 0.5, 86: 1 };
-    function sceneFromWeather(c) {
+    // Rain amount (0..1) from a precipitation rate in mm/hour: light drizzle shows at 0.1, a downpour tops out at 7.5+
+    function rainFromRate(mmPerHour) {
+      if (!(mmPerHour > 0)) return 0;
+      return Math.min(1, Math.max(0.25, 0.25 + mmPerHour / 10));
+    }
+    // The weather code alone can say "overcast" while rain is falling, so measured precipitation now and in the
+    // next hour (15-minute steps, mm per step) also count. Whichever shows more rain wins.
+    function sceneFromWeather(c, minutely) {
       const code = c.weather_code;
+      const nowRate = Math.max(c.rain || 0, c.showers || 0, c.precipitation || 0); // current values are mm over the last hour
+      const soon = minutely && minutely.precipitation ? minutely.precipitation.slice(0, 4) : [];
+      const hourRate = soon.reduce((a, b) => a + (b || 0), 0); // mm over the next hour
+      const snowing = (c.snowfall || 0) > 0 || SNOW_BY_CODE[code];
+      const measuredRain = snowing ? 0 : Math.max(rainFromRate(nowRate), rainFromRate(hourRate) * 0.8);
       const scene = {
-        rain: RAIN_BY_CODE[code] || 0, snow: SNOW_BY_CODE[code] || 0,
+        rain: Math.max(RAIN_BY_CODE[code] || 0, measuredRain), snow: SNOW_BY_CODE[code] || 0,
         bolt: code >= 95, // 95-99 thunderstorm
         // Sideways drift, -1..1: wind_direction is where it blows FROM, so west wind (270) pushes right
         wind: -Math.sin((c.wind_direction_10m || 0) * Math.PI / 180) * Math.min((c.wind_speed_10m || 0) / 30, 1)
@@ -2571,12 +2583,13 @@
       weatherPos = lonLat.slice();
       try {
         const url = 'https://api.open-meteo.com/v1/forecast?latitude=' + lonLat[1].toFixed(3) + '&longitude=' + lonLat[0].toFixed(3) +
-          '&current=weather_code,wind_speed_10m,wind_direction_10m&wind_speed_unit=mph';
+          '&current=weather_code,precipitation,rain,showers,snowfall,wind_speed_10m,wind_direction_10m&wind_speed_unit=mph' +
+          '&minutely_15=precipitation&forecast_minutely_15=4';
         const res = await fetch(url);
         if (!res.ok) throw new Error('weather ' + res.status);
         const data = await res.json();
         if (req !== weatherReq) return; // a newer location came back first
-        setWeatherScene(sceneFromWeather(data.current));
+        setWeatherScene(sceneFromWeather(data.current, data.minutely_15));
       } catch (e) { /* offline or blocked: keep whatever is showing */ }
     }
 
