@@ -547,7 +547,7 @@
       color: #c3cbd3; 
       font-weight: 600; 
     }
-    .pop-badge-val { font-size: 20px; font-weight: 800; }
+    .pop-badge-val { font-size: 20px; font-weight: 800; font-variant-numeric: tabular-nums; }
 
     .pop-grid {
       display: grid;
@@ -1806,7 +1806,10 @@
         map.off('moveend', reveal);
         cancelPendingReveal = null;
         const el = popup.getElement();
-        if (el) el.classList.remove('popup-pending');
+        if (el) {
+          el.classList.remove('popup-pending');
+          ringUpTotal(el);
+        }
       };
       cancelPendingReveal = () => { done = true; map.off('move', onMove); map.off('moveend', reveal); };
       const onMove = () => { if (offCenter() <= Math.max(60, start * 0.35)) reveal(); };
@@ -1814,6 +1817,38 @@
       map.on('move', onMove);
       map.on('moveend', reveal);
       popup.on('close', reveal);
+    }
+
+    // Cash-register ring-up for the popup's total: every digit spins like a register wheel, and the wheels lock in
+    // from left to right on the final amount. Skipped for reduced motion, where the total simply shows.
+    function ringUpTotal(popupEl) {
+      const val = popupEl.querySelector('.pop-badge-val');
+      if (!val || reducedMotion.matches) return;
+      const digits = val.dataset.total;
+      if (!digits) return;
+      const n = digits.length;
+      const start = performance.now();
+      const LOCK_FIRST_MS = 350, LOCK_STEP_MS = 160, TICK_MS = 45;
+      let lastTick = -TICK_MS;
+      let shown = '';
+      const frame = (now) => {
+        if (!val.isConnected) return; // the card closed or was redrawn for another venue
+        const t = now - start;
+        if (t - lastTick >= TICK_MS || t >= LOCK_FIRST_MS + (n - 1) * LOCK_STEP_MS) {
+          lastTick = t;
+          let out = '';
+          let allLocked = true;
+          for (let i = 0; i < n; i++) {
+            if (t >= LOCK_FIRST_MS + i * LOCK_STEP_MS) out += digits[i];
+            else { out += Math.floor(Math.random() * 10); allLocked = false; }
+          }
+          if (out !== shown) { shown = out; val.textContent = '$' + out; }
+          if (allLocked) return;
+        }
+        requestAnimationFrame(frame);
+      };
+      val.textContent = '$' + '0'.repeat(n);
+      requestAnimationFrame(frame);
     }
 
     // ---------- Venue list: cards along the bottom, nearest or cheapest first ----------
@@ -3058,7 +3093,7 @@
         </div>
         <div class="pop-badge">
           <span class="pop-badge-label">Est. TOTAL (incl. tip and tax)</span>
-          <span class="pop-badge-val" style="color: ${getTierColor(total)}">$${total}</span>
+          <span class="pop-badge-val" data-total="${total}" style="color: ${getTierColor(total)}">$${total}</span>
         </div>
         <div class="pop-grid">
           <div><div class="pop-grid-lbl">Apps</div><div class="pop-grid-val">$${appCost}</div></div>
