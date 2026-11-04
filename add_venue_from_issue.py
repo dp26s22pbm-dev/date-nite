@@ -519,6 +519,24 @@ BLOCKED_HOSTS = set()
 # Hosts whose TLS handshake failed once; plain requests to them are skipped (the same failure would repeat for every
 # guessed menu path) and the browser reads them instead
 TLS_FAILED_HOSTS = set()
+# Hosts that answered with a bot check ("Just a moment..." and similar) instead of the page, in a plain request and then
+# in the browser. Every other path on the host gets the same check, so the importer stops guessing pages there and
+# moves to the next source. Nothing here tries to pass the check.
+CHALLENGED_HOSTS = set()
+# Plain requests: a challenge arrives as a 403 with this header. Other bot walls are recognized by their page text.
+BOT_CHALLENGE_TITLE_RE = re.compile(r"<title[^>]*>\s*(just a moment|attention required|checking your browser|pardon our interruption|verify you are human)", re.I)
+BOT_CHALLENGE_TEXT_RE = re.compile(r"verify you are (a )?human|checking if the site connection is secure|enable javascript and cookies to continue|press (&|&amp;|and) hold|request unsuccessful\. incapsula|captcha-delivery\.com|px-captcha", re.I)
+
+def looks_like_bot_challenge(html, headers=None):
+    """True when a response is a bot check and not the page. Cloudflare says so in a cf-mitigated header; any bot wall
+    shows a short page (a real page that merely loads a captcha script has far more text) or a known title."""
+    if headers is not None and "challenge" in (headers.get("cf-mitigated") or "").lower():
+        return True
+    if not html:
+        return False
+    if BOT_CHALLENGE_TITLE_RE.search(html[:5000]):
+        return True
+    return len(html_to_text(html)) < 1500 and bool(BOT_CHALLENGE_TEXT_RE.search(html) or "challenges.cloudflare.com" in html)
 
 # Some sites set a cookie and redirect; without a cookie jar a script is bounced in a loop
 _opener = urllib.request.build_opener(urllib.request.HTTPCookieProcessor())
@@ -532,6 +550,8 @@ def fetch_url(url, limit=2000000, with_url=False):
     if _host(url) in TLS_FAILED_HOSTS:
         menu_log.step("fetch", "skipped_tls_host", url=url)
         return None
+    if _host(url) in CHALLENGED_HOSTS:
+        return None  # already logged as bot_challenge; the same check would answer every path
     try:
         req = urllib.request.Request(url, headers={"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64)"})
         with _opener.open(req, timeout=15) as resp:
@@ -545,7 +565,13 @@ def fetch_url(url, limit=2000000, with_url=False):
         if e.code in (401, 403, 429, 301, 302, 303, 307, 308):
             BLOCKED_HOSTS.add(_host(url))
         print(f"Could not fetch {url}: {e}")
-        menu_log.step("fetch", f"http_{e.code}", url=url)
+        challenged = False
+        if e.code in (403, 429, 503):
+            try:
+                challenged = looks_like_bot_challenge(e.read(50000).decode("utf-8", "ignore"), e.headers)
+            except Exception:
+                pass
+        menu_log.step("fetch", "bot_challenge" if challenged else f"http_{e.code}", url=url, detail=f"http_{e.code}" if challenged else None)
         return None
     except Exception as e:
         # A handshake or connection the server drops on a script (Hinsdale Prime ends every urllib TLS handshake with
@@ -637,10 +663,20 @@ def _expand_page(page):
         if not clicked:
             break
 
+def _note_browser_challenge(url, html):
+    """True when the browser was shown a bot check instead of the page. Logs it and marks the host so the importer
+    stops opening more pages there."""
+    if not looks_like_bot_challenge(html):
+        return False
+    print(f"{url} answered the browser with a bot check; no more pages on {_host(url)} will be tried.")
+    CHALLENGED_HOSTS.add(_host(url))
+    menu_log.step("browser", "bot_challenge", url=url, chars=len(html or ""))
+    return True
+
 def render_page_html(url):
     """(html, final_url) of a page after a headless browser has loaded it, or None. Used for sites that refuse plain
     requests."""
-    if not _use_browser():
+    if _host(url) in CHALLENGED_HOSTS or not _use_browser():
         return None
     try:
         with sync_playwright() as pw:
@@ -655,6 +691,8 @@ def render_page_html(url):
                 except Exception:
                     pass
                 html = page.content()
+                if _note_browser_challenge(url, html):
+                    return None
                 print(f"Browser read {url} -> {page.url}: {len(html)} characters of HTML, {len(ANCHOR_RE.findall(html))} links")
                 menu_log.step("browser", "ok", url=url, chars=len(html), links=len(ANCHOR_RE.findall(html)),
                               platform=menu_log.platform_of(page.url, html))
@@ -670,7 +708,7 @@ def render_page_text(url, timeout_ms=45000):
     """Open a page in a headless browser so menus that JavaScript draws (including ones split into tabs) have their
     text. Returns the visible text plus each tab's text under a "=== tab ===" heading, or None when playwright is not
     installed or the page will not load."""
-    if not _use_browser():
+    if _host(url) in CHALLENGED_HOSTS or not _use_browser():
         return None
     try:
         with sync_playwright() as pw:
@@ -679,6 +717,8 @@ def render_page_text(url, timeout_ms=45000):
                 page = browser.new_page(user_agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64)")
                 _open_page(page, url, timeout_ms)
                 _scroll_page(page)
+                if _note_browser_challenge(url, page.content()):
+                    return None
                 _expand_page(page)
                 parts = [page.inner_text("body")]
                 # Menu widgets (SinglePlatform and similar) draw inside an iframe, which the page's own text leaves out
@@ -929,6 +969,8 @@ def pricing_from_website_menu(site, where=""):
         if url in tried:
             continue
         tried.add(url)
+        if _host(url) in CHALLENGED_HOSTS:
+            continue  # the site shows a bot check on every page; ordering platforms it links to are still tried
         if browser_launches >= BROWSER_LIMIT and _host(url) in BLOCKED_HOSTS:
             continue  # a plain request would be refused again and the browser's launches are spent
         html, pricing = None, None
@@ -973,7 +1015,7 @@ def pricing_from_website_menu(site, where=""):
                 print(f"{url} has no prices; trying the menu links on it: {new}")
                 menu_log.step("page", "no_prices_links_followed", url=url, links=len(new), platform=menu_log.platform_of(final, page))
                 queue = new + queue
-    menu_log.step("site_pages", "no_menu_page_found", url=site, n=len(tried))
+    menu_log.step("site_pages", "bot_challenge" if _host(site) in CHALLENGED_HOSTS else "no_menu_page_found", url=site, n=len(tried))
     return None, None
 
 def _gemini_read_site(name, site, hint=""):
