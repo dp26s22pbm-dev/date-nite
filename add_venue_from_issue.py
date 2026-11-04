@@ -30,6 +30,7 @@ SCOPE_RULES = """Scope rules (they apply to every category below):
 - A fixed price per person (a buffet, a rodizio, a prix fixe) is one main. Use its dinner price, not the lunch price.
 - drinks: priced cocktails or craft beverages. Never include soft drinks, coffee, tea, juice or other non-alcoholic drinks. Use beer and wine only if no cocktail is priced. Many menus list no alcohol prices; then return an empty list.
 - If a category has no prices printed on the menu, return an empty list for it. Never estimate or fill in a typical price.
+- This map lists sit-down restaurants only. If any page you find shows the place is a food truck, trailer, cart, stand, pop-up or other mobile or counter-only vendor (photos of a truck, "food truck" in a listing or description, no dining room), return empty lists for every category, even when a menu with prices exists.
 """
 
 SEARCH_PRICING_PROMPT = """
@@ -339,7 +340,8 @@ def claude_search_pricing(venue_name, city, website=""):
         prompt = SEARCH_PRICING_PROMPT.format(venue_name=venue_name, city=city, scope_rules=SCOPE_RULES)
         prompt += ("\nSearch the web for this restaurant's own menu, or a menu page from an ordering platform that shows its "
                    "prices. Use only dish prices printed on a menu page you found, never a typical price you remember. "
-                   "If you find no real dish prices, return empty lists.\n")
+                   "If you find no real dish prices, return empty lists. Also check what kind of place this is: read the listing "
+                   "or review pages you find, and if any of them shows a food truck or other mobile vendor, return empty lists.\n")
         if website:
             prompt += f"The restaurant's website is {website}. Fetch its menu pages if they show prices.\n"
         tools = [{"type": "web_search_20260209", "name": "web_search", "max_uses": 5},
