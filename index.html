@@ -1768,7 +1768,7 @@
     const SPIN_DEG_PER_SEC = 1.5;
     const SPIN_START_DELAY_MS = 350;
     const SPIN_RESET_MS = 350;
-    const spin = { active: false, home: 0, anchor: null, pivot: null, raf: 0, last: 0, own: false, timer: 0, resetAfterMove: false };
+    const spin = { active: false, home: 0, anchor: null, pivot: null, raf: 0, last: 0, own: false, timer: 0, resetAfterMove: false, holding: false };
     // Turn the map about the open venue, so the dot and its card stay where they were on screen
     function setBearingOwn(b) {
       spin.own = true;
@@ -1782,6 +1782,25 @@
       } finally { spin.own = false; }
     }
     function cancelSpinFrames() { cancelAnimationFrame(spin.raf); spin.raf = 0; clearTimeout(spin.timer); spin.timer = 0; }
+    function runSpinFrames() {
+      spin.last = performance.now();
+      const tick = (now) => {
+        if (!spin.active || spin.holding) return;
+        const dt = Math.min(now - spin.last, 100);
+        spin.last = now;
+        setBearingOwn(map.getBearing() + SPIN_DEG_PER_SEC * dt / 1000);
+        spin.raf = requestAnimationFrame(tick);
+      };
+      spin.raf = requestAnimationFrame(tick);
+    }
+    // For the zoom-out button: the spin carries on inside the camera move instead of being stopped. Returns the bearing
+    // the move should end on (or undefined when not spinning); the frame loop is paused until the move lands.
+    function spinThrough(durationMs) {
+      if (!spin.active) return undefined;
+      cancelSpinFrames();
+      spin.holding = true;
+      return map.getBearing() + SPIN_DEG_PER_SEC * durationMs / 1000;
+    }
     function startSpin() {
       if (reducedMotion.matches || spin.active) return;
       cancelSpinFrames();
@@ -1795,15 +1814,7 @@
           spin.home = map.getBearing();
           spin.pivot = popup.getLngLat();
           spin.anchor = map.project(spin.pivot);
-          spin.last = performance.now();
-          const tick = (now) => {
-            if (!spin.active) return;
-            const dt = Math.min(now - spin.last, 100);
-            spin.last = now;
-            setBearingOwn(map.getBearing() + SPIN_DEG_PER_SEC * dt / 1000);
-            spin.raf = requestAnimationFrame(tick);
-          };
-          spin.raf = requestAnimationFrame(tick);
+          runSpinFrames();
         }, SPIN_START_DELAY_MS);
       };
       begin();
@@ -1812,6 +1823,7 @@
     function stopSpin(reset) {
       cancelSpinFrames();
       spin.resetAfterMove = false;
+      spin.holding = false;
       if (!spin.active) return undefined;
       spin.active = false;
       const home = spin.home;
@@ -1838,11 +1850,22 @@
     });
     // Moves that did not come from a gesture on the map (buttons, search, location): once they land, swing back too
     map.on('movestart', () => {
-      if (spin.own || !spin.active) return;
+      if (spin.own || !spin.active || spin.holding) return;
       stopSpin(false);
       spin.resetAfterMove = true;
     });
     map.on('moveend', () => {
+      if (spin.holding) {
+        // The zoom-out landed: pick the spin back up around the venue's new spot on screen
+        spin.holding = false;
+        if (spin.active && currentPopup && currentPopup.isOpen()) {
+          spin.anchor = map.project(spin.pivot);
+          runSpinFrames();
+        } else {
+          spin.active = false;
+        }
+        return;
+      }
       if (!spin.resetAfterMove) return;
       spin.resetAfterMove = false;
       spin.active = true; // let stopSpin run its reset from the stored home
@@ -3098,9 +3121,12 @@
 
     // Cloud button: zoom back out to the cloud height, over whatever is in view
     function resetZoom() {
+      const duration = reducedMotion.matches ? 0 : 1000;
+      const bearing = spinThrough(duration);
       map.easeTo({
         zoom: CLOUD_ZOOM,
-        duration: reducedMotion.matches ? 0 : 1000,
+        ...(bearing !== undefined && { bearing }),
+        duration,
         easing: (x) => 0.5 - Math.cos(Math.PI * x) / 2
       });
     }
