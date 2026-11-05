@@ -3151,5 +3151,23 @@
     "drink": 9.75,
     "dessert": 8.0,
     "tierColor": "#eab308"
+  },
+  {
+    "id": 187,
+    "name": "Chuck's Southern Comforts Cafe & Banquets",
+    "category": "Southern Cuisine",
+    "city": "Darien",
+    "state": "IL",
+    "website": "http://www.chuckscafe.com/",
+    "coords": [
+      -87.97271,
+      41.741395
+    ],
+    "app": 12.99,
+    "casualMain": 16.99,
+    "premiumMain": 24.99,
+    "drink": 8.49,
+    "dessert": 8.99,
+    "tierColor": "#eab308"
   }
 ]
