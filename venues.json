@@ -3257,5 +3257,41 @@
     "drink": 8.75,
     "dessert": 7.0,
     "tierColor": "#eab308"
+  },
+  {
+    "id": 193,
+    "name": "113 Main",
+    "category": "New American",
+    "city": "Oswego",
+    "state": "IL",
+    "website": "http://www.113main.com/",
+    "coords": [
+      -88.353189,
+      41.683269
+    ],
+    "app": 13.5,
+    "casualMain": 18.0,
+    "premiumMain": 33.0,
+    "drink": 9.0,
+    "dessert": 12.0,
+    "tierColor": "#eab308"
+  },
+  {
+    "id": 194,
+    "name": "La Marimba Mexican Restaurant",
+    "category": "Mexican Cuisine",
+    "city": "Oswego",
+    "state": "IL",
+    "website": "https://lamarimbarestaurant.com/",
+    "coords": [
+      -88.353701,
+      41.683724
+    ],
+    "app": 12.0,
+    "casualMain": 16.0,
+    "premiumMain": 24.0,
+    "drink": 12.0,
+    "dessert": 8.0,
+    "tierColor": "#eab308"
   }
 ]
