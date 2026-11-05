@@ -3223,5 +3223,23 @@
     "drink": 8.0,
     "dessert": 5.94,
     "tierColor": "#22c55e"
+  },
+  {
+    "id": 191,
+    "name": "Taste Greek Street Food - Westmont",
+    "category": "Greek",
+    "city": "Westmont",
+    "state": "IL",
+    "website": "https://tastegreekfood.com/westmont-il/",
+    "coords": [
+      -87.975561,
+      41.812123
+    ],
+    "app": 5.5,
+    "casualMain": 13.5,
+    "premiumMain": 24.5,
+    "drink": 8.0,
+    "dessert": 5.25,
+    "tierColor": "#22c55e"
   }
 ]
