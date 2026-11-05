@@ -2530,8 +2530,18 @@
             return;
           }
           if (trusted) loadWeather(here);
+          // Bringing the car back always closes any open venue card and re-centers on the car. Take the spin's home
+          // bearing into the flight and close the card first: otherwise the card's close handler starts a bearing
+          // swing-back whose per-frame setBearing calls cancel the flight about half the time.
+          const spinHome = stopSpin(false);
+          closePopup();
           placeCar(here);
-          map.flyTo({ center: here, zoom: Math.max(map.getZoom(), 13.5), duration: 1200 });
+          map.flyTo({
+            center: here,
+            zoom: Math.max(map.getZoom(), 13.5),
+            ...(spinHome !== undefined && { bearing: spinHome }),
+            duration: 1200
+          });
         },
         (err) => {
           carBtn.classList.remove('busy');
