@@ -1762,6 +1762,76 @@
       }, reducedMotion.matches ? 0 : 270);
     }
 
+    // Slow turntable spin while a venue card is open. The map turns counterclockwise from the view it settled on.
+    // Anything that might move the map (touch, drag, wheel, keys, or a programmatic move) stops the spin and swings the
+    // bearing quickly back to where it started.
+    const SPIN_DEG_PER_SEC = 4;
+    const SPIN_START_DELAY_MS = 700;
+    const SPIN_RESET_MS = 350;
+    const spin = { active: false, home: 0, raf: 0, last: 0, own: false, timer: 0, resetAfterMove: false };
+    function setBearingOwn(b) { spin.own = true; try { map.setBearing(b); } finally { spin.own = false; } }
+    function cancelSpinFrames() { cancelAnimationFrame(spin.raf); spin.raf = 0; clearTimeout(spin.timer); spin.timer = 0; }
+    function startSpin() {
+      if (reducedMotion.matches || spin.active) return;
+      cancelSpinFrames();
+      const popup = currentPopup;
+      const begin = () => {
+        spin.timer = setTimeout(() => {
+          spin.timer = 0;
+          if (!currentPopup || currentPopup !== popup || !popup.isOpen()) return;
+          if (map.isMoving()) { begin(); return; } // still travelling: check again shortly
+          spin.active = true;
+          spin.home = map.getBearing();
+          spin.last = performance.now();
+          const tick = (now) => {
+            if (!spin.active) return;
+            const dt = Math.min(now - spin.last, 100);
+            spin.last = now;
+            setBearingOwn(map.getBearing() + SPIN_DEG_PER_SEC * dt / 1000);
+            spin.raf = requestAnimationFrame(tick);
+          };
+          spin.raf = requestAnimationFrame(tick);
+        }, SPIN_START_DELAY_MS);
+      };
+      begin();
+    }
+    // Stop spinning. With reset, swing the bearing back to where the spin began; returns that bearing either way.
+    function stopSpin(reset) {
+      cancelSpinFrames();
+      spin.resetAfterMove = false;
+      if (!spin.active) return undefined;
+      spin.active = false;
+      const home = spin.home;
+      if (!reset) return home;
+      const from = map.getBearing();
+      // shortest way round, since the spin may have gone past 180 degrees
+      const delta = ((home - from + 540) % 360) - 180;
+      if (Math.abs(delta) < 0.5 || reducedMotion.matches) { setBearingOwn(home); return home; }
+      const t0 = performance.now();
+      const step = (now) => {
+        const k = Math.min(1, (now - t0) / SPIN_RESET_MS);
+        setBearingOwn(from + delta * (1 - Math.pow(1 - k, 3)));
+        if (k < 1 && !spin.active) spin.raf = requestAnimationFrame(step);
+      };
+      spin.raf = requestAnimationFrame(step);
+      return home;
+    }
+    ['pointerdown', 'touchstart', 'wheel', 'keydown'].forEach(type => {
+      map.getContainer().addEventListener(type, () => { if (spin.active) stopSpin(true); }, { capture: true, passive: true });
+    });
+    // Moves that did not come from a gesture on the map (buttons, search, location): once they land, swing back too
+    map.on('movestart', () => {
+      if (spin.own || !spin.active) return;
+      stopSpin(false);
+      spin.resetAfterMove = true;
+    });
+    map.on('moveend', () => {
+      if (!spin.resetAfterMove) return;
+      spin.resetAfterMove = false;
+      spin.active = true; // let stopSpin run its reset from the stored home
+      stopSpin(true);
+    });
+
     // Open a venue's popup, send the car, and glide the venue to its spot on the map (the center, or lower on narrow
     // screens so its card clears the panels), keeping the current zoom and tilt
     const SEARCH_ZOOM = 16; // the height the map settles at when a venue is chosen from the search bar or the bottom list
@@ -1771,6 +1841,7 @@
       // Hide the card for a new venue, whether it's the first popup or a switch from another venue's card
       const hide = !(currentPopup && currentPopup.isOpen()) || selectedVenueId !== venueId;
       selectedVenueId = venueId;
+      const spinHome = stopSpin(false);
       renderPopup(venue, hide);
       driveCarTo(venue.coords, zoom !== undefined ? zoom : map.getZoom());
       const target = venueTargetPoint();
@@ -1778,11 +1849,12 @@
       map.easeTo({
         center: venue.coords,
         ...(zoom !== undefined && { zoom }),
+        ...(spinHome !== undefined && { bearing: spinHome }),
         offset: [target.x - container.clientWidth / 2, target.y - container.clientHeight / 2],
         duration: reducedMotion.matches ? 0 : 900,
         easing: (x) => 0.5 - Math.cos(Math.PI * x) / 2
       });
-      if (hide) revealPopupNearCenter(venue, target);
+      if (hide) revealPopupNearCenter(venue, target); else startSpin();
       updateListSelection();
     }
 
@@ -1810,6 +1882,7 @@
           el.classList.remove('popup-pending');
           ringUpTotal(el);
         }
+        startSpin();
       };
       cancelPendingReveal = () => { done = true; map.off('move', onMove); map.off('moveend', reveal); };
       const onMove = () => { if (offCenter() <= Math.max(60, start * 0.35)) reveal(); };
@@ -3130,6 +3203,7 @@
           .addTo(map);
 
         currentPopup.on('close', () => {
+          stopSpin(true);
           selectedVenueId = null;
           currentPopup = null;
           updateListSelection();
