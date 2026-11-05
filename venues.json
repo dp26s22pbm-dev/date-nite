@@ -3133,5 +3133,23 @@
     "drink": 8.34,
     "dessert": 8.0,
     "tierColor": "#22c55e"
+  },
+  {
+    "id": 186,
+    "name": "Zazzo's Pizza & Bar - Darien",
+    "category": "Italian / Pizza",
+    "city": "Darien",
+    "state": "IL",
+    "website": "https://zazzospizza.com/",
+    "coords": [
+      -87.945772,
+      41.75457
+    ],
+    "app": 16.5,
+    "casualMain": 19.8,
+    "premiumMain": 25.8,
+    "drink": 9.75,
+    "dessert": 8.0,
+    "tierColor": "#eab308"
   }
 ]
