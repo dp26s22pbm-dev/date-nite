@@ -3187,5 +3187,23 @@
     "drink": 9.99,
     "dessert": 8.0,
     "tierColor": "#22c55e"
+  },
+  {
+    "id": 189,
+    "name": "Fat Rosie's Taco & Tequila Bar",
+    "category": "Mexican Cuisine",
+    "city": "Oak Brook",
+    "state": "IL",
+    "website": "http://fatrosies.com/",
+    "coords": [
+      -87.992039,
+      41.840957
+    ],
+    "app": 10.0,
+    "casualMain": 18.0,
+    "premiumMain": 26.0,
+    "drink": 15.0,
+    "dessert": 9.5,
+    "tierColor": "#eab308"
   }
 ]
