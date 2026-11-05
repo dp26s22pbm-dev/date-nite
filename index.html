@@ -1633,8 +1633,11 @@
 
         if (hits.length > 1 && map.getZoom() < CROWD_MAX_ZOOM - 0.5) {
           // Several dots overlap here: zoom in until they separate instead of guessing which one was meant
+          // Take the spin's home bearing into the zoom: closing the card would otherwise start a bearing swing-back
+          // whose per-frame setBearing calls cancel the zoom animation
+          const spinHome = stopSpin(false);
           closePopup();
-          zoomToSeparate(hits);
+          zoomToSeparate(hits, spinHome);
           return;
         }
 
@@ -3128,7 +3131,7 @@
       return f ? rawVenues.find(v => v.id === Number(f.properties.id)) || null : null;
     }
 
-    function zoomToSeparate(hits) {
+    function zoomToSeparate(hits, bearing) {
       const bounds = new maplibregl.LngLatBounds();
       hits.forEach(h => bounds.extend(h.venue.coords));
       const cam = map.cameraForBounds(bounds, {
@@ -3142,6 +3145,7 @@
       map.easeTo({
         center,
         zoom,
+        ...(bearing !== undefined && { bearing }),
         duration: reducedMotion.matches ? 0 : 900,
         easing: (x) => 0.5 - Math.cos(Math.PI * x) / 2
       });
