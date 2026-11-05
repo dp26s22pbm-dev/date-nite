@@ -1,0 +1,53 @@
+[
+  {
+    "name": "Bottle Theory",
+    "category": "Casual American",
+    "city": "Elmhurst",
+    "state": "IL",
+    "website": "http://bottletheorytaproom.com/",
+    "coords": [
+      -87.949756,
+      41.884139
+    ],
+    "app": 14.0,
+    "casualMain": 17.0,
+    "premiumMain": 21.0,
+    "drink": 12.5,
+    "dessert": 7.0,
+    "tierColor": "#eab308"
+  },
+  {
+    "name": "More Brewing Company",
+    "category": "New American",
+    "city": "Villa Park",
+    "state": "IL",
+    "website": "https://morebrewing.com/",
+    "coords": [
+      -87.9694,
+      41.886797
+    ],
+    "app": 15.0,
+    "casualMain": 17.5,
+    "premiumMain": 20.0,
+    "drink": 7.0,
+    "dessert": 8.0,
+    "tierColor": "#22c55e"
+  },
+  {
+    "name": "Manny's Ale House",
+    "category": "Casual American",
+    "city": "Elmhurst",
+    "state": "IL",
+    "website": "http://mannysalehouse.com/",
+    "coords": [
+      -87.967303,
+      41.890278
+    ],
+    "app": 10.5,
+    "casualMain": 15.25,
+    "premiumMain": 17.5,
+    "drink": 8.0,
+    "dessert": 8.0,
+    "tierColor": "#22c55e"
+  }
+]
