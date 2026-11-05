@@ -1766,7 +1766,7 @@
     // Anything that might move the map (touch, drag, wheel, keys, or a programmatic move) stops the spin and swings the
     // bearing quickly back to where it started.
     const SPIN_DEG_PER_SEC = 1.5;
-    const SPIN_START_DELAY_MS = 700;
+    const SPIN_START_DELAY_MS = 350;
     const SPIN_RESET_MS = 350;
     const spin = { active: false, home: 0, anchor: null, pivot: null, raf: 0, last: 0, own: false, timer: 0, resetAfterMove: false };
     // Turn the map about the open venue, so the dot and its card stay where they were on screen
