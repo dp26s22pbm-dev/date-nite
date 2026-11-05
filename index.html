@@ -1830,7 +1830,11 @@
       return home;
     }
     ['pointerdown', 'touchstart', 'wheel', 'keydown'].forEach(type => {
-      map.getContainer().addEventListener(type, () => { if (spin.active) stopSpin(true); }, { capture: true, passive: true });
+      map.getContainer().addEventListener(type, (e) => {
+        // Links in the card (venue name, location) open a new tab and never move the map
+        if (e.target instanceof Element && e.target.closest('.maplibregl-popup a')) return;
+        if (spin.active) stopSpin(true);
+      }, { capture: true, passive: true });
     });
     // Moves that did not come from a gesture on the map (buttons, search, location): once they land, swing back too
     map.on('movestart', () => {
