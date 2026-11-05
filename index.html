@@ -3208,13 +3208,10 @@
 
       // Town and state under the cuisine; clicking opens the restaurant in Google Maps (the saved Maps link when there is one)
       const place = [venue.city, venue.state].filter(Boolean).join(', ');
-      // Venues saved without a town still get the link: the search is anchored on the saved coordinates instead
-      const coordHint = (!place && Array.isArray(venue.coords) && venue.coords.length === 2)
-        ? `${venue.coords[1]},${venue.coords[0]}` : '';
       const mapsHref = safeWebsiteUrl(venue.mapsUrl)
-        || `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(`${venue.name} ${place || coordHint}`.trim())}`;
-      const locHtml = (place || siteUrl || coordHint || venue.mapsUrl)
-        ? `<div class="pop-loc"><a href="${escapeHtml(mapsHref)}" target="_blank" rel="noopener noreferrer" title="Open ${escapeHtml(venue.name)} in Google Maps in a new tab">${escapeHtml(place || 'Open in Google Maps')}</a></div>`
+        || `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(`${venue.name} ${place}`.trim())}`;
+      const locHtml = place
+        ? `<div class="pop-loc"><a href="${escapeHtml(mapsHref)}" target="_blank" rel="noopener noreferrer" title="Open ${escapeHtml(venue.name)} in Google Maps in a new tab">${escapeHtml(place)}</a></div>`
         : '';
 
       const html = `
