@@ -1768,7 +1768,7 @@
     const SPIN_DEG_PER_SEC = 1.5;
     const SPIN_START_DELAY_MS = 350;
     const SPIN_RESET_MS = 350;
-    const spin = { active: false, home: 0, anchor: null, pivot: null, raf: 0, last: 0, own: false, timer: 0, resetAfterMove: false, holding: false };
+    const spin = { active: false, home: 0, anchor: null, pivot: null, raf: 0, last: 0, own: false, timer: 0, resetAfterMove: false, holding: false, paused: false };
     // Turn the map about the open venue, so the dot and its card stay where they were on screen
     function setBearingOwn(b) {
       spin.own = true;
@@ -1824,6 +1824,7 @@
       cancelSpinFrames();
       spin.resetAfterMove = false;
       spin.holding = false;
+      spin.paused = false;
       if (!spin.active) return undefined;
       spin.active = false;
       const home = spin.home;
@@ -1841,9 +1842,36 @@
       spin.raf = requestAnimationFrame(step);
       return home;
     }
-    ['pointerdown', 'touchstart', 'wheel', 'keydown'].forEach(type => {
+    // A press on the map freezes the spin where it is instead of swinging back at once. Swinging back on pointerdown
+    // moved the dots out from under the finger before the click landed, so a tap on another venue missed it. If the
+    // press turns into a tap, selectVenue/closePopup take over; if it turns into a drag, movestart does; if neither
+    // happens, the bearing swings back shortly after release.
+    let resumeTimer = 0;
+    function freezeSpin() {
+      if (!spin.active || spin.holding) return;
+      cancelSpinFrames();
+      spin.paused = true;
+    }
+    function settleAfterPress() {
+      clearTimeout(resumeTimer);
+      resumeTimer = setTimeout(() => {
+        resumeTimer = 0;
+        if (spin.active && spin.paused && !map.isMoving()) stopSpin(true);
+      }, 200);
+    }
+    ['pointerdown', 'touchstart'].forEach(type => {
       map.getContainer().addEventListener(type, (e) => {
         // Links in the card (venue name, location) open a new tab and never move the map
+        if (e.target instanceof Element && e.target.closest('.maplibregl-popup a')) return;
+        clearTimeout(resumeTimer);
+        freezeSpin();
+      }, { capture: true, passive: true });
+    });
+    ['pointerup', 'pointercancel', 'touchend', 'touchcancel'].forEach(type => {
+      window.addEventListener(type, () => { if (spin.paused) settleAfterPress(); }, { capture: true, passive: true });
+    });
+    ['wheel', 'keydown'].forEach(type => {
+      map.getContainer().addEventListener(type, (e) => {
         if (e.target instanceof Element && e.target.closest('.maplibregl-popup a')) return;
         if (spin.active) stopSpin(true);
       }, { capture: true, passive: true });
