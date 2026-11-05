@@ -2207,7 +2207,6 @@
     const carBtn = document.getElementById('car-toggle');
     const carToast = document.getElementById('car-toast');
     const MAP_CENTER = [-88.16632, 41.74594];
-    const MAX_DISTANCE_FROM_MAP_M = 60000;
     const MAX_TRUSTED_ACCURACY_M = 1000;
     let carPos = null; // [lng, lat] of the car, or null until located
     let carLoopRaf = null;
@@ -2522,11 +2521,6 @@
             }
           } else if (forList) {
             showCarToast('Your location is too imprecise to measure distances. Try again.');
-            return;
-          }
-          if (haversineM(here, MAP_CENTER) > MAX_DISTANCE_FROM_MAP_M) {
-            showCarToast('You appear to be outside the Naperville area, so your car is not shown.');
-            fallback();
             return;
           }
           if (trusted) loadWeather(here);
