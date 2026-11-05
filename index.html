@@ -1765,11 +1765,22 @@
     // Slow turntable spin while a venue card is open. The map turns counterclockwise from the view it settled on.
     // Anything that might move the map (touch, drag, wheel, keys, or a programmatic move) stops the spin and swings the
     // bearing quickly back to where it started.
-    const SPIN_DEG_PER_SEC = 4;
+    const SPIN_DEG_PER_SEC = 1.5;
     const SPIN_START_DELAY_MS = 700;
     const SPIN_RESET_MS = 350;
-    const spin = { active: false, home: 0, raf: 0, last: 0, own: false, timer: 0, resetAfterMove: false };
-    function setBearingOwn(b) { spin.own = true; try { map.setBearing(b); } finally { spin.own = false; } }
+    const spin = { active: false, home: 0, anchor: null, pivot: null, raf: 0, last: 0, own: false, timer: 0, resetAfterMove: false };
+    // Turn the map about the open venue, so the dot and its card stay where they were on screen
+    function setBearingOwn(b) {
+      spin.own = true;
+      try {
+        map.setBearing(b);
+        if (spin.pivot && spin.anchor) {
+          const p = map.project(spin.pivot);
+          const dx = p.x - spin.anchor.x, dy = p.y - spin.anchor.y;
+          if (Math.abs(dx) > 0.01 || Math.abs(dy) > 0.01) map.panBy([dx, dy], { animate: false });
+        }
+      } finally { spin.own = false; }
+    }
     function cancelSpinFrames() { cancelAnimationFrame(spin.raf); spin.raf = 0; clearTimeout(spin.timer); spin.timer = 0; }
     function startSpin() {
       if (reducedMotion.matches || spin.active) return;
@@ -1782,6 +1793,8 @@
           if (map.isMoving()) { begin(); return; } // still travelling: check again shortly
           spin.active = true;
           spin.home = map.getBearing();
+          spin.pivot = popup.getLngLat();
+          spin.anchor = map.project(spin.pivot);
           spin.last = performance.now();
           const tick = (now) => {
             if (!spin.active) return;
