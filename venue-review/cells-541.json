@@ -1,0 +1,53 @@
+[
+  {
+    "name": "Thithi's Fine Dining and Martinis Bar",
+    "category": "Vietnamese & Thai Cuisine",
+    "city": "Westchester",
+    "state": "IL",
+    "website": "https://www.thithirestaurant.com/westchester",
+    "coords": [
+      -87.899391,
+      41.862518
+    ],
+    "app": 15.0,
+    "casualMain": 32.0,
+    "premiumMain": 34.0,
+    "drink": 16.0,
+    "dessert": 8.0,
+    "tierColor": "#f97316"
+  },
+  {
+    "name": "Q's Restaurant & Pizzeria",
+    "category": "Italian / Pizza",
+    "city": "Hillside",
+    "state": "IL",
+    "website": "https://www.qspizzeria.com/",
+    "coords": [
+      -87.904615,
+      41.876819
+    ],
+    "app": 11.0,
+    "casualMain": 19.8,
+    "premiumMain": 27.5,
+    "drink": 9.9,
+    "dessert": 7.7,
+    "tierColor": "#eab308"
+  },
+  {
+    "name": "JG's Jerk Grill",
+    "category": "Jamaican Cuisine",
+    "city": "Hillside",
+    "state": "IL",
+    "website": "http://www.jgsjerkgrill.com/",
+    "coords": [
+      -87.90496,
+      41.877262
+    ],
+    "app": 9.97,
+    "casualMain": 18.12,
+    "premiumMain": 21.99,
+    "drink": 9.06,
+    "dessert": 8.0,
+    "tierColor": "#22c55e"
+  }
+]
