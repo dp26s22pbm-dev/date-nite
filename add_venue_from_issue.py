@@ -324,6 +324,11 @@ def fetch_pricing_via_gemini_search(venue_name, city="Naperville, IL"):
         return None
 
 CLAUDE_SEARCH_MODEL = os.environ.get("CLAUDE_SEARCH_MODEL", "claude-sonnet-5-5")
+# Caps on the Claude fallback. The log showed it consulting 9 to 23 pages per venue, mostly aggregator listings, and
+# still returning defaulted categories about half the time, so searches, fetches and continuation passes are kept low.
+CLAUDE_MAX_SEARCHES = 2
+CLAUDE_MAX_FETCHES = 2
+CLAUDE_MAX_PASSES = 2
 
 def claude_search_pricing(venue_name, city, website=""):
     """Backup for Gemini's web search: ask Claude, with Anthropic's web search and web fetch tools, for the same pricing
@@ -344,12 +349,17 @@ def claude_search_pricing(venue_name, city, website=""):
                    "or review pages you find, and if any of them shows a food truck or other mobile vendor, return empty lists.\n")
         if website:
             prompt += f"The restaurant's website is {website}. Fetch its menu pages if they show prices.\n"
-        tools = [{"type": "web_search_20260209", "name": "web_search", "max_uses": 5},
-                 {"type": "web_fetch_20260209", "name": "web_fetch", "max_uses": 5}]
+        tools = [{"type": "web_search_20260209", "name": "web_search", "max_uses": CLAUDE_MAX_SEARCHES},
+                 {"type": "web_fetch_20260209", "name": "web_fetch", "max_uses": CLAUDE_MAX_FETCHES}]
         messages = [{"role": "user", "content": prompt}]
         sources = []
-        for _ in range(4):  # a server-side tool loop that runs long comes back paused; send it back to continue
+        tokens_in = tokens_out = 0
+        for _ in range(CLAUDE_MAX_PASSES):  # a server-side tool loop that runs long comes back paused; send it back to continue
             response = claude.messages.create(model=CLAUDE_SEARCH_MODEL, max_tokens=8000, tools=tools, messages=messages)
+            usage = getattr(response, "usage", None)
+            tokens_in += (getattr(usage, "input_tokens", 0) or 0) + (getattr(usage, "cache_read_input_tokens", 0) or 0) \
+                + (getattr(usage, "cache_creation_input_tokens", 0) or 0)
+            tokens_out += getattr(usage, "output_tokens", 0) or 0
             for block in response.content:
                 found = []
                 if block.type == "web_search_tool_result" and isinstance(block.content, list):
@@ -368,7 +378,7 @@ def claude_search_pricing(venue_name, city, website=""):
         claude_pages[0] = len(sources)
         if response.stop_reason == "refusal":
             print(f"Claude web search for {venue_name} was refused, so there are no prices from it.")
-            menu_log.step("search_claude", "refused", pages=len(sources))
+            menu_log.step("search_claude", "refused", pages=len(sources), tokens_in=tokens_in, tokens_out=tokens_out)
             return None, []
         text = "".join(b.text for b in response.content if b.type == "text")
         start, end = text.find("{"), text.rfind("}")
@@ -377,6 +387,7 @@ def claude_search_pricing(venue_name, city, website=""):
             # Without this the log cannot say whether Claude found no prices or answered in a form the parser rejected
             print(f"Claude's reply for {venue_name} had no usable prices. Its reply was: {text[:1500]!r}")
         menu_log.step("search_claude", "ok" if pricing else "no_prices", pages=len(sources),
+                      tokens_in=tokens_in, tokens_out=tokens_out,
                       sources=[menu_log.host_of(u) for _, u in sources[:5]] or None)
         return pricing, sources[:5]
     except Exception as e:
