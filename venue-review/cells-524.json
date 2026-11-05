@@ -1,0 +1,17 @@
+[
+  {
+    "name": "Tequila Azteca Restaurant",
+    "category": "Mexican Cuisine",
+    "state": "IL",
+    "coords": [
+      -87.945797,
+      41.717846
+    ],
+    "app": 13.0,
+    "casualMain": 17.5,
+    "premiumMain": 27.0,
+    "drink": 8.75,
+    "dessert": 7.0,
+    "tierColor": "#eab308"
+  }
+]
