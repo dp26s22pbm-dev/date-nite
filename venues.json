@@ -2406,6 +2406,8 @@
     "id": 145,
     "name": "Tapri",
     "category": "Indian Cuisine",
+    "city": "Aurora",
+    "state": "IL",
     "website": "https://taprisocial.com/?utm_source=google",
     "coords": [
       -88.070565,
@@ -2422,6 +2424,8 @@
     "id": 146,
     "name": "Chef Soon Contemporary Sushi & Bar",
     "category": "Modern Japanese",
+    "city": "Aurora",
+    "state": "IL",
     "website": "http://chefsoon.com/",
     "coords": [
       -88.070548,
