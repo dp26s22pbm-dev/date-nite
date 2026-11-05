@@ -3169,5 +3169,23 @@
     "drink": 8.49,
     "dessert": 8.99,
     "tierColor": "#eab308"
+  },
+  {
+    "id": 188,
+    "name": "Saffron Restaurant",
+    "category": "Indian Cuisine",
+    "city": "Westmont",
+    "state": "IL",
+    "website": "https://saffronrestaurantil.com/?utm_source=google",
+    "coords": [
+      -87.982925,
+      41.77284
+    ],
+    "app": 5.99,
+    "casualMain": 14.99,
+    "premiumMain": 19.99,
+    "drink": 9.99,
+    "dessert": 8.0,
+    "tierColor": "#22c55e"
   }
 ]
