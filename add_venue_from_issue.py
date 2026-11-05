@@ -251,6 +251,15 @@ def reverse_geocode_town(coords):
     iso = addr.get("ISO3166-2-lvl4", "")
     return town, (iso.split("-")[1] if iso.startswith("US-") else "")
 
+_ADDRESS_TOWN = re.compile(r",\s*([^,\d]+?),\s*([A-Z]{2})(?:\s+\d{5}(?:-\d{4})?)?(?:,\s*(?:USA|United States))?\s*$")
+
+def town_from_address(address):
+    """Town and two-letter state from a US address such as '51 Town Square, Wheaton, IL 60189, USA', the way Google
+    prints it. This is the postal town, so it also covers unincorporated areas the coordinate lookup has no name for.
+    ("", "") when the text does not end in a town, state and optional zip."""
+    m = _ADDRESS_TOWN.search((address or "").strip())
+    return (m.group(1).strip(), m.group(2)) if m else ("", "")
+
 # (title, url) of the pages the last web search consulted, shown in the report so the estimates can be checked by hand
 search_sources = []
 
@@ -1625,6 +1634,28 @@ def main():
 
     next_id = max([v.get("id", 0) for v in venues], default=0) + 1
     town, state = reverse_geocode_town(coords)
+    town_source = "coordinates"
+    if not town:
+        # The coordinate lookup names no town in unincorporated areas (and fails when Nominatim is busy). Fall back to the
+        # town in the Google Places address: the listing already fetched, the address the city and cell searches pass in,
+        # the text from a Maps link, and as a last resort one more Places lookup.
+        sources = [(listing or {}).get("address", ""), address if not is_maps_link(address) else "", place_text]
+        for text in sources:
+            town, addr_state = town_from_address(text)
+            if town:
+                state = state or addr_state
+                town_source = "address"
+                break
+        if not town and not listing:
+            listing = places_lookup(name, place_text or address)
+            town, addr_state = town_from_address((listing or {}).get("address", ""))
+            if town:
+                state = state or addr_state
+                town_source = "Places lookup"
+    if town:
+        print(f"Town for the popup: {town}, {state} (from the {town_source})")
+    else:
+        print("WARNING: no town found from the coordinates or any address; the popup will have no Google Maps link until one is added.")
 
     # Overwrite if restaurant already exists, else append
     entry = {
@@ -1760,7 +1791,13 @@ def main():
             listed = ", ".join(f"{n} ({m} m)" for n, m in neighbors)
             lines.append(f"{len(neighbors)} saved venue(s) sit within {NEARBY_VENUE_M} m, which may share a building or strip mall: {listed}. "
                          "If they do, confirm the pin lines up with theirs.")
-    if not (needs_menu or warnings or neighbors or pin_guessed):
+    # The popup's Google Maps link is the town line, so a venue saved without a town has no link on its card
+    town_missing = not (venues[existing_idx] if existing_idx is not None else entry).get("city")
+    if town_missing:
+        lines += ["", "### 🏙️ Town missing", "",
+                  "No town could be found from the coordinates or the address, so this venue's card has no Google Maps link. "
+                  "Add `city` and `state` (for example `Wheaton` and `IL`) to this venue in venues.json."]
+    if not (needs_menu or warnings or neighbors or pin_guessed or town_missing):
         lines += ["", "Nothing else is needed. Closing this issue."]
     set_output("venue_name", name)
     set_output("summary", "\n".join(lines), multiline=True)
