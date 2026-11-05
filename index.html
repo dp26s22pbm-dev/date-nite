@@ -2207,7 +2207,6 @@
     const carBtn = document.getElementById('car-toggle');
     const carToast = document.getElementById('car-toast');
     const MAP_CENTER = [-88.16632, 41.74594];
-    const MAX_DISTANCE_FROM_MAP_M = 60000;
     const MAX_TRUSTED_ACCURACY_M = 1000;
     let carPos = null; // [lng, lat] of the car, or null until located
     let carLoopRaf = null;
@@ -2524,14 +2523,19 @@
             showCarToast('Your location is too imprecise to measure distances. Try again.');
             return;
           }
-          if (haversineM(here, MAP_CENTER) > MAX_DISTANCE_FROM_MAP_M) {
-            showCarToast('You appear to be outside the Naperville area, so your car is not shown.');
-            fallback();
-            return;
-          }
           if (trusted) loadWeather(here);
+          // Bringing the car back always closes any open venue card and re-centers on the car. Take the spin's home
+          // bearing into the flight and close the card first: otherwise the card's close handler starts a bearing
+          // swing-back whose per-frame setBearing calls cancel the flight about half the time.
+          const spinHome = stopSpin(false);
+          closePopup();
           placeCar(here);
-          map.flyTo({ center: here, zoom: Math.max(map.getZoom(), 13.5), duration: 1200 });
+          map.flyTo({
+            center: here,
+            zoom: Math.max(map.getZoom(), 13.5),
+            ...(spinHome !== undefined && { bearing: spinHome }),
+            duration: 1200
+          });
         },
         (err) => {
           carBtn.classList.remove('busy');
