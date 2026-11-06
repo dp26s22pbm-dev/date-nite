@@ -3433,5 +3433,23 @@
     "drink": 8.0,
     "dessert": 8.0,
     "tierColor": "#22c55e"
+  },
+  {
+    "id": 202,
+    "name": "JG's Jerk Grill",
+    "category": "Jamaican Cuisine",
+    "city": "Hillside",
+    "state": "IL",
+    "website": "http://www.jgsjerkgrill.com/",
+    "coords": [
+      -87.90496,
+      41.877262
+    ],
+    "app": 9.97,
+    "casualMain": 20.99,
+    "premiumMain": 26.99,
+    "drink": 9.06,
+    "dessert": 8.0,
+    "tierColor": "#eab308"
   }
 ]
