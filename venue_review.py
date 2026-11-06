@@ -61,9 +61,13 @@ def issue_body(venue, source_url):
     prices = ", ".join(f"{label} ${venue[k]:g}" for k, label in
                        [("app", "appetizer"), ("casualMain", "casual main"), ("premiumMain", "premium main"),
                         ("drink", "drink"), ("dessert", "dessert")] if k in venue)
+    notes = [n for n in venue.get("reviewNotes") or [] if str(n).strip()]
+    flagged = ("### ⚠️ Flagged for double-checking\n\nThe importer flagged this venue during the grid search:\n\n"
+               + "\n".join(f"- {n}" for n in notes) + "\n\n") if notes else ""
     return (f"Held from {source_url} for later review.\n\n"
             f"- **Cuisine:** {venue.get('category', '?')}\n- **Website:** {venue.get('website', 'none')}\n"
             f"- **Prices:** {prices}\n\n"
+            f"{flagged}"
             f"Add the `{APPROVE_LABEL}` label to put this venue on the map. Add the `{DENY_LABEL}` label to leave it off and keep "
             "it from coming back in later searches. Close the issue to leave it off without blacklisting it. "
             "Fix the prices or cuisine first by editing the JSON below.\n\n"

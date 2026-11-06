@@ -356,6 +356,13 @@ def price_and_keep(ranked, work_dir, venues_file, count=COUNT, max_priced=MAX_PR
             skipped.append(f"- {name}: {reason}")
             continue
         kept += 1
+        # Saved on the venue so a held venue's review issue can list why it was flagged; fold_pending_venues.py strips it
+        flags = [l for l in outputs.get("flags", "").splitlines() if l.strip()]
+        if flags:
+            venue["reviewNotes"] = flags
+            venues[-1] = venue
+            with open(venues_file, "w") as f:
+                json.dump(venues, f)
         if cuisine_key(place):
             used[cuisine_key(place)] = used.get(cuisine_key(place), 0) + 1
         sections.append(f"## {kept}. {name}\n\nRanking score {score:.2f}\n\n{reword_for_city_pr(outputs.get('summary', ''))}")

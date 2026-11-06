@@ -29,7 +29,8 @@ def main():
             if name_key(venue["name"]) in known:
                 print(f"{name}: {venue['name']} is already on the map; skipped.")
                 continue
-            venues.append({"id": next_id, **{k: v for k, v in venue.items() if k != "id"}})
+            # reviewNotes (why the importer flagged the venue) is only for the review issue, not the site
+            venues.append({"id": next_id, **{k: v for k, v in venue.items() if k not in ("id", "reviewNotes")}})
             known.add(name_key(venue["name"]))
             print(f"{name}: added {venue['name']} as id {next_id}.")
             next_id += 1
