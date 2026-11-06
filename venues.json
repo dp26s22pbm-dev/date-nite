@@ -2219,7 +2219,6 @@
     "category": "Thai Cuisine",
     "city": "Glen Ellyn",
     "state": "IL",
-    "state": "IL",
     "website": "http://mwthairestaurant.com/",
     "coords": [
       -88.066179,
@@ -3262,7 +3261,6 @@
     "category": "Mexican Cuisine",
     "city": "Willowbrook",
     "state": "IL",
-    "state": "IL",
     "coords": [
       -87.945797,
       41.717846
@@ -3308,6 +3306,42 @@
     "premiumMain": 24.0,
     "drink": 12.0,
     "dessert": 8.0,
+    "tierColor": "#eab308"
+  },
+  {
+    "id": 195,
+    "name": "Thithi's Fine Dining and Martinis Bar",
+    "category": "Vietnamese & Thai Cuisine",
+    "city": "Westchester",
+    "state": "IL",
+    "website": "https://www.thithirestaurant.com/westchester",
+    "coords": [
+      -87.899391,
+      41.862518
+    ],
+    "app": 15.0,
+    "casualMain": 32.0,
+    "premiumMain": 34.0,
+    "drink": 16.0,
+    "dessert": 8.0,
+    "tierColor": "#f97316"
+  },
+  {
+    "id": 196,
+    "name": "Q's Restaurant & Pizzeria",
+    "category": "Italian / Pizza",
+    "city": "Hillside",
+    "state": "IL",
+    "website": "https://www.qspizzeria.com/",
+    "coords": [
+      -87.904615,
+      41.876819
+    ],
+    "app": 11.0,
+    "casualMain": 19.8,
+    "premiumMain": 27.5,
+    "drink": 9.9,
+    "dessert": 7.7,
     "tierColor": "#eab308"
   }
 ]
