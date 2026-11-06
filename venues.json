@@ -3451,5 +3451,23 @@
     "drink": 9.06,
     "dessert": 5.0,
     "tierColor": "#eab308"
+  },
+  {
+    "id": 203,
+    "name": "BNK Thai & Sushi",
+    "category": "Thai Cuisine",
+    "city": "Elmhurst",
+    "state": "IL",
+    "website": "http://www.bnkthaisushi.com/",
+    "coords": [
+      -87.940671,
+      41.902256
+    ],
+    "app": 6.0,
+    "casualMain": 14.99,
+    "premiumMain": 26.0,
+    "drink": 8.0,
+    "dessert": 8.0,
+    "tierColor": "#22c55e"
   }
 ]
