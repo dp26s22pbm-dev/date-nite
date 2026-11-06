@@ -1691,17 +1691,23 @@
       map.getCanvas().addEventListener('touchstart', () => { lastTouchAt = performance.now(); }, { passive: true });
       map.getCanvas().addEventListener('touchend', () => { lastTouchAt = performance.now(); }, { passive: true });
 
-      map.on('mousemove', (e) => {
-        const hits = venuesUnderPoint(e.point);
+      // The last mouse position over the map. While the card's turntable spin turns the map under a resting mouse, no
+      // mousemove fires, so the spin re-checks this point every frame (refreshHoverOnSpin) to keep labels appearing.
+      let lastMousePoint = null;
+      function updateHover(point) {
+        const hits = venuesUnderPoint(point);
         const crowded = hits.length > 1 && map.getZoom() < CROWD_MAX_ZOOM - 0.5;
-        const overLabel = hits.length === 0 && venueUnderLabel(e.point) !== null;
+        const overLabel = hits.length === 0 && venueUnderLabel(point) !== null;
         const fromTouch = performance.now() - lastTouchAt < 800;
         map.getCanvas().style.cursor = crowded ? 'zoom-in' : (hits.length > 0 || overLabel ? 'pointer' : '');
-        if (hits.length > 0 && !crowded && !fromTouch && !map.isMoving()) showDotLabel(hits[0].venue);
+        if (hits.length > 0 && !crowded && !fromTouch && (!map.isMoving() || spin.active)) showDotLabel(hits[0].venue);
         else hideDotLabel();
-      });
-      map.getCanvas().addEventListener('mouseleave', hideDotLabel);
-      map.on('movestart', hideDotLabel);
+      }
+      map.on('mousemove', (e) => { lastMousePoint = e.point; updateHover(e.point); });
+      refreshHoverOnSpin = () => { if (lastMousePoint) updateHover(lastMousePoint); };
+      map.getCanvas().addEventListener('mouseleave', () => { lastMousePoint = null; hideDotLabel(); });
+      // The spin's own per-frame bearing changes are not a reason to hide the label
+      map.on('movestart', () => { if (!spin.own) hideDotLabel(); });
       map.on('zoom', () => { if (map.getZoom() >= LABELS_MIN_ZOOM - LABELS_FADE_ZOOM) hideDotLabel(); });
       map.on('click', () => hideDotLabel(true));
 
@@ -1798,6 +1804,7 @@
     // Anything that might move the map (touch, drag, wheel, keys, or a programmatic move) stops the spin and swings the
     // bearing quickly back to where it started.
     const SPIN_DEG_PER_SEC = 1.5;
+    let refreshHoverOnSpin = () => {}; // set once the map has loaded
     const SPIN_START_DELAY_MS = 350;
     const SPIN_RESET_MS = 350;
     const spin = { active: false, home: 0, anchor: null, pivot: null, raf: 0, last: 0, own: false, timer: 0, resetAfterMove: false, holding: false, paused: false };
@@ -1821,6 +1828,7 @@
         const dt = Math.min(now - spin.last, 100);
         spin.last = now;
         setBearingOwn(map.getBearing() + SPIN_DEG_PER_SEC * dt / 1000);
+        refreshHoverOnSpin();
         spin.raf = requestAnimationFrame(tick);
       };
       spin.raf = requestAnimationFrame(tick);
