@@ -1767,6 +1767,12 @@ def main():
     if str(pricing_source).startswith("a web search") and not reused_pricing and search_ungrounded:
         warnings.append("the web search returned no source pages, so these prices may come from Gemini's memory rather than from a menu")
     set_output("needs_check", "true" if warnings else "false")
+    # Why the venue was flagged, one reason per line. add_city.price_and_keep saves these on the venue so a held
+    # venue's review issue (venue_review.py) can say why it needed a second look.
+    flag_reasons = ([sentence(w) for w in warnings]
+                    + (["No menu prices were read, so these prices are estimates"] if needs_menu else []))
+    if flag_reasons:
+        set_output("flags", "\n".join(flag_reasons), multiline=True)
     final_coords = (venues[existing_idx] if existing_idx is not None else entry)["coords"]
     neighbors = nearby_venues(venues[existing_idx]["id"] if existing_idx is not None else entry["id"], final_coords, venues)
 
