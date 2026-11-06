@@ -3415,5 +3415,23 @@
     "drink": 8.0,
     "dessert": 8.0,
     "tierColor": "#22c55e"
+  },
+  {
+    "id": 201,
+    "name": "Antojitos Oaxaque\u00f1os restaurant inc",
+    "category": "Oaxacan Cuisine",
+    "city": "Oswego",
+    "state": "IL",
+    "website": "http://orderantojitosoaxaqueosrestaurantinc.com/",
+    "coords": [
+      -88.379261,
+      41.682559
+    ],
+    "app": 8.0,
+    "casualMain": 14.0,
+    "premiumMain": 16.99,
+    "drink": 8.0,
+    "dessert": 8.0,
+    "tierColor": "#22c55e"
   }
 ]
