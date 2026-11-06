@@ -746,6 +746,19 @@
     .car-btn { right: 188px !important; }
     .theme-btn { color: #fbbf24 !important; } /* the sun */
     html[data-theme="light"] .theme-btn { color: #a5b4fc !important; } /* the moon */
+    /* Press feedback: the same white outline glow the car, cloud and list buttons wear while on, fading in and back out
+       once. It lives on a pseudo-element because the button's own box-shadow is !important, which an animation can't beat. */
+    .theme-btn::after {
+      content: '';
+      position: absolute;
+      inset: -1px; /* over the 1px border */
+      border-radius: 50%;
+      box-shadow: 0 0 4px rgba(255, 255, 255, 0.8), 0 0 12px rgba(255, 255, 255, 0.45);
+      opacity: 0;
+      pointer-events: none;
+    }
+    .theme-btn.pressed::after { animation: theme-btn-glow 0.7s ease-in-out; }
+    @keyframes theme-btn-glow { 0%, 100% { opacity: 0; } 35% { opacity: 1; } }
     .car-btn.active {
       color: #a78bfa !important;
       box-shadow: 0 0 4px rgba(255, 255, 255, 0.8), 0 0 12px rgba(255, 255, 255, 0.45) !important;
@@ -3206,6 +3219,7 @@
       btn.title = label;
     }
     updateThemeButton();
+    document.getElementById('theme-toggle').addEventListener('animationend', (e) => e.currentTarget.classList.remove('pressed'));
 
     // Swapping the basemap would normally drop everything the page drew itself. transformStyle carries these sources and
     // their layers (the venue dots and names, the car, the route trail) into the new style, so the dots, the open card,
@@ -3227,6 +3241,11 @@
       try { localStorage.setItem(THEME_KEY, theme); } catch (e) { /* storage unavailable: the choice just won't be remembered */ }
       document.documentElement.dataset.theme = theme;
       updateThemeButton();
+      // Restart the glow even on a quick second press
+      const btn = document.getElementById('theme-toggle');
+      btn.classList.remove('pressed');
+      void btn.offsetWidth;
+      btn.classList.add('pressed');
       map.setStyle(MAP_STYLES[theme], { transformStyle: carryOwnLayers });
     }
 
