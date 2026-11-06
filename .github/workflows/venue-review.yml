@@ -70,6 +70,7 @@ jobs:
     permissions:
       contents: write
       issues: write
+      actions: read
     steps:
       - uses: actions/checkout@v4
         with:
@@ -80,9 +81,22 @@ jobs:
       - name: Fold the venue into venues.json
         env:
           GH_TOKEN: ${{ github.token }}
-          ISSUE_BODY: ${{ github.event.issue.body }}
+          EVENT_ISSUE_BODY: ${{ github.event.issue.body }}
           ISSUE_NUMBER: ${{ github.event.issue.number }}
         run: |
+          # A price comment (venue-review-menu.yml) rewrites the issue body about 30 seconds after it is posted. The
+          # event body is a snapshot from when the label was applied, so label-then-edit used to save the old prices.
+          # Wait for any menu run still going (up to 10 minutes), then read the body as it is now.
+          for i in $(seq 1 60); do
+            busy=$(gh run list --repo "${{ github.repository }}" --workflow venue-review-menu.yml \
+                     --json status --jq '[.[] | select(.status == "queued" or .status == "in_progress" or .status == "waiting")] | length' 2>/dev/null || echo 0)
+            [ "${busy:-0}" = "0" ] && break
+            echo "A price update is still running; waiting (attempt $i)"
+            sleep 10
+          done
+          ISSUE_BODY=$(gh issue view "$ISSUE_NUMBER" --repo "${{ github.repository }}" --json body --jq .body 2>/dev/null) || ISSUE_BODY=""
+          [ -n "$ISSUE_BODY" ] || ISSUE_BODY="$EVENT_ISSUE_BODY"
+          export ISSUE_BODY
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
           for attempt in 1 2 3 4 5 6; do
