@@ -335,8 +335,8 @@ def fetch_pricing_via_gemini_search(venue_name, city="Naperville, IL"):
 CLAUDE_SEARCH_MODEL = os.environ.get("CLAUDE_SEARCH_MODEL", "claude-sonnet-5-5")
 # Caps on the Claude fallback. The log showed it consulting 9 to 23 pages per venue, mostly aggregator listings, and
 # still returning defaulted categories about half the time, so searches, fetches and continuation passes are kept low.
-CLAUDE_MAX_SEARCHES = 2
-CLAUDE_MAX_FETCHES = 2
+CLAUDE_MAX_SEARCHES = 1
+CLAUDE_MAX_FETCHES = 1
 CLAUDE_MAX_PASSES = 2
 
 def claude_search_pricing(venue_name, city, website=""):
