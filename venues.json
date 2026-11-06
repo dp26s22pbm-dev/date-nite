@@ -3469,5 +3469,23 @@
     "drink": 8.0,
     "dessert": 8.0,
     "tierColor": "#22c55e"
+  },
+  {
+    "id": 204,
+    "name": "More Brewing Company",
+    "category": "New American",
+    "city": "Villa Park",
+    "state": "IL",
+    "website": "https://morebrewing.com/",
+    "coords": [
+      -87.9694,
+      41.886797
+    ],
+    "app": 15.5,
+    "casualMain": 19.0,
+    "premiumMain": 21.0,
+    "drink": 12.0,
+    "dessert": 11.5,
+    "tierColor": "#eab308"
   }
 ]
