@@ -779,6 +779,9 @@
     .list-btn.active .row-2 { fill: #eab308; }
     .list-btn.active .row-3 { fill: #ef4444; }
     .car-btn svg, .zoom-btn svg, .list-btn svg, .theme-btn svg { width: 16.5px !important; height: 16.5px !important; fill: currentColor !important; pointer-events: none !important; }
+    /* The plane is drawn a little larger and bolder than the other icons: 19.5px with a thin outline in its own color */
+    .zoom-btn svg { width: 19.5px !important; height: 19.5px !important; }
+    .zoom-btn svg path { stroke: currentColor; stroke-width: 0.9; stroke-linejoin: round; }
 
     /* Phone layout: search across the top, the Menu as a row beneath it, and no Budget bar for now. The Cost
        legend leaves the left rail and becomes a four-dot color button in the bottom row, just left of the list button; pressing it opens a
