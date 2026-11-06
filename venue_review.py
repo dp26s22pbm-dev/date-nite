@@ -64,8 +64,9 @@ def issue_body(venue, source_url):
     notes = [n for n in venue.get("reviewNotes") or [] if str(n).strip()]
     flagged = ("### ⚠️ Flagged for double-checking\n\nThe importer flagged this venue during the grid search:\n\n"
                + "\n".join(f"- {n}" for n in notes) + "\n\n") if notes else ""
+    town = ", ".join(p for p in (venue.get("city"), venue.get("state")) if p) or "unknown (add city and state to the JSON below)"
     return (f"Held from {source_url} for later review.\n\n"
-            f"- **Cuisine:** {venue.get('category', '?')}\n- **Website:** {venue.get('website', 'none')}\n"
+            f"- **Cuisine:** {venue.get('category', '?')}\n- **Town:** {town}\n- **Website:** {venue.get('website', 'none')}\n"
             f"- **Prices:** {prices}\n\n"
             f"{flagged}"
             f"Add the `{APPROVE_LABEL}` label to put this venue on the map. Add the `{DENY_LABEL}` label to leave it off and keep "
