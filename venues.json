@@ -3343,5 +3343,41 @@
     "drink": 9.9,
     "dessert": 7.7,
     "tierColor": "#eab308"
+  },
+  {
+    "id": 197,
+    "name": "Pazzi Di Pizza Elmhurst",
+    "category": "Italian / Pizza",
+    "city": "Elmhurst",
+    "state": "IL",
+    "website": "http://www.pazzidipizza.com/",
+    "coords": [
+      -87.939852,
+      41.898959
+    ],
+    "app": 14.0,
+    "casualMain": 18.5,
+    "premiumMain": 43.0,
+    "drink": 13.0,
+    "dessert": 8.0,
+    "tierColor": "#eab308"
+  },
+  {
+    "id": 198,
+    "name": "Maharaj Indian Grill",
+    "category": "Indian Cuisine",
+    "city": "Elmhurst",
+    "state": "IL",
+    "website": "http://maharajindiangrill.com/",
+    "coords": [
+      -87.94135,
+      41.900658
+    ],
+    "app": 6.0,
+    "casualMain": 18.0,
+    "premiumMain": 28.0,
+    "drink": 9.0,
+    "dessert": 5.0,
+    "tierColor": "#22c55e"
   }
 ]
