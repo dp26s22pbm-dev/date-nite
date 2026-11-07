@@ -1613,16 +1613,31 @@ def main():
                 rendered = render_page_text(menu_url)
                 pricing = pricing_from_menu_text(rendered, where="page_browser", url=menu_url) if rendered else None
             pricing_source = "the menu link"
+    low_site_pricing = None  # (pricing, source) from the restaurant's site when its prices looked implausibly low
     if not pricing and (website or saved_site):
         where_text = (listing or {}).get("address") or place_text or address or ""
         pricing, menu_page = pricing_from_website_menu(website or saved_site, where_text)
         pricing_source = f"the menu on the restaurant's website ({menu_page})"
+        if pricing and pricing_rules.menu_prices_implausibly_low(pricing, name, category):
+            # Template filler or a kids/lunch section: try the other sources, and keep this read as a last resort
+            print("The site's menu prices are implausibly low for a sit-down place; trying other sources first.")
+            menu_log.step("site_pages", "implausibly_low", url=menu_page)
+            low_site_pricing = (pricing, pricing_source)
+            pricing = None
     if not pricing and (website or saved_site):
         pricing = pricing_from_gemini_reading_site(name, website or saved_site)
         pricing_source = "Gemini reading the restaurant's own menu pages"
+        if pricing and pricing_rules.menu_prices_implausibly_low(pricing, name, category):
+            print("Gemini's read of the site gave implausibly low prices; trying a web search first.")
+            menu_log.step("site_gemini", "implausibly_low", url=website or saved_site)
+            low_site_pricing = low_site_pricing or (pricing, pricing_source)
+            pricing = None
     if not pricing:
         pricing = fetch_pricing_via_web_search(name, place_text or address or "Naperville, IL", website or saved_site or "")
         pricing_source = web_search_menu_source or "a web search (estimates)"
+        if low_site_pricing and (not pricing or pricing_rules.menu_prices_implausibly_low(pricing, name, category)):
+            # The search found nothing better, so the site's own (low) prices stand
+            pricing, pricing_source = low_site_pricing
     if not reused_pricing:
         save_pricing_cache(pricing, pricing_source)
 

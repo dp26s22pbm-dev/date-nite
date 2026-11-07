@@ -31,3 +31,21 @@ def looks_like_counter_menu(venue):
     """True when the saved prices look like a counter-service menu: even the premium tier is cheap. A taco place is left
     alone, since its prices are per taco."""
     return not taco_at_a_time(venue) and venue["premiumMain"] < COUNTER_MENU_PREMIUM_MAX
+
+def menu_prices_implausibly_low(pricing, name="", category=""):
+    """True when menu prices read from a restaurant's own site are so low that even the premium tier would trip the
+    counter-service check (looks_like_counter_menu). That usually means the page is unedited website-template filler
+    (Gray's Mill Estate's Wix page lists a $1.50 cocktail and an $8 steak) or a kids/lunch section was read, so the
+    importer tries its other sources before settling for it. Taco places are exempt: their prices are per taco.
+    pricing is the importer's category lists (apps, casualMains, premiumMains, drinks, desserts)."""
+    casual = sorted(pricing.get("casualMains") or [])
+    if not casual or is_taco_place(name, category):
+        return False
+    prem = sorted(pricing.get("premiumMains") or [])
+    # The importer fills a missing premium tier with 1.6 times the casual main; judge the number it would save
+    premium = _median(prem) if prem else _median(casual) * 1.6
+    return premium < COUNTER_MENU_PREMIUM_MAX
+
+def _median(values):
+    mid = len(values) // 2
+    return values[mid] if len(values) % 2 else (values[mid - 1] + values[mid]) / 2

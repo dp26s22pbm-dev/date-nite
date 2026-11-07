@@ -31,9 +31,9 @@ Steps and results are short fixed words so they can be counted. A result of "ok"
     browser       unavailable | limit | failed | bot_challenge | ok
     pdf           download_or_parse_error | no_prices | too_few_prices | ok  (PDF or image menus)
     menu_link     google_search_url
-    site_pages    no_menu_page_found | bot_challenge | ok                   (the restaurant's own site; n = pages tried)
+    site_pages    no_menu_page_found | bot_challenge | implausibly_low | ok  (the restaurant's own site; n = pages tried; implausibly_low = prices so low the page is probably template filler, other sources tried first)
     page          load_more | no_prices_links_followed                       (observations about a page, not failures)
-    site_gemini   too_few_prices | lunch_prices_suspected | error | ok
+    site_gemini   too_few_prices | lunch_prices_suspected | implausibly_low | error | ok
     search_gemini error | no_sources | ok
     search_claude no_key | error | refused | no_prices | ok         (pages = search results seen; read = pages fetched or cited; tokens_in / tokens_out = API tokens used)
 bot_challenge means the site answered with a bot check ("Just a moment...", a captcha) instead of the page. The importer
