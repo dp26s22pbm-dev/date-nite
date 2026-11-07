@@ -8,9 +8,11 @@ jobs:
   add-venue:
     # The repository is public, so only run for the owner and collaborators; otherwise any stranger's issue
     # could write to venues.json and use the Gemini key
-    # Issues from the Add a City form are handled by add-city.yml, "Remove ..." issues by remove-venue.yml, Split Grid Cells issues by split-cells.yml, and Search Grid Cells issues by search-cells.yml
+    # Issues from the Add a City form are handled by add-city.yml, "Remove ..." issues by remove-venue.yml, Edit a Venue issues by edit-venue.yml, Split Grid Cells issues by split-cells.yml, and Search Grid Cells issues by search-cells.yml
     if: >-
       contains(fromJSON('["OWNER","MEMBER","COLLABORATOR"]'), github.event.issue.author_association) &&
+      !contains(github.event.issue.labels.*.name, 'edit-venue') &&
+      !startsWith(github.event.issue.title, '[Edit Venue]') &&
       !contains(github.event.issue.labels.*.name, 'add-city') &&
       !startsWith(github.event.issue.title, 'remove') &&
       !startsWith(github.event.issue.title, 'delete') &&
