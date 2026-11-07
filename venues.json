@@ -3593,5 +3593,24 @@
     "drink": 8.0,
     "dessert": 8.0,
     "tierColor": "#22c55e"
+  },
+  {
+    "id": 211,
+    "name": "Gray's Mill Estate",
+    "category": "New American",
+    "city": "Montgomery",
+    "state": "IL",
+    "website": "https://graysmillestate.com/",
+    "mapsUrl": "https://maps.app.goo.gl/jYExyiajbueNhCbCA",
+    "coords": [
+      -88.340015,
+      41.729559
+    ],
+    "app": 4.5,
+    "casualMain": 7.25,
+    "premiumMain": 8.0,
+    "drink": 1.5,
+    "dessert": 5.5,
+    "tierColor": "#38bdf8"
   }
 ]
