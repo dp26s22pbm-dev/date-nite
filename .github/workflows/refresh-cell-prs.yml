@@ -1,0 +1,77 @@
+name: Refresh Grid Cell Pull Requests
+
+# Search Grid Cells and Split Grid Cells pull requests all edit the sorted lists in grid/grid.json, so merging one makes
+# the others conflict. When grid/grid.json changes on main, this brings every open add-cell/* and split-cells/* branch up
+# to date with main and merges grid.json with merge_grid.py (a cell either side added is kept). A branch with any other
+# conflict is left alone, and the run says which one. Pushes made with the workflow token do not start other workflows,
+# which is fine here: nothing runs on these branches.
+on:
+  push:
+    branches: [main]
+    paths:
+      - grid/grid.json
+  workflow_dispatch:
+
+# One refresh at a time; a newer one starts from the latest main anyway
+concurrency:
+  group: refresh-cell-prs
+  cancel-in-progress: false
+
+jobs:
+  refresh:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: write
+      pull-requests: read
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 0
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Update the Open Cell Pull Requests
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git fetch origin main
+          branches=$(gh pr list --repo "${{ github.repository }}" --state open --limit 100 --json headRefName,isCrossRepository \
+            --jq '.[] | select(.isCrossRepository == false) | .headRefName | select(startswith("add-cell/") or startswith("split-cells/"))')
+          for branch in $branches; do
+            echo "::group::$branch"
+            git fetch origin "$branch" || { echo "Could not fetch $branch; skipping."; echo "::endgroup::"; continue; }
+            git checkout -q -B "$branch" "origin/$branch"
+            if git merge-base --is-ancestor origin/main HEAD; then
+              echo "Already up to date."
+              echo "::endgroup::"; continue
+            fi
+            if ! git merge --no-edit -m "Merge main into $branch" origin/main; then
+              others=$(git diff --name-only --diff-filter=U | grep -vx 'grid/grid.json' || true)
+              if [ -n "$others" ] || ! git ls-files -u grid/grid.json | grep -q .; then
+                echo "::warning::$branch has conflicts beyond grid/grid.json ($others); left for a person."
+                git merge --abort
+                echo "::endgroup::"; continue
+              fi
+              git show :1:grid/grid.json > "$RUNNER_TEMP/base.json" 2>/dev/null || echo '{}' > "$RUNNER_TEMP/base.json"
+              git show :2:grid/grid.json > "$RUNNER_TEMP/branch.json"
+              git show :3:grid/grid.json > "$RUNNER_TEMP/main.json"
+              if ! python merge_grid.py "$RUNNER_TEMP/base.json" "$RUNNER_TEMP/branch.json" "$RUNNER_TEMP/main.json" grid/grid.json; then
+                echo "::warning::Could not merge grid/grid.json on $branch; left for a person."
+                git merge --abort
+                echo "::endgroup::"; continue
+              fi
+              git add grid/grid.json
+              git commit -q --no-edit -m "Merge main into $branch (resolve grid.json conflict)"
+            fi
+            git push origin "$branch" || echo "::warning::Could not push $branch (it may have changed meanwhile)."
+            echo "::endgroup::"
+          done

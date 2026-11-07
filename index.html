@@ -950,6 +950,9 @@
       text-shadow: 0 1px 3px #000;
       pointer-events: none;
     }
+    /* Light map: no dark backing strip, so the text turns dark to stay readable */
+    html[data-theme="light"] .app-ver { background: none; color: #1f2430; text-shadow: none; }
+    html[data-theme="light"] .app-ver b { color: #7c3aed; }
     .app-ver.pre { opacity: 0; } /* held back until the opening sign has gone, then flickered in by the script near the top of the body */
     #app-ver-num { margin-left: -3px; } /* tucks the number closer to "ver." */
     .app-ver b { color: #a78bfa; /* same purple as the car trail */  font-weight: 700; }
@@ -1241,7 +1244,7 @@
     <div class="list-cards" id="list-cards"></div>
   </div>
 
-  <div class="app-ver pre"><b>DATE NITE</b> ver. <span id="app-ver-num">573</span></div>
+  <div class="app-ver pre"><b>DATE NITE</b> ver. <span id="app-ver-num">579</span></div>
 
   <!-- Audio Controls -->
   <audio id="bg-audio" preload="auto"></audio>

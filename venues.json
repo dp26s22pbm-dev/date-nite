@@ -3606,11 +3606,12 @@
       -88.340015,
       41.729559
     ],
-    "app": 4.5,
-    "casualMain": 7.25,
-    "premiumMain": 8.0,
-    "drink": 1.5,
-    "dessert": 5.5,
-    "tierColor": "#38bdf8"
+    "app": 11.95,
+    "casualMain": 15.95,
+    "premiumMain": 18.95,
+    "drink": 13.0,
+    "dessert": 9.95,
+    "tierColor": "#eab308",
+    "lastUpdated": "2026-11-07"
   }
 ]
