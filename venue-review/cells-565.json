@@ -1,0 +1,23 @@
+[
+  {
+    "name": "Taco Madre",
+    "category": "Mexican Cuisine",
+    "city": "Montgomery",
+    "state": "IL",
+    "website": "https://www.thetacomadre.com/",
+    "coords": [
+      -88.369123,
+      41.722938
+    ],
+    "app": 5.99,
+    "casualMain": 4.19,
+    "premiumMain": 5.49,
+    "drink": 9.99,
+    "dessert": 7.49,
+    "tierColor": "#22c55e",
+    "isTaco": true,
+    "reviewNotes": [
+      "The drink ($9.99) costs more than the casual main ($8.38)"
+    ]
+  }
+]
