@@ -1966,8 +1966,8 @@
     }
     ['pointerdown', 'touchstart'].forEach(type => {
       map.getContainer().addEventListener(type, (e) => {
-        // Links in the card (venue name, location) open a new tab and never move the map
-        if (e.target instanceof Element && e.target.closest('.maplibregl-popup a')) return;
+        // Links in the card (venue name, location) open a new tab, and the music button only toggles sound; neither moves the map
+        if (e.target instanceof Element && e.target.closest('.maplibregl-popup a, #audio-toggle')) return;
         clearTimeout(resumeTimer);
         freezeSpin();
       }, { capture: true, passive: true });
@@ -1977,7 +1977,7 @@
     });
     ['wheel', 'keydown'].forEach(type => {
       map.getContainer().addEventListener(type, (e) => {
-        if (e.target instanceof Element && e.target.closest('.maplibregl-popup a')) return;
+        if (e.target instanceof Element && e.target.closest('.maplibregl-popup a, #audio-toggle')) return; // links and the music button never move the map
         if (spin.active) stopSpin(true);
       }, { capture: true, passive: true });
     });
