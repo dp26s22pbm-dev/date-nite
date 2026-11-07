@@ -1,0 +1,57 @@
+[
+  {
+    "name": "Mario's Pizza",
+    "category": "Italian / Pizza",
+    "city": "North Aurora",
+    "state": "IL",
+    "website": "http://mariospizzanorthaurora.com/",
+    "coords": [
+      -88.347984,
+      41.808331
+    ],
+    "app": 8.99,
+    "casualMain": 15.49,
+    "premiumMain": 27.49,
+    "drink": 8.0,
+    "dessert": 4.99,
+    "tierColor": "#22c55e"
+  },
+  {
+    "name": "Fortunato Fish and Oyster",
+    "category": "Italian",
+    "city": "North Aurora",
+    "state": "IL",
+    "website": "http://www.eatfortunato.com/",
+    "coords": [
+      -88.372279,
+      41.808441
+    ],
+    "app": 16.0,
+    "casualMain": 21.0,
+    "premiumMain": 39.0,
+    "drink": 27.0,
+    "dessert": 11.0,
+    "tierColor": "#f97316",
+    "reviewNotes": [
+      "The drink ($27.0) is unusually high for one person, which often means catering or party-package prices were read",
+      "The drink ($27.0) costs more than the casual main ($21)"
+    ]
+  },
+  {
+    "name": "Oak Street Restaurant And Bar",
+    "category": "Casual American",
+    "city": "North Aurora",
+    "state": "IL",
+    "website": "http://www.oakstreetrestaurant.com/",
+    "coords": [
+      -88.348873,
+      41.808761
+    ],
+    "app": 10.99,
+    "casualMain": 15.99,
+    "premiumMain": 34.49,
+    "drink": 8.0,
+    "dessert": 6.99,
+    "tierColor": "#eab308"
+  }
+]
