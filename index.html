@@ -399,6 +399,13 @@
       opacity: 0;
       transition: opacity 0.12s ease;
     }
+    /* Light map: no backing pill, dark text with a white outline, like the always-on venue names */
+    html[data-theme="light"] .dot-label {
+      background: none;
+      padding: 0;
+      color: #000;
+      text-shadow: -1px -1px 0 #fff, 1px -1px 0 #fff, -1px 1px 0 #fff, 1px 1px 0 #fff, 0 0 3px #fff;
+    }
     .dot-label.show { opacity: 1; }
     .dot-label.slow { transition-duration: 0.3s; } /* a click on the dot lets its name linger a little longer */
     @media (prefers-reduced-motion: reduce) { .dot-label.slow { transition-duration: 0.12s; } }
@@ -951,7 +958,7 @@
       pointer-events: none;
     }
     /* Light map: no dark backing strip, so the text turns dark to stay readable */
-    html[data-theme="light"] .app-ver { background: none; color: #1f2430; text-shadow: none; }
+    html[data-theme="light"] .app-ver { background: none; color: #1f2430; text-shadow: -1px -1px 0 #fff, 1px -1px 0 #fff, -1px 1px 0 #fff, 1px 1px 0 #fff, 0 0 3px #fff; }
     html[data-theme="light"] .app-ver b { color: #7c3aed; }
     .app-ver.pre { opacity: 0; } /* held back until the opening sign has gone, then flickered in by the script near the top of the body */
     #app-ver-num { margin-left: -3px; } /* tucks the number closer to "ver." */
