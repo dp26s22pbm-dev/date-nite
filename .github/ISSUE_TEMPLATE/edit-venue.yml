@@ -1,0 +1,76 @@
+name: Edit a Venue
+description: Change the prices, website or cuisine of a venue that is already on the map
+title: "[Edit Venue]: "
+labels: ["edit-venue"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Fill in the venue's name, town and state, then whatever you want to change. Blank fields keep what is saved. Nothing is looked up or guessed, and the issue closes itself once the change is saved.
+
+        The name does not have to be exact: capitalization, punctuation, "The", "Restaurant" or "Grill", and small typos are fine. Town and state must be right.
+
+  - type: input
+    id: venue_name
+    attributes:
+      label: Restaurant Name
+      placeholder: "e.g., Traverso's"
+    validations:
+      required: true
+
+  - type: input
+    id: town
+    attributes:
+      label: Town
+      placeholder: "e.g., Naperville"
+    validations:
+      required: true
+
+  - type: input
+    id: state
+    attributes:
+      label: State
+      description: "Two-letter code or full name."
+      placeholder: "e.g., IL"
+    validations:
+      required: true
+
+  - type: textarea
+    id: menu_text
+    attributes:
+      label: Menu text (Optional)
+      description: "Open the restaurant's menu page, select all, copy, and paste it here. Prices are read from this text. Anything the text has no prices for keeps its saved value."
+    validations:
+      required: false
+
+  - type: textarea
+    id: price_overrides
+    attributes:
+      label: Price Overrides (Optional)
+      description: "One price per line. Use any of the five; these win over the menu text."
+      placeholder: |
+        app: 10.00
+        casualMain: 18.00
+        premiumMain: 32.00
+        drink: 8.00
+        dessert: 8.00
+    validations:
+      required: false
+
+  - type: input
+    id: website
+    attributes:
+      label: Website URL (Optional)
+      description: "Replaces the saved website."
+      placeholder: "https://traversosrestaurant.com"
+    validations:
+      required: false
+
+  - type: input
+    id: category
+    attributes:
+      label: Cuisine Category (Optional)
+      description: "Replaces the saved cuisine label."
+      placeholder: "e.g., Italian / Pizza"
+    validations:
+      required: false

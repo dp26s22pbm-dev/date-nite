@@ -1,0 +1,97 @@
+name: Edit Venue on Issue
+
+# An "Edit a Venue" issue changes the prices, website or cuisine of a venue that is already on the map. The venue is found
+# by restaurant name, town and state (see venue_match.py). The issue always closes with a summary: no labels, no follow-up.
+# add-venue.yml skips these issues.
+on:
+  issues:
+    types: [opened, reopened]
+
+jobs:
+  edit-venue:
+    # Only the owner and collaborators. The title prefix backs up the label, which a template cannot apply until it exists.
+    if: >-
+      contains(fromJSON('["OWNER","MEMBER","COLLABORATOR"]'), github.event.issue.author_association) &&
+      (contains(github.event.issue.labels.*.name, 'edit-venue') || startsWith(github.event.issue.title, '[Edit Venue]'))
+    runs-on: ubuntu-latest
+    # Waiting for an earlier run can take a while when several venues arrive together
+    timeout-minutes: 90
+    permissions:
+      actions: read
+      contents: write
+      issues: write
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+        with:
+          ref: main
+
+      # Venue runs edit the same file, so they take turns in the order they started
+      - name: Wait for earlier runs
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          .github/scripts/wait-for-earlier-runs.sh
+          git fetch origin main
+          git reset --hard origin/main
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install Dependencies
+        run: pip install -r requirements.txt
+
+      - name: Edit Venue and Push
+        id: edit
+        env:
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          ISSUE_BODY: ${{ github.event.issue.body }}
+          ISSUE_NUMBER: ${{ github.event.issue.number }}
+        run: |
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+          # Another run may push first; start over from the new main and make the edit again instead of rebasing
+          for attempt in 1 2 3 4 5 6; do
+            python edit_venue_from_issue.py || exit 1
+            git add venues.json
+            git commit -m "Edit venue via Issue #${{ github.event.issue.number }}" || exit 0
+            git push && exit 0
+            echo "Push rejected (attempt $attempt); resetting to origin/main and editing again"
+            git fetch origin main
+            git reset --hard origin/main
+          done
+          echo "Could not push after 6 attempts" >&2
+          exit 1
+
+      # A venue's name is its identity here, so the issue is named after the venue that was edited
+      - name: Name the issue after the venue
+        if: steps.edit.outputs.venue_name != ''
+        env:
+          GH_TOKEN: ${{ github.token }}
+          VENUE_NAME: ${{ steps.edit.outputs.venue_name }}
+        run: |
+          gh issue edit ${{ github.event.issue.number }} --repo ${{ github.repository }} --title "[Edit Venue]: $VENUE_NAME" || true
+
+      - name: Close Issue
+        uses: peter-evans/close-issue@v3
+        with:
+          issue-number: ${{ github.event.issue.number }}
+          comment: ${{ steps.edit.outputs.summary || '✓ Venue updated.' }}
+
+      - name: Report failure on the issue
+        if: failure()
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REASON: ${{ steps.edit.outputs.error }}
+        run: |
+          gh issue comment ${{ github.event.issue.number }} --repo ${{ github.repository }} --body "Could not edit this venue. ${REASON:-See the workflow run for details.} Fix the form and reopen this issue to try again. Run: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+
+      # Which menu text was readable, kept on the menu-log branch (see menu_log.py)
+      - name: Save the menu import log
+        if: always()
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: python menu_log.py publish || true
