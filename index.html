@@ -4,6 +4,11 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
   <title>DATE NITE</title>
+  <script>
+    // Light or dark map, remembered on this device. Set before first paint so the page never flashes the wrong one.
+    try { document.documentElement.dataset.theme = localStorage.getItem('datenite-theme') === 'light' ? 'light' : 'dark'; }
+    catch (e) { document.documentElement.dataset.theme = 'dark'; }
+  </script>
   
   <link href="https://unpkg.com/maplibre-gl@4.7.1/dist/maplibre-gl.css" rel="stylesheet" />
 
@@ -46,6 +51,8 @@
       z-index: 900; /* over the map, under the buttons, venue list and open venue card */
       transition: height 0.2s ease;
     }
+    /* Over a light map the same dark fade reads as a gray smudge, so it fades to a pale wash instead */
+    html[data-theme="light"] .map-scrim { background: linear-gradient(to bottom, rgba(236, 238, 241, 0) 0%, rgba(236, 238, 241, 0.7) 40%); }
     @media (prefers-reduced-motion: reduce) { .map-scrim { transition: none; } }
 
     /* Weather animation drawn over the map: rain, snow, lightning */
@@ -710,10 +717,11 @@
     }
 
     /* Round map buttons in a row above the venue cards, right-aligned: car, cloud, sound, then the cards
-       Names used for them (in the user's words -> class): car -> .car-btn, cloud -> .zoom-btn (zoom reset),
-       cost -> .cost-btn (phones only, four color dots), list -> .list-btn (venue list), audio/sound -> .audio-btn
-       Order, left to right: desktop is car, cloud, list, audio; phones are car, cloud, cost, list, audio */
-    .car-btn, .zoom-btn, .list-btn {
+       Names used for them (in the user's words -> class): car -> .car-btn, plane (formerly the cloud) -> .zoom-btn (zoom reset),
+       cost -> .cost-btn (phones only, four color dots), list -> .list-btn (venue list), audio/sound -> .audio-btn,
+       theme -> .theme-btn (sun on the dark map, crescent moon on the light one)
+       Order, left to right: desktop is car, cloud, theme, list, audio; phones are car, cloud, theme, cost, list, audio */
+    .car-btn, .zoom-btn, .list-btn, .theme-btn {
       position: fixed !important;
       right: 16px !important;
       bottom: var(--btn-base) !important;
@@ -733,14 +741,31 @@
       transition: all 0.2s ease !important;
     }
     .list-btn { right: 59px !important; }
-    .zoom-btn { right: 102px !important; }
-    .car-btn { right: 145px !important; }
+    .theme-btn { right: 102px !important; }
+    .zoom-btn { right: 145px !important; }
+    .car-btn { right: 188px !important; }
+    .theme-btn { color: #fbbf24 !important; } /* the sun */
+    html[data-theme="light"] .theme-btn { color: #a5b4fc !important; } /* the moon */
+    /* Press feedback: the same white outline glow the car, cloud and list buttons wear while on, fading in and back out
+       once. It lives on a pseudo-element because the button's own box-shadow is !important, which an animation can't beat. */
+    .theme-btn::after {
+      content: '';
+      position: absolute;
+      inset: -1px; /* over the 1px border */
+      border-radius: 50%;
+      box-shadow: 0 0 4px rgba(255, 255, 255, 0.8), 0 0 12px rgba(255, 255, 255, 0.45);
+      opacity: 0;
+      pointer-events: none;
+    }
+    .theme-btn.pressed::after { animation: theme-btn-glow 0.7s ease-in-out; }
+    @keyframes theme-btn-glow { 0%, 100% { opacity: 0; } 35% { opacity: 1; } }
     .car-btn.active {
       color: #a78bfa !important;
       box-shadow: 0 0 4px rgba(255, 255, 255, 0.8), 0 0 12px rgba(255, 255, 255, 0.45) !important;
     }
-    .zoom-btn { color: #38bdf8 !important; } /* the cloud stays blue on or off; the white glow shows it's on */
+    /* the plane is grey when the map is not at the zoomed-out height, and blue with the white glow when it is */
     .zoom-btn.active {
+      color: #38bdf8 !important;
       box-shadow: 0 0 4px rgba(255, 255, 255, 0.8), 0 0 12px rgba(255, 255, 255, 0.45) !important;
     }
     .car-btn.busy { opacity: 0.6; }
@@ -753,12 +778,15 @@
     .list-btn.active .row-1 { fill: #22c55e; }
     .list-btn.active .row-2 { fill: #eab308; }
     .list-btn.active .row-3 { fill: #ef4444; }
-    .car-btn svg, .zoom-btn svg, .list-btn svg { width: 16.5px !important; height: 16.5px !important; fill: currentColor !important; pointer-events: none !important; }
+    .car-btn svg, .zoom-btn svg, .list-btn svg, .theme-btn svg { width: 16.5px !important; height: 16.5px !important; fill: currentColor !important; pointer-events: none !important; }
+    /* The plane is drawn a little larger and bolder than the other icons: 19.5px with a thin outline in its own color */
+    .zoom-btn svg { width: 19.5px !important; height: 19.5px !important; }
+    .zoom-btn svg path { stroke: currentColor; stroke-width: 0.9; stroke-linejoin: round; }
 
     /* Phone layout: search across the top, the Menu as a row beneath it, and no Budget bar for now. The Cost
        legend leaves the left rail and becomes a four-dot color button in the bottom row, just left of the list button; pressing it opens a
-       horizontal Cost explanation just above the row. The car and cloud buttons each move over one slot to make room;
-       the row is car (188px), cloud (145px), cost (102px), list (59px), audio (16px) from the right edge. */
+       horizontal Cost explanation just above the row. The car, cloud and theme buttons each move over one slot to make room;
+       the row is car (231px), cloud (188px), theme (145px), cost (102px), list (59px), audio (16px) from the right edge. */
     .cost-btn, .cost-pop { display: none; }
     @media (max-width: 480px) {
       .left-rail { display: none; } /* Cost and Budget */
@@ -776,9 +804,10 @@
       #menu-panel .counter-actions { gap: 3px; }
       #menu-panel .counter-value { min-width: 12px; }
 
-      .zoom-btn { right: 145px !important; }
-      .car-btn { right: 188px !important; }
-      .car-toast { right: 188px; }
+      .theme-btn { right: 145px !important; }
+      .zoom-btn { right: 188px !important; }
+      .car-btn { right: 231px !important; }
+      .car-toast { right: 231px; }
 
       .cost-btn {
         position: fixed;
@@ -889,17 +918,17 @@
     .venue-list.loading { opacity: 0; visibility: hidden; } /* removing the class lets the normal 0.25s fade run */
     /* The rest of the interface waits for the same moment, then fades in with the strip */
     .search-bar { transition: opacity 0.25s ease; }
-    body.app-loading :is(.left-rail, .right-rail, .search-bar, .car-btn, .zoom-btn, .list-btn, .cost-btn, .audio-btn) {
+    body.app-loading :is(.left-rail, .right-rail, .search-bar, .car-btn, .zoom-btn, .list-btn, .theme-btn, .cost-btn, .audio-btn) {
       opacity: 0 !important;
       pointer-events: none !important;
     }
     /* For the moment the interface is revealed, everything fades over 0.6s (set by revealApp, then dropped) */
-    body.app-revealing :is(.left-rail, .right-rail, .search-bar, .car-btn, .zoom-btn, .list-btn, .cost-btn, .audio-btn) {
+    body.app-revealing :is(.left-rail, .right-rail, .search-bar, .car-btn, .zoom-btn, .list-btn, .theme-btn, .cost-btn, .audio-btn) {
       transition: opacity 0.6s ease !important;
     }
     body.app-revealing .venue-list { transition: opacity 0.6s ease, visibility 0s linear 0s !important; }
     @media (prefers-reduced-motion: reduce) {
-      body.app-revealing :is(.left-rail, .right-rail, .search-bar, .car-btn, .zoom-btn, .list-btn, .cost-btn, .audio-btn, .venue-list) { transition: none !important; }
+      body.app-revealing :is(.left-rail, .right-rail, .search-bar, .car-btn, .zoom-btn, .list-btn, .theme-btn, .cost-btn, .audio-btn, .venue-list) { transition: none !important; }
     }
     @media (prefers-reduced-motion: reduce) {
       .search-bar { transition: none; }
@@ -1001,7 +1030,7 @@
 
     .car-toast {
       position: fixed;
-      right: 145px;
+      right: 188px;
       bottom: calc(var(--btn-base) + 54px);
       max-width: 260px;
       padding: 10px 12px;
@@ -1175,7 +1204,7 @@
     <svg viewBox="0 0 24 24"><path d="M18.92 6.01C18.72 5.42 18.16 5 17.5 5h-11c-.66 0-1.21.42-1.42 1.01L3 12v8c0 .55.45 1 1 1h1c.55 0 1-.45 1-1v-1h12v1c0 .55.45 1 1 1h1c.55 0 1-.45 1-1v-8l-2.08-5.99zM6.5 16c-.83 0-1.5-.67-1.5-1.5S5.67 13 6.5 13s1.5.67 1.5 1.5S7.33 16 6.5 16zm11 0c-.83 0-1.5-.67-1.5-1.5s.67-1.5 1.5-1.5 1.5.67 1.5 1.5-.67 1.5-1.5 1.5zM5 11l1.5-4.5h11L19 11H5z"/></svg>
   </button>
   <button id="zoom-reset" class="zoom-btn" onclick="resetZoom()" aria-label="Zoom out to the skies!" title="Zoom out to the skies!">
-    <svg viewBox="0 0 24 24"><path d="M19.35 10.04C18.67 6.59 15.64 4 12 4 9.11 4 6.6 5.64 5.35 8.04 2.34 8.36 0 10.91 0 14c0 3.31 2.69 6 6 6h13c2.76 0 5-2.24 5-5 0-2.64-2.05-4.78-4.65-4.96z"/></svg>
+    <svg viewBox="0 0 24 24"><path d="M21 16v-2l-8-5V3.5c0-.83-.67-1.5-1.5-1.5S10 2.67 10 3.5V9l-8 5v2l8-2.5V19l-2 1.5V22l3.5-1 3.5 1v-1.5L13 19v-5.5l8 2.5z"/></svg>
   </button>
   <button id="list-toggle" class="list-btn active" onclick="toggleList()" aria-label="Show or hide the venue list" title="Show or hide the venue list">
     <svg viewBox="0 0 24 24"><g transform="translate(0 -1)">
@@ -1184,6 +1213,7 @@
       <path class="row-3" d="M3 17h4v4H3v-4zm6 0h12v4H9v-4z"/>
     </g></svg>
   </button>
+  <button id="theme-toggle" class="theme-btn" onclick="toggleTheme()" aria-label="Switch to light map" title="Switch to light map"></button>
   <!-- Phones only: the Cost legend as a four-dot color button in the bottom row, left of the list button, opening a horizontal explanation above it -->
   <button id="cost-toggle" class="cost-btn" onclick="toggleCostPop()" aria-label="What the colors cost" aria-expanded="false" aria-controls="cost-pop" title="What the colors cost"><svg viewBox="0 0 20 20" aria-hidden="true"><circle cx="6" cy="6" r="3.6" fill="#22c55e"/><circle cx="14" cy="6" r="3.6" fill="#eab308"/><circle cx="6" cy="14" r="3.6" fill="#f97316"/><circle cx="14" cy="14" r="3.6" fill="#ef4444"/></svg></button>
   <div id="cost-pop" class="cost-pop" role="region" aria-label="Cost">
@@ -1208,7 +1238,7 @@
     <div class="list-cards" id="list-cards"></div>
   </div>
 
-  <div class="app-ver pre"><b>DATE NITE</b> ver. <span id="app-ver-num">553</span></div>
+  <div class="app-ver pre"><b>DATE NITE</b> ver. <span id="app-ver-num">563</span></div>
 
   <!-- Audio Controls -->
   <audio id="bg-audio" preload="auto"></audio>
@@ -1370,11 +1400,14 @@
       budgetOn: false // the slider stays rolled up until the Budget button is pressed, and then no budget applies
     };
 
-    // A taco place whose appetizer costs more than its Casual price, or whose Casual price is at most PER_TACO_MAX,
-    // sells tacos one at a time, so Casual means 2 tacos (keep PER_TACO_MAX in step with pricing_rules.py)
+    // A taco place whose Casual price is at most PER_TACO_MAX, or whose appetizer costs more than a Casual price of at
+    // most PER_TACO_APP_RULE_MAX, sells tacos one at a time, so Casual means 2 tacos. Above that the Casual price is a
+    // plate of several tacos. (Keep both numbers in step with pricing_rules.py)
     const PER_TACO_MAX = 7;
+    const PER_TACO_APP_RULE_MAX = 10;
     function tacoAtATime(v) {
-      return !!v.isTaco && ((v.app || 0) > (v.casualMain || 0) || (v.casualMain || 0) <= PER_TACO_MAX);
+      const casual = v.casualMain || 0;
+      return !!v.isTaco && (casual <= PER_TACO_MAX || ((v.app || 0) > casual && casual <= PER_TACO_APP_RULE_MAX));
     }
 
     function calculateTotal(v) {
@@ -1439,9 +1472,26 @@
 
     const DEFAULT_ZOOM = 12.2; // the height the page loads at
     const CLOUD_ZOOM = 11.5; // the height the cloud button zooms back out to
+    // Light or dark basemap. The choice is remembered on this device; the head script has already put it on <html>.
+    const THEME_KEY = 'datenite-theme';
+    const MAP_STYLES = {
+      dark: 'https://tiles.openfreemap.org/styles/dark',
+      light: 'https://tiles.openfreemap.org/styles/positron'
+    };
+    let theme = document.documentElement.dataset.theme === 'light' ? 'light' : 'dark';
+    // Venue names: white with a black outline on the dark map, black with a white outline on the light one. Over-budget
+    // venues still dim through the color's alpha.
+    function labelPaint(t) {
+      const light = t === 'light';
+      const [fg, bg] = light ? [0, 255] : [255, 0];
+      return {
+        'text-color': ['rgba', fg, fg, fg, ['get', 'opacity']],
+        'text-halo-color': ['rgba', bg, bg, bg, ['*', ['get', 'opacity'], light ? 0.9 : 0.85]]
+      };
+    }
     const map = new maplibregl.Map({
       container: 'map',
-      style: 'https://tiles.openfreemap.org/styles/dark',
+      style: MAP_STYLES[theme],
       center: [-88.16632, 41.74594],
       zoom: DEFAULT_ZOOM,
       pitch: 60,
@@ -1481,7 +1531,7 @@
       map.panBy([e.deltaX, e.deltaY], { animate: false });
     }, { capture: true, passive: false });
 
-    // The cloud button lights up white whenever the map is at the cloud height
+    // The plane button turns blue and glows whenever the map is at the zoomed-out height
     function updateZoomButton() {
       document.getElementById('zoom-reset').classList.toggle('active', Math.abs(map.getZoom() - CLOUD_ZOOM) < 0.1);
     }
@@ -1600,8 +1650,7 @@
         paint: {
           // Over-budget venues dim their name through the color's alpha. The zoom fade has to stay a plain zoom
           // expression: mixing venue data into its stops makes the map ramp the fade in far more slowly.
-          'text-color': ['rgba', 255, 255, 255, ['get', 'opacity']],
-          'text-halo-color': ['rgba', 0, 0, 0, ['*', ['get', 'opacity'], 0.85]],
+          ...labelPaint(theme),
           'text-halo-width': 1.8,
           'text-opacity': labelOpacity(1),
           'text-opacity-transition': { duration: 250 }
@@ -1662,17 +1711,23 @@
       map.getCanvas().addEventListener('touchstart', () => { lastTouchAt = performance.now(); }, { passive: true });
       map.getCanvas().addEventListener('touchend', () => { lastTouchAt = performance.now(); }, { passive: true });
 
-      map.on('mousemove', (e) => {
-        const hits = venuesUnderPoint(e.point);
+      // The last mouse position over the map. While the card's turntable spin turns the map under a resting mouse, no
+      // mousemove fires, so the spin re-checks this point every frame (refreshHoverOnSpin) to keep labels appearing.
+      let lastMousePoint = null;
+      function updateHover(point) {
+        const hits = venuesUnderPoint(point);
         const crowded = hits.length > 1 && map.getZoom() < CROWD_MAX_ZOOM - 0.5;
-        const overLabel = hits.length === 0 && venueUnderLabel(e.point) !== null;
+        const overLabel = hits.length === 0 && venueUnderLabel(point) !== null;
         const fromTouch = performance.now() - lastTouchAt < 800;
         map.getCanvas().style.cursor = crowded ? 'zoom-in' : (hits.length > 0 || overLabel ? 'pointer' : '');
-        if (hits.length > 0 && !crowded && !fromTouch && !map.isMoving()) showDotLabel(hits[0].venue);
+        if (hits.length > 0 && !crowded && !fromTouch && (!map.isMoving() || spin.active)) showDotLabel(hits[0].venue);
         else hideDotLabel();
-      });
-      map.getCanvas().addEventListener('mouseleave', hideDotLabel);
-      map.on('movestart', hideDotLabel);
+      }
+      map.on('mousemove', (e) => { lastMousePoint = e.point; updateHover(e.point); });
+      refreshHoverOnSpin = () => { if (lastMousePoint) updateHover(lastMousePoint); };
+      map.getCanvas().addEventListener('mouseleave', () => { lastMousePoint = null; hideDotLabel(); });
+      // The spin's own per-frame bearing changes are not a reason to hide the label
+      map.on('movestart', () => { if (!spin.own) hideDotLabel(); });
       map.on('zoom', () => { if (map.getZoom() >= LABELS_MIN_ZOOM - LABELS_FADE_ZOOM) hideDotLabel(); });
       map.on('click', () => hideDotLabel(true));
 
@@ -1769,6 +1824,7 @@
     // Anything that might move the map (touch, drag, wheel, keys, or a programmatic move) stops the spin and swings the
     // bearing quickly back to where it started.
     const SPIN_DEG_PER_SEC = 1.5;
+    let refreshHoverOnSpin = () => {}; // set once the map has loaded
     const SPIN_START_DELAY_MS = 350;
     const SPIN_RESET_MS = 350;
     const spin = { active: false, home: 0, anchor: null, pivot: null, raf: 0, last: 0, own: false, timer: 0, resetAfterMove: false, holding: false, paused: false };
@@ -1792,6 +1848,7 @@
         const dt = Math.min(now - spin.last, 100);
         spin.last = now;
         setBearingOwn(map.getBearing() + SPIN_DEG_PER_SEC * dt / 1000);
+        refreshHoverOnSpin();
         spin.raf = requestAnimationFrame(tick);
       };
       spin.raf = requestAnimationFrame(tick);
@@ -3156,6 +3213,49 @@
     }
 
     // Cloud button: zoom back out to the cloud height, over whatever is in view
+    // Theme button: a sun while the map is dark (press for light), a crescent moon while it is light (press for dark)
+    const THEME_ICONS = {
+      dark: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 7c-2.76 0-5 2.24-5 5s2.24 5 5 5 5-2.24 5-5-2.24-5-5-5zM2 13h2c.55 0 1-.45 1-1s-.45-1-1-1H2c-.55 0-1 .45-1 1s.45 1 1 1zm18 0h2c.55 0 1-.45 1-1s-.45-1-1-1h-2c-.55 0-1 .45-1 1s.45 1 1 1zM11 2v2c0 .55.45 1 1 1s1-.45 1-1V2c0-.55-.45-1-1-1s-1 .45-1 1zm0 18v2c0 .55.45 1 1 1s1-.45 1-1v-2c0-.55-.45-1-1-1s-1 .45-1 1zM5.99 4.58a.996.996 0 0 0-1.41 0 .996.996 0 0 0 0 1.41l1.06 1.06c.39.39 1.03.39 1.41 0s.39-1.03 0-1.41L5.99 4.58zm12.37 12.37a.996.996 0 0 0-1.41 0 .996.996 0 0 0 0 1.41l1.06 1.06c.39.39 1.03.39 1.41 0a.996.996 0 0 0 0-1.41l-1.06-1.06zm1.06-10.96a.996.996 0 0 0 0-1.41.996.996 0 0 0-1.41 0l-1.06 1.06c-.39.39-.39 1.03 0 1.41s1.03.39 1.41 0l1.06-1.06zM7.05 18.36a.996.996 0 0 0 0-1.41.996.996 0 0 0-1.41 0l-1.06 1.06c-.39.39-.39 1.03 0 1.41s1.03.39 1.41 0l1.06-1.06z"/></svg>',
+      light: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3a9 9 0 1 0 9 9c0-.46-.04-.92-.1-1.36a5.389 5.389 0 0 1-4.4 2.26 5.403 5.403 0 0 1-3.14-9.8c-.44-.06-.9-.1-1.36-.1z"/></svg>'
+    };
+    function updateThemeButton() {
+      const btn = document.getElementById('theme-toggle');
+      const label = theme === 'dark' ? 'Switch to light map' : 'Switch to dark map';
+      btn.innerHTML = THEME_ICONS[theme];
+      btn.setAttribute('aria-label', label);
+      btn.title = label;
+    }
+    updateThemeButton();
+    document.getElementById('theme-toggle').addEventListener('animationend', (e) => e.currentTarget.classList.remove('pressed'));
+
+    // Swapping the basemap would normally drop everything the page drew itself. transformStyle carries these sources and
+    // their layers (the venue dots and names, the car, the route trail) into the new style, so the dots, the open card,
+    // the camera and any drive in progress all stay as they are and nothing reloads.
+    const OWN_SOURCES = ['restaurants', 'car-3d', 'car-route'];
+    function carryOwnLayers(prev, next) {
+      const paint = labelPaint(theme);
+      const ownLayers = (prev.layers || [])
+        .filter((l) => OWN_SOURCES.includes(l.source))
+        .map((l) => (l.id === 'restaurants-label' || l.id === 'restaurants-label-above')
+          ? { ...l, paint: { ...l.paint, ...paint } }
+          : l);
+      const sources = { ...next.sources };
+      for (const id of OWN_SOURCES) if (prev.sources && prev.sources[id]) sources[id] = prev.sources[id];
+      return { ...next, sources, layers: [...next.layers, ...ownLayers] };
+    }
+    function toggleTheme() {
+      theme = theme === 'dark' ? 'light' : 'dark';
+      try { localStorage.setItem(THEME_KEY, theme); } catch (e) { /* storage unavailable: the choice just won't be remembered */ }
+      document.documentElement.dataset.theme = theme;
+      updateThemeButton();
+      // Restart the glow even on a quick second press
+      const btn = document.getElementById('theme-toggle');
+      btn.classList.remove('pressed');
+      void btn.offsetWidth;
+      btn.classList.add('pressed');
+      map.setStyle(MAP_STYLES[theme], { transformStyle: carryOwnLayers });
+    }
+
     function resetZoom() {
       const duration = reducedMotion.matches ? 0 : 1000;
       const bearing = spinThrough(duration);

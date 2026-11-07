@@ -4,7 +4,7 @@ A static site (`index.html`, `venues.json`) mapping restaurants with an estimate
 
 ## The menu importer
 
-- `add_venue_from_issue.py` is the importer. It tries sources in order and falls back down the list: pasted menu text, the restaurant's own site (plain request, then a headless Playwright browser), linked PDF/image menus, Gemini reading the site, Gemini web search, then Claude web search (`claude_search_pricing`). Gemini prompts live in `PDF_PROMPT`, `SCOPE_RULES` and `SEARCH_PRICING_PROMPT` near the top.
+- `add_venue_from_issue.py` is the importer. It tries sources in order and falls back down the list: pasted menu text, the restaurant's own site (plain request, then a headless Playwright browser), linked PDF/image menus, Gemini reading the site, Gemini web search, then Claude web search (`claude_search_pricing`), after which the venue's Yelp menu page is tried when the search found its Yelp listing (`pricing_from_yelp_menu`). Gemini prompts live in `PDF_PROMPT`, `SCOPE_RULES` and `SEARCH_PRICING_PROMPT` near the top.
 - Output per venue: `app`, `casualMain`, `premiumMain`, `drink`, `dessert` (medians of the category lists, with stand-in numbers when a category is empty), total = (app + casualMain + premiumMain + 2*drink + dessert) * 1.30, mapped to a tier color. Taco places count two casual mains.
 - `clean_pricing`, `price_count` (needs at least 6 price-like numbers), `price_sanity_warnings` and `pricing_rules.py` hold the cleaning and sanity rules. Change those rather than duplicating logic.
 - Workflows that run the importer: `add-venue.yml`, `add-city.yml`, `search-cells.yml`, `add-menu.yml` (someone replies to a `needs-menu` or `double-check` issue with pasted menu text). Each ends with `python menu_log.py publish`.
