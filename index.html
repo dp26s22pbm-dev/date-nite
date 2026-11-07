@@ -582,6 +582,33 @@
     html[data-theme="light"] .pop-badge,
     html[data-theme="light"] .pop-grid { background: #4a535f; border-color: #737d8a; }
 
+    /* Light mode: the other dark panels take a lighter gray too, a notch darker than the popup card (#515a67). Dark mode is unchanged. */
+    html[data-theme="light"] .control-panel,
+    html[data-theme="light"] .legend-panel,
+    html[data-theme="light"] .budget-card,
+    html[data-theme="light"] .cost-pop,
+    html[data-theme="light"] .venue-card { background: rgba(72, 80, 92, 0.95); }
+    html[data-theme="light"] .search-input { background: rgba(72, 80, 92, 0.95); }
+    html[data-theme="light"] .search-results { background: #48505c; }
+    html[data-theme="light"] .search-results li.active { background: #5a5878; }
+    html[data-theme="light"] .cost-pop::after,
+    html[data-theme="light"] .car-toast,
+    html[data-theme="light"] .cost-btn,
+    html[data-theme="light"] .sort-chip { background: #48505c; }
+    html[data-theme="light"] .audio-btn,
+    html[data-theme="light"] .car-btn,
+    html[data-theme="light"] .zoom-btn,
+    html[data-theme="light"] .list-btn,
+    html[data-theme="light"] .theme-btn { background: #48505c !important; }
+    html[data-theme="light"] .counter-btn { background: #58616e; border-color: #6e7885; }
+    html[data-theme="light"] .budget-slider::-webkit-slider-runnable-track { background: linear-gradient(to right, var(--c) var(--fill), #6e7885 var(--fill)); }
+    html[data-theme="light"] .budget-slider::-moz-range-track { background: linear-gradient(to right, var(--c) var(--fill), #6e7885 var(--fill)); }
+    /* #8b949e gray text on the lighter panels would be too faint, so it steps up to the card's secondary gray */
+    html[data-theme="light"] .card-cat,
+    html[data-theme="light"] .card-dist,
+    html[data-theme="light"] .sort-chip { color: #c3cbd3; }
+    html[data-theme="light"] .audio-btn { color: #c3cbd3 !important; }
+
     /* Cost tier legend, at the top of the left rail */
     .legend-panel {
       width: 100%;
