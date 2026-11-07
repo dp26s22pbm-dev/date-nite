@@ -3539,5 +3539,59 @@
     "drink": 18.2,
     "dessert": 13.65,
     "tierColor": "#eab308"
+  },
+  {
+    "id": 208,
+    "name": "Emilio's Tapas Bar",
+    "category": "Spanish Tapas",
+    "city": "Hillside",
+    "state": "IL",
+    "website": "http://emiliostapas.com/",
+    "coords": [
+      -87.88481,
+      41.863547
+    ],
+    "app": 14.0,
+    "casualMain": 26.0,
+    "premiumMain": 26.88,
+    "drink": 10.0,
+    "dessert": 8.0,
+    "tierColor": "#eab308"
+  },
+  {
+    "id": 209,
+    "name": "Sawa's Old Warsaw Restaurant",
+    "category": "Polish Cuisine",
+    "city": "Broadview",
+    "state": "IL",
+    "website": "https://sawasoldwarsaw.com/?utm_source=google&utm_medium=organic&utm_campaign=gbp_website",
+    "coords": [
+      -87.852969,
+      41.849701
+    ],
+    "app": 10.45,
+    "casualMain": 19.0,
+    "premiumMain": 27.0,
+    "drink": 9.5,
+    "dessert": 8.0,
+    "tierColor": "#eab308"
+  },
+  {
+    "id": 210,
+    "name": "Rocky's Pizza & Restaurant",
+    "category": "Italian / Pizza",
+    "city": "Westchester",
+    "state": "IL",
+    "website": "http://www.rockyspizzawestchesteril.com/",
+    "coords": [
+      -87.882702,
+      41.848365
+    ],
+    "app": 6.0,
+    "casualMain": 10.0,
+    "premiumMain": 21.6,
+    "drink": 8.0,
+    "dessert": 8.0,
+    "tierColor": "#22c55e"
   }
 ]
