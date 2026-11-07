@@ -950,6 +950,9 @@
       text-shadow: 0 1px 3px #000;
       pointer-events: none;
     }
+    /* Light map: no dark backing strip, so the text turns dark to stay readable */
+    html[data-theme="light"] .app-ver { background: none; color: #1f2430; text-shadow: none; }
+    html[data-theme="light"] .app-ver b { color: #7c3aed; }
     .app-ver.pre { opacity: 0; } /* held back until the opening sign has gone, then flickered in by the script near the top of the body */
     #app-ver-num { margin-left: -3px; } /* tucks the number closer to "ver." */
     .app-ver b { color: #a78bfa; /* same purple as the car trail */  font-weight: 700; }
@@ -1080,6 +1083,9 @@
       -webkit-background-clip: text;
       background-clip: text;
     }
+    /* Light map: the white bulbs and the big lilac glow wash out on a pale background, so swap the glow for a slight purple one (single blurred shadow) and outline each letter with a flat 1px stroke (one even line, not stacked offset shadows, which look 3-D). Dark map keeps the glowing sign above. */
+    html[data-theme="light"] .neon-intro { filter: drop-shadow(0 0 10px rgba(139, 92, 246, 0.45)); }
+    html[data-theme="light"] .neon-intro span { -webkit-text-stroke: 1px #a78bfa; }
     @media (prefers-reduced-motion: reduce) { .neon-intro { transition: opacity 0.8s ease; } }
 
   </style>
@@ -1238,7 +1244,7 @@
     <div class="list-cards" id="list-cards"></div>
   </div>
 
-  <div class="app-ver pre"><b>DATE NITE</b> ver. <span id="app-ver-num">556</span></div>
+  <div class="app-ver pre"><b>DATE NITE</b> ver. <span id="app-ver-num">580</span></div>
 
   <!-- Audio Controls -->
   <audio id="bg-audio" preload="auto"></audio>
