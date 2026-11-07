@@ -1,10 +1,13 @@
 """Pricing rules shared by the importer (add_venue_from_issue.py), the city and cell searches (add_city.py) and, in
-spirit, the map page (index.html, tacoAtATime). Keep PER_TACO_MAX in step with the same number in index.html."""
+spirit, the map page (index.html, tacoAtATime). Keep PER_TACO_MAX and PER_TACO_APP_RULE_MAX in step with the same numbers in index.html."""
 import re
 
 # A Mexican or taco place whose casual main is at or under this price is selling tacos one at a time, so the map counts
-# two of them as the Casual order. Taco places that list the appetizer above the casual main are covered as well.
+# two of them as the Casual order. Taco places that list the appetizer above the casual main are covered as well, but
+# only up to PER_TACO_APP_RULE_MAX: above that the casual main is a plate of several tacos (Oh-Mar Fresh Seafood sells 3
+# tacos for $16.78 to $20.78 and prices its appetizer higher), so doubling it overstates the total.
 PER_TACO_MAX = 7.0
+PER_TACO_APP_RULE_MAX = 10.0
 _TACO_PLACE = re.compile(r"taco|taquer|mexican", re.I)
 
 # A menu whose steak and seafood tier tops out below this is a counter-service menu (burgers, bowls, wraps), not a date spot.
@@ -14,7 +17,7 @@ def is_taco_place(name, category):
     return bool(_TACO_PLACE.search(f"{name} {category}"))
 
 def per_taco_prices(app, casual):
-    return casual <= PER_TACO_MAX or app > casual
+    return casual <= PER_TACO_MAX or (app > casual and casual <= PER_TACO_APP_RULE_MAX)
 
 def taco_at_a_time(venue):
     """True when the venue's Casual price is for one taco, so two tacos make the order (mirrors tacoAtATime in index.html)."""
