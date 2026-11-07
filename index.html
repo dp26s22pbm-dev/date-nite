@@ -751,9 +751,8 @@
     .theme-btn { right: 102px !important; }
     .zoom-btn { right: 145px !important; }
     .car-btn { right: 188px !important; }
-    .theme-btn { color: #fbbf24 !important; } /* the sun */
-    html[data-theme="light"] .theme-btn { color: #a5b4fc !important; } /* the moon */
-    /* Press feedback: the same white outline glow the car, cloud and list buttons wear while on, fading in and back out
+    .theme-btn { color: #fbbf24 !important; } /* the sun and the moon, same yellow */
+        /* Press feedback: the same white outline glow the car, cloud and list buttons wear while on, fading in and back out
        once. It lives on a pseudo-element because the button's own box-shadow is !important, which an animation can't beat. */
     .theme-btn::after {
       content: '';
@@ -3229,7 +3228,7 @@
     // Theme button: a sun while the map is dark (press for light), a crescent moon while it is light (press for dark)
     const THEME_ICONS = {
       dark: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 7c-2.76 0-5 2.24-5 5s2.24 5 5 5 5-2.24 5-5-2.24-5-5-5zM2 13h2c.55 0 1-.45 1-1s-.45-1-1-1H2c-.55 0-1 .45-1 1s.45 1 1 1zm18 0h2c.55 0 1-.45 1-1s-.45-1-1-1h-2c-.55 0-1 .45-1 1s.45 1 1 1zM11 2v2c0 .55.45 1 1 1s1-.45 1-1V2c0-.55-.45-1-1-1s-1 .45-1 1zm0 18v2c0 .55.45 1 1 1s1-.45 1-1v-2c0-.55-.45-1-1-1s-1 .45-1 1zM5.99 4.58a.996.996 0 0 0-1.41 0 .996.996 0 0 0 0 1.41l1.06 1.06c.39.39 1.03.39 1.41 0s.39-1.03 0-1.41L5.99 4.58zm12.37 12.37a.996.996 0 0 0-1.41 0 .996.996 0 0 0 0 1.41l1.06 1.06c.39.39 1.03.39 1.41 0a.996.996 0 0 0 0-1.41l-1.06-1.06zm1.06-10.96a.996.996 0 0 0 0-1.41.996.996 0 0 0-1.41 0l-1.06 1.06c-.39.39-.39 1.03 0 1.41s1.03.39 1.41 0l1.06-1.06zM7.05 18.36a.996.996 0 0 0 0-1.41.996.996 0 0 0-1.41 0l-1.06 1.06c-.39.39-.39 1.03 0 1.41s1.03.39 1.41 0l1.06-1.06z"/></svg>',
-      light: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3a9 9 0 1 0 9 9c0-.46-.04-.92-.1-1.36a5.389 5.389 0 0 1-4.4 2.26 5.403 5.403 0 0 1-3.14-9.8c-.44-.06-.9-.1-1.36-.1z"/></svg>'
+      light: '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M22.12 15.23A10.62 10.62 0 1 1 8.77 1.88A9.44 9.44 0 0 0 22.12 15.23z"/></svg>'
     };
     function updateThemeButton() {
       const btn = document.getElementById('theme-toggle');
