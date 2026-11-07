@@ -389,6 +389,7 @@ def claude_search_pricing(venue_name, city, website=""):
         print(f"Claude web search for {venue_name}: stop_reason={response.stop_reason} source pages={len(sources)}")
         claude_pages[0] = len(sources)
         claude_read[0] = bool(read)
+        claude_result_urls[:] = [u for _, u in sources]
         if response.stop_reason == "refusal":
             print(f"Claude web search for {venue_name} was refused, so there are no prices from it.")
             menu_log.step("search_claude", "refused", pages=len(sources), tokens_in=tokens_in, tokens_out=tokens_out)
@@ -410,14 +411,50 @@ def claude_search_pricing(venue_name, city, website=""):
         return None, []
 
 claude_pages = [None]  # pages the last Claude search consulted; None until a search ran. A list so claude_search_pricing can set it
+claude_result_urls = []  # every URL the last Claude search saw, search hits included, for the Yelp menu lookup below
 claude_read = [False]  # True when the last Claude search fetched or cited at least one page, False when it only saw search results
+
+# Set when the web search step found the venue's own menu (the Yelp menu page) instead of estimates, so the caller labels
+# the prices by that source and does not mark them as guesses. "" otherwise.
+web_search_menu_source = ""
+
+_YELP_SLUG = re.compile(r"https?://(?:www\.)?yelp\.com/(?:biz|biz_photos|menu)/([A-Za-z0-9_%\-]+)", re.I)
+
+def yelp_menu_url(urls):
+    """The Yelp menu page for the venue behind any Yelp business, photo or menu link in urls, or None. Yelp lists a
+    restaurant's full menu with prices at yelp.com/menu/<same slug as the business page>."""
+    for u in urls or []:
+        m = _YELP_SLUG.match(u or "")
+        if m and m.group(1).lower() not in ("search", "c"):
+            return f"https://www.yelp.com/menu/{m.group(1)}"
+    return None
+
+def pricing_from_yelp_menu(venue_name, urls):
+    """Prices read from the venue's Yelp menu page when one of urls (the pages a web search found) points at its Yelp
+    listing, else None. The page must name the venue, so a same-named place elsewhere is not used. Yelp can turn a
+    script away; fetch_url logs that and this returns None, leaving the estimates as they were."""
+    url = yelp_menu_url(urls)
+    if not url:
+        return None
+    got = fetch_url(url)
+    if not got or "html" not in got[1].lower():
+        menu_log.step("yelp_menu", "not_fetched", url=url)
+        return None
+    text = html_to_text(got[0].decode("utf-8", "ignore"))
+    squash = lambda t: re.sub(r"[^a-z0-9]", "", t.lower())
+    if squash(venue_name) not in squash(text[:300]):
+        menu_log.step("yelp_menu", "not_this_venue", url=url)
+        return None
+    return pricing_from_menu_text(text, where="yelp_menu", url=url)
 
 def fetch_pricing_via_web_search(venue_name, city, website=""):
     """Gemini's web search first. When it returns no source pages (so its prices may be from memory) or no prices, Claude
     searches instead, and its prices are used only when it found source pages. If Gemini had no sources and Claude gives no
     sourced prices either, nothing is returned: Gemini's unsourced prices are not kept, so the venue counts as having no
     prices found (the cell and city imports skip it, and the Add Venue form asks for the menu)."""
-    global search_ungrounded, search_by_claude, claude_backup_result, claude_found_nothing_pages
+    global search_ungrounded, search_by_claude, claude_backup_result, claude_found_nothing_pages, web_search_menu_source
+    web_search_menu_source = ""
+    claude_result_urls.clear()
     search_by_claude = False
     claude_backup_result = None
     claude_found_nothing_pages = 0
@@ -427,6 +464,14 @@ def fetch_pricing_via_web_search(venue_name, city, website=""):
     if search_ungrounded or not pricing:
         print("Gemini's web search had no usable sourced prices; asking Claude to search.")
         claude_pricing, sources = claude_search_pricing(venue_name, city, website)
+        # Claude's search often turns up the venue's Yelp listing, whose menu page has the real prices
+        yelp_pricing = pricing_from_yelp_menu(venue_name, claude_result_urls)
+        if yelp_pricing:
+            print("Read the venue's Yelp menu page instead of using search estimates.")
+            web_search_menu_source = "the venue's Yelp menu page"
+            search_ungrounded = False
+            search_sources.clear()
+            return yelp_pricing
         if claude_pricing and sources:
             pricing = claude_pricing
             search_sources[:] = sources
@@ -1577,7 +1622,7 @@ def main():
         pricing_source = "Gemini reading the restaurant's own menu pages"
     if not pricing:
         pricing = fetch_pricing_via_web_search(name, place_text or address or "Naperville, IL", website or saved_site or "")
-        pricing_source = "a web search (estimates)"
+        pricing_source = web_search_menu_source or "a web search (estimates)"
     if not reused_pricing:
         save_pricing_cache(pricing, pricing_source)
 

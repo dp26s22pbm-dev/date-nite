@@ -26,6 +26,7 @@ Steps and results are short fixed words so they can be counted. A result of "ok"
     pasted_text   binary | too_few_prices | gemini_error | no_casual_main | ok
     page_html     too_few_prices | gemini_error | no_casual_main | ok        (a page read with a plain request)
     page_browser  too_few_prices | gemini_error | no_casual_main | ok        (a page read with a headless browser)
+    yelp_menu     not_fetched | not_this_venue | too_few_prices | gemini_error | no_casual_main | ok   (the Yelp menu page of a listing the Claude search found)
     fetch         http_<code> | bot_challenge | tls_failed | connection_failed | fetch_error | skipped_tls_host | not_a_page
     browser       unavailable | limit | failed | bot_challenge | ok
     pdf           download_or_parse_error | no_prices | too_few_prices | ok  (PDF or image menus)
