@@ -1080,6 +1080,9 @@
       -webkit-background-clip: text;
       background-clip: text;
     }
+    /* Light map: the white bulbs and lilac glow wash out on a pale background, so drop the glow and outline each letter with a flat 1px stroke (one even line, not stacked shadows, which look 3-D). Dark map keeps the glowing sign above. */
+    html[data-theme="light"] .neon-intro { filter: none; }
+    html[data-theme="light"] .neon-intro span { -webkit-text-stroke: 1px #a78bfa; }
     @media (prefers-reduced-motion: reduce) { .neon-intro { transition: opacity 0.8s ease; } }
 
   </style>
