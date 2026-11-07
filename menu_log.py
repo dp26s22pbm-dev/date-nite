@@ -26,6 +26,7 @@ Steps and results are short fixed words so they can be counted. A result of "ok"
     pasted_text   binary | too_few_prices | gemini_error | no_casual_main | ok
     page_html     too_few_prices | gemini_error | no_casual_main | ok        (a page read with a plain request)
     page_browser  too_few_prices | gemini_error | no_casual_main | ok        (a page read with a headless browser)
+    yelp_menu     not_fetched | not_this_venue | too_few_prices | gemini_error | no_casual_main | ok   (the Yelp menu page of a listing the Claude search found)
     fetch         http_<code> | bot_challenge | tls_failed | connection_failed | fetch_error | skipped_tls_host | not_a_page
     browser       unavailable | limit | failed | bot_challenge | ok
     pdf           download_or_parse_error | no_prices | too_few_prices | ok  (PDF or image menus)
@@ -34,7 +35,7 @@ Steps and results are short fixed words so they can be counted. A result of "ok"
     page          load_more | no_prices_links_followed                       (observations about a page, not failures)
     site_gemini   too_few_prices | lunch_prices_suspected | error | ok
     search_gemini error | no_sources | ok
-    search_claude no_key | error | refused | no_prices | ok         (pages = search results seen; tokens_in / tokens_out = API tokens used)
+    search_claude no_key | error | refused | no_prices | ok         (pages = search results seen; read = pages fetched or cited; tokens_in / tokens_out = API tokens used)
 bot_challenge means the site answered with a bot check ("Just a moment...", a captcha) instead of the page. The importer
 stops guessing pages on that host and goes on to Gemini and web search; the venue needs a pasted menu.
 Add a new word where the importer learns a new way to fail; the report counts whatever it finds.

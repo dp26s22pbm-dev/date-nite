@@ -361,7 +361,8 @@ def claude_search_pricing(venue_name, city, website=""):
         tools = [{"type": "web_search_20260209", "name": "web_search", "max_uses": CLAUDE_MAX_SEARCHES},
                  {"type": "web_fetch_20260209", "name": "web_fetch", "max_uses": CLAUDE_MAX_FETCHES}]
         messages = [{"role": "user", "content": prompt}]
-        sources = []
+        sources = []  # every page that came back, search hits included
+        read = []  # only the pages Claude fetched or cited, which are the ones it can have taken prices from
         tokens_in = tokens_out = 0
         for _ in range(CLAUDE_MAX_PASSES):  # a server-side tool loop that runs long comes back paused; send it back to continue
             response = claude.messages.create(model=CLAUDE_SEARCH_MODEL, max_tokens=8000, tools=tools, messages=messages)
@@ -380,11 +381,15 @@ def claude_search_pricing(venue_name, city, website=""):
                 for title, url in found:
                     if url and url not in [u for _, u in sources]:
                         sources.append((title or url, url))
+                    if url and block.type != "web_search_tool_result" and url not in [u for _, u in read]:
+                        read.append((title or url, url))
             if response.stop_reason != "pause_turn":
                 break
             messages.append({"role": "assistant", "content": response.content})
         print(f"Claude web search for {venue_name}: stop_reason={response.stop_reason} source pages={len(sources)}")
         claude_pages[0] = len(sources)
+        claude_read[0] = bool(read)
+        claude_result_urls[:] = [u for _, u in sources]
         if response.stop_reason == "refusal":
             print(f"Claude web search for {venue_name} was refused, so there are no prices from it.")
             menu_log.step("search_claude", "refused", pages=len(sources), tokens_in=tokens_in, tokens_out=tokens_out)
@@ -395,31 +400,78 @@ def claude_search_pricing(venue_name, city, website=""):
         if not pricing:
             # Without this the log cannot say whether Claude found no prices or answered in a form the parser rejected
             print(f"Claude's reply for {venue_name} had no usable prices. Its reply was: {text[:1500]!r}")
-        menu_log.step("search_claude", "ok" if pricing else "no_prices", pages=len(sources),
+        menu_log.step("search_claude", "ok" if pricing else "no_prices", pages=len(sources), read=len(read),
                       tokens_in=tokens_in, tokens_out=tokens_out,
                       sources=[menu_log.host_of(u) for _, u in sources[:5]] or None)
-        return pricing, sources[:5]
+        # The pages Claude opened or cited come first, then the remaining search hits, so the report can name what was read
+        return pricing, (read + [x for x in sources if x not in read])[:5]
     except Exception as e:
         print(f"Claude web search error for {venue_name}: {e}")
         menu_log.step("search_claude", "error", detail=e)
         return None, []
 
 claude_pages = [None]  # pages the last Claude search consulted; None until a search ran. A list so claude_search_pricing can set it
+claude_result_urls = []  # every URL the last Claude search saw, search hits included, for the Yelp menu lookup below
+claude_read = [False]  # True when the last Claude search fetched or cited at least one page, False when it only saw search results
+
+# Set when the web search step found the venue's own menu (the Yelp menu page) instead of estimates, so the caller labels
+# the prices by that source and does not mark them as guesses. "" otherwise.
+web_search_menu_source = ""
+
+_YELP_SLUG = re.compile(r"https?://(?:www\.)?yelp\.com/(?:biz|biz_photos|menu)/([A-Za-z0-9_%\-]+)", re.I)
+
+def yelp_menu_url(urls):
+    """The Yelp menu page for the venue behind any Yelp business, photo or menu link in urls, or None. Yelp lists a
+    restaurant's full menu with prices at yelp.com/menu/<same slug as the business page>."""
+    for u in urls or []:
+        m = _YELP_SLUG.match(u or "")
+        if m and m.group(1).lower() not in ("search", "c"):
+            return f"https://www.yelp.com/menu/{m.group(1)}"
+    return None
+
+def pricing_from_yelp_menu(venue_name, urls):
+    """Prices read from the venue's Yelp menu page when one of urls (the pages a web search found) points at its Yelp
+    listing, else None. The page must name the venue, so a same-named place elsewhere is not used. Yelp can turn a
+    script away; fetch_url logs that and this returns None, leaving the estimates as they were."""
+    url = yelp_menu_url(urls)
+    if not url:
+        return None
+    got = fetch_url(url)
+    if not got or "html" not in got[1].lower():
+        menu_log.step("yelp_menu", "not_fetched", url=url)
+        return None
+    text = html_to_text(got[0].decode("utf-8", "ignore"))
+    squash = lambda t: re.sub(r"[^a-z0-9]", "", t.lower())
+    if squash(venue_name) not in squash(text[:300]):
+        menu_log.step("yelp_menu", "not_this_venue", url=url)
+        return None
+    return pricing_from_menu_text(text, where="yelp_menu", url=url)
 
 def fetch_pricing_via_web_search(venue_name, city, website=""):
     """Gemini's web search first. When it returns no source pages (so its prices may be from memory) or no prices, Claude
     searches instead, and its prices are used only when it found source pages. If Gemini had no sources and Claude gives no
     sourced prices either, nothing is returned: Gemini's unsourced prices are not kept, so the venue counts as having no
     prices found (the cell and city imports skip it, and the Add Venue form asks for the menu)."""
-    global search_ungrounded, search_by_claude, claude_backup_result, claude_found_nothing_pages
+    global search_ungrounded, search_by_claude, claude_backup_result, claude_found_nothing_pages, web_search_menu_source
+    web_search_menu_source = ""
+    claude_result_urls.clear()
     search_by_claude = False
     claude_backup_result = None
     claude_found_nothing_pages = 0
     claude_pages[0] = None
+    claude_read[0] = False
     pricing = fetch_pricing_via_gemini_search(venue_name, city)
     if search_ungrounded or not pricing:
         print("Gemini's web search had no usable sourced prices; asking Claude to search.")
         claude_pricing, sources = claude_search_pricing(venue_name, city, website)
+        # Claude's search often turns up the venue's Yelp listing, whose menu page has the real prices
+        yelp_pricing = pricing_from_yelp_menu(venue_name, claude_result_urls)
+        if yelp_pricing:
+            print("Read the venue's Yelp menu page instead of using search estimates.")
+            web_search_menu_source = "the venue's Yelp menu page"
+            search_ungrounded = False
+            search_sources.clear()
+            return yelp_pricing
         if claude_pricing and sources:
             pricing = claude_pricing
             search_sources[:] = sources
@@ -1354,11 +1406,15 @@ def nearby_venues(venue_id, coords, venues, radius_m=NEARBY_VENUE_M):
 # Highest plausible dine-in price per category. Catering trays and per-pan prices land far above these.
 PRICE_CEILINGS = {"appetizer": 35, "casual main": 65, "premium main": 120, "drink": 25, "dessert": 25}
 
-def price_sanity_warnings(app, casual, premium, drink, dessert, defaulted=(), estimated=False):
+def price_sanity_warnings(app, casual, premium, drink, dessert, defaulted=(), estimated=False, casual_count=1):
     """Reasons the saved prices may be off. A venue with any of these is left open for a second look. Prices from a
     web search or defaults (estimated) get the lunch-price check; a menu read from the restaurant's own site, a PDF or
-    a paste is not second-guessed for a premium main close to the casual main (pizza and bar menus top out there)."""
+    a paste is not second-guessed for a premium main close to the casual main (pizza and bar menus top out there).
+    casual is the price of one casual main. casual_count is 2 for a taco place, whose casual order is two tacos: that
+    order cost is what the appetizer, drink and dessert are compared with, while the tier checks use the single price
+    (one taco is not the same dish as the premium main)."""
     warnings = []
+    order = casual * casual_count
     for label, value in (("appetizer", app), ("casual main", casual), ("premium main", premium), ("drink", drink), ("dessert", dessert)):
         if value > PRICE_CEILINGS[label]:
             warnings.append(f"the {label} (${value}) is unusually high for one person, which often means catering or "
@@ -1373,8 +1429,8 @@ def price_sanity_warnings(app, casual, premium, drink, dessert, defaulted=(), es
         warnings.append(f"the premium main (${premium}) is within 25% of the casual main (${casual}), which often means "
                         "lunch or combo prices were read")
     for label, value in (("appetizer", app), ("drink", drink), ("dessert", dessert)):
-        if value > casual * 1.1:
-            warnings.append(f"the {label} (${value}) costs more than the casual main (${casual})")
+        if value > order * 1.1:
+            warnings.append(f"the {label} (${value}) costs more than the casual main (${order:g})")
     return warnings
 
 # The workflows start over from the new main when a push is rejected, which runs this script again. Gemini does not
@@ -1566,7 +1622,7 @@ def main():
         pricing_source = "Gemini reading the restaurant's own menu pages"
     if not pricing:
         pricing = fetch_pricing_via_web_search(name, place_text or address or "Naperville, IL", website or saved_site or "")
-        pricing_source = "a web search (estimates)"
+        pricing_source = web_search_menu_source or "a web search (estimates)"
     if not reused_pricing:
         save_pricing_cache(pricing, pricing_source)
 
@@ -1733,7 +1789,9 @@ def main():
                 lines.append("**Claude-backup deployed**")
             if search_sources:
                 lines.append("")
-                lines.append("**Pages the web search consulted:** " + "; ".join(f"[{t}]({u})" for t, u in search_sources))
+                label = ("Search results Claude saw (it opened or cited none of them, so the prices may rest on snippets)"
+                         if search_by_claude and not claude_read[0] else "Pages the web search consulted")
+                lines.append(f"**{label}:** " + "; ".join(f"[{t}]({u})" for t, u in search_sources))
             else:
                 lines.append("")
                 lines.append("**Pages the web search consulted:** none were returned, even on a second try")
@@ -1763,7 +1821,8 @@ def main():
                     venue_id=entry["id"], category=category, needs_menu=needs_menu,
                     final={"app": app, "casualMain": casual_main, "premiumMain": premium_main, "drink": drink, "dessert": dessert},
                     claude_backup=claude_backup_result, claude_pages=claude_found_nothing_pages if claude_backup_result else None)
-    warnings = price_sanity_warnings(app, casual_main * casual_count, premium_main, drink, dessert, defaulted, estimated=guessed)
+    warnings = price_sanity_warnings(app, casual_main, premium_main, drink, dessert, defaulted, estimated=guessed,
+                                     casual_count=casual_count)
     if str(pricing_source).startswith("a web search") and not reused_pricing and search_ungrounded:
         warnings.append("the web search returned no source pages, so these prices may come from Gemini's memory rather than from a menu")
     set_output("needs_check", "true" if warnings else "false")

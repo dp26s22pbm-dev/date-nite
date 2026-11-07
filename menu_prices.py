@@ -55,7 +55,8 @@ def main():
 
     is_taco = pricing_rules.is_taco_place(args.name, args.category) and pricing_rules.per_taco_prices(app, casual)
     total = round((app + (2 if is_taco else 1) * casual + premium + 2 * drink + dessert) * 1.30)
-    warnings = importer.price_sanity_warnings(app, casual, premium, drink, dessert, defaulted=defaulted)
+    warnings = importer.price_sanity_warnings(app, casual, premium, drink, dessert, defaulted=defaulted,
+                                               casual_count=2 if is_taco else 1)
     if pricing_rules.looks_like_counter_menu({"isTaco": is_taco, "app": app, "casualMain": casual, "premiumMain": premium}):
         warnings.append(f"the premium main (${premium}) is under ${pricing_rules.COUNTER_MENU_PREMIUM_MAX:g}, "
                         "which looks like a counter-service menu rather than a date spot")
