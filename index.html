@@ -576,6 +576,12 @@
     .pop-grid-lbl { font-size: 8px; text-transform: uppercase; color: #c3cbd3; margin-bottom: 2px; }
     .pop-grid-val { font-size: 11px; font-weight: 700; color: #e6edf3; }
 
+    /* Light mode: a lighter gray card (dark mode keeps #2d343d). Inner panels step up with it. */
+    html[data-theme="light"] .maplibregl-popup-content,
+    html[data-theme="light"] .maplibregl-popup-tip { background: #515a67 !important; }
+    html[data-theme="light"] .pop-badge,
+    html[data-theme="light"] .pop-grid { background: #4a535f; border-color: #737d8a; }
+
     /* Cost tier legend, at the top of the left rail */
     .legend-panel {
       width: 100%;
