@@ -3698,11 +3698,12 @@
       41.808441
     ],
     "app": 16.0,
-    "casualMain": 21.0,
-    "premiumMain": 39.0,
-    "drink": 27.0,
+    "casualMain": 24.0,
+    "premiumMain": 40.0,
+    "drink": 12.0,
     "dessert": 11.0,
-    "tierColor": "#f97316"
+    "tierColor": "#f97316",
+    "lastUpdated": "2026-11-08"
   },
   {
     "id": 217,
