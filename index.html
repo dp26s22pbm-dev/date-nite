@@ -602,32 +602,96 @@
     html[data-theme="light"] .pop-badge-val[style*="#f97316"] { color: #c2410c !important; }
     html[data-theme="light"] .pop-badge-val[style*="#ef4444"] { color: #b91c1c !important; }
 
-    /* Light mode: the other dark panels take a lighter gray too, a notch darker than the popup card (#515a67). Dark mode is unchanged. */
+    /* Light mode: the other panels take a darker shade of the popup's white (#edeff3), with dark text, the way the dark theme's panels sit darker than its popup. Dark mode is unchanged. */
     html[data-theme="light"] .control-panel,
     html[data-theme="light"] .legend-panel,
     html[data-theme="light"] .budget-card,
     html[data-theme="light"] .cost-pop,
-    html[data-theme="light"] .venue-card { background: rgba(72, 80, 92, 0.95); }
-    html[data-theme="light"] .search-input { background: rgba(72, 80, 92, 0.95); }
-    html[data-theme="light"] .search-results { background: #48505c; }
-    html[data-theme="light"] .search-results li.active { background: #5a5878; }
+    html[data-theme="light"] .venue-card,
+    html[data-theme="light"] .search-input { background: rgba(237, 239, 243, 0.96); color: #1f2430; border-color: rgba(31, 36, 48, 0.16); }
+    html[data-theme="light"] .control-panel,
+    html[data-theme="light"] .legend-panel,
+    html[data-theme="light"] .budget-card,
+    html[data-theme="light"] .cost-pop { box-shadow: 0 10px 28px rgba(31, 36, 48, 0.22); }
+    html[data-theme="light"] .search-input { box-shadow: 0 6px 20px rgba(31, 36, 48, 0.2); border-color: rgba(31, 36, 48, 0.25); }
+    html[data-theme="light"] .search-input:focus { box-shadow: 0 0 12px rgba(31, 36, 48, 0.28), 0 6px 20px rgba(31, 36, 48, 0.2); border-color: #1f2430; }
+    html[data-theme="light"] .control-panel.open,
+    html[data-theme="light"] .legend-panel.open,
+    html[data-theme="light"] .budget-card.open { border-color: rgba(31, 36, 48, 0.4); }
+    html[data-theme="light"] .roll-title,
+    html[data-theme="light"] .budget-btn,
+    html[data-theme="light"] .legend-label,
+    html[data-theme="light"] .counter-btn { color: #1f2430; }
+    html[data-theme="light"] .counter-label { color: #5b6472; }
+    html[data-theme="light"] .roll.open .roll-title,
+    html[data-theme="light"] .budget-card.open .budget-btn,
+    html[data-theme="light"] .cost-pop-title { border-bottom-color: rgba(31, 36, 48, 0.12); }
+    html[data-theme="light"] .counter-pill + .counter-pill,
+    html[data-theme="light"] #cost-panel .legend-item + .legend-item { border-color: rgba(31, 36, 48, 0.12); }
+    html[data-theme="light"] .counter-btn { background: #fff; border-color: #c5cad3; }
+    html[data-theme="light"] .budget-slider::-webkit-slider-runnable-track { background: linear-gradient(to right, var(--c) var(--fill), #c5cad3 var(--fill)); }
+    html[data-theme="light"] .budget-slider::-moz-range-track { background: linear-gradient(to right, var(--c) var(--fill), #c5cad3 var(--fill)); }
+    html[data-theme="light"] .legend-swatch { border-color: rgba(31, 36, 48, 0.18); }
+    /* Search bar: the bouncing "Welcome to DATE NITE!" words and the placeholder turn dark */
+    html[data-theme="light"] .search-bar.cycling .hint-brand span { animation-name: hint-letter-light; }
+    html[data-theme="light"] .hint-text { color: #5b6472; }
+    html[data-theme="light"] .search-input:focus::placeholder { color: rgba(31, 36, 48, 0.5); }
+    @media (prefers-reduced-motion: reduce) { html[data-theme="light"] .search-input:not(:focus)::placeholder { color: #5b6472; } }
+    @keyframes hint-letter-light {
+      0%   { opacity: 0; transform: translateY(10px) scale(0.5) rotate(-12deg); color: #1f2430; }
+      2.25% { opacity: 1; transform: translateY(-5px) scale(1.25) rotate(6deg); color: #ff7eb6; }
+      3.75% { opacity: 1; transform: translateY(0) scale(1) rotate(0); color: #1f2430; }
+      7.5%  { transform: translateY(-3px) scale(1.1); color: #ffd166; }
+      10.5% { transform: translateY(0) scale(1); color: #ff7eb6; }
+      14.25% { transform: translateY(-3px) scale(1.1); color: #a78bfa; }
+      17.25% { transform: translateY(0) scale(1); color: #ffd166; }
+      21%   { transform: translateY(-3px) scale(1.1); color: #ff7eb6; }
+      24%   { transform: translateY(0) scale(1); color: #a78bfa; }
+      30%   { opacity: 1; transform: translateY(0) scale(1); color: #1f2430; }
+      36%   { opacity: 1; transform: translateY(0) scale(1); color: #1f2430; }
+      39%   { opacity: 0; transform: translateY(-8px) scale(0.8); color: #1f2430; }
+      100%  { opacity: 0; transform: translateY(-8px) scale(0.8); color: #1f2430; }
+    }
+    html[data-theme="light"] .search-results { background: #edeff3; color: #1f2430; border-color: rgba(31, 36, 48, 0.16); box-shadow: 0 6px 20px rgba(31, 36, 48, 0.2); }
+    html[data-theme="light"] .search-results li.active { background: #e0dbf6; }
+    html[data-theme="light"] .search-results .sr-cat,
+    html[data-theme="light"] .search-results .sr-none { color: rgba(31, 36, 48, 0.55); }
+    /* Bottom venue cards */
+    html[data-theme="light"] .venue-card { box-shadow: 0 3px 10px rgba(31, 36, 48, 0.18); }
+    html[data-theme="light"] .card-cat,
+    html[data-theme="light"] .card-dist { color: #5b6472; }
+    html[data-theme="light"] .venue-card[style*="#38bdf8"] .card-cost { color: #0369a1; }
+    html[data-theme="light"] .venue-card[style*="#22c55e"] .card-cost { color: #15803d; }
+    html[data-theme="light"] .venue-card[style*="#eab308"] .card-cost { color: #a16207; }
+    html[data-theme="light"] .venue-card[style*="#f97316"] .card-cost { color: #c2410c; }
+    html[data-theme="light"] .venue-card[style*="#ef4444"] .card-cost { color: #b91c1c; }
+    /* Round buttons, sort chips, cost popover tip and the car toast */
+    html[data-theme="light"] .cost-pop::before { background: rgba(31, 36, 48, 0.4); }
     html[data-theme="light"] .cost-pop::after,
-    html[data-theme="light"] .car-toast,
     html[data-theme="light"] .cost-btn,
-    html[data-theme="light"] .sort-chip { background: #48505c; }
+    html[data-theme="light"] .sort-chip,
+    html[data-theme="light"] .car-toast { background: #edeff3; }
+    html[data-theme="light"] .car-toast { color: #1f2430; border-color: rgba(31, 36, 48, 0.2); }
     html[data-theme="light"] .audio-btn,
     html[data-theme="light"] .car-btn,
     html[data-theme="light"] .zoom-btn,
     html[data-theme="light"] .list-btn,
-    html[data-theme="light"] .theme-btn { background: #48505c !important; }
-    html[data-theme="light"] .counter-btn { background: #58616e; border-color: #6e7885; }
-    html[data-theme="light"] .budget-slider::-webkit-slider-runnable-track { background: linear-gradient(to right, var(--c) var(--fill), #6e7885 var(--fill)); }
-    html[data-theme="light"] .budget-slider::-moz-range-track { background: linear-gradient(to right, var(--c) var(--fill), #6e7885 var(--fill)); }
-    /* #8b949e gray text on the lighter panels would be too faint, so it steps up to the card's secondary gray */
-    html[data-theme="light"] .card-cat,
-    html[data-theme="light"] .card-dist,
-    html[data-theme="light"] .sort-chip { color: #c3cbd3; }
-    html[data-theme="light"] .audio-btn { color: #c3cbd3 !important; }
+    html[data-theme="light"] .theme-btn { background: #edeff3 !important; border-color: #c5cad3 !important; color: #5b6472 !important; box-shadow: 0 4px 14px rgba(31, 36, 48, 0.25) !important; }
+    html[data-theme="light"] .cost-btn,
+    html[data-theme="light"] .sort-chip { border-color: #c5cad3; box-shadow: 0 4px 14px rgba(31, 36, 48, 0.25); }
+    html[data-theme="light"] .theme-btn { color: #d97706 !important; }
+    html[data-theme="light"] .car-btn.active { color: #7c3aed !important; }
+    html[data-theme="light"] .zoom-btn.active,
+    html[data-theme="light"] .list-btn.active { color: #0284c7 !important; }
+    html[data-theme="light"] .car-btn.active,
+    html[data-theme="light"] .zoom-btn.active,
+    html[data-theme="light"] .list-btn.active { box-shadow: 0 0 4px rgba(31, 36, 48, 0.4), 0 0 12px rgba(31, 36, 48, 0.2) !important; }
+    html[data-theme="light"] .cost-btn.active,
+    html[data-theme="light"] .sort-chip.active { box-shadow: 0 0 4px rgba(31, 36, 48, 0.4), 0 0 12px rgba(31, 36, 48, 0.2) !important; }
+    html[data-theme="light"] .theme-btn::after { box-shadow: 0 0 4px rgba(31, 36, 48, 0.4), 0 0 12px rgba(31, 36, 48, 0.2); }
+    html[data-theme="light"] #sort-cost { color: #15803d; }
+    html[data-theme="light"] #sort-near { color: #c2410c; }
+    html[data-theme="light"] #sort-near.unavailable { color: #9aa1ac; border-color: #c5cad3; }
 
     /* Cost tier legend, at the top of the left rail */
     .legend-panel {
