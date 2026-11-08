@@ -29,6 +29,7 @@ SCOPE_RULES = """Scope rules (they apply to every category below):
 - Catering prices are per tray, pan or "serves N" and run several times a dine-in price. If the only prices you can find are catering prices, return empty lists.
 - A fixed price per person (a buffet, a rodizio, a prix fixe) is one main. Use its dinner price, not the lunch price.
 - drinks: priced cocktails or craft beverages. Never include soft drinks, coffee, tea, juice or other non-alcoholic drinks. Use beer and wine only if no cocktail is priced. Many menus list no alcohol prices; then return an empty list.
+- Ignore carry-out, grab-and-go and deli sections (deli sandwiches, packaged or counter items), even when they sit on the same page as the dine-in menu. Price only what a guest orders at the table.
 - If a category has no prices printed on the menu, return an empty list for it. Never estimate or fill in a typical price.
 - This map lists sit-down restaurants only. If any page you find shows the place is a food truck, trailer, cart, stand, pop-up or other mobile or counter-only vendor (photos of a truck, "food truck" in a listing or description, no dining room), return empty lists for every category, even when a menu with prices exists.
 """
@@ -551,6 +552,10 @@ def clean_pricing(data, require_main=True):
             if 0 < f < 500:
                 values.append(round(f, 2))
         out[key] = values
+    # One lone drink price is more often a misread dish (a $27 pasta) than a real drink menu. Leave drinks empty so the
+    # stand-in is used and the venue is not saved with a bogus drink median.
+    if len(out["drinks"]) < 2:
+        out["drinks"] = []
     if require_main:
         return out if out["casualMains"] else None
     return out if any(out.values()) else None
