@@ -52,7 +52,7 @@ function normalizeState(value) {
 // Employee count read from the size evidence. The model's band is only trusted when no count is found.
 function employeeCount(text) {
   const t = String(text || '').toLowerCase().replace(/(\d),(\d)/g, '$1$2');
-  const unit = '(?:full[- ]time |total |paid |regular )?(?:employees|employee|staff|people|workers|team members)';
+  const UNIT = /(?:full[- ]time |total |paid |regular )?(?:employees|employee|staff|people|workers|team members)/.source;
   const counts = [];
   // "fewer than 50" is an upper bound (49 or less); "more than 450" is a lower bound (451 or more).
   const bounded = (n, pos) => {
@@ -61,9 +61,9 @@ function employeeCount(text) {
     if (/(more than|over|at least|exceeds?|above)\s*$/.test(before)) return n + 1;
     return n;
   };
-  for (const m of t.matchAll(new RegExp('(\\d+)\\s*(?:-|\u2013|to)\\s*(\\d+)\\+?\\s*' + unit, 'g'))) counts.push(Number(m[2]));
-  for (const m of t.matchAll(new RegExp('(\\d+)\\s*\\+?\\s*' + unit, 'g'))) counts.push(bounded(Number(m[1]), m.index));
-  for (const m of t.matchAll(new RegExp(unit + '[^\\d]{0,25}?(\\d+)', 'g'))) {
+  for (const m of t.matchAll(new RegExp(/(\d+)\s*(?:-|–|to)\s*(\d+)\+?\s*/.source + UNIT, 'g'))) counts.push(Number(m[2]));
+  for (const m of t.matchAll(new RegExp(/(\d+)\s*\+?\s*/.source + UNIT, 'g'))) counts.push(bounded(Number(m[1]), m.index));
+  for (const m of t.matchAll(new RegExp(UNIT + /[^\d]{0,25}?(\d+)/.source, 'g'))) {
     const n = Number(m[1]);
     if (n < 1990 || n > 2039) counts.push(bounded(n, m.index + m[0].length - m[1].length));
   }
