@@ -621,9 +621,15 @@ _opener = urllib.request.build_opener(urllib.request.HTTPCookieProcessor())
 def _host(url):
     return urllib.parse.urlparse(url).netloc.lower().removeprefix("www.")
 
-def fetch_url(url, limit=2000000, with_url=False):
+def is_guessed_menu_path(url):
+    """True for a URL the importer made up (/menu, /food-menu, <city page>/menu) and not one a page linked to."""
+    path = urllib.parse.urlparse(url).path.rstrip("/")
+    return path in MENU_PATHS or path.endswith("/menu")
+
+def fetch_url(url, limit=2000000, with_url=False, guess=False):
     """GET a page. Returns (bytes, content_type), or (bytes, content_type, final_url) with with_url, or None when it
-    is blocked or fails."""
+    is blocked or fails. guess=True marks a made-up menu path, whose 404 or 410 just means the site has no such page
+    and is logged as guess_404, which the report does not count as a failure."""
     if _host(url) in TLS_FAILED_HOSTS:
         menu_log.step("fetch", "skipped_tls_host", url=url)
         return None
@@ -642,6 +648,9 @@ def fetch_url(url, limit=2000000, with_url=False):
         if e.code in (401, 403, 429, 301, 302, 303, 307, 308):
             BLOCKED_HOSTS.add(_host(url))
         print(f"Could not fetch {url}: {e}")
+        if guess and e.code in (404, 410):
+            menu_log.step("fetch", "guess_404", url=url)
+            return None
         challenged = False
         if e.code in (403, 429, 503):
             try:
@@ -854,10 +863,20 @@ SKIP_MENU_WORDS = ("get.popmenu.com", "levelaccess.com", "/items/", "/item/", "c
 # these links go to the back of the queue instead of being dropped. The prompt tells Gemini to ignore lunch-only prices.
 SOFT_MENU_WORDS = ("brunch", "lunch", "happy")
 
+def link_words_text(url):
+    """The part of a link to look for menu words in: its path and query. A link on the restaurant's own domain leaves the
+    domain out, because a name like tastegreekfood.com (food), barnsgrill.com (bar) or eatalianpizza.com (eat) would
+    otherwise match every link on the site. Ordering platforms keep their host (order.toasttab.com says order)."""
+    p = urllib.parse.urlparse(url)
+    if any(h in p.netloc.lower() for h in ORDERING_HOSTS):
+        return url.lower()
+    return (p.path + " " + p.query).lower()
+
 def menu_link_score(url, label=""):
-    """Rank a candidate menu link: dinner menus first, drink-only and lunch-named menus last."""
-    text = (url + " " + label).lower()
-    return ((3 if "dinner" in text else 0) + (1 if "menu" in text else 0)
+    """Rank a candidate menu link: dinner menus first, drink-only and lunch-named menus last. An ordering page ranks with
+    a menu page, since a site whose menu page lists dishes without prices shows them on its order page."""
+    text = (link_words_text(url) + " " + label).lower()
+    return ((3 if "dinner" in text else 0) + (1 if "menu" in text or "order" in text else 0)
             - (2 if any(w in text for w in ("bar", "drink", "wine", "beer", "cocktail")) else 0)
             - (3 if any(w in text for w in SOFT_MENU_WORDS) else 0))
 
@@ -897,9 +916,9 @@ def menu_links_from_page(page, base_url, hosts):
     page = re.sub(r"(?is)<script\b.*?</script>", "", page)
     for href, label in ANCHOR_RE.findall(page):
         text = re.sub(r"<[^>]+>", "", label).lower()
-        if not (any(w in href.lower() for w in MENU_LINK_WORDS) or any(w in text for w in MENU_LINK_WORDS)):
-            continue
         url = urllib.parse.urljoin(base_url, unescape(href).split("#")[0])
+        if not (any(w in link_words_text(url) for w in MENU_LINK_WORDS) or any(w in text for w in MENU_LINK_WORDS)):
+            continue
         if any(w in (url + " " + text).lower() for w in SKIP_MENU_WORDS):
             continue
         p = urllib.parse.urlparse(url)
@@ -1051,7 +1070,7 @@ def pricing_from_website_menu(site, where=""):
         if browser_launches >= BROWSER_LIMIT and _host(url) in BLOCKED_HOSTS:
             continue  # a plain request would be refused again and the browser's launches are spent
         html, pricing = None, None
-        got = fetch_url(url, with_url=True)
+        got = fetch_url(url, with_url=True, guess=is_guessed_menu_path(url))
         mime = menu_file_mime(url, got[1]) if got else None
         if got and mime:
             # A PDF or an image of the menu (a flyer with no prices simply returns nothing)
