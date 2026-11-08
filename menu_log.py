@@ -27,7 +27,7 @@ Steps and results are short fixed words so they can be counted. A result of "ok"
     page_html     too_few_prices | gemini_error | no_casual_main | ok        (a page read with a plain request)
     page_browser  too_few_prices | gemini_error | no_casual_main | ok        (a page read with a headless browser)
     yelp_menu     not_fetched | not_this_venue | too_few_prices | gemini_error | no_casual_main | ok   (the Yelp menu page of a listing the Claude search found)
-    fetch         http_<code> | bot_challenge | tls_failed | connection_failed | fetch_error | skipped_tls_host | not_a_page
+    fetch         http_<code> | guess_404 | bot_challenge | tls_failed | connection_failed | fetch_error | skipped_tls_host | not_a_page
     browser       unavailable | limit | failed | bot_challenge | ok
     pdf           download_or_parse_error | no_prices | too_few_prices | ok  (PDF or image menus)
     menu_link     google_search_url
@@ -36,6 +36,7 @@ Steps and results are short fixed words so they can be counted. A result of "ok"
     site_gemini   too_few_prices | lunch_prices_suspected | implausibly_low | error | ok
     search_gemini error | no_sources | ok
     search_claude no_key | error | refused | no_prices | ok         (pages = search results seen; read = pages fetched or cited; tokens_in / tokens_out = API tokens used)
+guess_404 is a made-up menu path (/menu, /food-menu) the site does not have; the report leaves it out of the failure counts.
 bot_challenge means the site answered with a bot check ("Just a moment...", a captcha) instead of the page. The importer
 stops guessing pages on that host and goes on to Gemini and web search; the venue needs a pasted menu.
 Add a new word where the importer learns a new way to fail; the report counts whatever it finds.
@@ -235,9 +236,13 @@ def within_days(entries, days, now=None, offset=0):
     return [e for e in entries if fmt(start) <= (e.get("t") or "")[:19] < fmt(end)]
 
 
+# Results that record a normal event, not a failure: a guessed menu path (/menu, /food-menu) the site does not have
+QUIET_RESULTS = {("fetch", "guess_404")}
+
 def _failures(entry):
     """(step, result) for every attempt in a record that did not succeed or merely note something."""
-    return [(s["step"], s["result"]) for s in entry.get("steps", []) if s.get("result") not in ("ok",)]
+    return [(s["step"], s["result"]) for s in entry.get("steps", [])
+            if s.get("result") not in ("ok",) and (s.get("step"), s.get("result")) not in QUIET_RESULTS]
 
 
 def report(entries, recent=15):
@@ -271,7 +276,7 @@ def report(entries, recent=15):
             row["last"] = max(row["last"], e["t"])
             if s.get("platform"):
                 row["platform"][s["platform"]] += 1
-            if s.get("result") not in ("ok", None):
+            if s.get("result") not in ("ok", None) and (s.get("step"), s.get("result")) not in QUIET_RESULTS:
                 row["reasons"][f"{s['step']}:{s['result']}"] += 1
             seen.add(h)
         own = e.get("host")
