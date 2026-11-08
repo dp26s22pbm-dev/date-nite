@@ -54,11 +54,18 @@ function employeeCount(text) {
   const t = String(text || '').toLowerCase().replace(/(\d),(\d)/g, '$1$2');
   const unit = '(?:full[- ]time |total |paid |regular )?(?:employees|employee|staff|people|workers|team members)';
   const counts = [];
+  // "fewer than 50" is an upper bound (49 or less); "more than 450" is a lower bound (451 or more).
+  const bounded = (n, pos) => {
+    const before = t.slice(Math.max(0, pos - 20), pos);
+    if (/(fewer than|less than|under|below|up to|no more than|at most)\s*$/.test(before)) return n - 1;
+    if (/(more than|over|at least|exceeds?|above)\s*$/.test(before)) return n + 1;
+    return n;
+  };
   for (const m of t.matchAll(new RegExp('(\\d+)\\s*(?:-|\u2013|to)\\s*(\\d+)\\+?\\s*' + unit, 'g'))) counts.push(Number(m[2]));
-  for (const m of t.matchAll(new RegExp('(\\d+)\\s*\\+?\\s*' + unit, 'g'))) counts.push(Number(m[1]));
+  for (const m of t.matchAll(new RegExp('(\\d+)\\s*\\+?\\s*' + unit, 'g'))) counts.push(bounded(Number(m[1]), m.index));
   for (const m of t.matchAll(new RegExp(unit + '[^\\d]{0,25}?(\\d+)', 'g'))) {
     const n = Number(m[1]);
-    if (n < 1990 || n > 2039) counts.push(n);
+    if (n < 1990 || n > 2039) counts.push(bounded(n, m.index + m[0].length - m[1].length));
   }
   return counts.length ? Math.max(...counts) : null;
 }
