@@ -1,0 +1,13 @@
+New tab in the tracker workbook, named exactly: Watchlist
+
+A1: Defendant
+B1: Docket
+C1: AD Client?
+D1: Note
+
+A2 (one cell, paste this formula; it fills the rows below by itself):
+
+={"(none)","","","";IFERROR(QUERY(Sheet1!A2:S,"select E, D, Q, S where E is not null and (lower(Q) = 'yes' or lower(S) contains 'represented' or lower(S) contains 'client' or lower(S) contains 'out of state' or lower(S) contains 'outside' or lower(S) contains 'no longer')",0),{"","","",""})}
+
+Row 2 is a permanent placeholder, "(none)". It keeps the tab from ever being empty, because Make stops the scenario when a sheet read returns no rows.
+Do not type anything in rows 3 and below. The formula fills them.
