@@ -8,7 +8,10 @@ It holds a single commit (each publish replaces it) with dashboard-stats.json an
 
 Sections (each one is computed on its own; a source that fails leaves {"error": "..."} in its section and the rest
 still ships):
-    venues      total, added and changed in the last 7 days, stale (last change over 30 days ago), age from git history
+    venues      total, added and changed in the last 7 days, stale (last change over 30 days ago), age from git history.
+                Also the protected venues: the weekly refresh will not re-price them (prices read from the restaurant's
+                own menu or changed by hand, see menu_log.protection_reason), so they go stale until someone re-reads
+                the menu. protected_stale_count is past 30 days, protected_soon_count is within 7 days of it
     grid        cells searched, still to search, coverage of the searchable cells, full cells due to split
     menu        imports this week vs last week, outcomes, success rate, venues with no real menu, failure causes.
                 "No real menu" counts only venues on the map whose saved prices still equal the importer's logged
@@ -113,11 +116,16 @@ def venues_section(now):
     with open(VENUES_FILE) as f:
         venues = json.load(f)
     hist, commits = venue_history()
+    # Protected venues are the ones the weekly price refresh will not re-price (prices read from the restaurant's own
+    # menu or changed by hand). Only a re-read menu refreshes them, so they are listed apart from the stale ones the
+    # refresh handles. Unknown (None) when the menu log cannot be read.
+    entries = menu_log.load_entries()
+    index = menu_log.log_index(entries) if entries else None
     today = now.date()
     week_ago = (now - datetime.timedelta(days=WINDOW_DAYS)).date().isoformat()
     stale_cut = (now - datetime.timedelta(days=STALE_DAYS)).date().isoformat()
     added = changed = dated_by_field = 0
-    stale, ages = [], []
+    stale, ages, protected = [], [], []
     for v in venues:
         k = venue_key(v)
         h = hist.get(k, {})
@@ -130,14 +138,25 @@ def venues_section(now):
             changed += 1
         if last:
             ages.append((today - datetime.date.fromisoformat(last)).days)
+            reason = menu_log.protection_reason(v, index) if index else None
+            row = {"name": v.get("name"), "city": v.get("city"), "last_changed": last}
+            if reason:
+                protected.append({**row, "age_days": ages[-1], "reason": reason})
             if last < stale_cut:
-                stale.append({"name": v.get("name"), "city": v.get("city"), "last_changed": last})
+                stale.append({**row, "protected": bool(reason)})
     stale.sort(key=lambda s: s["last_changed"])
+    protected.sort(key=lambda r: r["last_changed"])
+    soon_cut = (now - datetime.timedelta(days=STALE_DAYS - WINDOW_DAYS)).date().isoformat()
     return {
         "total": len(venues), "added_7d": added, "changed_7d": changed, "stale_days": STALE_DAYS,
         "stale_count": len(stale), "stale_oldest": stale[:15], "age_unknown": len(venues) - len(ages),
         "with_lastUpdated_field": dated_by_field, "median_age_days": sorted(ages)[len(ages) // 2] if ages else None,
         "history_commits_read": commits,
+        "protected_count": len(protected) if index else None,
+        "protected_stale_count": sum(1 for r in protected if r["last_changed"] < stale_cut) if index else None,
+        "protected_soon_count": sum(1 for r in protected if stale_cut <= r["last_changed"] < soon_cut) if index else None,
+        "protected_oldest": protected[:10],
+        "stale_refreshable_count": sum(1 for r in stale if not r["protected"]) if index else None,
     }
 
 

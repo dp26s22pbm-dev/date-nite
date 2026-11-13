@@ -17,9 +17,6 @@ except Exception as e:
     VENUE_URLS = {}
 
 DEFAULT_VENUE_LIMIT = 60
-# priceSource values written by this refresh. A venue carrying one of them has search-derived (or re-read PDF) prices,
-# so the next refresh may replace them. Any other source, or none, goes through protection_reason() first.
-REFRESH_SOURCES = ("search", "pdf")
 # Closure checks that cover venues the price refresh leaves alone (protected prices). They rotate by closureCheckedAt,
 # which every closure check stamps, so every venue is checked in turn whether or not its prices are refreshed.
 DEFAULT_CLOSURE_LIMIT = 40
@@ -86,44 +83,6 @@ def venue_place(v):
     """"Elmhurst, IL": the venue's own town, so the search looks for the right restaurant."""
     town, state = (v.get("city") or "").strip(), (v.get("state") or "").strip()
     return ", ".join(p for p in (town, state) if p) or "the Chicago, IL area"
-
-
-def log_index(entries):
-    """({name key: latest menu-log record}, {name key: last logged final prices}). Matched by name: the venue_id in
-    the log is not unique (grid runs that ran side by side handed out the same id)."""
-    latest, finals = {}, {}
-    for e in sorted(entries, key=lambda e: e.get("t", "")):
-        key = menu_log.name_key(e.get("venue"))
-        latest[key] = e
-        if e.get("final"):
-            finals[key] = e["final"]
-    return latest, finals
-
-
-def protection_reason(v, index):
-    """Why this venue's saved prices must not be replaced by a web-search estimate, or None when a refresh may.
-
-    The refresh stamps priceSource "search" (or "pdf") on what it writes, so those venues are fair game again. Edit Venue
-    stamps "hand" or "menu". Anything else is judged from the menu log: prices that still equal what the importer read
-    from the restaurant's own menu, or that differ from the importer's numbers (someone changed them), are protected.
-    A venue with no log record has no known source and is refreshed as before."""
-    source = v.get("priceSource")
-    if source in REFRESH_SOURCES:
-        return None
-    if source == "hand":
-        return "prices were typed in by hand"
-    if source == "menu":
-        return "prices were read from a menu someone pasted"
-    latest, finals = index
-    key = menu_log.name_key(v.get("name"))
-    record, final = latest.get(key), finals.get(key)
-    if record is None or not final:
-        return None
-    if not menu_log.still_estimates(v, final):
-        return "saved prices differ from the importer's, so someone changed them"
-    if record.get("outcome") in ("menu_read", "menu_read_partial"):
-        return "prices were read from the restaurant's own menu"
-    return None
 
 
 def fetch_pricing_via_gemini_search(venue_name, city="Naperville, IL"):
@@ -266,8 +225,8 @@ def main():
         if not entries:
             # Without the log a venue read from a real menu looks like any other, so stop instead of overwriting it
             sys.exit("Could not read the menu-log branch, so protected prices cannot be told apart. Nothing was refreshed.")
-        index = log_index(entries)
-        protected = {v.get("id"): r for v in venues if (r := protection_reason(v, index))}
+        index = menu_log.log_index(entries)
+        protected = {v.get("id"): r for v in venues if (r := menu_log.protection_reason(v, index))}
         print(f"Leaving {len(protected)} venue(s) alone because their prices were read from a real menu or changed by hand.")
 
     try:
