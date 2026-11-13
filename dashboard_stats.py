@@ -10,7 +10,10 @@ Sections (each one is computed on its own; a source that fails leaves {"error": 
 still ships):
     venues      total, added and changed in the last 7 days, stale (last change over 30 days ago), age from git history
     grid        cells searched, still to search, coverage of the searchable cells, full cells due to split
-    menu        imports this week vs last week, outcomes, success rate, venues with no real menu, failure causes
+    menu        imports this week vs last week, outcomes, success rate, venues with no real menu, failure causes.
+                "No real menu" counts only venues on the map whose saved prices still equal the importer's logged
+                numbers; venues fixed by hand and candidates never added to the map are counted separately.
+                Failure causes still cover every import that ended badly, since they measure the importer
     review      open issues and pull requests that wait on a person (needs-menu, double-check, venue-review, grid PRs)
     workflows   failed GitHub Actions runs in the last 7 days, by workflow
     places      Google Places requests used today and over the last 7 days against the daily budget
@@ -26,6 +29,7 @@ import argparse
 import datetime
 import json
 import os
+import re
 import subprocess
 import sys
 import tempfile
@@ -46,6 +50,7 @@ VENUES_FILE = "venues.json"
 PRICE_FIELDS = ("app", "casualMain", "premiumMain", "drink", "dessert", "lastUpdated")
 REVIEW_LABELS = ("needs-menu", "double-check", "venue-review")
 GRID_PR_PREFIX = "Add venues for cells: "
+PRICE_KEYS = ("app", "casualMain", "premiumMain", "drink", "dessert")
 
 UTC = datetime.timezone.utc
 
@@ -188,6 +193,18 @@ def failure_cause(entry):
     return "Other"
 
 
+def name_key(name):
+    return re.sub(r"[^a-z0-9]", "", (name or "").lower())
+
+
+def still_estimates(venue, final):
+    """True when the venue's saved prices are exactly the five numbers the importer logged for it."""
+    try:
+        return all(abs(float(venue[k]) - float(final[k])) < 0.005 for k in PRICE_KEYS)
+    except (KeyError, TypeError, ValueError):
+        return False
+
+
 def menu_section(now):
     entries = menu_log.load_entries()
     if not entries:
@@ -206,8 +223,26 @@ def menu_section(now):
     latest = {}
     for e in sorted(entries, key=lambda e: e.get("t", "")):
         latest[(e.get("venue") or "").lower()] = e
-    unresolved = sorted((e for e in latest.values() if e.get("outcome") in menu_log.UNRESOLVED_OUTCOMES),
-                        key=lambda e: e["t"], reverse=True)
+    last_final = {}
+    for e in sorted(entries, key=lambda e: e.get("t", "")):
+        if e.get("final"):
+            last_final[(e.get("venue") or "").lower()] = e["final"]
+    with open(VENUES_FILE) as f:
+        on_map = {name_key(v.get("name")): v for v in json.load(f)}
+    # The log only sees what the importer did. A venue fixed by editing its venue-review issue or with Edit Venue price
+    # overrides leaves no record, so its last record still says the import failed. Count a venue as still needing a menu
+    # only when it is on the map and its saved prices are still the importer's own numbers.
+    unresolved, fixed_by_hand, off_map = [], [], []
+    for e in sorted((e for e in latest.values() if e.get("outcome") in menu_log.UNRESOLVED_OUTCOMES),
+                    key=lambda e: e["t"], reverse=True):
+        v = on_map.get(name_key(e.get("venue")))
+        final = e.get("final") or last_final.get((e.get("venue") or "").lower())
+        if v is None:
+            off_map.append(e)
+        elif final and not still_estimates(v, final):
+            fixed_by_hand.append(e)
+        else:
+            unresolved.append(e)
     tokens_in = tokens_out = 0
     for e in cur:
         for s in e.get("steps", []):
@@ -223,6 +258,8 @@ def menu_section(now):
         "step_reasons_note": "Raw attempt counts. fetch/http_404 includes real dead links, so judge by venues, not attempts.",
         "no_real_menu": [{"venue": e["venue"], "site": e.get("host"), "outcome": e["outcome"], "date": e["t"][:10]} for e in unresolved],
         "no_real_menu_count": len(unresolved),
+        "fixed_by_hand_count": len(fixed_by_hand), "fixed_by_hand": [e["venue"] for e in fixed_by_hand],
+        "candidates_not_on_map_count": len(off_map), "candidates_not_on_map": [e["venue"] for e in off_map],
         "partial_reads_this_week": sum(1 for e in cur if e.get("outcome") == "menu_read_partial"),
         "pasted_menus_this_week": sum(1 for e in cur if e.get("reply") and e.get("outcome") == "menu_read"),
         "claude_search_tokens_in": tokens_in, "claude_search_tokens_out": tokens_out,
