@@ -1,0 +1,46 @@
+name: Dashboard Stats
+
+# Every night: computes the numbers behind the Date Nite dashboard (venues, grid coverage, menu import results, items
+# waiting on a person, failed workflow runs, Google Places use) and saves them as dashboard-stats.json on the
+# dashboard-data branch (see dashboard_stats.py). That branch is kept off main, so saving the file never triggers a site
+# rebuild. Nothing here uses the Gemini, Anthropic or Places keys. Run it by hand from the Actions tab for a fresh copy.
+on:
+  schedule:
+    - cron: "23 9 * * *"
+  workflow_dispatch:
+
+concurrency:
+  group: dashboard-stats
+  cancel-in-progress: false
+
+jobs:
+  stats:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      issues: read
+      pull-requests: read
+      actions: read
+
+    steps:
+      # The whole history, because venue ages come from the commits that changed venues.json
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 0
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Build the Numbers
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          python dashboard_stats.py build --out dashboard-stats.json
+          { echo '```json'; python -c "import json; d=json.load(open('dashboard-stats.json')); d.pop('history', None); print(json.dumps(d, indent=1)[:60000])"; echo '```'; } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Save to the dashboard-data Branch
+        run: python dashboard_stats.py publish --file dashboard-stats.json
