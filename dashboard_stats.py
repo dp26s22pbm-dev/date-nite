@@ -10,7 +10,10 @@ Sections (each one is computed on its own; a source that fails leaves {"error": 
 still ships):
     venues      total, added and changed in the last 7 days, stale (last change over 30 days ago), age from git history
     grid        cells searched, still to search, coverage of the searchable cells, full cells due to split
-    menu        imports this week vs last week, outcomes, success rate, venues with no real menu, failure causes
+    menu        imports this week vs last week, outcomes, success rate, venues with no real menu, failure causes.
+                "No real menu" counts only venues on the map whose saved prices still equal the importer's logged
+                numbers; venues fixed by hand and candidates never added to the map are counted separately.
+                Failure causes still cover every import that ended badly, since they measure the importer
     review      open issues and pull requests that wait on a person (needs-menu, double-check, venue-review, grid PRs)
     workflows   failed GitHub Actions runs in the last 7 days, by workflow
     places      Google Places requests used today and over the last 7 days against the daily budget
@@ -203,11 +206,7 @@ def menu_section(now):
     problems = [e for e in cur if e.get("outcome") in menu_log.PROBLEM_OUTCOMES]
     causes = Counter(failure_cause(e) for e in problems)
     steps = Counter(r for e in cur for r in menu_log._failures(e))
-    latest = {}
-    for e in sorted(entries, key=lambda e: e.get("t", "")):
-        latest[(e.get("venue") or "").lower()] = e
-    unresolved = sorted((e for e in latest.values() if e.get("outcome") in menu_log.UNRESOLVED_OUTCOMES),
-                        key=lambda e: e["t"], reverse=True)
+    unresolved, fixed_by_hand, off_map = menu_log.classify_unresolved(entries, menu_log.load_map_venues())
     tokens_in = tokens_out = 0
     for e in cur:
         for s in e.get("steps", []):
@@ -223,6 +222,8 @@ def menu_section(now):
         "step_reasons_note": "Raw attempt counts. fetch/http_404 includes real dead links, so judge by venues, not attempts.",
         "no_real_menu": [{"venue": e["venue"], "site": e.get("host"), "outcome": e["outcome"], "date": e["t"][:10]} for e in unresolved],
         "no_real_menu_count": len(unresolved),
+        "fixed_by_hand_count": len(fixed_by_hand), "fixed_by_hand": [e["venue"] for e in fixed_by_hand],
+        "candidates_not_on_map_count": len(off_map), "candidates_not_on_map": [e["venue"] for e in off_map],
         "partial_reads_this_week": sum(1 for e in cur if e.get("outcome") == "menu_read_partial"),
         "pasted_menus_this_week": sum(1 for e in cur if e.get("reply") and e.get("outcome") == "menu_read"),
         "claude_search_tokens_in": tokens_in, "claude_search_tokens_out": tokens_out,
