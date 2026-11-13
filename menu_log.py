@@ -41,6 +41,10 @@ bot_challenge means the site answered with a bot check ("Just a moment...", a ca
 stops guessing pages on that host and goes on to Gemini and web search; the venue needs a pasted menu.
 Add a new word where the importer learns a new way to fail; the report counts whatever it finds.
 
+The report's list of venues still without a real menu leaves out venues fixed by hand (saved prices differ from the logged
+ones) and candidates never added to the map, because neither shows in the log; see classify_unresolved. It reads venues.json
+beside this file and skips that check when the file is missing.
+
 Nothing here raises: a logging problem must never stop a venue from being added. Menu text itself is not stored, only
 counts and the prices read. Add it later if sample pages are wanted for testing a new importer."""
 import atexit
@@ -63,6 +67,61 @@ VERSION = 1
 PROBLEM_OUTCOMES = {"none", "web_search_only", "menu_read_partial", "reply_unreadable", "incomplete"}
 # Outcomes that leave the venue without a real menu on the map. A later menu_read for the same venue resolves it.
 UNRESOLVED_OUTCOMES = {"none", "web_search_only", "reply_unreadable", "incomplete"}
+
+PRICE_KEYS = ("app", "casualMain", "premiumMain", "drink", "dessert")
+
+
+def name_key(name):
+    return re.sub(r"[^a-z0-9]", "", (name or "").lower())
+
+
+def still_estimates(venue, final):
+    """True when the venue's saved prices are exactly the five numbers the importer logged for it."""
+    try:
+        return all(abs(float(venue[k]) - float(final[k])) < 0.005 for k in PRICE_KEYS)
+    except (KeyError, TypeError, ValueError):
+        return False
+
+
+def load_map_venues(path=None):
+    """{name_key: venue} for the venues on the map, or None when venues.json cannot be read (nothing is then left out)."""
+    try:
+        with open(path or os.path.join(os.path.dirname(os.path.abspath(__file__)), "venues.json")) as f:
+            return {name_key(v.get("name")): v for v in json.load(f)}
+    except (OSError, ValueError, AttributeError, TypeError):
+        return None
+
+
+def classify_unresolved(entries, on_map):
+    """Split the venues whose latest import has no real menu into (still_needs_menu, fixed_by_hand, not_on_map).
+
+    The log only records what the importer did. A venue fixed by editing its venue-review issue or with Edit Venue price
+    overrides leaves no record, so its last record still says the import failed. A venue needs a menu only while it is on
+    the map and its saved prices are still the importer's own numbers. A candidate the grid search found but nobody
+    approved is not on the map. With on_map None every such venue counts as still needing a menu. Newest first."""
+    latest, last_final = {}, {}
+    for e in sorted(entries, key=lambda e: e.get("t", "")):
+        key = (e.get("venue") or "").lower()
+        latest[key] = e
+        if e.get("final"):
+            last_final[key] = e["final"]
+    needs, fixed, off = [], [], []
+    for key, e in latest.items():
+        if e.get("outcome") not in UNRESOLVED_OUTCOMES:
+            continue
+        venue = None if on_map is None else on_map.get(name_key(e.get("venue")))
+        final = e.get("final") or last_final.get(key)
+        if on_map is None:
+            needs.append(e)
+        elif venue is None:
+            off.append(e)
+        elif final and not still_estimates(venue, final):
+            fixed.append(e)
+        else:
+            needs.append(e)
+    newest = lambda rows: sorted(rows, key=lambda e: e["t"], reverse=True)
+    return newest(needs), newest(fixed), newest(off)
+
 
 # Hints about what builds a menu page; many failures turn out to share a platform, which is what a better importer would target
 PLATFORMS = (
@@ -306,15 +365,19 @@ def report(entries, recent=15):
     if platforms:
         out += ["", "Platforms behind the problem sites: " + ", ".join(f"{k} {n}" for k, n in platforms.most_common())]
 
-    latest = {}
-    for e in entries:
-        latest[(e.get("venue") or "").lower()] = e
-    unresolved = [e for e in latest.values() if e.get("outcome") in UNRESOLVED_OUTCOMES]
-    out += ["", f"Venues whose latest import has no real menu ({len(unresolved)})"]
-    for e in sorted(unresolved, key=lambda e: e["t"], reverse=True):
+    unresolved, fixed, off_map = classify_unresolved(entries, load_map_venues())
+    out += ["", f"Venues on the map still without a real menu ({len(unresolved)})"]
+    for e in unresolved:
         out.append(f"  {e['venue']}  {e.get('host') or 'no website'}  {e['outcome']}  {e['t'][:10]}")
     if not unresolved:
         out.append("  (none)")
+    if fixed or off_map:
+        out.append(f"  Left out: {len(fixed)} fixed by hand (saved prices differ from the importer's), "
+                   f"{len(off_map)} not on the map (found but never approved).")
+        if fixed:
+            out.append("  Fixed by hand: " + ", ".join(e["venue"] for e in fixed))
+        if off_map:
+            out.append("  Not on the map: " + ", ".join(e["venue"] for e in off_map))
 
     replies = [e for e in entries if e.get("reply") and e.get("outcome") == "menu_read"]
     if replies:

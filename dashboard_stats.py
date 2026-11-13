@@ -29,7 +29,6 @@ import argparse
 import datetime
 import json
 import os
-import re
 import subprocess
 import sys
 import tempfile
@@ -50,7 +49,6 @@ VENUES_FILE = "venues.json"
 PRICE_FIELDS = ("app", "casualMain", "premiumMain", "drink", "dessert", "lastUpdated")
 REVIEW_LABELS = ("needs-menu", "double-check", "venue-review")
 GRID_PR_PREFIX = "Add venues for cells: "
-PRICE_KEYS = ("app", "casualMain", "premiumMain", "drink", "dessert")
 
 UTC = datetime.timezone.utc
 
@@ -193,18 +191,6 @@ def failure_cause(entry):
     return "Other"
 
 
-def name_key(name):
-    return re.sub(r"[^a-z0-9]", "", (name or "").lower())
-
-
-def still_estimates(venue, final):
-    """True when the venue's saved prices are exactly the five numbers the importer logged for it."""
-    try:
-        return all(abs(float(venue[k]) - float(final[k])) < 0.005 for k in PRICE_KEYS)
-    except (KeyError, TypeError, ValueError):
-        return False
-
-
 def menu_section(now):
     entries = menu_log.load_entries()
     if not entries:
@@ -220,29 +206,7 @@ def menu_section(now):
     problems = [e for e in cur if e.get("outcome") in menu_log.PROBLEM_OUTCOMES]
     causes = Counter(failure_cause(e) for e in problems)
     steps = Counter(r for e in cur for r in menu_log._failures(e))
-    latest = {}
-    for e in sorted(entries, key=lambda e: e.get("t", "")):
-        latest[(e.get("venue") or "").lower()] = e
-    last_final = {}
-    for e in sorted(entries, key=lambda e: e.get("t", "")):
-        if e.get("final"):
-            last_final[(e.get("venue") or "").lower()] = e["final"]
-    with open(VENUES_FILE) as f:
-        on_map = {name_key(v.get("name")): v for v in json.load(f)}
-    # The log only sees what the importer did. A venue fixed by editing its venue-review issue or with Edit Venue price
-    # overrides leaves no record, so its last record still says the import failed. Count a venue as still needing a menu
-    # only when it is on the map and its saved prices are still the importer's own numbers.
-    unresolved, fixed_by_hand, off_map = [], [], []
-    for e in sorted((e for e in latest.values() if e.get("outcome") in menu_log.UNRESOLVED_OUTCOMES),
-                    key=lambda e: e["t"], reverse=True):
-        v = on_map.get(name_key(e.get("venue")))
-        final = e.get("final") or last_final.get((e.get("venue") or "").lower())
-        if v is None:
-            off_map.append(e)
-        elif final and not still_estimates(v, final):
-            fixed_by_hand.append(e)
-        else:
-            unresolved.append(e)
+    unresolved, fixed_by_hand, off_map = menu_log.classify_unresolved(entries, menu_log.load_map_venues())
     tokens_in = tokens_out = 0
     for e in cur:
         for s in e.get("steps", []):
