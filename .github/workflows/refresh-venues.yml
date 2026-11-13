@@ -2,7 +2,7 @@ name: Refresh Venue Pricing
 
 on:
   schedule:
-    # Weekly, Sundays 08:17 UTC. Each run refreshes the least recently updated slice.
+    # Weekly, Sundays 08:17 UTC. Each run refreshes the 60 least recently updated venues (DEFAULT_VENUE_LIMIT in batch_update_venues.py), so a map of up to about 240 venues is covered within 30 days.
     - cron: '17 8 * * 0'
   workflow_dispatch:
     inputs:
@@ -13,7 +13,7 @@ on:
       limit:
         description: 'Max venues to refresh when no target is given (0 = all venues)'
         required: false
-        default: '14'
+        default: '60'
 
 jobs:
   refresh:

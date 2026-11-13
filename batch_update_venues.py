@@ -13,7 +13,7 @@ except Exception as e:
     print(f"Failed to import TARGET_URLS from urls.py: {e}")
     VENUE_URLS = {}
 
-DEFAULT_VENUE_LIMIT = 14
+DEFAULT_VENUE_LIMIT = 60
 CLOSURE_FLAGS_FILE = "closure_flags.json"
 
 CLOSURE_PROMPT = """
