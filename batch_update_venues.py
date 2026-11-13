@@ -20,6 +20,9 @@ DEFAULT_VENUE_LIMIT = 60
 # priceSource values written by this refresh. A venue carrying one of them has search-derived (or re-read PDF) prices,
 # so the next refresh may replace them. Any other source, or none, goes through protection_reason() first.
 REFRESH_SOURCES = ("search", "pdf")
+# Closure checks that cover venues the price refresh leaves alone (protected prices). They rotate by closureCheckedAt,
+# which every closure check stamps, so every venue is checked in turn whether or not its prices are refreshed.
+DEFAULT_CLOSURE_LIMIT = 40
 CLOSURE_FLAGS_FILE = "closure_flags.json"
 
 CLOSURE_PROMPT = """
@@ -143,9 +146,9 @@ def fetch_pricing_via_gemini_search(venue_name, city="Naperville, IL"):
         print(f"Gemini Search Grounding error for {venue_name}: {e}")
         return None
 
-def check_for_closure(v):
-    """Ask Gemini (with search) whether a venue has permanently closed. Returns an evidence string if it
-    reports CLOSED, else None. Never edits the venue: a person reviews the flag and removes it."""
+def closure_status(v):
+    """Ask Gemini (with search) whether a venue has permanently closed. Returns ("closed", evidence), ("open", None)
+    or ("error", None) when no answer could be read. Never edits the venue: a person reviews the flag and removes it."""
     try:
         lon, lat = v["coords"]
         response = client.models.generate_content(
@@ -161,10 +164,28 @@ def check_for_closure(v):
             raw_text = raw_text.strip("`").removeprefix("json").strip()
         result = json.loads(raw_text)
         if str(result.get("status", "")).upper() == "CLOSED":
-            return str(result.get("evidence", "")).strip() or "No source given."
+            return "closed", str(result.get("evidence", "")).strip() or "No source given."
+        return "open", None
     except Exception as e:
         print(f"Closure check error for {v.get('name')}: {e}")
-    return None
+        return "error", None
+
+def check_for_closure(v):
+    """The evidence string when Gemini reports the venue CLOSED, else None."""
+    status, evidence = closure_status(v)
+    return evidence if status == "closed" else None
+
+def run_closure_check(v, flags):
+    """Check one venue, add a flag when it looks closed, and stamp closureCheckedAt unless the check could not be read
+    (an unreadable answer must not push the venue to the back of the rotation). Returns True when the venue was stamped."""
+    status, evidence = closure_status(v)
+    if status == "closed":
+        print(f"  Possible permanent closure: {evidence}")
+        flags.append({"id": v.get("id"), "name": v.get("name", ""), "evidence": evidence})
+    if status == "error":
+        return False
+    v["closureCheckedAt"] = date.today().isoformat()
+    return True
 
 def parse_pricing_from_pdf(pdf_bytes):
     """Parse pricing from a PDF using Gemini (no search grounding needed)."""
@@ -222,6 +243,12 @@ def select_venues(venues, target_venue, limit, skip_ids=()):
     ordered = sorted((v for v in venues if v.get("id") not in skip_ids), key=lambda v: v.get("lastUpdated", ""))
     return ordered if limit <= 0 else ordered[:limit]
 
+def select_for_closure(venues, protected_ids, limit):
+    """Protected venues (the price refresh skips them), least recently closure-checked first, never-checked first.
+    A limit of 0 means all of them."""
+    pool = sorted((v for v in venues if v.get("id") in protected_ids), key=lambda v: v.get("closureCheckedAt", ""))
+    return pool if limit <= 0 else pool[:limit]
+
 def main():
     target_venue = os.environ.get("TARGET_VENUE", "").strip().lower()
 
@@ -243,10 +270,17 @@ def main():
         protected = {v.get("id"): r for v in venues if (r := protection_reason(v, index))}
         print(f"Leaving {len(protected)} venue(s) alone because their prices were read from a real menu or changed by hand.")
 
+    try:
+        closure_limit = int(os.environ.get("CLOSURE_LIMIT", "").strip() or DEFAULT_CLOSURE_LIMIT)
+    except ValueError:
+        closure_limit = DEFAULT_CLOSURE_LIMIT
+
     selected = select_venues(venues, target_venue, limit, skip_ids=set(protected))
-    print(f"Refreshing {len(selected)} of {len(venues)} venue(s).")
+    closure_only = select_for_closure(venues, set(protected), closure_limit)
+    print(f"Refreshing {len(selected)} of {len(venues)} venue(s); closure-checking {len(closure_only)} protected venue(s).")
 
     updated_count = 0
+    checked_count = 0
     closure_flags = []
     for v in selected:
         venue_id = v.get("id")
@@ -254,10 +288,8 @@ def main():
 
         print(f"Refreshing pricing for: {name} (ID: {venue_id})")
 
-        evidence = check_for_closure(v)
-        if evidence:
-            print(f"  Possible permanent closure: {evidence}")
-            closure_flags.append({"id": venue_id, "name": name, "evidence": evidence})
+        if run_closure_check(v, closure_flags):
+            checked_count += 1
 
         # Step 1: Try direct PDF download if the registered URL is a PDF
         pdf_pricing = None
@@ -285,13 +317,18 @@ def main():
         else:
             print(f"  Could not retrieve new prices for {name}; keeping existing data.")
 
+    for v in closure_only:
+        print(f"Closure check only (prices left alone): {v.get('name', '')} (ID: {v.get('id')})")
+        if run_closure_check(v, closure_flags):
+            checked_count += 1
+
     with open(CLOSURE_FLAGS_FILE, "w") as f:
         json.dump(closure_flags, f, indent=2)
 
-    if updated_count > 0:
+    if updated_count > 0 or checked_count > 0:
         with open("venues.json", "w") as f:
             json.dump(venues, f, indent=2)
-        print(f"Saved {updated_count} updated venue(s) to venues.json.")
+        print(f"Saved venues.json: {updated_count} repriced, {checked_count} closure-checked, {len(closure_flags)} flagged.")
 
 if __name__ == "__main__":
     main()
