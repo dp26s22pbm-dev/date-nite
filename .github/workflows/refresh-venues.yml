@@ -2,7 +2,7 @@ name: Refresh Venue Pricing
 
 on:
   schedule:
-    # Weekly, Sundays 08:17 UTC. Each run refreshes the 60 least recently updated venues (DEFAULT_VENUE_LIMIT in batch_update_venues.py), so a map of up to about 240 venues is covered within 30 days.
+    # Weekly, Sundays 08:17 UTC. Each run refreshes the 60 least recently updated venues (DEFAULT_VENUE_LIMIT in batch_update_venues.py), so a map of up to about 240 venues is covered within 30 days. Venues whose prices were read from a real menu or changed by hand are skipped (protection_reason).
     - cron: '17 8 * * 0'
   workflow_dispatch:
     inputs:

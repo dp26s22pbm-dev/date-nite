@@ -1,9 +1,12 @@
 import os
+import sys
 import json
 import statistics
 from datetime import date
 from google import genai
 from google.genai import types
+
+import menu_log
 
 client = genai.Client(api_key=os.environ.get("GEMINI_API_KEY", ""))
 
@@ -14,10 +17,13 @@ except Exception as e:
     VENUE_URLS = {}
 
 DEFAULT_VENUE_LIMIT = 60
+# priceSource values written by this refresh. A venue carrying one of them has search-derived (or re-read PDF) prices,
+# so the next refresh may replace them. Any other source, or none, goes through protection_reason() first.
+REFRESH_SOURCES = ("search", "pdf")
 CLOSURE_FLAGS_FILE = "closure_flags.json"
 
 CLOSURE_PROMPT = """
-Is the restaurant "{venue_name}" ({category}), located near latitude {lat}, longitude {lon} in the Naperville, IL area, permanently closed?
+Is the restaurant "{venue_name}" ({category}), located near latitude {lat}, longitude {lon} in {place}, permanently closed?
 Use Google Search. Answer CLOSED only if a source says this location has permanently closed, has been replaced by a different business, or is "permanently closed" on Google Maps or Yelp. Temporary closures, renovations and seasonal hours are not closures. Answer OPEN if sources show it operating, and UNKNOWN if you cannot tell.
 Return ONLY a valid JSON object: {{"status": "OPEN" | "CLOSED" | "UNKNOWN", "evidence": "one sentence naming the source"}}
 Do not include markdown code block formatting.
@@ -73,6 +79,50 @@ def calculate_tier_color(total_cost):
     else:
         return "#ef4444"
 
+def venue_place(v):
+    """"Elmhurst, IL": the venue's own town, so the search looks for the right restaurant."""
+    town, state = (v.get("city") or "").strip(), (v.get("state") or "").strip()
+    return ", ".join(p for p in (town, state) if p) or "the Chicago, IL area"
+
+
+def log_index(entries):
+    """({name key: latest menu-log record}, {name key: last logged final prices}). Matched by name: the venue_id in
+    the log is not unique (grid runs that ran side by side handed out the same id)."""
+    latest, finals = {}, {}
+    for e in sorted(entries, key=lambda e: e.get("t", "")):
+        key = menu_log.name_key(e.get("venue"))
+        latest[key] = e
+        if e.get("final"):
+            finals[key] = e["final"]
+    return latest, finals
+
+
+def protection_reason(v, index):
+    """Why this venue's saved prices must not be replaced by a web-search estimate, or None when a refresh may.
+
+    The refresh stamps priceSource "search" (or "pdf") on what it writes, so those venues are fair game again. Edit Venue
+    stamps "hand" or "menu". Anything else is judged from the menu log: prices that still equal what the importer read
+    from the restaurant's own menu, or that differ from the importer's numbers (someone changed them), are protected.
+    A venue with no log record has no known source and is refreshed as before."""
+    source = v.get("priceSource")
+    if source in REFRESH_SOURCES:
+        return None
+    if source == "hand":
+        return "prices were typed in by hand"
+    if source == "menu":
+        return "prices were read from a menu someone pasted"
+    latest, finals = index
+    key = menu_log.name_key(v.get("name"))
+    record, final = latest.get(key), finals.get(key)
+    if record is None or not final:
+        return None
+    if not menu_log.still_estimates(v, final):
+        return "saved prices differ from the importer's, so someone changed them"
+    if record.get("outcome") in ("menu_read", "menu_read_partial"):
+        return "prices were read from the restaurant's own menu"
+    return None
+
+
 def fetch_pricing_via_gemini_search(venue_name, city="Naperville, IL"):
     """Query Gemini with Google Search Grounding to find live menu pricing."""
     try:
@@ -100,7 +150,7 @@ def check_for_closure(v):
         lon, lat = v["coords"]
         response = client.models.generate_content(
             model="gemini-3.6-flash",
-            contents=CLOSURE_PROMPT.format(venue_name=v["name"], category=v.get("category", "restaurant"), lat=lat, lon=lon),
+            contents=CLOSURE_PROMPT.format(venue_name=v["name"], category=v.get("category", "restaurant"), lat=lat, lon=lon, place=venue_place(v)),
             config=types.GenerateContentConfig(
                 tools=[types.Tool(google_search=types.GoogleSearch())],
                 temperature=0.0
@@ -132,7 +182,7 @@ def parse_pricing_from_pdf(pdf_bytes):
         print(f"Gemini PDF parsing error: {e}")
         return None
 
-def apply_pricing_to_venue(v, pricing):
+def apply_pricing_to_venue(v, pricing, source="search"):
     """Update venue dict with median values from pricing data. Returns True if updated."""
     if not pricing or not pricing.get("casualMains"):
         return False
@@ -155,18 +205,21 @@ def apply_pricing_to_venue(v, pricing):
     total_cost = round((v["app"] + (1 * v["casualMain"]) + (1 * v["premiumMain"]) + (2 * v["drink"]) + v["dessert"]) * 1.30)
     v["tierColor"] = calculate_tier_color(total_cost)
     v["lastUpdated"] = date.today().isoformat()
+    v["priceSource"] = source
     return True
 
-def select_venues(venues, target_venue, limit):
+def select_venues(venues, target_venue, limit, skip_ids=()):
     """Pick which venues to refresh this run.
 
     A target name matches by substring and ignores the limit. Otherwise the
     `limit` least recently updated venues are chosen (never-updated first),
     so repeated runs rotate through the whole list. A limit of 0 means all.
+    Venues whose ids are in `skip_ids` (protected prices) are left out before the limit applies, so they do not use
+    up the run's slots. A target name ignores both.
     """
     if target_venue:
         return [v for v in venues if target_venue in v.get("name", "").lower()]
-    ordered = sorted(venues, key=lambda v: v.get("lastUpdated", ""))
+    ordered = sorted((v for v in venues if v.get("id") not in skip_ids), key=lambda v: v.get("lastUpdated", ""))
     return ordered if limit <= 0 else ordered[:limit]
 
 def main():
@@ -180,7 +233,17 @@ def main():
     except ValueError:
         limit = DEFAULT_VENUE_LIMIT
 
-    selected = select_venues(venues, target_venue, limit)
+    protected = {}
+    if not target_venue:
+        entries = menu_log.load_entries()
+        if not entries:
+            # Without the log a venue read from a real menu looks like any other, so stop instead of overwriting it
+            sys.exit("Could not read the menu-log branch, so protected prices cannot be told apart. Nothing was refreshed.")
+        index = log_index(entries)
+        protected = {v.get("id"): r for v in venues if (r := protection_reason(v, index))}
+        print(f"Leaving {len(protected)} venue(s) alone because their prices were read from a real menu or changed by hand.")
+
+    selected = select_venues(venues, target_venue, limit, skip_ids=set(protected))
     print(f"Refreshing {len(selected)} of {len(venues)} venue(s).")
 
     updated_count = 0
@@ -208,14 +271,13 @@ def main():
             except Exception as e:
                 print(f"  PDF fetch failed: {e}")
 
-        if pdf_pricing and apply_pricing_to_venue(v, pdf_pricing):
+        if pdf_pricing and apply_pricing_to_venue(v, pdf_pricing, source="pdf"):
             print(f"  Updated {name} from PDF: Casual ${v['casualMain']}, Prime ${v['premiumMain']}")
             updated_count += 1
             continue
 
         # Step 2: Use Gemini Google Search Grounding as the primary method
-        city = "Naperville, IL"
-        pricing = fetch_pricing_via_gemini_search(name, city)
+        pricing = fetch_pricing_via_gemini_search(name, venue_place(v))
 
         if pricing and apply_pricing_to_venue(v, pricing):
             print(f"  Updated {name} via Gemini Search: Casual ${v['casualMain']}, Prime ${v['premiumMain']}, Drinks ${v['drink']}, App ${v['app']}, Color {v['tierColor']}")
