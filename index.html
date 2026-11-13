@@ -831,6 +831,12 @@
       90%  { --music-c: #ef4444; --music-blur: 20px; }
       100% { --music-c: #38bdf8; --music-blur: 5px; }
     }
+    /* Light theme forces a grey button with !important at higher specificity, so the pulse needs its own light rule */
+    html[data-theme="light"] .audio-btn.playing {
+      color: var(--music-c) !important;
+      border-color: var(--music-c) !important;
+      box-shadow: 0 0 4px color-mix(in srgb, var(--music-c) 80%, transparent), 0 0 var(--music-blur) color-mix(in srgb, var(--music-c) 80%, transparent) !important;
+    }
     @media (prefers-reduced-motion: reduce) {
       .audio-btn.playing { animation: none; }
     }
