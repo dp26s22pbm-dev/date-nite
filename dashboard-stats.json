@@ -1,0 +1,316 @@
+{
+ "generated_at": "2026-11-14T03:07:26+00:00",
+ "window_days": 7,
+ "repo": "dp26s22pbm-dev/date-nite",
+ "venues": {
+  "total": 204,
+  "added_7d": 13,
+  "changed_7d": 14,
+  "stale_days": 30,
+  "stale_count": 0,
+  "stale_oldest": [],
+  "age_unknown": 0,
+  "with_lastUpdated_field": 30,
+  "median_age_days": 13,
+  "history_commits_read": 253,
+  "protected_count": 32,
+  "protected_stale_count": 0,
+  "protected_soon_count": 0,
+  "protected_oldest": [
+   {
+    "name": "Mamma Onesta's Italian Restaurant",
+    "city": "Lockport",
+    "last_changed": "2026-11-04",
+    "age_days": 10,
+    "reason": "prices were read from the restaurant's own menu"
+   },
+   {
+    "name": "Tallgrass Restaurant",
+    "city": "Lockport",
+    "last_changed": "2026-11-04",
+    "age_days": 10,
+    "reason": "prices were read from the restaurant's own menu"
+   },
+   {
+    "name": "Zazzo's Pizza & Bar - Darien",
+    "city": "Darien",
+    "last_changed": "2026-11-05",
+    "age_days": 9,
+    "reason": "saved prices differ from the importer's, so someone changed them"
+   },
+   {
+    "name": "Chuck's Southern Comforts Cafe & Banquets",
+    "city": "Darien",
+    "last_changed": "2026-11-05",
+    "age_days": 9,
+    "reason": "saved prices differ from the importer's, so someone changed them"
+   },
+   {
+    "name": "Saffron Restaurant",
+    "city": "Westmont",
+    "last_changed": "2026-11-05",
+    "age_days": 9,
+    "reason": "saved prices differ from the importer's, so someone changed them"
+   },
+   {
+    "name": "Fat Rosie's Taco & Tequila Bar",
+    "city": "Oak Brook",
+    "last_changed": "2026-11-05",
+    "age_days": 9,
+    "reason": "prices were read from the restaurant's own menu"
+   },
+   {
+    "name": "Ton-Ichi ramen",
+    "city": "Downers Grove",
+    "last_changed": "2026-11-05",
+    "age_days": 9,
+    "reason": "saved prices differ from the importer's, so someone changed them"
+   },
+   {
+    "name": "Taste Greek Street Food - Westmont",
+    "city": "Westmont",
+    "last_changed": "2026-11-05",
+    "age_days": 9,
+    "reason": "saved prices differ from the importer's, so someone changed them"
+   },
+   {
+    "name": "113 Main",
+    "city": "Oswego",
+    "last_changed": "2026-11-05",
+    "age_days": 9,
+    "reason": "prices were read from the restaurant's own menu"
+   },
+   {
+    "name": "La Marimba Mexican Restaurant",
+    "city": "Oswego",
+    "last_changed": "2026-11-05",
+    "age_days": 9,
+    "reason": "prices were read from the restaurant's own menu"
+   }
+  ],
+  "stale_refreshable_count": 0
+ },
+ "grid": {
+  "cells_total": 378,
+  "skipped": 37,
+  "split": 2,
+  "searchable": 371,
+  "searched": 49,
+  "remaining": 322,
+  "coverage_pct": 13.2,
+  "full_at": 3,
+  "full_cells_due_to_split": [
+   "A10",
+   "A13",
+   "A14",
+   "A16",
+   "B10",
+   "B14",
+   "B15",
+   "B16",
+   "D13",
+   "D14",
+   "D15",
+   "D17",
+   "D18",
+   "E11",
+   "E13",
+   "E14",
+   "E19",
+   "F11",
+   "F12",
+   "F13",
+   "G13",
+   "G15",
+   "G16",
+   "G17",
+   "G19",
+   "H12",
+   "H14",
+   "H16",
+   "H17",
+   "H18",
+   "I10",
+   "I11",
+   "I12",
+   "I13",
+   "I14",
+   "J10",
+   "J11",
+   "J13",
+   "K10",
+   "K11"
+  ],
+  "venues_outside_grid": 0
+ },
+ "menu": {
+  "this_week": {
+   "imports": 1,
+   "outcomes": {
+    "reply_unreadable": 1
+   },
+   "menu_read_pct": 0
+  },
+  "last_week": {
+   "imports": 45,
+   "outcomes": {
+    "menu_read_partial": 11,
+    "web_search_only": 13,
+    "menu_read": 15,
+    "none": 6
+   },
+   "menu_read_pct": 33
+  },
+  "problem_venues_this_week": 1,
+  "top_causes": [
+   {
+    "cause": "A pasted menu could not be read",
+    "venues": 1
+   }
+  ],
+  "all_causes": [
+   {
+    "cause": "A pasted menu could not be read",
+    "venues": 1
+   }
+  ],
+  "top_step_reasons": [
+   {
+    "step": "pasted_text",
+    "result": "too_few_prices",
+    "count": 1
+   }
+  ],
+  "step_reasons_note": "Raw attempt counts. fetch/http_404 includes real dead links, so judge by venues, not attempts.",
+  "no_real_menu": [
+   {
+    "venue": "Parceros bar grill",
+    "site": null,
+    "outcome": "web_search_only",
+    "date": "2026-11-06"
+   },
+   {
+    "venue": "Tequila Azteca Restaurant",
+    "site": null,
+    "outcome": "web_search_only",
+    "date": "2026-11-05"
+   },
+   {
+    "venue": "Paradise Bay Bar and Grill",
+    "site": null,
+    "outcome": "web_search_only",
+    "date": "2026-11-04"
+   }
+  ],
+  "no_real_menu_count": 3,
+  "fixed_by_hand_count": 10,
+  "fixed_by_hand": [
+   "Gray's Mill Estate",
+   "Oh-Mar Fresh Seafood",
+   "More Brewing Company",
+   "BNK Thai & Sushi",
+   "JG's Jerk Grill",
+   "Taste Greek Street Food - Westmont",
+   "Ton-Ichi ramen",
+   "Zazzo's Pizza & Bar - Darien",
+   "Chuck's Southern Comforts Cafe & Banquets",
+   "Saffron Restaurant"
+  ],
+  "candidates_not_on_map_count": 7,
+  "candidates_not_on_map": [
+   "Mariscos el catr\u00edn del mar",
+   "Taverna on Division",
+   "Rapido Taco",
+   "Victory Meat and Seafood",
+   "Francesca's Amici",
+   "Roadhouse 71 \"America's Saloon\"",
+   "Shu's Sushi Bar & Grill"
+  ],
+  "partial_reads_this_week": 0,
+  "pasted_menus_this_week": 0,
+  "claude_search_tokens_in": 0,
+  "claude_search_tokens_out": 0,
+  "log_records_total": 46,
+  "latest_record": "2026-11-07T03:38:42+00:00"
+ },
+ "review": {
+  "open_issues_total": 0,
+  "waiting_issues": [],
+  "waiting_by_kind": {},
+  "grid_prs": [],
+  "other_prs": [],
+  "waiting_count": 0
+ },
+ "workflows": {
+  "runs_7d": 157,
+  "failed_7d": 1,
+  "failed_by_workflow": [
+   {
+    "workflow": "Edit Venue on Issue",
+    "failures": 1,
+    "latest": "2026-11-07",
+    "url": "https://github.com/dp26s22pbm-dev/date-nite/actions/runs/42334919367"
+   }
+  ]
+ },
+ "places": {
+  "daily_limit": 500,
+  "used_today": 0,
+  "last_7_days": [
+   {
+    "date": "2026-11-07",
+    "requests": 2
+   },
+   {
+    "date": "2026-11-08",
+    "requests": 0
+   },
+   {
+    "date": "2026-11-09",
+    "requests": 0
+   },
+   {
+    "date": "2026-11-10",
+    "requests": 0
+   },
+   {
+    "date": "2026-11-11",
+    "requests": 0
+   },
+   {
+    "date": "2026-11-12",
+    "requests": 0
+   },
+   {
+    "date": "2026-11-13",
+    "requests": 0
+   }
+  ],
+  "total_7d": 2,
+  "timezone": "America/Los_Angeles"
+ },
+ "history": [
+  {
+   "date": "2026-11-13",
+   "venues": 204,
+   "grid_remaining": 322,
+   "coverage_pct": 13.2,
+   "waiting": 0,
+   "no_real_menu": 3,
+   "menu_read_pct": 67,
+   "failed_runs_7d": 1,
+   "places_used_today": 0
+  },
+  {
+   "date": "2026-11-14",
+   "venues": 204,
+   "grid_remaining": 322,
+   "coverage_pct": 13.2,
+   "waiting": 0,
+   "no_real_menu": 3,
+   "menu_read_pct": 0,
+   "failed_runs_7d": 1,
+   "places_used_today": 0
+  }
+ ]
+}
