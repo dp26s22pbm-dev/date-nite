@@ -1628,6 +1628,31 @@ def price_sanity_warnings(app, casual, premium, drink, dessert, defaulted=(), es
 # Where saved venues are read and written; the Add City run points this at a scratch copy so it never touches venues.json
 VENUES_FILE = os.environ.get("VENUES_FILE", "venues.json")
 
+# Names a person might type for each price, reduced to lowercase letters, and the shape of a `casualMain: 18.50` line
+PRICE_ALIASES = {"app": "app", "apps": "app", "appetizer": "app", "appetizers": "app", "starter": "app",
+                 "casualmain": "casualMain", "casual": "casualMain", "casualmains": "casualMain",
+                 "premiummain": "premiumMain", "premium": "premiumMain", "premiummains": "premiumMain",
+                 "drink": "drink", "drinks": "drink", "cocktail": "drink",
+                 "dessert": "dessert", "desserts": "dessert"}
+PRICE_LINE = re.compile(r"^\s*([A-Za-z ]+?)\s*[:=]\s*\$?\s*(\d+(?:\.\d+)?)\s*$")
+
+
+def price_overrides_from_reply(text):
+    """{price key: value} when a reply is nothing but `key: price` lines (any of app, casualMain, premiumMain, drink,
+    dessert), else {}. Strict on purpose: one line that is not such a line (a dish with a price, say) means the reply is
+    menu text, so a pasted menu is never mistaken for overrides."""
+    found = {}
+    for line in (text or "").splitlines():
+        if not line.strip():
+            continue
+        m = PRICE_LINE.match(line)
+        key = PRICE_ALIASES.get(re.sub(r"[^a-z]", "", m.group(1).lower())) if m else None
+        if not key:
+            return {}
+        found[key] = float(m.group(2))
+    return found
+
+
 PRICING_CACHE_FILE = os.environ.get("PRICING_CACHE_FILE", "")
 
 def load_pricing_cache():
@@ -1682,6 +1707,11 @@ def main():
     manual_pricing_text = extract_field(issue_body, "Manual Pricing Overrides (Optional)")
     # A reply to a "needs menu" issue arrives as MENU_TEXT_OVERRIDE (see the add-menu workflow)
     menu_override = os.environ.get("MENU_TEXT_OVERRIDE", "").strip()
+    # A reply that is only `key: price` lines sets those prices by hand; it is not menu text
+    reply_overrides = price_overrides_from_reply(menu_override)
+    if reply_overrides:
+        print(f"Reply holds price overrides, not menu text: {reply_overrides}")
+        menu_override = ""
     menu_text = menu_override or extract_field(issue_body, "Menu text (Optional)")
 
     # A Maps share link carries the place's name and address; use them for anything the form left blank
@@ -1769,6 +1799,13 @@ def main():
     reused_pricing = bool(pricing)
     if reused_pricing:
         print(f"Reusing the prices from the first attempt ({pricing_source}).")
+    elif reply_overrides and existing_idx is not None and all(venues[existing_idx].get(k) is not None for k in
+                                                              ("app", "casualMain", "premiumMain", "drink", "dessert")):
+        # Overrides only: the other prices stay as saved, with no new menu search
+        old = venues[existing_idx]
+        pricing = {"casualMains": [old["casualMain"]], "premiumMains": [old["premiumMain"]], "apps": [old["app"]],
+                   "drinks": [old["drink"]], "desserts": [old["dessert"]]}
+        pricing_source = "the prices already saved, with your overrides"
     if not reused_pricing:
         # A retry after a rejected push reuses the first attempt's prices and was logged then
         if website_found:
@@ -1848,6 +1885,7 @@ def main():
             m = re.match(r'\s*(\w+)\s*:\s*\$?\s*([\d.]+)\s*', line)
             if m:
                 overrides[m.group(1)] = float(m.group(2))
+    overrides.update(reply_overrides)  # a reply's overrides win over the form's
 
     # Calculate medians with guarded fallbacks
     defaulted = []
@@ -2058,7 +2096,9 @@ def main():
         lines += ["", "### ⚠️ Double-check these prices", ""] + [f"- {sentence(w)}" for w in warnings]
         if not menu_override:
             lines += ["", "If they are wrong, reply with the menu text (open the venue's menu page, select all, copy, paste) "
-                          "and I will update them. If they are fine, close this issue."]
+                          "and I will update them. To change only some prices, reply with lines like `casualMain: 18.50` "
+                          "(any of app, casualMain, premiumMain, drink, dessert); the others stay as saved. "
+                          "If they are fine, close this issue."]
     # An address-level pin is a guess; so is any pin placed while Google's Places API could not be asked (daily quota spent)
     pin_guessed = not coords_exact and not (existing_idx is not None and venues[existing_idx].get("coords"))
     if neighbors or pin_guessed:

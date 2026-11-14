@@ -25,14 +25,10 @@ from venue_review import PRICE_KEYS
 
 VENUES_FILE = "venues.json"
 LABELS = {"app": "appetizer", "casualMain": "casual main", "premiumMain": "premium main", "drink": "drink", "dessert": "dessert"}
-# Names a person might type for each price, reduced to lowercase letters
-PRICE_ALIASES = {"app": "app", "apps": "app", "appetizer": "app", "appetizers": "app", "starter": "app",
-                 "casualmain": "casualMain", "casual": "casualMain", "casualmains": "casualMain",
-                 "premiummain": "premiumMain", "premium": "premiumMain", "premiummains": "premiumMain",
-                 "drink": "drink", "drinks": "drink", "cocktail": "drink",
-                 "dessert": "dessert", "desserts": "dessert"}
+# Names a person might type for each price, and the `key: price` line shape (shared with the add-menu reply path)
+PRICE_ALIASES = add.PRICE_ALIASES
 POOL = {"casualMain": "casualMains", "premiumMain": "premiumMains", "app": "apps", "drink": "drinks", "dessert": "desserts"}
-LINE = re.compile(r"^\s*([A-Za-z ]+?)\s*[:=]\s*\$?\s*(\d+(?:\.\d+)?)\s*$")
+LINE = add.PRICE_LINE
 
 
 def fail(message):
