@@ -3731,11 +3731,13 @@
       -88.105892,
       42.047589
     ],
-    "app": 2.49,
+    "app": 12.99,
     "casualMain": 19.49,
     "premiumMain": 25.99,
     "drink": 9.74,
     "dessert": 10.0,
-    "tierColor": "#eab308"
+    "tierColor": "#eab308",
+    "lastUpdated": "2026-11-14",
+    "priceSource": "hand"
   }
 ]
