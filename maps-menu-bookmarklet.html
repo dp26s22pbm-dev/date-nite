@@ -16,7 +16,7 @@
 </head>
 <body>
 <h1>Maps menu bookmark</h1>
-<p>Sends the menu shown on a restaurant's Google Maps listing to the Date Nite importer. It runs in your own browser, signed in to Google, where Maps shows the Menu tab.</p>
+<p>Sends the menu shown on a restaurant's Google Maps listing, or picked sections of its Uber Eats or Postmates menu, to the Date Nite importer. It runs in your own browser, signed in to Google, where Maps shows the Menu tab.</p>
 
 <p><a class="bookmark" id="bookmark" href="#" aria-disabled="true">Loading…</a></p>
 
@@ -33,6 +33,17 @@
   <li>Check the menu text and press <strong>Create</strong>. A venue already on the map is updated; a new one is added.</li>
 </ol>
 <p class="note">Breakfast, lunch, brunch, kids and catering sections are skipped. Nothing is sent until you press Create. If Google changes the layout of the Maps page, the bookmark may stop finding dishes and will say so.</p>
+
+<h2>Use on Uber Eats or Postmates</h2>
+<p>For prices the Maps menu does not have, such as drinks and desserts.</p>
+<ol>
+  <li>Open the restaurant's page on Uber Eats or Postmates.</li>
+  <li>Click <strong>Menu → Date Nite</strong>. A small panel lists the menu's sections, with drinks and desserts ticked.</li>
+  <li>Tick the sections to send, check the restaurant, town and state, and press <strong>Open the Edit a Venue form</strong>.</li>
+  <li>Press <strong>Create</strong> on the form. Only the kinds of price the ticked sections cover are changed; the rest keep their saved values.</li>
+</ol>
+<p class="note">Delivery prices can run higher than in-store prices, which is why the mains are not ticked to start. The ticked sections need at least 6 prices between them.</p>
+<p class="note">Installed this bookmark before the Uber Eats option was added? Delete it and drag the button again.</p>
 
 <script>
   fetch("maps-menu-bookmarklet.js", { cache: "no-store" })
