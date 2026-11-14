@@ -46,6 +46,18 @@ def menu_prices_implausibly_low(pricing, name="", category=""):
     premium = _median(prem) if prem else _median(casual) * 1.6
     return premium < COUNTER_MENU_PREMIUM_MAX
 
+def apps_look_misfiled(pricing):
+    """True when the appetizers read from a menu cost more than its casual mains (medians, with the same 10% leeway
+    as the importer's "costs more than the casual main" warning). Starters do not outprice the main course, so the
+    list is almost always entrees filed in the wrong category: a shrimp cocktail, salad and soup at $20 each on a menu
+    whose mains run $17 (Tequila Azteca, issue 615). Menus that sell tacos one at a time are left alone, because a
+    shared appetizer does cost more than one taco there (the same cutoff as per_taco_prices)."""
+    apps = sorted(pricing.get("apps") or [])
+    casual = sorted(pricing.get("casualMains") or [])
+    if not apps or not casual:
+        return False
+    return _median(casual) > PER_TACO_APP_RULE_MAX and _median(apps) > _median(casual) * 1.1
+
 def _median(values):
     mid = len(values) // 2
     return values[mid] if len(values) % 2 else (values[mid - 1] + values[mid]) / 2
