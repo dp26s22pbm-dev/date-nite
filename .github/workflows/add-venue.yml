@@ -67,6 +67,8 @@ jobs:
           GOOGLE_PLACES_API_KEY: ${{ secrets.GOOGLE_PLACES_API_KEY }}
           ISSUE_BODY: ${{ github.event.issue.body }}
           ISSUE_TITLE: ${{ github.event.issue.title }}
+          # The menu log records which issue each import came from
+          ISSUE_NUMBER: ${{ github.event.issue.number }}
           # Kept outside the repository so a retry after a rejected push reuses the first prices
           PRICING_CACHE_FILE: ${{ runner.temp }}/pricing-cache.json
         run: |
