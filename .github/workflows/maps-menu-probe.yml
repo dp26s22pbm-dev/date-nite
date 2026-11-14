@@ -1,0 +1,49 @@
+name: Maps Menu Probe
+
+# Opens one venue's Google Maps listing from a GitHub runner and prints what the importer's Maps menu step read.
+# Uses no API keys and changes nothing. Run it by hand, or it runs when a pull request changes the probe.
+on:
+  workflow_dispatch:
+    inputs:
+      name:
+        description: Restaurant name
+        required: true
+        default: Tequila Azteca Restaurant
+      where:
+        description: Town and state (or street address)
+        required: true
+        default: Willowbrook, IL
+      maps_url:
+        description: Google Maps link (optional)
+        required: false
+  pull_request:
+    paths:
+      - maps_menu_probe.py
+      - .github/workflows/maps-menu-probe.yml
+
+permissions:
+  contents: read
+
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install the browser
+        run: |
+          pip install playwright
+          playwright install --with-deps chromium
+
+      - name: Read the Maps menu
+        env:
+          VENUE_NAME: ${{ inputs.name || 'Tequila Azteca Restaurant' }}
+          VENUE_WHERE: ${{ inputs.where || 'Willowbrook, IL' }}
+          VENUE_MAPS_URL: ${{ inputs.maps_url }}
+        run: python maps_menu_probe.py "$VENUE_NAME" "$VENUE_WHERE" --maps-url "$VENUE_MAPS_URL"
