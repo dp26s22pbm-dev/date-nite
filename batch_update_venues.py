@@ -1,9 +1,12 @@
 import os
+import sys
 import json
 import statistics
 from datetime import date
 from google import genai
 from google.genai import types
+
+import menu_log
 
 client = genai.Client(api_key=os.environ.get("GEMINI_API_KEY", ""))
 
@@ -13,11 +16,14 @@ except Exception as e:
     print(f"Failed to import TARGET_URLS from urls.py: {e}")
     VENUE_URLS = {}
 
-DEFAULT_VENUE_LIMIT = 14
+DEFAULT_VENUE_LIMIT = 60
+# Closure checks that cover venues the price refresh leaves alone (protected prices). They rotate by closureCheckedAt,
+# which every closure check stamps, so every venue is checked in turn whether or not its prices are refreshed.
+DEFAULT_CLOSURE_LIMIT = 40
 CLOSURE_FLAGS_FILE = "closure_flags.json"
 
 CLOSURE_PROMPT = """
-Is the restaurant "{venue_name}" ({category}), located near latitude {lat}, longitude {lon} in the Naperville, IL area, permanently closed?
+Is the restaurant "{venue_name}" ({category}), located near latitude {lat}, longitude {lon} in {place}, permanently closed?
 Use Google Search. Answer CLOSED only if a source says this location has permanently closed, has been replaced by a different business, or is "permanently closed" on Google Maps or Yelp. Temporary closures, renovations and seasonal hours are not closures. Answer OPEN if sources show it operating, and UNKNOWN if you cannot tell.
 Return ONLY a valid JSON object: {{"status": "OPEN" | "CLOSED" | "UNKNOWN", "evidence": "one sentence naming the source"}}
 Do not include markdown code block formatting.
@@ -73,6 +79,12 @@ def calculate_tier_color(total_cost):
     else:
         return "#ef4444"
 
+def venue_place(v):
+    """"Elmhurst, IL": the venue's own town, so the search looks for the right restaurant."""
+    town, state = (v.get("city") or "").strip(), (v.get("state") or "").strip()
+    return ", ".join(p for p in (town, state) if p) or "the Chicago, IL area"
+
+
 def fetch_pricing_via_gemini_search(venue_name, city="Naperville, IL"):
     """Query Gemini with Google Search Grounding to find live menu pricing."""
     try:
@@ -93,14 +105,14 @@ def fetch_pricing_via_gemini_search(venue_name, city="Naperville, IL"):
         print(f"Gemini Search Grounding error for {venue_name}: {e}")
         return None
 
-def check_for_closure(v):
-    """Ask Gemini (with search) whether a venue has permanently closed. Returns an evidence string if it
-    reports CLOSED, else None. Never edits the venue: a person reviews the flag and removes it."""
+def closure_status(v):
+    """Ask Gemini (with search) whether a venue has permanently closed. Returns ("closed", evidence), ("open", None)
+    or ("error", None) when no answer could be read. Never edits the venue: a person reviews the flag and removes it."""
     try:
         lon, lat = v["coords"]
         response = client.models.generate_content(
             model="gemini-3.6-flash",
-            contents=CLOSURE_PROMPT.format(venue_name=v["name"], category=v.get("category", "restaurant"), lat=lat, lon=lon),
+            contents=CLOSURE_PROMPT.format(venue_name=v["name"], category=v.get("category", "restaurant"), lat=lat, lon=lon, place=venue_place(v)),
             config=types.GenerateContentConfig(
                 tools=[types.Tool(google_search=types.GoogleSearch())],
                 temperature=0.0
@@ -111,10 +123,28 @@ def check_for_closure(v):
             raw_text = raw_text.strip("`").removeprefix("json").strip()
         result = json.loads(raw_text)
         if str(result.get("status", "")).upper() == "CLOSED":
-            return str(result.get("evidence", "")).strip() or "No source given."
+            return "closed", str(result.get("evidence", "")).strip() or "No source given."
+        return "open", None
     except Exception as e:
         print(f"Closure check error for {v.get('name')}: {e}")
-    return None
+        return "error", None
+
+def check_for_closure(v):
+    """The evidence string when Gemini reports the venue CLOSED, else None."""
+    status, evidence = closure_status(v)
+    return evidence if status == "closed" else None
+
+def run_closure_check(v, flags):
+    """Check one venue, add a flag when it looks closed, and stamp closureCheckedAt unless the check could not be read
+    (an unreadable answer must not push the venue to the back of the rotation). Returns True when the venue was stamped."""
+    status, evidence = closure_status(v)
+    if status == "closed":
+        print(f"  Possible permanent closure: {evidence}")
+        flags.append({"id": v.get("id"), "name": v.get("name", ""), "evidence": evidence})
+    if status == "error":
+        return False
+    v["closureCheckedAt"] = date.today().isoformat()
+    return True
 
 def parse_pricing_from_pdf(pdf_bytes):
     """Parse pricing from a PDF using Gemini (no search grounding needed)."""
@@ -132,7 +162,7 @@ def parse_pricing_from_pdf(pdf_bytes):
         print(f"Gemini PDF parsing error: {e}")
         return None
 
-def apply_pricing_to_venue(v, pricing):
+def apply_pricing_to_venue(v, pricing, source="search"):
     """Update venue dict with median values from pricing data. Returns True if updated."""
     if not pricing or not pricing.get("casualMains"):
         return False
@@ -155,19 +185,28 @@ def apply_pricing_to_venue(v, pricing):
     total_cost = round((v["app"] + (1 * v["casualMain"]) + (1 * v["premiumMain"]) + (2 * v["drink"]) + v["dessert"]) * 1.30)
     v["tierColor"] = calculate_tier_color(total_cost)
     v["lastUpdated"] = date.today().isoformat()
+    v["priceSource"] = source
     return True
 
-def select_venues(venues, target_venue, limit):
+def select_venues(venues, target_venue, limit, skip_ids=()):
     """Pick which venues to refresh this run.
 
     A target name matches by substring and ignores the limit. Otherwise the
     `limit` least recently updated venues are chosen (never-updated first),
     so repeated runs rotate through the whole list. A limit of 0 means all.
+    Venues whose ids are in `skip_ids` (protected prices) are left out before the limit applies, so they do not use
+    up the run's slots. A target name ignores both.
     """
     if target_venue:
         return [v for v in venues if target_venue in v.get("name", "").lower()]
-    ordered = sorted(venues, key=lambda v: v.get("lastUpdated", ""))
+    ordered = sorted((v for v in venues if v.get("id") not in skip_ids), key=lambda v: v.get("lastUpdated", ""))
     return ordered if limit <= 0 else ordered[:limit]
+
+def select_for_closure(venues, protected_ids, limit):
+    """Protected venues (the price refresh skips them), least recently closure-checked first, never-checked first.
+    A limit of 0 means all of them."""
+    pool = sorted((v for v in venues if v.get("id") in protected_ids), key=lambda v: v.get("closureCheckedAt", ""))
+    return pool if limit <= 0 else pool[:limit]
 
 def main():
     target_venue = os.environ.get("TARGET_VENUE", "").strip().lower()
@@ -180,10 +219,27 @@ def main():
     except ValueError:
         limit = DEFAULT_VENUE_LIMIT
 
-    selected = select_venues(venues, target_venue, limit)
-    print(f"Refreshing {len(selected)} of {len(venues)} venue(s).")
+    protected = {}
+    if not target_venue:
+        entries = menu_log.load_entries()
+        if not entries:
+            # Without the log a venue read from a real menu looks like any other, so stop instead of overwriting it
+            sys.exit("Could not read the menu-log branch, so protected prices cannot be told apart. Nothing was refreshed.")
+        index = menu_log.log_index(entries)
+        protected = {v.get("id"): r for v in venues if (r := menu_log.protection_reason(v, index))}
+        print(f"Leaving {len(protected)} venue(s) alone because their prices were read from a real menu or changed by hand.")
+
+    try:
+        closure_limit = int(os.environ.get("CLOSURE_LIMIT", "").strip() or DEFAULT_CLOSURE_LIMIT)
+    except ValueError:
+        closure_limit = DEFAULT_CLOSURE_LIMIT
+
+    selected = select_venues(venues, target_venue, limit, skip_ids=set(protected))
+    closure_only = select_for_closure(venues, set(protected), closure_limit)
+    print(f"Refreshing {len(selected)} of {len(venues)} venue(s); closure-checking {len(closure_only)} protected venue(s).")
 
     updated_count = 0
+    checked_count = 0
     closure_flags = []
     for v in selected:
         venue_id = v.get("id")
@@ -191,10 +247,8 @@ def main():
 
         print(f"Refreshing pricing for: {name} (ID: {venue_id})")
 
-        evidence = check_for_closure(v)
-        if evidence:
-            print(f"  Possible permanent closure: {evidence}")
-            closure_flags.append({"id": venue_id, "name": name, "evidence": evidence})
+        if run_closure_check(v, closure_flags):
+            checked_count += 1
 
         # Step 1: Try direct PDF download if the registered URL is a PDF
         pdf_pricing = None
@@ -208,14 +262,13 @@ def main():
             except Exception as e:
                 print(f"  PDF fetch failed: {e}")
 
-        if pdf_pricing and apply_pricing_to_venue(v, pdf_pricing):
+        if pdf_pricing and apply_pricing_to_venue(v, pdf_pricing, source="pdf"):
             print(f"  Updated {name} from PDF: Casual ${v['casualMain']}, Prime ${v['premiumMain']}")
             updated_count += 1
             continue
 
         # Step 2: Use Gemini Google Search Grounding as the primary method
-        city = "Naperville, IL"
-        pricing = fetch_pricing_via_gemini_search(name, city)
+        pricing = fetch_pricing_via_gemini_search(name, venue_place(v))
 
         if pricing and apply_pricing_to_venue(v, pricing):
             print(f"  Updated {name} via Gemini Search: Casual ${v['casualMain']}, Prime ${v['premiumMain']}, Drinks ${v['drink']}, App ${v['app']}, Color {v['tierColor']}")
@@ -223,13 +276,18 @@ def main():
         else:
             print(f"  Could not retrieve new prices for {name}; keeping existing data.")
 
+    for v in closure_only:
+        print(f"Closure check only (prices left alone): {v.get('name', '')} (ID: {v.get('id')})")
+        if run_closure_check(v, closure_flags):
+            checked_count += 1
+
     with open(CLOSURE_FLAGS_FILE, "w") as f:
         json.dump(closure_flags, f, indent=2)
 
-    if updated_count > 0:
+    if updated_count > 0 or checked_count > 0:
         with open("venues.json", "w") as f:
             json.dump(venues, f, indent=2)
-        print(f"Saved {updated_count} updated venue(s) to venues.json.")
+        print(f"Saved venues.json: {updated_count} repriced, {checked_count} closure-checked, {len(closure_flags)} flagged.")
 
 if __name__ == "__main__":
     main()

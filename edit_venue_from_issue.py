@@ -124,6 +124,8 @@ def main():
         else:
             venue.pop("isTaco", None)
         venue["lastUpdated"] = datetime.date.today().isoformat()
+        # The weekly refresh leaves venues with these sources alone (see batch_update_venues.protection_reason)
+        venue["priceSource"] = "hand" if overrides else "menu"
     else:
         total = None
     if website and website != venue.get("website"):

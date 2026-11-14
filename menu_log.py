@@ -123,6 +123,49 @@ def classify_unresolved(entries, on_map):
     return newest(needs), newest(fixed), newest(off)
 
 
+# priceSource values the weekly price refresh (batch_update_venues.py) stamps on what it writes. A venue carrying one of
+# them has search-derived (or re-read PDF) prices, so the next refresh may replace them. Edit Venue stamps "hand" or "menu".
+REFRESH_SOURCES = ("search", "pdf")
+
+
+def log_index(entries):
+    """({name key: latest menu-log record}, {name key: last logged final prices}). Matched by name: the venue_id in
+    the log is not unique (grid runs that ran side by side handed out the same id)."""
+    latest, finals = {}, {}
+    for e in sorted(entries, key=lambda e: e.get("t", "")):
+        key = name_key(e.get("venue"))
+        latest[key] = e
+        if e.get("final"):
+            finals[key] = e["final"]
+    return latest, finals
+
+
+def protection_reason(v, index):
+    """Why this venue's saved prices must not be replaced by a web-search estimate, or None when a refresh may.
+
+    The refresh stamps priceSource "search" (or "pdf") on what it writes, so those venues are fair game again. Edit Venue
+    stamps "hand" or "menu". Anything else is judged from the menu log: prices that still equal what the importer read
+    from the restaurant's own menu, or that differ from the importer's numbers (someone changed them), are protected.
+    A venue with no log record has no known source and is refreshed as before."""
+    source = v.get("priceSource")
+    if source in REFRESH_SOURCES:
+        return None
+    if source == "hand":
+        return "prices were typed in by hand"
+    if source == "menu":
+        return "prices were read from a menu someone pasted"
+    latest, finals = index
+    key = name_key(v.get("name"))
+    record, final = latest.get(key), finals.get(key)
+    if record is None or not final:
+        return None
+    if not still_estimates(v, final):
+        return "saved prices differ from the importer's, so someone changed them"
+    if record.get("outcome") in ("menu_read", "menu_read_partial"):
+        return "prices were read from the restaurant's own menu"
+    return None
+
+
 # Hints about what builds a menu page; many failures turn out to share a platform, which is what a better importer would target
 PLATFORMS = (
     ("toast", ("toasttab.com", "toast.app", "toasttab")), ("popmenu", ("popmenu.com", "popmenu")),

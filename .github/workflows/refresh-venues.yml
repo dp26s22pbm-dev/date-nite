@@ -2,7 +2,7 @@ name: Refresh Venue Pricing
 
 on:
   schedule:
-    # Weekly, Sundays 08:17 UTC. Each run refreshes the least recently updated slice.
+    # Weekly, Sundays 08:17 UTC. Each run refreshes the 60 least recently updated venues (DEFAULT_VENUE_LIMIT in batch_update_venues.py), so a map of up to about 240 venues is covered within 30 days. Venues whose prices were read from a real menu or changed by hand are skipped for pricing (protection_reason) but still get a rotating closure check (CLOSURE_LIMIT per run).
     - cron: '17 8 * * 0'
   workflow_dispatch:
     inputs:
@@ -13,7 +13,11 @@ on:
       limit:
         description: 'Max venues to refresh when no target is given (0 = all venues)'
         required: false
-        default: '14'
+        default: '60'
+      closure_limit:
+        description: 'Max protected venues to closure-check when no target is given (0 = all)'
+        required: false
+        default: '40'
 
 jobs:
   refresh:
@@ -46,6 +50,7 @@ jobs:
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
           TARGET_VENUE: ${{ github.event.inputs.target }}
           VENUE_LIMIT: ${{ github.event.inputs.limit }}
+          CLOSURE_LIMIT: ${{ github.event.inputs.closure_limit }}
         run: |
           python batch_update_venues.py
 
