@@ -3722,5 +3722,23 @@
     "tierColor": "#eab308",
     "lastUpdated": "2026-11-14",
     "priceSource": "hand"
+  },
+  {
+    "id": 219,
+    "name": "Tequila Azteca Restaurant",
+    "category": "Mexican Cuisine",
+    "city": "Willowbrook",
+    "state": "IL",
+    "mapsUrl": "https://www.google.com/maps/place/Tequila+Azteca+Restaurant/@41.7180137,-87.948368,17z/data=!4m16!1m8!3m7!1s0x880e45efcd4516b5:0xf12b9e9efc76a236!2sTequila+Azteca+Restaurant!8m2!3d41.717846!4d-87.9457974!10e9!16s%2Fg%2F11vqrjst77!3m6!1s0x880e45efcd4516b5:0xf12b9e9efc76a236!8m2!3d41.717846!4d-87.9457974!10e9!16s%2Fg%2F11vqrjst77?entry=ttu&g_ep=EgoyMDI2MTExMC4wIKXMDSoASAFQAw%3D%3D",
+    "coords": [
+      -87.945797,
+      41.717846
+    ],
+    "app": 20.0,
+    "casualMain": 17.0,
+    "premiumMain": 25.0,
+    "drink": 8.5,
+    "dessert": 8.0,
+    "tierColor": "#eab308"
   }
 ]
