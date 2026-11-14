@@ -3270,24 +3270,6 @@
     "tierColor": "#22c55e"
   },
   {
-    "id": 192,
-    "name": "Tequila Azteca Restaurant",
-    "category": "Mexican Cuisine",
-    "city": "Willowbrook",
-    "state": "IL",
-    "coords": [
-      -87.945797,
-      41.717846
-    ],
-    "app": 11.0,
-    "casualMain": 16.0,
-    "premiumMain": 25.0,
-    "drink": 8.0,
-    "dessert": 8.0,
-    "tierColor": "#22c55e",
-    "mapsUrl": "https://www.google.com/maps/place/Tequila+Azteca+Restaurant/@41.7180137,-87.948368,17z/data=!4m7!3m6!1s0x880e45efcd4516b5:0xf12b9e9efc76a236!8m2!3d41.717846!4d-87.9457974!10e9!16s%2Fg%2F11vqrjst77"
-  },
-  {
     "id": 193,
     "name": "113 Main",
     "category": "New American",
