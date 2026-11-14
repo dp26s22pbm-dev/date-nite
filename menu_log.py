@@ -27,10 +27,13 @@ Steps and results are short fixed words so they can be counted. A result of "ok"
     page_html     too_few_prices | gemini_error | no_casual_main | ok        (a page read with a plain request)
     page_browser  too_few_prices | gemini_error | no_casual_main | ok        (a page read with a headless browser)
     yelp_menu     not_fetched | not_this_venue | too_few_prices | gemini_error | no_casual_main | ok   (the Yelp menu page of a listing the Claude search found)
+    maps_menu     bot_challenge | no_listing | not_this_venue | no_menu_tab | failed | tab_read | too_few_prices | gemini_error | no_casual_main | implausibly_low | ok
+                  (the Menu tab of the venue's Google Maps listing, read with a headless browser. tab_read = the tab was opened and its
+                  text taken, n = dollar prices seen; it is followed by the result of reading that text. no_menu_tab = the listing has none)
     fetch         http_<code> | guess_404 | bot_challenge | tls_failed | connection_failed | fetch_error | skipped_tls_host | not_a_page
     browser       unavailable | limit | failed | bot_challenge | ok
     pdf           download_or_parse_error | no_prices | too_few_prices | ok  (PDF or image menus)
-    menu_link     google_search_url
+    menu_link     google_search_url                                          (a google.com/search or /searchviewer link, which holds no readable menu)
     site_pages    no_menu_page_found | bot_challenge | implausibly_low | ok  (the restaurant's own site; n = pages tried; implausibly_low = prices so low the page is probably template filler, other sources tried first)
     page          load_more | no_prices_links_followed                       (observations about a page, not failures)
     site_gemini   too_few_prices | lunch_prices_suspected | implausibly_low | error | ok
@@ -338,8 +341,9 @@ def within_days(entries, days, now=None, offset=0):
     return [e for e in entries if fmt(start) <= (e.get("t") or "")[:19] < fmt(end)]
 
 
-# Results that record a normal event, not a failure: a guessed menu path (/menu, /food-menu) the site does not have
-QUIET_RESULTS = {("fetch", "guess_404")}
+# Results that record a normal event, not a failure: a guessed menu path (/menu, /food-menu) the site does not have,
+# and the Maps Menu tab being opened (what its text yielded is the next step)
+QUIET_RESULTS = {("fetch", "guess_404"), ("maps_menu", "tab_read")}
 
 def _failures(entry):
     """(step, result) for every attempt in a record that did not succeed or merely note something."""

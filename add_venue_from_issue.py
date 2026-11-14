@@ -852,6 +852,147 @@ def get_page(url):
         return render_page_html(url)
     return None
 
+# The Menu tab of the venue's Google Maps listing. Set MAPS_MENU=0 to turn the step off.
+MAPS_MENU_ENABLED = os.environ.get("MAPS_MENU", "1").strip().lower() not in ("0", "false", "off", "no")
+# Sections of the Maps menu that are not the dinner menu ("Overview" is photos and highlights)
+MAPS_SECTION_SKIP_WORDS = TAB_SKIP_WORDS + ("breakfast", "overview", "photo")
+MAPS_SECTION_LIMIT = 8
+MAPS_BLOCK_RE = re.compile(r"unusual traffic|/sorry/index|before you continue to google", re.I)
+# Scrolls every scrollable box to its end; the listing's side panel draws more dishes as it scrolls
+_SCROLL_BOXES_JS = """() => { for (const el of document.querySelectorAll('div')) {
+    if (el.scrollHeight > el.clientHeight + 50 && /auto|scroll/.test(getComputedStyle(el).overflowY)) el.scrollTop = el.scrollHeight; } }"""
+
+def maps_listing_url(name, where, maps_url="", place_id=""):
+    """The address of the venue's Google Maps listing: by Places id when there is one (the exact listing), else the Maps
+    link the form gave, else a Maps search for the name and town. None when there is nothing to tell same-named places
+    apart."""
+    if place_id:
+        query = {"api": 1, "query": f"{name} {where}".strip(), "query_place_id": place_id, "hl": "en"}
+        return "https://www.google.com/maps/search/?" + urllib.parse.urlencode(query)
+    if maps_url:
+        return expand_maps_url(maps_url)
+    if not (where or "").strip() or is_maps_link(where):
+        return None
+    query = {"api": 1, "query": name if name.lower() in where.lower() else f"{name} {where}", "hl": "en"}
+    return "https://www.google.com/maps/search/?" + urllib.parse.urlencode(query)
+
+def _tab_labels(page):
+    tabs = page.locator("[role=tab]")
+    out = []
+    for i in range(min(tabs.count(), 30)):
+        try:
+            out.append((tabs.nth(i).inner_text() or "").strip())
+        except Exception:
+            out.append("")
+    return out
+
+def _maps_panel_text(page):
+    """The page's text once the side panel has been scrolled to its end (it draws more dishes as it scrolls)."""
+    text = page.inner_text("body")
+    for _ in range(12):
+        page.evaluate(_SCROLL_BOXES_JS)
+        page.wait_for_timeout(600)
+        longer = page.inner_text("body")
+        if len(longer) <= len(text):
+            break
+        text = longer
+    return text
+
+def render_maps_menu_text(url, name):
+    """Open the venue's Google Maps listing in a headless browser, click its Menu tab and return the text of each menu
+    section under a "=== section ===" heading. None when the listing or its Menu tab cannot be read; the reason is
+    logged as a maps_menu step. Google decides how this page is built and may change it or turn a script away, so
+    every miss here is an ordinary result and the importer carries on to the web search."""
+    if _host(url) in CHALLENGED_HOSTS or not _use_browser():
+        return None
+    debug = bool(os.environ.get("MAPS_MENU_DEBUG"))
+    try:
+        with sync_playwright() as pw:
+            browser = pw.chromium.launch(args=["--no-sandbox"])
+            try:
+                major = browser.version.split(".")[0]
+                page = browser.new_page(
+                    user_agent=f"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/{major}.0.0.0 Safari/537.36",
+                    locale="en-US", viewport={"width": 1280, "height": 900})
+                page.goto(url, wait_until="domcontentloaded", timeout=45000)
+                try:
+                    page.wait_for_selector("h1, [role=feed]", timeout=30000)
+                except Exception:
+                    pass
+                page.wait_for_timeout(2000)
+                html = page.content()
+                if "/sorry/" in page.url or "consent.google." in page.url or MAPS_BLOCK_RE.search(html) or looks_like_bot_challenge(html):
+                    print(f"Google Maps answered with a bot check or consent page ({page.url[:80]}); skipping the Maps menu.")
+                    CHALLENGED_HOSTS.add(_host(url))
+                    menu_log.step("maps_menu", "bot_challenge", url=url)
+                    return None
+                headings = [h.strip() for h in page.locator("h1").all_inner_texts() if h.strip()]
+                if not any(name_matches(name, h) for h in headings):
+                    # A search with several matches shows a list; open the result that carries the venue's name
+                    for link in page.locator('a[href*="/maps/place/"]').all()[:10]:
+                        if name_matches(name, link.get_attribute("aria-label") or ""):
+                            link.click(timeout=5000)
+                            page.wait_for_timeout(4000)
+                            headings = [h.strip() for h in page.locator("h1").all_inner_texts() if h.strip()]
+                            break
+                if debug:
+                    print(f"[maps debug] url={page.url[:200]} title={page.title()!r} h1={headings} tabs={_tab_labels(page)}")
+                if not headings:
+                    print("Google Maps showed no listing (the page did not finish loading, or nothing matched).")
+                    menu_log.step("maps_menu", "no_listing", url=url, chars=len(html))
+                    return None
+                if not any(name_matches(name, h) for h in headings):
+                    print(f"Google Maps opened {headings[0]!r}, which does not look like {name!r}; not using its menu.")
+                    menu_log.step("maps_menu", "not_this_venue", url=url, detail=headings[0])
+                    return None
+                before = _tab_labels(page)
+                menu_tab = page.get_by_role("tab", name=re.compile(r"^\s*menu\s*$", re.I))
+                if not menu_tab.count():
+                    print(f"The Google Maps listing has no Menu tab (tabs: {', '.join(t for t in before if t) or 'none'}).")
+                    menu_log.step("maps_menu", "no_menu_tab", url=url, tabs=len(before) or None)
+                    return None
+                menu_tab.first.click(timeout=5000)
+                page.wait_for_timeout(2500)
+                parts = [_maps_panel_text(page)]
+                # The Menu tab has its own row of sections (Dinner, Seafood, Breakfast...); they are the tabs that
+                # appeared after the click
+                after = _tab_labels(page)
+                sections = [i for i, t in enumerate(after) if t and t not in before][:MAPS_SECTION_LIMIT * 2]
+                wanted = [i for i in sections if not any(w in after[i].lower() for w in MAPS_SECTION_SKIP_WORDS)][:MAPS_SECTION_LIMIT]
+                if debug:
+                    buttons = [b.strip()[:30] for b in page.locator("button").all_inner_texts() if b.strip()][:40]
+                    print(f"[maps debug] tabs after Menu click={after} sections={[after[i] for i in wanted]} buttons={buttons}")
+                tabs = page.locator("[role=tab]")
+                for i in wanted:
+                    try:
+                        tabs.nth(i).click(timeout=5000)
+                        page.wait_for_timeout(1200)
+                        parts.append(f"=== {after[i]} ===\n" + _maps_panel_text(page))
+                    except Exception as e:
+                        print(f"Could not open the {after[i]!r} section of the Maps menu: {e}")
+                text = "\n".join(parts)
+                print(f"Read the Menu tab of the Google Maps listing for {headings[0]!r}: {len(text)} characters, "
+                      f"{len(PRICE_RE.findall(text))} dollar prices, sections: {', '.join(after[i] for i in wanted) or 'none'}")
+                menu_log.step("maps_menu", "tab_read", url=url, chars=len(text), n=len(PRICE_RE.findall(text)), tabs=len(wanted) or None)
+                return text
+            finally:
+                browser.close()
+    except Exception as e:
+        print(f"Could not read the Google Maps listing: {e}")
+        menu_log.step("maps_menu", "failed", url=url, detail=e)
+        return None
+
+def pricing_from_google_maps_menu(name, where, maps_url="", place_id=""):
+    """Prices read from the Menu tab of the venue's Google Maps listing, else None. Many listings have no Menu tab, or
+    one that holds only photos; those are logged and the importer moves on."""
+    if not MAPS_MENU_ENABLED:
+        return None
+    url = maps_listing_url(name, where, maps_url, place_id)
+    if not url:
+        return None
+    text = render_maps_menu_text(url, name)
+    return pricing_from_menu_text(text, where="maps_menu", url=url) if text else None
+
 MENU_LINK_WORDS = ("menu", "food", "dine", "dining", "drink", "order", "eat", "lunch", "dinner", "brunch")
 ORDERING_HOSTS = ("toasttab.com", "toast.app","chownow.com", "square.site", "olo.com", "popmenu.com", "order.online", "ordering.", "menus.",
                   "orderexperience.net", "alohaorderonline.com")
@@ -1159,7 +1300,8 @@ def pricing_from_gemini_reading_site(name, site):
     return None
 
 def _is_google_search_url(url):
-    """True for a google.com results page (/search), as opposed to a Maps address."""
+    """True for a google.com results page (/search) or the "Order online" provider picker (/searchviewer), as opposed
+    to a Maps address. Neither holds a menu a script can read."""
     parsed = urllib.parse.urlparse((url or "").strip())
     return (parsed.hostname or "").lower() in ("google.com", "www.google.com") and parsed.path.startswith("/search")
 
@@ -1277,6 +1419,13 @@ NOT_A_WEBSITE = (
 )
 NAME_STOPWORDS = {"the", "and", "of", "restaurant", "naperville", "il", "illinois", "south", "north", "east", "west"}
 
+def name_matches(name, shown):
+    """True when shown (a listing's name as Google displays it) names the same venue: most of the name's distinctive
+    words appear in it."""
+    tokens = [t for t in re.findall(r"[a-z0-9]+", (name or "").lower()) if t not in NAME_STOPWORDS]
+    haystack = re.sub(r"[^a-z0-9]", "", (shown or "").lower())
+    return bool(tokens) and sum(t in haystack for t in tokens) >= max(1, round(0.6 * len(tokens)))
+
 def local_markers(where):
     """Zip codes and city names from the venue's own address text, so a site is checked against the town the
     venue is really in. Falls back to Naperville when the text has neither."""
@@ -1314,7 +1463,8 @@ def find_website_via_gemini(name, where):
 # Set when Google says the day's Places quota is used up: every further lookup would fail the same way
 places_quota_spent = False
 PLACES_URL = "https://places.googleapis.com/v1/places:searchText"
-PLACES_FIELDS = "places.displayName,places.formattedAddress,places.location,places.websiteUri"
+# places.id is what lets the Maps menu step open this exact listing (pricing_from_google_maps_menu)
+PLACES_FIELDS = "places.id,places.displayName,places.formattedAddress,places.location,places.websiteUri"
 # Centered on Naperville; only a bias, so a more exact match elsewhere still wins
 PLACES_BIAS = {"circle": {"center": {"latitude": 41.75, "longitude": -88.15}, "radius": 30000.0}}
 
@@ -1326,7 +1476,7 @@ def clean_listing_website(url):
 
 def places_lookup(name, where):
     """Look the venue up in Google's Places API (the data behind the Maps listing). Returns
-    {"coords": [lon, lat], "website": str, "name": str, "address": str} for the best match, else None.
+    {"coords": [lon, lat], "website": str, "name": str, "address": str, "id": str} for the best match, else None.
     Needs GOOGLE_PLACES_API_KEY; without it the importer falls back to the older address/search methods."""
     global places_quota_spent
     key = os.environ.get("GOOGLE_PLACES_API_KEY", "").strip()
@@ -1369,13 +1519,11 @@ def places_lookup(name, where):
             places_usage.record(PLACES_FIELDS, 0)
             print(f"Places API lookup failed: {e}")
             return None
-    tokens = [t for t in re.findall(r"[a-z0-9]+", name.lower()) if t not in NAME_STOPWORDS]
     zips, _ = local_markers(where)
     for p in places:
         shown = (p.get("displayName") or {}).get("text", "")
         address = p.get("formattedAddress", "")
-        haystack = re.sub(r"[^a-z0-9]", "", shown.lower())
-        named = bool(tokens) and sum(t in haystack for t in tokens) >= max(1, round(0.6 * len(tokens)))
+        named = name_matches(name, shown)
         in_zip = (not zips) or any(z in address for z in zips)
         loc = p.get("location") or {}
         if named and in_zip and "latitude" in loc and "longitude" in loc:
@@ -1385,6 +1533,7 @@ def places_lookup(name, where):
                 "website": clean_listing_website(p.get("websiteUri", "")),
                 "name": shown,
                 "address": address,
+                "id": p.get("id", ""),
             }
     print(f"Places API: no result matching '{name}' ({len(places)} returned)")
     return None
@@ -1599,7 +1748,7 @@ def main():
                 print(f"Website found and verified: {website}")
 
     # Pricing sources, best first: pasted menu text, the menu link (PDF or readable page), the restaurant's own
-    # menu pages, then a Gemini web search (estimates)
+    # menu pages, the Menu tab of its Google Maps listing, then a web search (estimates)
     pricing, pricing_source = load_pricing_cache() or (None, None)
     reused_pricing = bool(pricing)
     if reused_pricing:
@@ -1655,6 +1804,16 @@ def main():
         if pricing and pricing_rules.menu_prices_implausibly_low(pricing, name, category):
             print("Gemini's read of the site gave implausibly low prices; trying a web search first.")
             menu_log.step("site_gemini", "implausibly_low", url=website or saved_site)
+            low_site_pricing = low_site_pricing or (pricing, pricing_source)
+            pricing = None
+    if not pricing:
+        # The Menu tab of the venue's Google Maps listing: a real menu, so it is tried before any web search estimate
+        maps_where = (listing or {}).get("address") or place_text or (address if not is_maps_link(address) else "") or ""
+        pricing = pricing_from_google_maps_menu(name, maps_where, maps_url, (listing or {}).get("id", ""))
+        pricing_source = "the Menu tab of the venue's Google Maps listing"
+        if pricing and pricing_rules.menu_prices_implausibly_low(pricing, name, category):
+            print("The Maps menu's prices are implausibly low for a sit-down place; trying a web search first.")
+            menu_log.step("maps_menu", "implausibly_low")
             low_site_pricing = low_site_pricing or (pricing, pricing_source)
             pricing = None
     if not pricing:
