@@ -39,6 +39,8 @@ Steps and results are short fixed words so they can be counted. A result of "ok"
     page          load_more | no_prices_links_followed                       (observations about a page, not failures)
     site_gemini   too_few_prices | lunch_prices_suspected | implausibly_low | error | ok
     search_gemini error | no_sources | ok
+    prices        apps_above_casual                                          (a note on the prices read, from any source: the appetizers cost more than the
+                  casual mains, so they were dropped as misfiled entrees and the stand-in was used; n = how many)
     search_claude no_key | error | refused | no_prices | ok         (pages = search results seen; read = pages fetched or cited; tokens_in / tokens_out = API tokens used)
 guess_404 is a made-up menu path (/menu, /food-menu) the site does not have; the report leaves it out of the failure counts.
 bot_challenge means the site answered with a bot check ("Just a moment...", a captcha) instead of the page. The importer

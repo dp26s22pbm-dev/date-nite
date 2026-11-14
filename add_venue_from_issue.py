@@ -557,6 +557,13 @@ def clean_pricing(data, require_main=True):
     # stand-in is used and the venue is not saved with a bogus drink median.
     if len(out["drinks"]) < 2:
         out["drinks"] = []
+    # Appetizers that outprice the casual mains are entrees filed in the wrong category. Leave the list empty so the
+    # stand-in is used and the issue says the appetizer was not read.
+    if pricing_rules.apps_look_misfiled(out):
+        print(f"The appetizers read ({out['apps']}) cost more than the casual mains, so they look like misfiled entrees; "
+              "using the stand-in appetizer price instead.")
+        menu_log.step("prices", "apps_above_casual", n=len(out["apps"]))
+        out["apps"] = []
     if require_main:
         return out if out["casualMains"] else None
     return out if any(out.values()) else None
