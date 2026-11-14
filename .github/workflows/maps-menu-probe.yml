@@ -19,6 +19,7 @@ on:
   pull_request:
     paths:
       - maps_menu_probe.py
+      - add_venue_from_issue.py
       - .github/workflows/maps-menu-probe.yml
 
 permissions:

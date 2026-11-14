@@ -948,6 +948,13 @@ def render_maps_menu_text(url, name):
                 before = _tab_labels(page)
                 menu_tab = page.get_by_role("tab", name=re.compile(r"^\s*menu\s*$", re.I))
                 if not menu_tab.count():
+                    if debug:
+                        body = page.inner_text("body")
+                        menuish = [(e.get_attribute("aria-label") or e.inner_text() or "").strip()[:60]
+                                   for e in page.locator('a, button, [role=button], [role=link]').filter(has_text=re.compile("menu", re.I)).all()[:15]]
+                        labelled = [e.get_attribute("aria-label")[:60] for e in page.locator('[aria-label*="menu" i]').all()[:15]]
+                        print(f"[maps debug] no Menu tab. dollar prices on page={len(PRICE_RE.findall(body))} menu-ish controls={menuish} "
+                              f"aria-labels={labelled}\n[maps debug] page text:\n{body[:5000]}")
                     print(f"The Google Maps listing has no Menu tab (tabs: {', '.join(t for t in before if t) or 'none'}).")
                     menu_log.step("maps_menu", "no_menu_tab", url=url, tabs=len(before) or None)
                     return None
