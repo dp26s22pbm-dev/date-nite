@@ -27,9 +27,10 @@ Steps and results are short fixed words so they can be counted. A result of "ok"
     page_html     too_few_prices | gemini_error | no_casual_main | ok        (a page read with a plain request)
     page_browser  too_few_prices | gemini_error | no_casual_main | ok        (a page read with a headless browser)
     yelp_menu     not_fetched | not_this_venue | too_few_prices | gemini_error | no_casual_main | ok   (the Yelp menu page of a listing the Claude search found)
-    maps_menu     bot_challenge | no_listing | not_this_venue | no_menu_tab | failed | tab_read | too_few_prices | gemini_error | no_casual_main | implausibly_low | ok
+    maps_menu     bot_challenge | limited_view | no_listing | not_this_venue | no_menu_tab | failed | tab_read | too_few_prices | gemini_error | no_casual_main | implausibly_low | ok
                   (the Menu tab of the venue's Google Maps listing, read with a headless browser. tab_read = the tab was opened and its
-                  text taken, n = dollar prices seen; it is followed by the result of reading that text. no_menu_tab = the listing has none)
+                  text taken, n = dollar prices seen; it is followed by the result of reading that text. no_menu_tab = the listing has none.
+                  limited_view = Google served the signed-out listing, which has no Menu tab. The step runs only when MAPS_MENU=1)
     fetch         http_<code> | guess_404 | bot_challenge | tls_failed | connection_failed | fetch_error | skipped_tls_host | not_a_page
     browser       unavailable | limit | failed | bot_challenge | ok
     pdf           download_or_parse_error | no_prices | too_few_prices | ok  (PDF or image menus)

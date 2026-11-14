@@ -20,6 +20,7 @@ _genai.types = sys.modules["google.genai.types"]
 sys.modules["google"].genai = _genai
 
 os.environ.setdefault("MAPS_MENU_DEBUG", "1")
+os.environ.setdefault("MAPS_MENU", "1")
 import add_venue_from_issue as importer  # noqa: E402
 import menu_log  # noqa: E402
 

@@ -852,8 +852,11 @@ def get_page(url):
         return render_page_html(url)
     return None
 
-# The Menu tab of the venue's Google Maps listing. Set MAPS_MENU=0 to turn the step off.
-MAPS_MENU_ENABLED = os.environ.get("MAPS_MENU", "1").strip().lower() not in ("0", "false", "off", "no")
+# The Menu tab of the venue's Google Maps listing. Off unless MAPS_MENU=1: a browser that is not signed in to Google
+# gets a "limited view" of the listing with no Menu tab (seen from a GitHub runner, 2026-11-14), so the step would
+# spend a browser launch per venue and read nothing. The Maps Menu Probe workflow shows whether that has changed.
+MAPS_MENU_ENABLED = os.environ.get("MAPS_MENU", "0").strip().lower() in ("1", "true", "on", "yes")
+MAPS_LIMITED_VIEW_RE = re.compile(r"limited view of Google Maps", re.I)
 # Sections of the Maps menu that are not the dinner menu ("Overview" is photos and highlights)
 MAPS_SECTION_SKIP_WORDS = TAB_SKIP_WORDS + ("breakfast", "overview", "photo")
 MAPS_SECTION_LIMIT = 8
@@ -948,13 +951,12 @@ def render_maps_menu_text(url, name):
                 before = _tab_labels(page)
                 menu_tab = page.get_by_role("tab", name=re.compile(r"^\s*menu\s*$", re.I))
                 if not menu_tab.count():
-                    if debug:
-                        body = page.inner_text("body")
-                        menuish = [(e.get_attribute("aria-label") or e.inner_text() or "").strip()[:60]
-                                   for e in page.locator('a, button, [role=button], [role=link]').filter(has_text=re.compile("menu", re.I)).all()[:15]]
-                        labelled = [e.get_attribute("aria-label")[:60] for e in page.locator('[aria-label*="menu" i]').all()[:15]]
-                        print(f"[maps debug] no Menu tab. dollar prices on page={len(PRICE_RE.findall(body))} menu-ish controls={menuish} "
-                              f"aria-labels={labelled}\n[maps debug] page text:\n{body[:5000]}")
+                    body = page.inner_text("body")
+                    if MAPS_LIMITED_VIEW_RE.search(body):
+                        # Google shows visitors who are not signed in a cut-down listing: Overview, Reviews, About
+                        print("Google Maps served its limited (signed-out) view, which has no Menu tab.")
+                        menu_log.step("maps_menu", "limited_view", url=url, tabs=len(before) or None)
+                        return None
                     print(f"The Google Maps listing has no Menu tab (tabs: {', '.join(t for t in before if t) or 'none'}).")
                     menu_log.step("maps_menu", "no_menu_tab", url=url, tabs=len(before) or None)
                     return None
