@@ -411,7 +411,8 @@ def report(entries, recent=15):
     unresolved, fixed, off_map = classify_unresolved(entries, load_map_venues())
     out += ["", f"Venues on the map still without a real menu ({len(unresolved)})"]
     for e in unresolved:
-        out.append(f"  {e['venue']}  {e.get('host') or 'no website'}  {e['outcome']}  {e['t'][:10]}")
+        issue = f"issue #{e['issue']}" if e.get("issue") else "no issue"
+        out.append(f"  {e['venue']}  {e.get('host') or 'no website'}  {e['outcome']}  {e['t'][:10]}  {issue}")
     if not unresolved:
         out.append("  (none)")
     if fixed or off_map:
