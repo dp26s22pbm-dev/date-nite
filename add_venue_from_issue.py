@@ -1982,7 +1982,9 @@ def main():
         "drink": drink,
         "dessert": dessert,
         "tierColor": tier_color,
-        **({"isTaco": True} if is_taco else {})
+        **({"isTaco": True} if is_taco else {}),
+        # Prices typed into a reply are protected from the weekly search refresh, as Edit Venue's overrides are
+        **({"priceSource": "hand"} if reply_overrides else {})
     }
 
     if existing_idx is not None:
