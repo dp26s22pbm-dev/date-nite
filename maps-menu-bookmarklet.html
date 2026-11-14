@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<title>Date Nite: Maps menu bookmark</title>
+<style>
+  body { font: 16px/1.5 system-ui, sans-serif; max-width: 40em; margin: 2em auto; padding: 0 16px; color: #222; background: #fff; }
+  a.bookmark { display: inline-block; padding: 10px 18px; border-radius: 8px; background: #1a73e8; color: #fff; text-decoration: none; font-weight: 600; cursor: grab; }
+  a.bookmark[aria-disabled="true"] { background: #999; cursor: default; }
+  li { margin: .4em 0; }
+  code { background: #f2f2f2; padding: 1px 4px; border-radius: 4px; }
+  .note { color: #555; font-size: 14px; }
+</style>
+</head>
+<body>
+<h1>Maps menu bookmark</h1>
+<p>Sends the menu shown on a restaurant's Google Maps listing to the Date Nite importer. It runs in your own browser, signed in to Google, where Maps shows the Menu tab.</p>
+
+<p><a class="bookmark" id="bookmark" href="#" aria-disabled="true">Loading…</a></p>
+
+<h2>Install (once)</h2>
+<ol>
+  <li>Show the bookmarks bar: <code>Ctrl+Shift+B</code> (Windows) or <code>Cmd+Shift+B</code> (Mac).</li>
+  <li>Drag the blue button above onto the bookmarks bar.</li>
+</ol>
+
+<h2>Use</h2>
+<ol>
+  <li>Open the restaurant's page in Google Maps.</li>
+  <li>Click <strong>Menu → Date Nite</strong> on the bookmarks bar. It opens the Menu tab, reads each section and opens a filled-in GitHub issue form in a new tab.</li>
+  <li>Check the menu text and press <strong>Create</strong>. A venue already on the map is updated; a new one is added.</li>
+</ol>
+<p class="note">Breakfast, lunch, brunch, kids and catering sections are skipped. Nothing is sent until you press Create. If Google changes the layout of the Maps page, the bookmark may stop finding dishes and will say so.</p>
+
+<script>
+  fetch("maps-menu-bookmarklet.js", { cache: "no-store" })
+    .then((r) => { if (!r.ok) throw new Error(r.status); return r.text(); })
+    .then((src) => {
+      const a = document.getElementById("bookmark");
+      a.href = "javascript:" + encodeURIComponent(src);
+      a.textContent = "Menu → Date Nite";
+      a.removeAttribute("aria-disabled");
+      a.addEventListener("click", (e) => { e.preventDefault(); alert("Drag this button to your bookmarks bar, then click it on a Google Maps restaurant page."); });
+    })
+    .catch(() => { document.getElementById("bookmark").textContent = "Could not load the bookmark; reload the page"; });
+</script>
+</body>
+</html>
