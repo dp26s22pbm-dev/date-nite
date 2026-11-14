@@ -3719,5 +3719,23 @@
     "drink": 8.0,
     "dessert": 6.99,
     "tierColor": "#eab308"
+  },
+  {
+    "id": 218,
+    "name": "Parceros Bar Grill",
+    "category": "Columbian-inspired burgers",
+    "city": "Hoffman Estates",
+    "state": "IL",
+    "website": "https://parcerosburgergrill.com",
+    "coords": [
+      -88.105892,
+      42.047589
+    ],
+    "app": 2.49,
+    "casualMain": 19.49,
+    "premiumMain": 25.99,
+    "drink": 9.74,
+    "dessert": 10.0,
+    "tierColor": "#eab308"
   }
 ]
