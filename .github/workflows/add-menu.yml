@@ -3,6 +3,8 @@ name: Add Menu Prices from Issue Reply
 # A venue whose prices had to be guessed is left open with the "needs-menu" label, and one whose prices look off with
 # the "double-check" label. Replying to either issue with the menu text (select all on the menu page, copy, paste)
 # updates the venue's prices and closes the issue.
+# A reply made only of `key: price` lines (app, casualMain, premiumMain, drink, dessert) sets just those prices by hand and
+# keeps the rest as saved.
 on:
   issue_comment:
     types: [created]
