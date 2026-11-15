@@ -85,7 +85,10 @@ def extract_field(body, header):
 _expand_cache = {}
 
 def is_maps_link(s):
-    return bool(s) and ("maps" in s or "goo.gl" in s) and s.strip().lower().startswith("http")
+    s = (s or "").strip().lower()
+    # share.google/<id> is the share link Google's app gives for a place; it redirects to a google.com/search?q=<name>
+    # results page (not /maps/place/...), whose q= holds the restaurant name
+    return s.startswith("http") and ("maps" in s or "goo.gl" in s or "://share.google/" in s)
 
 def expand_maps_url(url):
     """Follow redirects on a Google Maps share link and return the final URL."""
@@ -1329,7 +1332,7 @@ def normalize_maps_url(value):
     if parsed.scheme not in ("http", "https"):
         return ""
     is_maps = (
-        host in ("maps.app.goo.gl", "maps.google.com", "g.page")
+        host in ("maps.app.goo.gl", "maps.google.com", "g.page", "share.google")
         or (host == "goo.gl" and parsed.path.startswith("/maps"))
         or (host in ("google.com", "www.google.com") and parsed.path.startswith("/maps"))
     )
