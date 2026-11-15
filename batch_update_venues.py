@@ -7,6 +7,7 @@ from google import genai
 from google.genai import types
 
 import menu_log
+import pricing_rules
 
 client = genai.Client(api_key=os.environ.get("GEMINI_API_KEY", ""))
 
@@ -170,16 +171,17 @@ def apply_pricing_to_venue(v, pricing, source="search"):
     casual_list = pricing.get("casualMains") or [19.00]
     v["casualMain"] = round(statistics.median(casual_list), 2)
 
-    prem_list = pricing.get("premiumMains") or [round(v["casualMain"] * 1.6, 2)]
+    stand_in = pricing_rules.stand_in_prices(v["casualMain"])
+    prem_list = pricing.get("premiumMains") or [stand_in["premiumMain"]]
     v["premiumMain"] = round(statistics.median(prem_list), 2)
 
-    apps_list = pricing.get("apps") or [round(v["casualMain"] * 0.55, 2)]
+    apps_list = pricing.get("apps") or [stand_in["app"]]
     v["app"] = round(statistics.median(apps_list), 2)
 
-    drinks_list = pricing.get("drinks") or [8.00]
+    drinks_list = pricing.get("drinks") or [stand_in["drink"]]
     v["drink"] = round(statistics.median(drinks_list), 2)
 
-    desserts_list = pricing.get("desserts") or [8.00]
+    desserts_list = pricing.get("desserts") or [stand_in["dessert"]]
     v["dessert"] = round(statistics.median(desserts_list), 2)
 
     total_cost = round((v["app"] + (1 * v["casualMain"]) + (1 * v["premiumMain"]) + (2 * v["drink"]) + v["dessert"]) * 1.30)

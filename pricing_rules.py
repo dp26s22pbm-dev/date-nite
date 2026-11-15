@@ -13,6 +13,22 @@ _TACO_PLACE = re.compile(r"taco|taquer|mexican", re.I)
 # A menu whose steak and seafood tier tops out below this is a counter-service menu (burgers, bowls, wraps), not a date spot.
 COUNTER_MENU_PREMIUM_MAX = 14.0
 
+# Stand-in drink and dessert for a per-taco menu (casual main at or under PER_TACO_MAX) that prints neither. A full-service
+# $8 drink and $8 dessert cost more than the taco order itself and roughly doubled the total for Gorditas Liselena (issue 633).
+CHEAP_STAND_IN_DRINK = 3.50
+CHEAP_STAND_IN_DESSERT = 4.50
+
+def stand_in_prices(casual):
+    """Numbers saved for a category the menu did not price, from the price of one casual main: premium main, appetizer,
+    drink, dessert. The one place these are set; the importer, the menu-reply review and menu_prices.py all use it."""
+    cheap = casual <= PER_TACO_MAX
+    return {
+        "premiumMain": round(casual * 1.6, 2),
+        "app": round(casual * 0.55, 2),
+        "drink": CHEAP_STAND_IN_DRINK if cheap else max(8.00, round(casual * 0.5, 2)),
+        "dessert": CHEAP_STAND_IN_DESSERT if cheap else 8.00,
+    }
+
 def is_taco_place(name, category):
     return bool(_TACO_PLACE.search(f"{name} {category}"))
 

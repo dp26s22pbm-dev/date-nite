@@ -1903,16 +1903,17 @@ def main():
             if not pricing.get(key):
                 defaulted.append(label)
 
-        prem_list = pricing.get("premiumMains") or [round(casual_main * 1.6, 2)]
+        stand_in = pricing_rules.stand_in_prices(casual_main)
+        prem_list = pricing.get("premiumMains") or [stand_in["premiumMain"]]
         premium_main = round(statistics.median(prem_list), 2)
 
-        apps_list = pricing.get("apps") or [round(casual_main * 0.55, 2)]
+        apps_list = pricing.get("apps") or [stand_in["app"]]
         app = round(statistics.median(apps_list), 2)
 
-        drinks_list = pricing.get("drinks") or [max(8.00, round(casual_main * 0.5, 2))]
+        drinks_list = pricing.get("drinks") or [stand_in["drink"]]
         drink = round(statistics.median(drinks_list), 2)
 
-        desserts_list = pricing.get("desserts") or [8.00]
+        desserts_list = pricing.get("desserts") or [stand_in["dessert"]]
         dessert = round(statistics.median(desserts_list), 2)
     elif existing_idx is not None and venues[existing_idx].get("casualMain") is not None:
         # The price lookup failed for a venue that is already on the map: keep its current prices

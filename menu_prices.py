@@ -48,10 +48,11 @@ def main():
     casual = round(median(pricing["casualMains"]), 2)
     defaulted = [label for key, label in (("premiumMains", "premium main"), ("apps", "appetizer"), ("desserts", "dessert"))
                  if not pricing.get(key)]
-    premium = round(median(pricing["premiumMains"] or [round(casual * 1.6, 2)]), 2)
-    app = round(median(pricing["apps"] or [round(casual * 0.55, 2)]), 2)
-    drink = round(median(pricing["drinks"] or [max(8.00, round(casual * 0.5, 2))]), 2)
-    dessert = round(median(pricing["desserts"] or [8.00]), 2)
+    stand_in = pricing_rules.stand_in_prices(casual)
+    premium = round(median(pricing["premiumMains"] or [stand_in["premiumMain"]]), 2)
+    app = round(median(pricing["apps"] or [stand_in["app"]]), 2)
+    drink = round(median(pricing["drinks"] or [stand_in["drink"]]), 2)
+    dessert = round(median(pricing["desserts"] or [stand_in["dessert"]]), 2)
 
     is_taco = pricing_rules.is_taco_place(args.name, args.category) and pricing_rules.per_taco_prices(app, casual)
     total = round((app + (2 if is_taco else 1) * casual + premium + 2 * drink + dessert) * 1.30)
