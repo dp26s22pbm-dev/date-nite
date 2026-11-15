@@ -1359,7 +1359,7 @@
     <div class="list-cards" id="list-cards"></div>
   </div>
 
-  <div class="app-ver pre"><b>DATE NITE</b> ver. <span id="app-ver-num">636</span></div>
+  <div class="app-ver pre"><b>DATE NITE</b> ver. <span id="app-ver-num">644</span></div>
 
   <!-- Audio Controls -->
   <audio id="bg-audio" preload="auto"></audio>
@@ -3465,8 +3465,17 @@
 
       // Town and state under the cuisine; clicking opens the restaurant in Google Maps (the saved Maps link when there is one)
       const place = [venue.city, venue.state].filter(Boolean).join(', ');
-      const mapsHref = safeWebsiteUrl(venue.mapsUrl)
-        || `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(`${venue.name} ${place}`.trim())}`;
+      // Only real Google Maps links are used; others (such as share.google, which lands on a Google search) fall back.
+      // The fallback searches Maps centered on the venue's coordinates so it opens that restaurant's listing.
+      const savedMaps = safeWebsiteUrl(venue.mapsUrl);
+      const isMapsLink = savedMaps && /^https?:\/\/(maps\.app\.goo\.gl\/|(www\.)?google\.[a-z.]+\/maps|goo\.gl\/maps)/i.test(savedMaps);
+      const mapsQuery = encodeURIComponent(`${venue.name} ${place}`.trim());
+      const [vLng, vLat] = Array.isArray(venue.coords) ? venue.coords : [];
+      const mapsHref = isMapsLink
+        ? savedMaps
+        : (Number.isFinite(vLat) && Number.isFinite(vLng)
+          ? `https://www.google.com/maps/search/${mapsQuery}/@${vLat},${vLng},17z`
+          : `https://www.google.com/maps/search/?api=1&query=${mapsQuery}`);
       const locHtml = place
         ? `<div class="pop-loc"><a href="${escapeHtml(mapsHref)}" target="_blank" rel="noopener noreferrer" title="Open ${escapeHtml(venue.name)} in Google Maps in a new tab">${escapeHtml(place)}</a></div>`
         : '';
