@@ -3734,11 +3734,12 @@
       -87.945797,
       41.717846
     ],
-    "app": 20.0,
+    "app": 8.0,
     "casualMain": 17.0,
     "premiumMain": 25.0,
     "drink": 8.5,
     "dessert": 8.0,
-    "tierColor": "#eab308"
+    "tierColor": "#22c55e",
+    "priceSource": "hand"
   }
 ]
