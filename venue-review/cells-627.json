@@ -1,0 +1,39 @@
+[
+  {
+    "name": "The Slice Spot",
+    "category": "Italian / Pizza",
+    "city": "West Chicago",
+    "state": "IL",
+    "website": "http://slicelife.com/restaurants/il/west-chicago/60185/the-slice-spot-west-chicago/menu",
+    "coords": [
+      -88.188986,
+      41.859548
+    ],
+    "app": 12.99,
+    "casualMain": 14.25,
+    "premiumMain": 42.0,
+    "drink": 8.0,
+    "dessert": 3.0,
+    "tierColor": "#eab308"
+  },
+  {
+    "name": "Twin Eagles Restaurant & Lounge",
+    "category": "Casual American",
+    "city": "West Chicago",
+    "state": "IL",
+    "website": "http://twineaglesrestaurantandlounge.com/",
+    "coords": [
+      -88.205046,
+      41.865884
+    ],
+    "app": 10.0,
+    "casualMain": 12.0,
+    "premiumMain": 15.0,
+    "drink": 8.0,
+    "dessert": 8.0,
+    "tierColor": "#22c55e",
+    "reviewNotes": [
+      "No menu price was found for the dessert, so a typical stand-in was saved"
+    ]
+  }
+]
