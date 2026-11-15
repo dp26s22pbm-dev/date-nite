@@ -43,7 +43,10 @@ Steps and results are short fixed words so they can be counted. A result of "ok"
                   casual mains, so they were dropped as misfiled entrees and the stand-in was used; n = how many)
                   premium_overlaps_casual                                    (most premium mains are the same dishes as the casual mains and the
                   medians are within 25%, so the menu has no real premium tier; the venue is flagged for a second look; n = premium items)
-    search_claude no_key | error | refused | no_prices | ok         (pages = search results seen; read = pages fetched or cited; tokens_in / tokens_out = API tokens used)
+    search_claude no_key | error | refused | no_prices | ok         (pages = search results seen; read = pages fetched or cited; searches / fetches = tool uses
+                  the API reported, so read=0 with fetches=1 means the fetch ran but returned nothing; tokens_in / tokens_out = API tokens used)
+    claude_fetch  failed                                             (a page Claude tried to fetch came back as an error; detail = the API's error code, e.g.
+                  url_not_accessible; logged just before the search_claude step)
 guess_404 is a made-up menu path (/menu, /food-menu) the site does not have; the report leaves it out of the failure counts.
 bot_challenge means the site answered with a bot check ("Just a moment...", a captcha) instead of the page. The importer
 stops guessing pages on that host and goes on to Gemini and web search; the venue needs a pasted menu.

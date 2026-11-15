@@ -361,7 +361,12 @@ def claude_search_pricing(venue_name, city, website=""):
                    "prices. Use only dish prices printed on a menu page you found, never a typical price you remember. "
                    "If you find no real dish prices, return empty lists. Also check what kind of place this is: read the listing "
                    "or review pages you find, and if any of them shows a food truck or other mobile vendor, return empty lists.\n")
-        if website:
+        if website and _host(website) in CHALLENGED_HOSTS:
+            # The importer already got a bot check from this site, so the one fetch would be wasted on it (issue 645)
+            prompt += (f"The restaurant's website ({website}) blocks automated readers, so do not fetch it. If you fetch a page, "
+                       "choose the most complete menu page in the search results, such as the restaurant's own menu page or an "
+                       "ordering platform's menu.\n")
+        elif website:
             prompt += f"The restaurant's website is {website}. Fetch its menu pages if they show prices.\n"
         tools = [{"type": "web_search_20260209", "name": "web_search", "max_uses": CLAUDE_MAX_SEARCHES},
                  {"type": "web_fetch_20260209", "name": "web_fetch", "max_uses": CLAUDE_MAX_FETCHES}]
@@ -369,14 +374,25 @@ def claude_search_pricing(venue_name, city, website=""):
         sources = []  # every page that came back, search hits included
         read = []  # only the pages Claude fetched or cited, which are the ones it can have taken prices from
         tokens_in = tokens_out = 0
+        n_searches = n_fetches = 0  # tool uses the API reports, so a log with read=0 says whether Claude fetched at all
+        fetch_targets = {}  # tool_use_id -> url Claude asked to fetch
+        fetch_failures = []  # (url, error_code) for fetches that came back as an error
         for _ in range(CLAUDE_MAX_PASSES):  # a server-side tool loop that runs long comes back paused; send it back to continue
             response = claude.messages.create(model=CLAUDE_SEARCH_MODEL, max_tokens=8000, tools=tools, messages=messages)
             usage = getattr(response, "usage", None)
             tokens_in += (getattr(usage, "input_tokens", 0) or 0) + (getattr(usage, "cache_read_input_tokens", 0) or 0) \
                 + (getattr(usage, "cache_creation_input_tokens", 0) or 0)
             tokens_out += getattr(usage, "output_tokens", 0) or 0
+            tool_use = getattr(usage, "server_tool_use", None)
+            n_searches += getattr(tool_use, "web_search_requests", 0) or 0
+            n_fetches += getattr(tool_use, "web_fetch_requests", 0) or 0
             for block in response.content:
                 found = []
+                if block.type == "server_tool_use" and getattr(block, "name", "") == "web_fetch":
+                    fetch_targets[getattr(block, "id", None)] = (getattr(block, "input", None) or {}).get("url")
+                if block.type == "web_fetch_tool_result" and "error" in str(getattr(block.content, "type", "")):
+                    fetch_failures.append((fetch_targets.get(getattr(block, "tool_use_id", None)),
+                                           getattr(block.content, "error_code", None) or "error"))
                 if block.type == "web_search_tool_result" and isinstance(block.content, list):
                     found = [(getattr(r, "title", None), getattr(r, "url", None)) for r in block.content]
                 elif block.type == "web_fetch_tool_result":
@@ -405,7 +421,10 @@ def claude_search_pricing(venue_name, city, website=""):
         if not pricing:
             # Without this the log cannot say whether Claude found no prices or answered in a form the parser rejected
             print(f"Claude's reply for {venue_name} had no usable prices. Its reply was: {text[:1500]!r}")
+        for failed_url, error_code in fetch_failures:
+            menu_log.step("claude_fetch", "failed", url=failed_url, detail=error_code)
         menu_log.step("search_claude", "ok" if pricing else "no_prices", pages=len(sources), read=len(read),
+                      searches=n_searches, fetches=n_fetches,
                       tokens_in=tokens_in, tokens_out=tokens_out,
                       sources=[menu_log.host_of(u) for _, u in sources[:5]] or None)
         # The pages Claude opened or cited come first, then the remaining search hits, so the report can name what was read
