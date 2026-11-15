@@ -3926,8 +3926,8 @@
     "app": 1.79,
     "casualMain": 3.25,
     "premiumMain": 3.45,
-    "drink": 8.0,
-    "dessert": 8.0,
+    "drink": 3.5,
+    "dessert": 4.5,
     "tierColor": "#38bdf8",
     "isTaco": true
   }
