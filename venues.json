@@ -3925,11 +3925,12 @@
     ],
     "app": 1.79,
     "casualMain": 3.25,
-    "premiumMain": 3.45,
+    "premiumMain": 4.75,
     "drink": 3.5,
     "dessert": 4.5,
     "tierColor": "#38bdf8",
-    "isTaco": true
+    "isTaco": true,
+    "priceSource": "hand"
   },
   {
     "id": 224,
