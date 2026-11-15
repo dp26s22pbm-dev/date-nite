@@ -1599,7 +1599,8 @@ def nearby_venues(venue_id, coords, venues, radius_m=NEARBY_VENUE_M):
 # Highest plausible dine-in price per category. Catering trays and per-pan prices land far above these.
 PRICE_CEILINGS = {"appetizer": 35, "casual main": 65, "premium main": 120, "drink": 25, "dessert": 25}
 
-def price_sanity_warnings(app, casual, premium, drink, dessert, defaulted=(), estimated=False, casual_count=1):
+def price_sanity_warnings(app, casual, premium, drink, dessert, defaulted=(), estimated=False, casual_count=1,
+                          premium_overlaps=False):
     """Reasons the saved prices may be off. A venue with any of these is left open for a second look. Prices from a
     web search or defaults (estimated) get the lunch-price check; a menu read from the restaurant's own site, a PDF or
     a paste is not second-guessed for a premium main close to the casual main (pizza and bar menus top out there).
@@ -1621,6 +1622,10 @@ def price_sanity_warnings(app, casual, premium, drink, dessert, defaulted=(), es
     elif estimated and premium < casual * 1.25:
         warnings.append(f"the premium main (${premium}) is within 25% of the casual main (${casual}), which often means "
                         "lunch or combo prices were read")
+    if premium_overlaps:
+        # Whatever the source: the premium list is the casual dishes again, so the menu has no real premium tier
+        warnings.append(f"most of the premium mains are the same dishes as the casual mains, so the menu may have no "
+                        f"separate premium tier (premium main ${premium}, casual main ${casual})")
     for label, value in (("appetizer", app), ("drink", drink), ("dessert", dessert)):
         if value > order * 1.1:
             warnings.append(f"the {label} (${value}) costs more than the casual main (${order:g})")
@@ -2080,8 +2085,13 @@ def main():
                     venue_id=entry["id"], category=category, needs_menu=needs_menu,
                     final={"app": app, "casualMain": casual_main, "premiumMain": premium_main, "drink": drink, "dessert": dessert},
                     claude_backup=claude_backup_result, claude_pages=claude_found_nothing_pages if claude_backup_result else None)
+    # Read from a menu, not typed in by hand: the premium list repeats the casual dishes (see pricing_rules)
+    premium_overlaps = (found_prices and "premiumMain" not in overrides
+                        and pricing_rules.premium_overlaps_casual(pricing))
+    if premium_overlaps:
+        menu_log.step("prices", "premium_overlaps_casual", n=len(pricing.get("premiumMains") or []))
     warnings = price_sanity_warnings(app, casual_main, premium_main, drink, dessert, defaulted, estimated=guessed,
-                                     casual_count=casual_count)
+                                     casual_count=casual_count, premium_overlaps=premium_overlaps)
     if str(pricing_source).startswith("a web search") and not reused_pricing and search_ungrounded:
         warnings.append("the web search returned no source pages, so these prices may come from Gemini's memory rather than from a menu")
     set_output("needs_check", "true" if warnings else "false")

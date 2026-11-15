@@ -3925,10 +3925,30 @@
     ],
     "app": 1.79,
     "casualMain": 3.25,
-    "premiumMain": 3.45,
+    "premiumMain": 4.75,
     "drink": 3.5,
     "dessert": 4.5,
     "tierColor": "#38bdf8",
-    "isTaco": true
+    "isTaco": true,
+    "priceSource": "hand"
+  },
+  {
+    "id": 224,
+    "name": "Thai Village Restaurant",
+    "category": "Thai Cuisine",
+    "city": "Batavia",
+    "state": "IL",
+    "website": "https://www.thaivillage-batavia.com/",
+    "mapsUrl": "https://maps.app.goo.gl/uwn6zA8epm63c86J6",
+    "coords": [
+      -88.311821,
+      41.850082
+    ],
+    "app": 7.95,
+    "casualMain": 14.95,
+    "premiumMain": 18.45,
+    "drink": 8.0,
+    "dessert": 8.0,
+    "tierColor": "#22c55e"
   }
 ]

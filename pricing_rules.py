@@ -29,6 +29,24 @@ def stand_in_prices(casual):
         "dessert": CHEAP_STAND_IN_DESSERT if cheap else 8.00,
     }
 
+def premium_overlaps_casual(pricing):
+    """True when the premium list is mostly the same dishes as the casual list and its median sits within 25% of the
+    casual median. A menu that tops out at the casual price (Gorditas Liselena, issue 633: every item $3.25 to $4.75)
+    has no premium tier, and the "top 25% of entrees" fallback in the prompts fills it with casual items. Prices are
+    compared as a multiset, so a premium price counts as shared only while the casual list still has one to match."""
+    casual = list((pricing or {}).get("casualMains") or [])
+    premium = list((pricing or {}).get("premiumMains") or [])
+    if not casual or not premium:
+        return False
+    if _median(premium) >= _median(casual) * 1.25:
+        return False
+    pool, shared = list(casual), 0
+    for price in premium:
+        if price in pool:
+            pool.remove(price)
+            shared += 1
+    return shared * 2 >= len(premium)
+
 def is_taco_place(name, category):
     return bool(_TACO_PLACE.search(f"{name} {category}"))
 
