@@ -246,6 +246,8 @@ def menu_section(now):
         "candidates_not_on_map_count": len(off_map), "candidates_not_on_map": [e["venue"] for e in off_map],
         "partial_reads_this_week": sum(1 for e in cur if e.get("outcome") == "menu_read_partial"),
         "pasted_menus_this_week": sum(1 for e in cur if e.get("reply") and e.get("outcome") == "menu_read"),
+        "defaulted_this_week": menu_log.defaulted_summary(cur),
+        "defaulted_last_week": {k: v for k, v in menu_log.defaulted_summary(prev).items() if k != "dessert_missing_venues"},
         "claude_search_tokens_in": tokens_in, "claude_search_tokens_out": tokens_out,
         "log_records_total": len(entries), "latest_record": entries[-1]["t"] if entries else None,
     }

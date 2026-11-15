@@ -359,6 +359,22 @@ def _failures(entry):
             if s.get("result") not in ("ok",) and (s.get("step"), s.get("result")) not in QUIET_RESULTS]
 
 
+def defaulted_summary(entries):
+    """How often each category got a stand-in number, and which venues lacked a dessert (the usual gap).
+    Counts imports, so a venue imported twice counts twice. Venues are newest first, one row per venue."""
+    counts = Counter(c for e in entries for c in set(e.get("defaulted") or []))
+    seen, venues = set(), []
+    for e in sorted(entries, key=lambda e: e.get("t", ""), reverse=True):
+        if "dessert" not in (e.get("defaulted") or []) or e.get("venue") in seen:
+            continue
+        seen.add(e.get("venue"))
+        platform = next((s["platform"] for s in e.get("steps", []) if s.get("platform")), None)
+        venues.append({"venue": e.get("venue"), "site": e.get("host"), "platform": platform,
+                       "outcome": e.get("outcome"), "date": (e.get("t") or "")[:10]})
+    return {"imports": len(entries), "by_category": dict(counts.most_common()),
+            "dessert_missing": counts.get("dessert", 0), "dessert_missing_venues": venues}
+
+
 def report(entries, recent=15):
     if not entries:
         return "Menu import log: nothing logged yet."
@@ -376,6 +392,17 @@ def report(entries, recent=15):
         out.append(f"  {n:>4}  {step}: {result}")
     if not reasons:
         out.append("  (none)")
+
+    gaps = defaulted_summary(entries)
+    out += ["", "Categories filled with a stand-in number (no price read from a menu)"]
+    for cat, n in gaps["by_category"].items():
+        out.append(f"  {cat}: {n} of {len(entries)} imports ({round(100 * n / len(entries))}%)")
+    if not gaps["by_category"]:
+        out.append("  (none)")
+    if gaps["dessert_missing_venues"]:
+        out.append(f"  Venues with no dessert price ({len(gaps['dessert_missing_venues'])}), newest first, 15 shown")
+        for v in gaps["dessert_missing_venues"][:15]:
+            out.append(f"    {v['venue']}  {v['site'] or 'no website'}  [{v['platform'] or '?'}]  {v['outcome']}  {v['date']}")
 
     # A site is a problem when a fetch of it failed or when a venue on it ended without a full menu
     hosts = defaultdict(lambda: {"venues": set(), "reasons": Counter(), "problem_imports": 0, "imports": 0, "platform": Counter(), "last": ""})
