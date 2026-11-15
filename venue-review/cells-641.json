@@ -1,0 +1,60 @@
+[
+  {
+    "name": "SUSHI YUME",
+    "category": "Japanese Cuisine",
+    "city": "Batavia",
+    "state": "IL",
+    "website": "http://sushiyumebatavia.com/",
+    "coords": [
+      -88.342303,
+      41.847539
+    ],
+    "app": 7.95,
+    "casualMain": 17.95,
+    "premiumMain": 33.95,
+    "drink": 8.97,
+    "dessert": 8.0,
+    "tierColor": "#eab308",
+    "reviewNotes": [
+      "No menu price was found for the dessert, so a typical stand-in was saved",
+      "No menu prices were read, so these prices are estimates"
+    ]
+  },
+  {
+    "name": "Swordfish",
+    "category": "Japanese Cuisine",
+    "city": "Batavia",
+    "state": "IL",
+    "website": "http://swordfishsushi.com/",
+    "coords": [
+      -88.341355,
+      41.854566
+    ],
+    "app": 10.0,
+    "casualMain": 12.5,
+    "premiumMain": 25.5,
+    "drink": 10.0,
+    "dessert": 8.0,
+    "tierColor": "#22c55e"
+  },
+  {
+    "name": "Acquaviva Winery & Ristorante Batavia",
+    "category": "Italian",
+    "city": "Batavia",
+    "state": "IL",
+    "website": "https://www.acquavivabatavia.com/",
+    "coords": [
+      -88.338769,
+      41.858463
+    ],
+    "app": 13.0,
+    "casualMain": 27.0,
+    "premiumMain": 47.0,
+    "drink": 13.5,
+    "dessert": 8.0,
+    "tierColor": "#f97316",
+    "reviewNotes": [
+      "No menu price was found for the dessert, so a typical stand-in was saved"
+    ]
+  }
+]
