@@ -1,0 +1,61 @@
+[
+  {
+    "name": "Chicago Kabob House",
+    "category": "Uzbek Cuisine",
+    "city": "Glendale Heights",
+    "state": "IL",
+    "coords": [
+      -88.082481,
+      41.903888
+    ],
+    "app": 13.63,
+    "casualMain": 15.58,
+    "premiumMain": 25.33,
+    "drink": 8.0,
+    "dessert": 8.0,
+    "tierColor": "#eab308",
+    "reviewNotes": [
+      "No menu price was found for the dessert, so a typical stand-in was saved"
+    ]
+  },
+  {
+    "name": "Ki's Steak & Seafood Restaurant",
+    "category": "Restaurant",
+    "city": "Glendale Heights",
+    "state": "IL",
+    "website": "https://www.kissteakandseafood.com/",
+    "coords": [
+      -88.057535,
+      41.903085
+    ],
+    "app": 14.95,
+    "casualMain": 21.95,
+    "premiumMain": 31.95,
+    "drink": 10.97,
+    "dessert": 8.0,
+    "tierColor": "#eab308",
+    "reviewNotes": [
+      "No menu price was found for the dessert, so a typical stand-in was saved"
+    ]
+  },
+  {
+    "name": "Schnitzel Platz",
+    "category": "German Cuisine",
+    "city": "Glendale Heights",
+    "state": "IL",
+    "website": "https://www.schnitzelplatz.com/",
+    "coords": [
+      -88.055892,
+      41.903075
+    ],
+    "app": 8.99,
+    "casualMain": 18.99,
+    "premiumMain": 24.99,
+    "drink": 9.49,
+    "dessert": 8.0,
+    "tierColor": "#eab308",
+    "reviewNotes": [
+      "No menu price was found for the dessert, so a typical stand-in was saved"
+    ]
+  }
+]
