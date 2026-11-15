@@ -546,12 +546,15 @@
       -88.204653,
       41.704274
     ],
-    "app": 8.88,
-    "casualMain": 17.5,
-    "premiumMain": 33.12,
-    "drink": 5.0,
-    "dessert": 5.5,
-    "tierColor": "#22c55e"
+    "app": 11.25,
+    "casualMain": 19.0,
+    "premiumMain": 35.0,
+    "drink": 12.0,
+    "dessert": 6.5,
+    "tierColor": "#eab308",
+    "closureCheckedAt": "2026-11-15",
+    "lastUpdated": "2026-11-15",
+    "priceSource": "search"
   },
   {
     "id": 33,
@@ -566,11 +569,14 @@
       41.847382
     ],
     "app": 24.0,
-    "casualMain": 26.0,
-    "premiumMain": 38.0,
-    "drink": 16.0,
-    "dessert": 11.0,
-    "tierColor": "#f97316"
+    "casualMain": 22.0,
+    "premiumMain": 36.0,
+    "drink": 17.0,
+    "dessert": 10.0,
+    "tierColor": "#f97316",
+    "closureCheckedAt": "2026-11-15",
+    "lastUpdated": "2026-11-15",
+    "priceSource": "search"
   },
   {
     "id": 34,
@@ -584,12 +590,15 @@
       -87.949699,
       41.846272
     ],
-    "app": 27.0,
-    "casualMain": 30.6,
-    "premiumMain": 90.0,
-    "drink": 15.0,
-    "dessert": 20.4,
-    "tierColor": "#ef4444"
+    "app": 38.4,
+    "casualMain": 24.6,
+    "premiumMain": 101.4,
+    "drink": 21.0,
+    "dessert": 24.0,
+    "tierColor": "#ef4444",
+    "closureCheckedAt": "2026-11-15",
+    "lastUpdated": "2026-11-15",
+    "priceSource": "search"
   },
   {
     "id": 35,
@@ -603,12 +612,15 @@
       -88.170109,
       41.802736
     ],
-    "app": 21.85,
-    "casualMain": 18.5,
-    "premiumMain": 61.92,
+    "app": 19.0,
+    "casualMain": 23.0,
+    "premiumMain": 60.5,
     "drink": 15.5,
-    "dessert": 15.6,
-    "tierColor": "#f97316"
+    "dessert": 15.0,
+    "tierColor": "#f97316",
+    "closureCheckedAt": "2026-11-15",
+    "lastUpdated": "2026-11-15",
+    "priceSource": "search"
   },
   {
     "id": 37,
@@ -622,12 +634,15 @@
       -87.927733,
       41.84509
     ],
-    "app": 12.0,
-    "casualMain": 28.5,
-    "premiumMain": 48.0,
-    "drink": 16.0,
-    "dessert": 10.0,
-    "tierColor": "#f97316"
+    "app": 13.0,
+    "casualMain": 19.5,
+    "premiumMain": 34.0,
+    "drink": 13.5,
+    "dessert": 9.0,
+    "tierColor": "#eab308",
+    "closureCheckedAt": "2026-11-15",
+    "lastUpdated": "2026-11-15",
+    "priceSource": "search"
   },
   {
     "id": 38,
@@ -641,12 +656,15 @@
       -88.147812,
       41.771204
     ],
-    "app": 19.0,
-    "casualMain": 19.0,
+    "app": 20.0,
+    "casualMain": 26.0,
     "premiumMain": 45.0,
-    "drink": 16.0,
+    "drink": 12.5,
     "dessert": 17.0,
-    "tierColor": "#f97316"
+    "tierColor": "#f97316",
+    "closureCheckedAt": "2026-11-15",
+    "lastUpdated": "2026-11-15",
+    "priceSource": "search"
   },
   {
     "id": 39,
@@ -661,11 +679,14 @@
       41.771035
     ],
     "app": 10.5,
-    "casualMain": 19.0,
-    "premiumMain": 27.12,
+    "casualMain": 16.0,
+    "premiumMain": 24.0,
     "drink": 14.5,
-    "dessert": 11.88,
-    "tierColor": "#eab308"
+    "dessert": 10.0,
+    "tierColor": "#eab308",
+    "closureCheckedAt": "2026-11-15",
+    "lastUpdated": "2026-11-15",
+    "priceSource": "search"
   },
   {
     "id": 40,
@@ -679,12 +700,15 @@
       -88.205261,
       41.763068
     ],
-    "app": 18.99,
-    "casualMain": 21.99,
-    "premiumMain": 30.99,
+    "app": 19.99,
+    "casualMain": 22.49,
+    "premiumMain": 31.99,
     "drink": 13.0,
     "dessert": 11.99,
-    "tierColor": "#eab308"
+    "tierColor": "#eab308",
+    "closureCheckedAt": "2026-11-15",
+    "lastUpdated": "2026-11-15",
+    "priceSource": "search"
   },
   {
     "id": 41,
@@ -698,12 +722,15 @@
       -88.151099,
       41.770881
     ],
-    "app": 12.0,
-    "casualMain": 13.0,
-    "premiumMain": 18.5,
-    "drink": 13.0,
-    "dessert": 9.0,
-    "tierColor": "#eab308"
+    "app": 14.0,
+    "casualMain": 17.0,
+    "premiumMain": 25.0,
+    "drink": 12.0,
+    "dessert": 8.5,
+    "tierColor": "#eab308",
+    "closureCheckedAt": "2026-11-15",
+    "lastUpdated": "2026-11-15",
+    "priceSource": "search"
   },
   {
     "id": 42,
@@ -718,11 +745,14 @@
       41.804944
     ],
     "app": 13.25,
-    "casualMain": 16.98,
-    "premiumMain": 29.9,
-    "drink": 7.0,
-    "dessert": 10.18,
-    "tierColor": "#eab308"
+    "casualMain": 17.0,
+    "premiumMain": 26.0,
+    "drink": 10.0,
+    "dessert": 11.0,
+    "tierColor": "#eab308",
+    "closureCheckedAt": "2026-11-15",
+    "lastUpdated": "2026-11-15",
+    "priceSource": "search"
   },
   {
     "id": 43,
@@ -736,12 +766,15 @@
       -88.149361,
       41.771278
     ],
-    "app": 12.0,
-    "casualMain": 17.0,
-    "premiumMain": 19.0,
+    "app": 11.0,
+    "casualMain": 16.25,
+    "premiumMain": 18.7,
     "drink": 14.5,
     "dessert": 11.0,
-    "tierColor": "#eab308"
+    "tierColor": "#eab308",
+    "closureCheckedAt": "2026-11-15",
+    "lastUpdated": "2026-11-15",
+    "priceSource": "search"
   },
   {
     "id": 44,
@@ -756,11 +789,14 @@
       41.84927
     ],
     "app": 14.95,
-    "casualMain": 19.95,
-    "premiumMain": 31.95,
-    "drink": 11.5,
+    "casualMain": 18.95,
+    "premiumMain": 35.95,
+    "drink": 15.5,
     "dessert": 11.95,
-    "tierColor": "#eab308"
+    "tierColor": "#eab308",
+    "closureCheckedAt": "2026-11-15",
+    "lastUpdated": "2026-11-15",
+    "priceSource": "search"
   },
   {
     "id": 45,
@@ -774,12 +810,15 @@
       -88.147307,
       41.771664
     ],
-    "app": 17.0,
+    "app": 18.0,
     "casualMain": 26.0,
-    "premiumMain": 36.0,
+    "premiumMain": 35.0,
     "drink": 14.5,
     "dessert": 13.0,
-    "tierColor": "#f97316"
+    "tierColor": "#f97316",
+    "closureCheckedAt": "2026-11-15",
+    "lastUpdated": "2026-11-15",
+    "priceSource": "search"
   },
   {
     "id": 46,
@@ -793,12 +832,15 @@
       -88.125831,
       41.802675
     ],
-    "app": 19.49,
-    "casualMain": 21.99,
-    "premiumMain": 43.99,
-    "drink": 13.75,
-    "dessert": 13.49,
-    "tierColor": "#f97316"
+    "app": 17.99,
+    "casualMain": 22.99,
+    "premiumMain": 33.99,
+    "drink": 15.0,
+    "dessert": 11.99,
+    "tierColor": "#f97316",
+    "closureCheckedAt": "2026-11-15",
+    "lastUpdated": "2026-11-15",
+    "priceSource": "search"
   },
   {
     "id": 47,
@@ -813,11 +855,14 @@
       41.71176
     ],
     "app": 5.75,
-    "casualMain": 14.99,
-    "premiumMain": 19.55,
+    "casualMain": 16.54,
+    "premiumMain": 19.77,
     "drink": 2.87,
-    "dessert": 4.99,
-    "tierColor": "#22c55e"
+    "dessert": 5.75,
+    "tierColor": "#22c55e",
+    "closureCheckedAt": "2026-11-15",
+    "lastUpdated": "2026-11-15",
+    "priceSource": "search"
   },
   {
     "id": 49,
@@ -832,11 +877,14 @@
       41.762717
     ],
     "app": 9.45,
-    "casualMain": 16.7,
-    "premiumMain": 21.45,
-    "drink": 4.72,
-    "dessert": 11.95,
-    "tierColor": "#22c55e"
+    "casualMain": 13.48,
+    "premiumMain": 20.45,
+    "drink": 3.5,
+    "dessert": 11.77,
+    "tierColor": "#22c55e",
+    "closureCheckedAt": "2026-11-15",
+    "lastUpdated": "2026-11-15",
+    "priceSource": "search"
   },
   {
     "id": 51,
@@ -850,12 +898,15 @@
       -88.203749,
       41.765325
     ],
-    "app": 13.99,
-    "casualMain": 18.99,
-    "premiumMain": 33.49,
-    "drink": 11.29,
-    "dessert": 10.49,
-    "tierColor": "#eab308"
+    "app": 13.74,
+    "casualMain": 15.99,
+    "premiumMain": 35.49,
+    "drink": 12.99,
+    "dessert": 9.49,
+    "tierColor": "#eab308",
+    "closureCheckedAt": "2026-11-15",
+    "lastUpdated": "2026-11-15",
+    "priceSource": "search"
   },
   {
     "id": 52,
@@ -869,12 +920,15 @@
       -88.068878,
       41.687366
     ],
-    "app": 8.95,
-    "casualMain": 15.95,
-    "premiumMain": 33.95,
-    "drink": 4.95,
-    "dessert": 8.0,
-    "tierColor": "#eab308"
+    "app": 9.93,
+    "casualMain": 16.75,
+    "premiumMain": 37.75,
+    "drink": 5.2,
+    "dessert": 4.22,
+    "tierColor": "#eab308",
+    "closureCheckedAt": "2026-11-15",
+    "lastUpdated": "2026-11-15",
+    "priceSource": "search"
   },
   {
     "id": 53,
@@ -888,12 +942,15 @@
       -88.148889,
       41.666389
     ],
-    "app": 9.35,
-    "casualMain": 17.0,
-    "premiumMain": 38.0,
-    "drink": 8.0,
-    "dessert": 8.0,
-    "tierColor": "#eab308"
+    "app": 13.5,
+    "casualMain": 16.0,
+    "premiumMain": 30.0,
+    "drink": 9.0,
+    "dessert": 7.5,
+    "tierColor": "#eab308",
+    "closureCheckedAt": "2026-11-15",
+    "lastUpdated": "2026-11-15",
+    "priceSource": "search"
   },
   {
     "id": 54,
@@ -907,12 +964,15 @@
       -88.129635,
       41.805042
     ],
-    "app": 3.62,
-    "casualMain": 22.0,
-    "premiumMain": 32.0,
-    "drink": 3.5,
-    "dessert": 9.0,
-    "tierColor": "#22c55e"
+    "app": 13.5,
+    "casualMain": 20.09,
+    "premiumMain": 37.59,
+    "drink": 12.84,
+    "dessert": 11.34,
+    "tierColor": "#eab308",
+    "closureCheckedAt": "2026-11-15",
+    "lastUpdated": "2026-11-15",
+    "priceSource": "search"
   },
   {
     "id": 55,
@@ -926,12 +986,15 @@
       -88.040722,
       41.718652
     ],
-    "app": 22.99,
-    "casualMain": 59.0,
-    "premiumMain": 44.95,
+    "app": 6.5,
+    "casualMain": 20.0,
+    "premiumMain": 43.0,
     "drink": 14.0,
     "dessert": 8.0,
-    "tierColor": "#ef4444"
+    "tierColor": "#eab308",
+    "closureCheckedAt": "2026-11-15",
+    "lastUpdated": "2026-11-15",
+    "priceSource": "search"
   },
   {
     "id": 56,
@@ -945,12 +1008,15 @@
       -88.042938,
       41.717424
     ],
-    "app": 16.0,
-    "casualMain": 19.5,
-    "premiumMain": 29.0,
-    "drink": 9.75,
-    "dessert": 12.0,
-    "tierColor": "#eab308"
+    "app": 17.0,
+    "casualMain": 21.0,
+    "premiumMain": 33.5,
+    "drink": 15.0,
+    "dessert": 11.0,
+    "tierColor": "#eab308",
+    "closureCheckedAt": "2026-11-15",
+    "lastUpdated": "2026-11-15",
+    "priceSource": "search"
   },
   {
     "id": 57,
@@ -964,12 +1030,15 @@
       -88.203848,
       41.608289
     ],
-    "app": 14.0,
-    "casualMain": 30.0,
-    "premiumMain": 50.0,
+    "app": 15.5,
+    "casualMain": 22.5,
+    "premiumMain": 47.5,
     "drink": 13.0,
-    "dessert": 8.0,
-    "tierColor": "#f97316"
+    "dessert": 10.5,
+    "tierColor": "#f97316",
+    "closureCheckedAt": "2026-11-15",
+    "lastUpdated": "2026-11-15",
+    "priceSource": "search"
   },
   {
     "id": 58,
@@ -983,12 +1052,15 @@
       -88.204918,
       41.608979
     ],
-    "app": 4.0,
-    "casualMain": 11.99,
-    "premiumMain": 15.99,
-    "drink": 8.0,
-    "dessert": 8.0,
-    "tierColor": "#22c55e"
+    "app": 7.99,
+    "casualMain": 13.49,
+    "premiumMain": 16.99,
+    "drink": 10.0,
+    "dessert": 5.25,
+    "tierColor": "#22c55e",
+    "closureCheckedAt": "2026-11-15",
+    "lastUpdated": "2026-11-15",
+    "priceSource": "search"
   },
   {
     "id": 59,
@@ -1002,12 +1074,15 @@
       -88.21211,
       41.608654
     ],
-    "app": 18.0,
-    "casualMain": 21.0,
-    "premiumMain": 38.0,
+    "app": 19.5,
+    "casualMain": 20.0,
+    "premiumMain": 36.5,
     "drink": 14.0,
     "dessert": 14.0,
-    "tierColor": "#f97316"
+    "tierColor": "#f97316",
+    "closureCheckedAt": "2026-11-15",
+    "lastUpdated": "2026-11-15",
+    "priceSource": "search"
   },
   {
     "id": 60,
@@ -1021,12 +1096,15 @@
       -88.04232,
       41.719486
     ],
-    "app": 12.0,
-    "casualMain": 20.0,
-    "premiumMain": 34.0,
-    "drink": 13.0,
-    "dessert": 11.0,
-    "tierColor": "#eab308"
+    "app": 12.5,
+    "casualMain": 25.5,
+    "premiumMain": 36.0,
+    "drink": 8.0,
+    "dessert": 13.0,
+    "tierColor": "#eab308",
+    "closureCheckedAt": "2026-11-15",
+    "lastUpdated": "2026-11-15",
+    "priceSource": "search"
   },
   {
     "id": 61,
@@ -1040,12 +1118,15 @@
       -88.202425,
       41.656821
     ],
-    "app": 12.0,
-    "casualMain": 16.0,
-    "premiumMain": 18.0,
-    "drink": 12.0,
-    "dessert": 9.0,
-    "tierColor": "#eab308"
+    "app": 13.5,
+    "casualMain": 16.8,
+    "premiumMain": 21.43,
+    "drink": 8.5,
+    "dessert": 9.6,
+    "tierColor": "#eab308",
+    "closureCheckedAt": "2026-11-15",
+    "lastUpdated": "2026-11-15",
+    "priceSource": "search"
   },
   {
     "id": 62,
@@ -1059,12 +1140,15 @@
       -88.207448,
       41.608247
     ],
-    "app": 12.5,
+    "app": 14.25,
     "casualMain": 15.75,
-    "premiumMain": 20.0,
+    "premiumMain": 21.0,
     "drink": 14.25,
     "dessert": 13.5,
-    "tierColor": "#eab308"
+    "tierColor": "#eab308",
+    "closureCheckedAt": "2026-11-15",
+    "lastUpdated": "2026-11-15",
+    "priceSource": "search"
   },
   {
     "id": 63,
@@ -1078,12 +1162,15 @@
       -88.205273,
       41.608664
     ],
-    "app": 22.0,
+    "app": 16.0,
     "casualMain": 28.0,
-    "premiumMain": 52.0,
-    "drink": 14.0,
-    "dessert": 8.0,
-    "tierColor": "#f97316"
+    "premiumMain": 47.0,
+    "drink": 13.5,
+    "dessert": 7.0,
+    "tierColor": "#f97316",
+    "closureCheckedAt": "2026-11-15",
+    "lastUpdated": "2026-11-15",
+    "priceSource": "search"
   },
   {
     "id": 70,
@@ -1097,12 +1184,15 @@
       -87.624692,
       41.881327
     ],
-    "app": 16.0,
-    "casualMain": 29.0,
-    "premiumMain": 62.0,
-    "drink": 18.0,
-    "dessert": 15.0,
-    "tierColor": "#ef4444"
+    "app": 22.0,
+    "casualMain": 26.0,
+    "premiumMain": 52.0,
+    "drink": 16.0,
+    "dessert": 15.5,
+    "tierColor": "#f97316",
+    "closureCheckedAt": "2026-11-15",
+    "lastUpdated": "2026-11-15",
+    "priceSource": "search"
   },
   {
     "id": 64,
@@ -1116,12 +1206,15 @@
       -87.624228,
       41.886565
     ],
-    "app": 14.74,
-    "casualMain": 20.99,
-    "premiumMain": 31.99,
-    "drink": 15.0,
-    "dessert": 10.99,
-    "tierColor": "#eab308"
+    "app": 16.39,
+    "casualMain": 21.29,
+    "premiumMain": 33.99,
+    "drink": 13.49,
+    "dessert": 12.39,
+    "tierColor": "#eab308",
+    "closureCheckedAt": "2026-11-15",
+    "lastUpdated": "2026-11-15",
+    "priceSource": "search"
   },
   {
     "id": 65,
@@ -1135,12 +1228,15 @@
       -87.629277,
       41.884337
     ],
-    "app": 20.0,
-    "casualMain": 26.0,
+    "app": 22.0,
+    "casualMain": 24.0,
     "premiumMain": 49.5,
-    "drink": 18.0,
-    "dessert": 8.0,
-    "tierColor": "#f97316"
+    "drink": 17.5,
+    "dessert": 10.5,
+    "tierColor": "#f97316",
+    "closureCheckedAt": "2026-11-15",
+    "lastUpdated": "2026-11-15",
+    "priceSource": "search"
   },
   {
     "id": 66,
@@ -1154,12 +1250,15 @@
       -87.646008,
       41.886973
     ],
-    "app": 16.0,
-    "casualMain": 32.0,
-    "premiumMain": 42.0,
-    "drink": 15.0,
-    "dessert": 12.5,
-    "tierColor": "#f97316"
+    "app": 16.5,
+    "casualMain": 26.0,
+    "premiumMain": 47.5,
+    "drink": 15.5,
+    "dessert": 13.5,
+    "tierColor": "#f97316",
+    "closureCheckedAt": "2026-11-15",
+    "lastUpdated": "2026-11-15",
+    "priceSource": "search"
   },
   {
     "id": 67,
@@ -1174,11 +1273,14 @@
       41.884128
     ],
     "app": 20.0,
-    "casualMain": 35.0,
-    "premiumMain": 42.0,
-    "drink": 21.0,
+    "casualMain": 31.0,
+    "premiumMain": 39.0,
+    "drink": 22.0,
     "dessert": 16.0,
-    "tierColor": "#ef4444"
+    "tierColor": "#f97316",
+    "closureCheckedAt": "2026-11-15",
+    "lastUpdated": "2026-11-15",
+    "priceSource": "search"
   },
   {
     "id": 68,
@@ -1192,12 +1294,15 @@
       -87.631598,
       41.889378
     ],
-    "app": 18.7,
-    "casualMain": 34.0,
-    "premiumMain": 46.0,
-    "drink": 17.0,
-    "dessert": 10.0,
-    "tierColor": "#f97316"
+    "app": 18.0,
+    "casualMain": 19.5,
+    "premiumMain": 39.0,
+    "drink": 16.0,
+    "dessert": 12.0,
+    "tierColor": "#f97316",
+    "closureCheckedAt": "2026-11-15",
+    "lastUpdated": "2026-11-15",
+    "priceSource": "search"
   },
   {
     "id": 69,
@@ -1210,12 +1315,15 @@
       -87.629989,
       41.891055
     ],
-    "app": 16.0,
-    "casualMain": 26.0,
-    "premiumMain": 60.0,
-    "drink": 18.0,
-    "dessert": 17.0,
-    "tierColor": "#ef4444"
+    "app": 18.5,
+    "casualMain": 27.0,
+    "premiumMain": 65.0,
+    "drink": 17.0,
+    "dessert": 15.0,
+    "tierColor": "#ef4444",
+    "closureCheckedAt": "2026-11-15",
+    "lastUpdated": "2026-11-15",
+    "priceSource": "search"
   },
   {
     "id": 71,
@@ -1228,13 +1336,16 @@
       -88.171691,
       41.803043
     ],
-    "app": 15.0,
-    "casualMain": 19.0,
-    "premiumMain": 33.0,
-    "drink": 7.25,
-    "dessert": 12.0,
+    "app": 18.0,
+    "casualMain": 24.6,
+    "premiumMain": 34.2,
+    "drink": 5.0,
+    "dessert": 11.4,
     "tierColor": "#eab308",
-    "website": "https://rockbottom.com/locations/warrenville/"
+    "website": "https://rockbottom.com/locations/warrenville/",
+    "closureCheckedAt": "2026-11-15",
+    "lastUpdated": "2026-11-15",
+    "priceSource": "search"
   },
   {
     "id": 72,
@@ -1248,12 +1359,15 @@
       -88.128962,
       41.804278
     ],
-    "app": 11.5,
-    "casualMain": 45.5,
-    "premiumMain": 54.5,
-    "drink": 15.0,
-    "dessert": 14.0,
-    "tierColor": "#ef4444"
+    "app": 12.75,
+    "casualMain": 11.0,
+    "premiumMain": 37.0,
+    "drink": 12.0,
+    "dessert": 10.0,
+    "tierColor": "#eab308",
+    "closureCheckedAt": "2026-11-15",
+    "lastUpdated": "2026-11-15",
+    "priceSource": "search"
   },
   {
     "id": 73,
@@ -1272,7 +1386,8 @@
     "premiumMain": 44.0,
     "drink": 13.0,
     "dessert": 12.0,
-    "tierColor": "#f97316"
+    "tierColor": "#f97316",
+    "closureCheckedAt": "2026-11-15"
   },
   {
     "id": 74,
