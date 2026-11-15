@@ -1,0 +1,66 @@
+[
+  {
+    "name": "Tonto Burrito",
+    "category": "Restaurant",
+    "city": "Joliet",
+    "state": "IL",
+    "website": "http://tontoburrito.com/",
+    "coords": [
+      -88.154926,
+      41.522669
+    ],
+    "app": 8.25,
+    "casualMain": 13.99,
+    "premiumMain": 16.99,
+    "drink": 8.0,
+    "dessert": 6.5,
+    "tierColor": "#22c55e",
+    "reviewNotes": [
+      "The premium main ($16.99) is within 25% of the casual main ($13.99), which often means lunch or combo prices were read",
+      "No menu prices were read, so these prices are estimates"
+    ]
+  },
+  {
+    "name": "The Irish Corner Cantina",
+    "category": "Restaurant",
+    "city": "Joliet",
+    "state": "IL",
+    "website": "https://theirishcornercantinajoliet.com/",
+    "coords": [
+      -88.149851,
+      41.537234
+    ],
+    "app": 10.0,
+    "casualMain": 15.0,
+    "premiumMain": 15.0,
+    "drink": 8.0,
+    "dessert": 5.5,
+    "tierColor": "#22c55e",
+    "reviewNotes": [
+      "The premium main ($15.0) is within 25% of the casual main ($15.0), which often means lunch or combo prices were read",
+      "Most of the premium mains are the same dishes as the casual mains, so the menu may have no separate premium tier (premium main $15.0, casual main $15.0)",
+      "No menu prices were read, so these prices are estimates"
+    ]
+  },
+  {
+    "name": "Jameson's Pub Joliet",
+    "category": "Restaurant",
+    "city": "Joliet",
+    "state": "IL",
+    "website": "http://www.thejamesonspub.com/joliet/",
+    "coords": [
+      -88.14878,
+      41.537438
+    ],
+    "app": 19.0,
+    "casualMain": 22.0,
+    "premiumMain": 35.2,
+    "drink": 11.0,
+    "dessert": 8.0,
+    "tierColor": "#eab308",
+    "reviewNotes": [
+      "No menu price was found for the premium main, dessert, so a typical stand-in was saved",
+      "No menu prices were read, so these prices are estimates"
+    ]
+  }
+]
