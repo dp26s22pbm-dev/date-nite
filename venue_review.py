@@ -222,10 +222,11 @@ def menu():
                                 "dinner menu, or reply with a line like `casualMain: 27.70`.")
             sys.exit(1)
         # For each category: the menu's median, else the saved value, else a stand-in based on the casual main
-        stand_ins = {"premiumMains": ("premiumMain", round(casual * 1.6, 2), "premium main"),
-                     "apps": ("app", round(casual * 0.55, 2), "appetizer"),
-                     "drinks": ("drink", max(8.00, round(casual * 0.5, 2)), "drink"),
-                     "desserts": ("dessert", 8.00, "dessert")}
+        sv = pricing_rules.stand_in_prices(casual)
+        stand_ins = {"premiumMains": ("premiumMain", sv["premiumMain"], "premium main"),
+                     "apps": ("app", sv["app"], "appetizer"),
+                     "drinks": ("drink", sv["drink"], "drink"),
+                     "desserts": ("dessert", sv["dessert"], "dessert")}
         values, kept, defaulted = {}, [], []
         for pricing_key, (venue_key, stand_in, label) in stand_ins.items():
             values[venue_key] = found(pricing_key)
