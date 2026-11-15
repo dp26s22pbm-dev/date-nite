@@ -270,10 +270,7 @@ REPORT_REWORDS = (
     ("\n\n### 👉 Action needed: reply with the menu\n\n"
      "These prices are estimates. Open the venue's menu page, select all, copy, and paste it as a reply here. "
      "I will update the prices and close this issue.",
-     "\n\n### 👉 Prices are estimates\n\nCheck them against the venue's menu and correct the entry before merging."),
-    ("If they are wrong, reply with the menu text (open the venue's menu page, select all, copy, paste) "
-     "and I will update them. If they are fine, close this issue.",
-     "If they are wrong, correct the entry before merging."),
+     "\n\n### 👉 Prices are estimates\n\nThey come from a web search, not from the menu. See Correcting prices at the top."),
     ("Nothing else is needed. Closing this issue.", "Nothing else is needed."),
     ("(best guess; edit venues.json if it is off)", "(best guess; correct the entry if it is off)"),
     ("Send a share link of the place's page or exact coordinates to fix it", "Correct the coordinates in the entry if the pin is off"),
@@ -285,7 +282,37 @@ def reword_for_city_pr(summary):
     """The importer's summary with its issue-only instructions replaced (see REPORT_REWORDS)."""
     for old, new in REPORT_REWORDS:
         summary = summary.replace(old, new)
+    # The importer's "reply with the menu text ... close this issue" paragraph. Replies are not read on a pull request,
+    # and a regex survives wording changes in the middle of it (the importer added a sentence about `key: price` lines).
+    summary = re.sub(r"If they are wrong, reply with the menu text.*?close this issue\.",
+                     "If they are wrong, see Correcting prices at the top.", summary, flags=re.S)
+    # Nothing is on the map until the pull request merges
+    summary = re.sub(r"### ✅ (.+?) was added to the map",
+                     r"### ✅ \1 is a candidate (it joins the map when this pull request merges, if approved)", summary)
     return summary
+
+# Shown once in each pull request's description. Comments on a pull request are not read by add-menu.yml or
+# venue-review-menu.yml (both skip pull requests), so the only ways to fix a price are the ones below.
+CORRECTING_PRICES_CELL = (
+    "## Correcting prices\n\n"
+    "Replies and comments on this pull request are not read, so pasting a menu or a `casualMain: 18.50` line here does nothing. "
+    "To fix a venue's prices, pick one:\n\n"
+    "1. **Hold it.** Leave both Approve and Deny empty under Decisions and merge. The venue gets its own `venue-review` issue. "
+    "Paste the menu text there as a comment (or lines like `casualMain: 18.50`, with any of app, casualMain, premiumMain, "
+    "drink, dessert) and the prices in the issue are rewritten. Then add the `approve-venue` label to put it on the map.\n"
+    "2. **Approve it, then fix it.** Merge with Approve ticked, then use the Edit a Venue issue form (name, town and state, plus "
+    "menu text or `key: price` lines).\n"
+    "3. **Edit the entry before merging.** Change the prices for that venue in the review file on this branch. "
+    "Its entry is copied to `venues.json` as written, so also update `tierColor` if the new total moves it to a different tier."
+)
+CORRECTING_PRICES_CITY = (
+    "## Correcting prices\n\n"
+    "Replies and comments on this pull request are not read, so pasting a menu or a `casualMain: 18.50` line here does nothing. "
+    "To fix a venue's prices, pick one:\n\n"
+    "1. **Edit the entry before merging.** Change the prices for that venue in the pending file on this branch. "
+    "Its entry is copied to `venues.json` as written, so also update `tierColor` if the new total moves it to a different tier.\n"
+    "2. **Fix it after merging.** Use the Edit a Venue issue form (name, town and state, plus menu text or `key: price` lines)."
+)
 
 def add_venue(place, work_dir, number, venues_file):
     """Run the importer for one place. Returns its outputs dict (venue_name, summary, needs_menu, ...), or {"error": ...} on failure."""
@@ -429,7 +456,7 @@ def main():
              f"(at least {MIN_REVIEWS} reviews, at most {MAX_PER_CUISINE} of one cuisine, no national fast-food chains, nothing under ${MIN_TOTAL_FOR_TWO} for two, no venue without any prices found, no counter-service places). "
              "Ratings were used only for the ranking and are not saved.\n\n"
              f"Review the prices and pins below before merging. The venues are in `{pending_file}`; delete an entry there to drop it. "
-             "They get their ids and join `venues.json` automatically after the merge.")
+             "They get their ids and join `venues.json` automatically after the merge.\n\n" + CORRECTING_PRICES_CITY)
     tail = ("\n\n## Skipped\n\n" + "\n".join(skipped)) if skipped else ""
     set_output("report", intro + "\n\n" + "\n\n".join(sections) + tail, multiline=True)
 
