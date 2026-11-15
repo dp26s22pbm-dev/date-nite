@@ -3795,5 +3795,25 @@
     "drink": 9.74,
     "dessert": 4.24,
     "tierColor": "#22c55e"
+  },
+  {
+    "id": 223,
+    "name": "Gorditas Liselena",
+    "category": "Mexican Cuisine",
+    "city": "West Chicago",
+    "state": "IL",
+    "website": "https://gorditasliselena.com/",
+    "mapsUrl": "https://share.google/U5X7C78K5Q3Z5CeCI",
+    "coords": [
+      -88.198868,
+      41.863093
+    ],
+    "app": 1.79,
+    "casualMain": 3.25,
+    "premiumMain": 3.45,
+    "drink": 8.0,
+    "dessert": 8.0,
+    "tierColor": "#38bdf8",
+    "isTaco": true
   }
 ]
