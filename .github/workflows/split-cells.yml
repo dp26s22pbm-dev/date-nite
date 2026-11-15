@@ -49,6 +49,8 @@ jobs:
           git checkout -b "$BRANCH"
           git add grid/grid.json
           git commit -m "Split grid cells (Issue #${{ github.event.issue.number }})"
+          # The run may have taken a while; other cell pull requests can have merged since it started
+          .github/scripts/merge-main-into-branch.sh || true
           git push origin "$BRANCH"
           printf '%s\n\nCloses #%s\n' "$REPORT" "${{ github.event.issue.number }}" > "$RUNNER_TEMP/pr-body.md"
           URL=$(gh pr create --base main --head "$BRANCH" --title "Split grid cells (#${{ github.event.issue.number }})" --body-file "$RUNNER_TEMP/pr-body.md")

@@ -75,6 +75,8 @@ jobs:
           git add grid/grid.json
           if [ -d venue-review ]; then git add venue-review; fi
           git commit -m "Search grid cells (Issue #${{ github.event.issue.number }})"
+          # The run may have taken a while; other cell pull requests can have merged since it started
+          .github/scripts/merge-main-into-branch.sh || true
           git push origin "$BRANCH"
           printf '%s\n\nCloses #%s\n' "$REPORT" "${{ github.event.issue.number }}" > "$RUNNER_TEMP/pr-body.md"
           # The title lists the searched cells; add_cell.py reads it to avoid searching a cell twice while its pull request is open
