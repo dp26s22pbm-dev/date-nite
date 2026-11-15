@@ -17,10 +17,10 @@ except Exception as e:
     print(f"Failed to import TARGET_URLS from urls.py: {e}")
     VENUE_URLS = {}
 
-DEFAULT_VENUE_LIMIT = 60
+DEFAULT_VENUE_LIMIT = 40
 # Closure checks that cover venues the price refresh leaves alone (protected prices). They rotate by closureCheckedAt,
 # which every closure check stamps, so every venue is checked in turn whether or not its prices are refreshed.
-DEFAULT_CLOSURE_LIMIT = 40
+DEFAULT_CLOSURE_LIMIT = 20
 CLOSURE_FLAGS_FILE = "closure_flags.json"
 
 CLOSURE_PROMPT = """
