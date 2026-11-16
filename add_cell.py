@@ -57,6 +57,9 @@ def excluded_here(place, exclusions):
     address = (place.get("formattedAddress") or "").lower()
     return any(key.startswith(prefix) and (city is None or city in address) for prefix, city in exclusions)
 
+# A cell with this many eligible restaurants holds more than a pull request can take (fullAt venues), so splitting it finds the rest
+SPLIT_ADVICE_AT = 5
+
 def main():
     api_key = os.environ.get("GOOGLE_PLACES_API_KEY", "").strip()
     if not api_key:
@@ -91,6 +94,7 @@ def main():
     exclusions = load_exclusions()
 
     sections, searched, added_total, priced_total = [], [], [], 0
+    crowded = []  # (cell, eligible count) for cells with SPLIT_ADVICE_AT or more prospects
     with tempfile.TemporaryDirectory() as work_dir:
         # The importer numbers and checks new venues against this scratch copy; venues.json itself stays untouched
         venues_file = os.path.join(work_dir, "venues.json")
@@ -116,6 +120,8 @@ def main():
                 sections.append(f"## {cid}\n\nNo restaurants qualified (open, with at least {ac.MIN_REVIEWS} reviews, "
                                 "not a chain or counter-service place, and not already on the map).")
                 continue
+            if len(ranked) >= SPLIT_ADVICE_AT:
+                crowded.append((cid, len(ranked), child is None))
             before = len(json.load(open(venues_file)))
             cell_sections, skipped, kept, priced = ac.price_and_keep(
                 ranked, work_dir, venues_file, count=full_at - have, number_start=priced_total)
@@ -159,12 +165,22 @@ def main():
                  "`venues.json` (with ids) automatically, denied venues are dropped and added to `excluded-venues.json` so later searches skip them, and a venue with neither box ticked gets "
                  "its own `venue-review` issue to approve later. Every searched cell is also recorded in `grid/grid.json`, "
                  "so the grid page shows it as searched.\n\n" + ac.CORRECTING_PRICES_CELL)
+    warning = ""
+    if crowded:
+        lines = [f"- {cid}: {n} eligible restaurants, and only {full_at} can be added" +
+                 ("" if whole else " (already the smallest cell, so it cannot be split further)")
+                 for cid, n, whole in crowded]
+        warning = ("**Consider closing this pull request and splitting " +
+                   ("these cells" if len(crowded) > 1 else "this cell") +
+                   f": {', '.join(c[0] for c in crowded)} had {SPLIT_ADVICE_AT} or more prospects. "
+                   "Split the grid and search the smaller cells so the remaining restaurants are found.**\n\n" +
+                   "\n".join(lines) + "\n\n")
     notes_text = ("\n\n## Not searched\n\n" + "\n".join(notes)) if notes else ""
     decisions = ""
     if added:
         from venue_review import decision_block
         decisions = "\n\n" + decision_block(added)
-    report = intro + "\n\n" + "\n\n".join(sections) + notes_text + decisions
+    report = warning + intro + "\n\n" + "\n\n".join(sections) + notes_text + decisions
     print(report)
     set_output("report", report, multiline=True)
 
