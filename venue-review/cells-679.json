@@ -1,0 +1,56 @@
+[
+  {
+    "name": "Merichka's Restaurant",
+    "category": "Steakhouse",
+    "city": "Crest Hill",
+    "state": "IL",
+    "website": "http://merichkas.com/",
+    "coords": [
+      -88.09759,
+      41.55269
+    ],
+    "app": 7.15,
+    "casualMain": 17.45,
+    "premiumMain": 34.1,
+    "drink": 8.72,
+    "dessert": 4.25,
+    "tierColor": "#eab308"
+  },
+  {
+    "name": "EDO Japanese Restaurant",
+    "category": "Japanese Cuisine",
+    "city": "Crest Hill",
+    "state": "IL",
+    "website": "http://www.edosushicresthill.com/",
+    "coords": [
+      -88.126805,
+      41.554943
+    ],
+    "app": 8.0,
+    "casualMain": 16.0,
+    "premiumMain": 26.0,
+    "drink": 8.0,
+    "dessert": 5.0,
+    "tierColor": "#22c55e"
+  },
+  {
+    "name": "Longshots",
+    "category": "Casual American",
+    "city": "Joliet",
+    "state": "IL",
+    "coords": [
+      -88.120621,
+      41.523039
+    ],
+    "app": 11.95,
+    "casualMain": 12.95,
+    "premiumMain": 20.95,
+    "drink": 8.0,
+    "dessert": 8.0,
+    "tierColor": "#22c55e",
+    "reviewNotes": [
+      "No menu price was found for the dessert, so a typical stand-in was saved",
+      "No menu prices were read, so these prices are estimates"
+    ]
+  }
+]
