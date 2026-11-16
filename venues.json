@@ -4183,5 +4183,22 @@
     "drink": 8.0,
     "dessert": 8.0,
     "tierColor": "#22c55e"
+  },
+  {
+    "id": 238,
+    "name": "The Bunker Bar & Grill",
+    "category": "Restaurant",
+    "city": "West Chicago",
+    "state": "IL",
+    "coords": [
+      -88.203745,
+      41.883234
+    ],
+    "app": 6.0,
+    "casualMain": 11.0,
+    "premiumMain": 13.0,
+    "drink": 6.5,
+    "dessert": 2.5,
+    "tierColor": "#22c55e"
   }
 ]
