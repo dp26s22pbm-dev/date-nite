@@ -4242,5 +4242,23 @@
     "drink": 15.0,
     "dessert": 8.0,
     "tierColor": "#eab308"
+  },
+  {
+    "id": 241,
+    "name": "Marco's Kitchen",
+    "category": "Italian",
+    "city": "La Grange",
+    "state": "IL",
+    "website": "http://www.marcoskitchen.com/",
+    "coords": [
+      -87.869847,
+      41.814738
+    ],
+    "app": 16.0,
+    "casualMain": 38.5,
+    "premiumMain": 46.0,
+    "drink": 22.5,
+    "dessert": 13.0,
+    "tierColor": "#ef4444"
   }
 ]
