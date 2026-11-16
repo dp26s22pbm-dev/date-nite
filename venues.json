@@ -4057,5 +4057,23 @@
     "drink": 9.49,
     "dessert": 8.0,
     "tierColor": "#eab308"
+  },
+  {
+    "id": 231,
+    "name": "Jameson's Pub Joliet",
+    "category": "Restaurant",
+    "city": "Joliet",
+    "state": "IL",
+    "website": "http://www.thejamesonspub.com/joliet/",
+    "coords": [
+      -88.14878,
+      41.537438
+    ],
+    "app": 14.0,
+    "casualMain": 19.0,
+    "premiumMain": 27.5,
+    "drink": 11.0,
+    "dessert": 8.0,
+    "tierColor": "#eab308"
   }
 ]
