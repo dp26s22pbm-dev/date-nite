@@ -4147,5 +4147,23 @@
     "drink": 8.0,
     "dessert": 5.99,
     "tierColor": "#22c55e"
+  },
+  {
+    "id": 236,
+    "name": "Mariscos El Vallartazo",
+    "category": "Restaurant",
+    "city": "West Chicago",
+    "state": "IL",
+    "website": "https://www.elvallartazo.com/",
+    "coords": [
+      -88.209645,
+      41.917069
+    ],
+    "app": 22.5,
+    "casualMain": 23.5,
+    "premiumMain": 28.5,
+    "drink": 14.25,
+    "dessert": 8.0,
+    "tierColor": "#eab308"
   }
 ]
