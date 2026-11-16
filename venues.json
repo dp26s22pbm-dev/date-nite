@@ -4129,5 +4129,23 @@
     "drink": 8.0,
     "dessert": 3.29,
     "tierColor": "#22c55e"
+  },
+  {
+    "id": 235,
+    "name": "Taqueria Los Comales West Chicago",
+    "category": "Restaurant",
+    "city": "West Chicago",
+    "state": "IL",
+    "website": "https://www.facebook.com/loscomaleswestchicago",
+    "coords": [
+      -88.19631,
+      41.881708
+    ],
+    "app": 6.49,
+    "casualMain": 16.99,
+    "premiumMain": 20.99,
+    "drink": 8.0,
+    "dessert": 5.99,
+    "tierColor": "#22c55e"
   }
 ]
