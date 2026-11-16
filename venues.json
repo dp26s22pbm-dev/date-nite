@@ -3269,12 +3269,15 @@
       -88.058369,
       41.588305
     ],
-    "app": 9.96,
-    "casualMain": 16.68,
-    "premiumMain": 18.98,
+    "app": 9.49,
+    "casualMain": 15.53,
+    "premiumMain": 20.7,
     "drink": 8.34,
     "dessert": 8.0,
-    "tierColor": "#22c55e"
+    "tierColor": "#22c55e",
+    "lastUpdated": "2026-11-16",
+    "priceSource": "menu",
+    "website": "https://www.yelp.com/biz/paradise-bay-lockport?uid=7CILRKTfKxW-z_fx6IY9jQ&utm_campaign=www_business_share_popup&utm_medium=copy_link&utm_source=(direct)"
   },
   {
     "id": 186,
