@@ -1,0 +1,63 @@
+[
+  {
+    "name": "The Bunker Bar & Grill",
+    "category": "Restaurant",
+    "city": "West Chicago",
+    "state": "IL",
+    "coords": [
+      -88.203745,
+      41.883234
+    ],
+    "app": 10.0,
+    "casualMain": 12.0,
+    "premiumMain": 15.0,
+    "drink": 5.5,
+    "dessert": 8.0,
+    "tierColor": "#22c55e",
+    "reviewNotes": [
+      "No menu price was found for the dessert, so a typical stand-in was saved",
+      "No menu prices were read, so these prices are estimates"
+    ]
+  },
+  {
+    "name": "Mariscos El Vallartazo",
+    "category": "Restaurant",
+    "city": "West Chicago",
+    "state": "IL",
+    "website": "https://www.elvallartazo.com/",
+    "coords": [
+      -88.209645,
+      41.917069
+    ],
+    "app": 8.99,
+    "casualMain": 16.99,
+    "premiumMain": 21.99,
+    "drink": 8.49,
+    "dessert": 8.0,
+    "tierColor": "#22c55e",
+    "reviewNotes": [
+      "No menu price was found for the dessert, so a typical stand-in was saved",
+      "No menu prices were read, so these prices are estimates"
+    ]
+  },
+  {
+    "name": "Taqueria Los Comales West Chicago",
+    "category": "Restaurant",
+    "city": "West Chicago",
+    "state": "IL",
+    "website": "https://www.facebook.com/loscomaleswestchicago",
+    "coords": [
+      -88.19631,
+      41.881708
+    ],
+    "app": 11.49,
+    "casualMain": 13.99,
+    "premiumMain": 22.49,
+    "drink": 8.0,
+    "dessert": 5.99,
+    "tierColor": "#22c55e",
+    "reviewNotes": [
+      "No menu prices were read, so these prices are estimates"
+    ]
+  }
+]
