@@ -4165,5 +4165,23 @@
     "drink": 14.25,
     "dessert": 8.0,
     "tierColor": "#eab308"
+  },
+  {
+    "id": 237,
+    "name": "Hummingbird Restaurant",
+    "category": "American",
+    "city": "Winfield",
+    "state": "IL",
+    "website": "https://www.hummingbirdrestaurantil.com/",
+    "coords": [
+      -88.152784,
+      41.886938
+    ],
+    "app": 5.0,
+    "casualMain": 15.0,
+    "premiumMain": 20.5,
+    "drink": 8.0,
+    "dessert": 8.0,
+    "tierColor": "#22c55e"
   }
 ]
