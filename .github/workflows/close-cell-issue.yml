@@ -1,0 +1,33 @@
+name: Close Grid Cell Issue When Pull Request Is Closed
+
+# Search Grid Cells and Split Grid Cells pull requests say "Closes #N", which GitHub honors only when the pull request
+# merges. When one is closed without merging, this closes the issue that started it so it does not stay open.
+on:
+  pull_request:
+    types: [closed]
+
+jobs:
+  close-issue:
+    # Only unmerged pull requests from the cell workflows' own branches
+    if: >-
+      github.event.pull_request.merged == false &&
+      (startsWith(github.event.pull_request.head.ref, 'add-cell/') ||
+       startsWith(github.event.pull_request.head.ref, 'split-cells/'))
+    runs-on: ubuntu-latest
+    permissions:
+      issues: write
+    steps:
+      - name: Close the issue
+        env:
+          GH_TOKEN: ${{ github.token }}
+          PR_BODY: ${{ github.event.pull_request.body }}
+          PR_URL: ${{ github.event.pull_request.html_url }}
+        run: |
+          # The branch is add-cell/<issue>-<run id> or split-cells/<issue>-<run id>; the body ends with "Closes #<issue>"
+          ISSUE=$(printf '%s\n' "$PR_BODY" | grep -oE 'Closes #[0-9]+' | tail -n 1 | grep -oE '[0-9]+' || true)
+          if [ -z "$ISSUE" ]; then
+            echo "No 'Closes #N' line in the pull request body; nothing to close."
+            exit 0
+          fi
+          gh issue comment "$ISSUE" --repo "${{ github.repository }}" --body "Pull request closed without merging: $PR_URL. Closing this issue."
+          gh issue close "$ISSUE" --repo "${{ github.repository }}" --reason "not planned" || true
