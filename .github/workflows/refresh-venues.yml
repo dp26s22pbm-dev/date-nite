@@ -1,9 +1,9 @@
 name: Refresh Venue Pricing
 
 on:
-  schedule:
-    # Weekly, Sundays 08:17 UTC. Each run refreshes the 40 least recently updated venues (DEFAULT_VENUE_LIMIT in batch_update_venues.py), about 170 refreshable venues in 30 days; the limits are kept low so the weekly Gemini search calls stay under the project's monthly spending cap. Venues whose prices were read from a real menu or changed by hand are skipped for pricing (protection_reason) but still get a rotating closure check (CLOSURE_LIMIT per run).
-    - cron: '17 8 * * 0'
+  # SUSPENDED: the weekly schedule is off while Gemini spend is investigated (the AI Studio spend cap was reached on Nov 15, with a burst of 429 errors). Manual runs still work through workflow_dispatch. To resume, restore this block:
+  #   schedule:
+  #     - cron: '17 8 * * 0'
   workflow_dispatch:
     inputs:
       target:

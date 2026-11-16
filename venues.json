@@ -4057,5 +4057,77 @@
     "drink": 9.49,
     "dessert": 8.0,
     "tierColor": "#eab308"
+  },
+  {
+    "id": 231,
+    "name": "Jameson's Pub Joliet",
+    "category": "Restaurant",
+    "city": "Joliet",
+    "state": "IL",
+    "website": "http://www.thejamesonspub.com/joliet/",
+    "coords": [
+      -88.14878,
+      41.537438
+    ],
+    "app": 14.0,
+    "casualMain": 19.0,
+    "premiumMain": 27.5,
+    "drink": 11.0,
+    "dessert": 8.0,
+    "tierColor": "#eab308"
+  },
+  {
+    "id": 232,
+    "name": "The Irish Corner Cantina",
+    "category": "Restaurant",
+    "city": "Joliet",
+    "state": "IL",
+    "website": "https://theirishcornercantinajoliet.com/",
+    "coords": [
+      -88.149851,
+      41.537234
+    ],
+    "app": 14.06,
+    "casualMain": 21.25,
+    "premiumMain": 25.94,
+    "drink": 8.0,
+    "dessert": 6.88,
+    "tierColor": "#eab308"
+  },
+  {
+    "id": 233,
+    "name": "Tonto Burrito",
+    "category": "Restaurant",
+    "city": "Joliet",
+    "state": "IL",
+    "website": "http://tontoburrito.com/",
+    "coords": [
+      -88.154926,
+      41.522669
+    ],
+    "app": 10.49,
+    "casualMain": 12.25,
+    "premiumMain": 14.99,
+    "drink": 8.0,
+    "dessert": 7.99,
+    "tierColor": "#22c55e"
+  },
+  {
+    "id": 234,
+    "name": "zen's Sushi express",
+    "category": "Sushi casual",
+    "city": "Geneva",
+    "state": "IL",
+    "website": "https://www.zensushiexpress.com/",
+    "coords": [
+      -88.278487,
+      41.886882
+    ],
+    "app": 7.99,
+    "casualMain": 12.49,
+    "premiumMain": 20.99,
+    "drink": 8.0,
+    "dessert": 3.29,
+    "tierColor": "#22c55e"
   }
 ]
