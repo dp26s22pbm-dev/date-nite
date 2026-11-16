@@ -4075,5 +4075,23 @@
     "drink": 11.0,
     "dessert": 8.0,
     "tierColor": "#eab308"
+  },
+  {
+    "id": 232,
+    "name": "The Irish Corner Cantina",
+    "category": "Restaurant",
+    "city": "Joliet",
+    "state": "IL",
+    "website": "https://theirishcornercantinajoliet.com/",
+    "coords": [
+      -88.149851,
+      41.537234
+    ],
+    "app": 14.06,
+    "casualMain": 21.25,
+    "premiumMain": 25.94,
+    "drink": 8.0,
+    "dessert": 6.88,
+    "tierColor": "#eab308"
   }
 ]
