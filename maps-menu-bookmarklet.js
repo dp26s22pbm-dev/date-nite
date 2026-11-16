@@ -6,7 +6,8 @@
   // On any other page (the restaurant's own website, Uber Eats, Postmates, another ordering site) it reads the dishes
   // and prices on the page and shows a small panel of the menu's sections. Tick the ones to send and it opens the
   // "Edit a Venue" form (which changes only the price categories the text covers) or, for a venue not yet on the map,
-  // the "Add New Venue" form. Sections can be kept while you open another page of the same site (its dessert or
+  // the "Add New Venue" form. For a venue held in Venue Review it copies the menu and opens that venue's review
+  // issue, where the menu is pasted as a comment. Sections can be kept while you open another page of the same site (its dessert or
   // drinks page) so one form holds them all. On Uber Eats and Postmates only drinks and desserts are ticked to start,
   // because delivery prices for the mains are often marked up.
   // Nothing is sent until you press "Create" on the form.
@@ -358,7 +359,8 @@
     }
     const modeRow = el("label", "display:block;margin:4px 0", "Venue is ");
     const mode = el("select", FIELD);
-    for (const [value, text] of [["edit", "already on the map (Edit a Venue)"], ["add", "new (Add New Venue)"]]) {
+    for (const [value, text] of [["edit", "already on the map (Edit a Venue)"], ["add", "new (Add New Venue)"],
+                                 ["review", "in Venue Review (paste as a comment)"]]) {
       const option = el("option", "", text);
       option.value = value;
       mode.appendChild(option);
@@ -397,13 +399,17 @@
       "\"Keep ticked\" holds them while you open this site's dessert or drinks page and click the bookmark there."));
     document.body.appendChild(panel);
 
+    let shownForCopy = false; // the menu is showing in a box for hand copying, because the clipboard was refused
     const chosen = () => sections.filter((s, i) => boxes[i].checked);
     const refresh = () => {
       const n = chosen().reduce((sum, s) => sum + s.lines.length, 0);
-      const filled = clean(inputs.name.value) && clean(inputs.town.value) && clean(inputs.state.value);
+      // A venue held in review is found by its name alone; the two forms also need the town and state
+      const review = mode.value === "review";
+      const filled = clean(inputs.name.value) && (review || (clean(inputs.town.value) && clean(inputs.state.value)));
       const ok = n >= 6 && filled;
+      go.textContent = shownForCopy ? "Find the review issue" : review ? "Copy menu, find the review issue" : "Open the form";
       status.textContent = n + " prices ticked" + (n < 6 ? " (a form needs at least 6; tick more, or keep these and add another page)" :
-        filled ? "" : " (fill in the restaurant, town and state)");
+        filled ? "" : review ? " (fill in the restaurant)" : " (fill in the restaurant, town and state)");
       status.style.color = ok ? "#137333" : "#b3261e";
       go.disabled = !ok;
       go.style.opacity = ok ? "1" : ".5";
@@ -430,6 +436,37 @@
       const full = chosen().map((s) => "=== " + s.name + " ===\n" + s.lines.join("\n")).join("\n\n");
       const venue = clean(inputs.name.value);
       const where = [clean(inputs.town.value), clean(inputs.state.value)];
+      if (mode.value === "review") {
+        // A venue held for review lives in its own `venue-review` issue, and a menu reaches it as a comment there.
+        // GitHub cannot pre-fill a comment, so the menu goes on the clipboard and the issue is found by name.
+        const words = venue.split(/[^A-Za-z0-9]+/).filter((w) => w.length >= 3).join(" ");
+        const search = "https://github.com/" + REPO + "/issues?" + new URLSearchParams({
+          q: "is:issue is:open label:venue-review in:title " + words }).toString();
+        if (shownForCopy) { window.open(search, "_blank"); panel.remove(); return; }
+        let copied = false;
+        // Copied before the new tab opens: a page may only write to the clipboard while it is the one in front
+        try { await navigator.clipboard.writeText(full); copied = true; } catch (e) { /* shown for hand copying below */ }
+        if (!copied) {
+          const box = el("textarea", "width:100%;height:160px;margin-top:8px;font:12px monospace;color:#222;background:#fff");
+          box.value = full;
+          box.readOnly = true;
+          panel.appendChild(el("div", "margin-top:8px;color:#b3261e;font-weight:600",
+            "Your browser would not copy the menu. Copy it from this box, then press the button again or open the review issue yourself."));
+          panel.appendChild(box);
+          box.focus();
+          box.select();
+          shownForCopy = true;
+          refresh();
+          return;
+        }
+        const win = window.open(search, "_blank");
+        try { localStorage.removeItem(BASKET); } catch (e) { /* nothing kept */ }
+        alert("Date Nite: the menu is on your clipboard. Open the venue's review issue" +
+              (win ? " in the tab that just opened" : " (your browser blocked the new tab; open the repository's venue-review issues)") +
+              ", paste it as a comment and press Comment. The prices in the issue are updated from it; add the approve-venue label to put the venue on the map.");
+        panel.remove();
+        return;
+      }
       const link = (text) => issueLink(mode.value === "edit"
         ? { template: "edit-venue.yml", title: "[Edit Venue]: " + venue, venue_name: venue, town: where[0], state: where[1], menu_text: text }
         : { template: "add-venue.yml", title: "[New Venue]: " + venue, venue_name: venue, address: where.join(", "),
