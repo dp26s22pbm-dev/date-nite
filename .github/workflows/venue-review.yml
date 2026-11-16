@@ -53,7 +53,13 @@ jobs:
             git add -A venues.json venue-review pending-venues excluded-venues.json 2>/dev/null || true
             git diff --cached --quiet && break
             git commit -m "Add approved venues (PR #${{ github.event.pull_request.number }})"
-            git push && break
+            push_out=$(git push 2>&1) && break
+            echo "$push_out"
+            # A 403 is a permissions problem, not a race with another push; retrying cannot fix it
+            if echo "$push_out" | grep -qE "error: 403|Permission to .* denied"; then
+              echo "::error::Push to main was denied (403). Check Settings > Actions > General > Workflow permissions and any rules on main." >&2
+              exit 1
+            fi
             echo "Push rejected (attempt $attempt); starting over from origin/main"
             git fetch origin main
             git reset --hard origin/main
@@ -104,7 +110,13 @@ jobs:
             git add -A venues.json pending-venues 2>/dev/null || true
             git diff --cached --quiet && break
             git commit -m "Add venue from review issue #${{ github.event.issue.number }}"
-            git push && break
+            push_out=$(git push 2>&1) && break
+            echo "$push_out"
+            # A 403 is a permissions problem, not a race with another push; retrying cannot fix it
+            if echo "$push_out" | grep -qE "error: 403|Permission to .* denied"; then
+              echo "::error::Push to main was denied (403). Check Settings > Actions > General > Workflow permissions and any rules on main." >&2
+              exit 1
+            fi
             echo "Push rejected (attempt $attempt); starting over from origin/main"
             git fetch origin main
             git reset --hard origin/main
@@ -141,7 +153,13 @@ jobs:
             git add excluded-venues.json
             git diff --cached --quiet && break
             git commit -m "Exclude venue from review issue #${{ github.event.issue.number }}"
-            git push && break
+            push_out=$(git push 2>&1) && break
+            echo "$push_out"
+            # A 403 is a permissions problem, not a race with another push; retrying cannot fix it
+            if echo "$push_out" | grep -qE "error: 403|Permission to .* denied"; then
+              echo "::error::Push to main was denied (403). Check Settings > Actions > General > Workflow permissions and any rules on main." >&2
+              exit 1
+            fi
             echo "Push rejected (attempt $attempt); starting over from origin/main"
             git fetch origin main
             git reset --hard origin/main
