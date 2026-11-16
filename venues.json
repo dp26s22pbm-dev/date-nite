@@ -4111,5 +4111,23 @@
     "drink": 8.0,
     "dessert": 7.99,
     "tierColor": "#22c55e"
+  },
+  {
+    "id": 234,
+    "name": "zen's Sushi express",
+    "category": "Sushi casual",
+    "city": "Geneva",
+    "state": "IL",
+    "website": "https://www.zensushiexpress.com/",
+    "coords": [
+      -88.278487,
+      41.886882
+    ],
+    "app": 7.99,
+    "casualMain": 12.49,
+    "premiumMain": 20.99,
+    "drink": 8.0,
+    "dessert": 3.29,
+    "tierColor": "#22c55e"
   }
 ]
