@@ -120,6 +120,7 @@ jobs:
             echo "Push rejected (attempt $attempt); starting over from origin/main"
             git fetch origin main
             git reset --hard origin/main
+            [ "$attempt" = 6 ] && { echo "Could not push after 6 attempts" >&2; exit 1; }
           done
           gh issue comment "$ISSUE_NUMBER" --body "Approved. The venue is now in venues.json (or was already on the map)."
           gh issue close "$ISSUE_NUMBER" --reason completed
