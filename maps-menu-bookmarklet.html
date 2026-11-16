@@ -40,18 +40,19 @@
 <ol>
   <li>Open the page that shows the menu with its prices (the menu page itself, or the site's online-ordering page).</li>
   <li>Click <strong>Menu → Date Nite</strong>. A small panel lists the sections it found, with a count of prices in each. Hover over a section to see its first dishes.</li>
-  <li>Tick the sections to send. Check the restaurant, town and state, and say whether the venue is already on the map or new.</li>
+  <li>Tick the sections to send. Check the restaurant, town and state, and say whether the venue is already on the map, new, or in Venue Review.</li>
   <li>Press <strong>Open the form</strong>, then <strong>Create</strong> on the form.</li>
 </ol>
 <ul>
   <li><strong>Menu spread over several pages</strong> (dinner, dessert, drinks): press <strong>Keep ticked, add another page</strong>, open the next page of the same site, and click the bookmark again. The kept sections come along, so one form holds them all.</li>
+  <li><strong>Venue in Venue Review</strong> (held in a <code>venue-review</code> issue, not yet on the map): the button copies the menu and opens that venue's review issue. Paste the menu as a comment there; the issue's prices are updated from it, and adding the <code>approve-venue</code> label puts the venue on the map.</li>
   <li><strong>Venue already on the map:</strong> only the kinds of price the ticked sections cover are changed; the rest keep their saved values.</li>
   <li><strong>Uber Eats, Postmates, DoorDash, Grubhub:</strong> only drinks and desserts are ticked to start, because delivery prices for the mains can run higher than in-store prices.</li>
   <li><strong>A form needs at least 6 prices</strong> between the ticked sections.</li>
 </ul>
 <p class="note">The bookmark cannot read a menu that is a PDF, a picture, or shown inside another site's frame. For those, copy the menu text into the Edit a Venue form by hand, or use the site's online-ordering page.</p>
 <p class="note">Nothing is sent until you press Create. If a site changes its layout the bookmark may stop finding dishes and will say so.</p>
-<p class="note">Installed this bookmark before 16 November 2026? Delete it and drag the button again to get the current version.</p>
+<p class="note">Installed this bookmark before the Venue Review choice was added (after 16 November 2026)? Delete it and drag the button again to get the current version.</p>
 
 <script>
   fetch("maps-menu-bookmarklet.js", { cache: "no-store" })
