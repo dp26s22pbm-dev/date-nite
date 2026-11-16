@@ -3850,12 +3850,14 @@
       41.717846
     ],
     "app": 8.0,
-    "casualMain": 17.0,
-    "premiumMain": 25.0,
+    "casualMain": 16.0,
+    "premiumMain": 24.0,
     "drink": 8.5,
     "dessert": 8.0,
     "tierColor": "#22c55e",
-    "priceSource": "hand"
+    "priceSource": "menu",
+    "lastUpdated": "2026-11-16",
+    "website": "https://tequila-azteca-restaurant.hey-restaurants.com/"
   },
   {
     "id": 220,
