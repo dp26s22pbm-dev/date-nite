@@ -7,7 +7,11 @@ D1: Note
 
 A2 (one cell, paste this formula; it fills the rows below by itself):
 
-={"(none)","","","";IFERROR(QUERY(Sheet1!A2:S,"select E, D, Q, S where E is not null and (lower(Q) = 'yes' or lower(S) contains 'represented' or lower(S) contains 'client' or lower(S) contains 'out of state' or lower(S) contains 'outside' or lower(S) contains 'no longer')",0),{"","","",""})}
+={"(none)","","","";IFERROR(QUERY(Sheet1!A2:S,"select E, D, Q, S where E is not null and (lower(Q) = 'yes' or lower(S) contains 'represented' or lower(S) contains 'client' or lower(S) contains 'out of state' or lower(S) contains 'outside' or lower(S) contains 'no longer')",0),{"","","",""});IFERROR({"(priorDQ)","","",TEXTJOIN("||",TRUE,UNIQUE(FILTER(Sheet1!E2:E,Sheet1!E2:E<>"",REGEXMATCH(LOWER(Sheet1!W2:W&""),"disqualified.*(too large|publicly traded|government ownership|out-of-state hq)"))))},{"","","",""})}
 
-Row 2 is a permanent placeholder, "(none)". It keeps the tab from ever being empty, because Make stops the scenario when a sheet read returns no rows.
-Do not type anything in rows 3 and below. The formula fills them.
+What it produces:
+- Row 2 is a permanent placeholder, "(none)". It keeps the tab from ever being empty, because Make stops the scenario when a sheet read returns no rows.
+- The next rows list employers your tracker marks as firm clients or whose Additional Notes say represented, client, out of state, outside, or no longer.
+- The last row begins "(priorDQ)". Its column D is one long text of employers an earlier week disqualified for size, public ownership, government, or out-of-state HQ, separated by ||.
+Do not type in rows 3 and below. The formula fills them.
+To make the scenario research an employer again, clear that row's Flags cell (column W).
