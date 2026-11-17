@@ -191,4 +191,23 @@ for (const item of finalCases) {
   delete item._researchFailed;
 }
 
-return { cases: finalCases };
+// Run summary for the email step. Conflict-review cases are diverted before this module and are not counted.
+const flagsOf = item => String(item.Flags || '');
+const countOf = test => finalCases.filter(test).length;
+const failed = countOf(item => /Research failed/.test(flagsOf(item)));
+const summary = {
+  total: finalCases.length,
+  recommended: countOf(item => item.recommendOutreach === 'Yes'),
+  disqualified: countOf(item => flagsOf(item).startsWith('Disqualified:')),
+  insufficient: countOf(item => /Insufficient profile/.test(flagsOf(item)) && !/Research failed/.test(flagsOf(item))),
+  researchFailed: failed,
+  recommendedList: finalCases
+    .filter(item => item.recommendOutreach === 'Yes')
+    .map(item => String(item.corporateDefendant || '') + ' (' + String(item.docketNumber || '') + ')')
+    .join('; ') || 'none',
+  alert: failed >= Math.max(3, Math.ceil(finalCases.length * 0.2))
+    ? 'WARNING: research failed on ' + failed + ' of ' + finalCases.length + ' cases. Check the Gemini spend cap and quota, then rerun. '
+    : ''
+};
+
+return { cases: finalCases, summary };
