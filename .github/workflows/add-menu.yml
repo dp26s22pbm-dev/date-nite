@@ -3,6 +3,8 @@ name: Add Menu Prices from Issue Reply
 # A venue whose prices had to be guessed is left open with the "needs-menu" label, and one whose prices look off with
 # the "double-check" label. Replying to either issue with the menu text (select all on the menu page, copy, paste)
 # updates the venue's prices and closes the issue.
+# A closed "[New Venue]" issue also takes a reply with a better menu, with no label needed. Text that is not a readable
+# menu changes nothing and gets a "Could not update" comment.
 # A reply made only of `key: price` lines (app, casualMain, premiumMain, drink, dessert) sets just those prices by hand and
 # keeps the rest as saved.
 on:
@@ -15,7 +17,8 @@ jobs:
     # the bot's own comments
     if: >-
       !github.event.issue.pull_request &&
-      (contains(github.event.issue.labels.*.name, 'needs-menu') || contains(github.event.issue.labels.*.name, 'double-check')) &&
+      (contains(github.event.issue.labels.*.name, 'needs-menu') || contains(github.event.issue.labels.*.name, 'double-check') ||
+       (github.event.issue.state == 'closed' && startsWith(github.event.issue.title, '[New Venue]'))) &&
       contains(fromJSON('["OWNER","MEMBER","COLLABORATOR"]'), github.event.comment.author_association) &&
       github.event.comment.user.type != 'Bot'
     runs-on: ubuntu-latest
@@ -93,7 +96,7 @@ jobs:
           gh issue edit ${{ github.event.issue.number }} --repo ${{ github.repository }} --remove-label double-check || true
           # Comment first and close without --comment: gh skips the comment when the issue is already closed
           gh issue comment ${{ github.event.issue.number }} --repo ${{ github.repository }} --body "${SUMMARY:-✓ Prices updated from your menu.}"
-          gh issue close ${{ github.event.issue.number }} --repo ${{ github.repository }} --reason completed
+          gh issue close ${{ github.event.issue.number }} --repo ${{ github.repository }} --reason completed || true
 
       - name: Report failure on the issue
         if: failure()
