@@ -1,0 +1,59 @@
+[
+  {
+    "name": "Rosebud Steakhouse St. Charles",
+    "category": "Steakhouse",
+    "city": "St. Charles",
+    "state": "IL",
+    "website": "https://www.rosebudsteak.com/",
+    "coords": [
+      -88.273368,
+      41.92262
+    ],
+    "app": 15.0,
+    "casualMain": 26.5,
+    "premiumMain": 57.5,
+    "drink": 15.0,
+    "dessert": 16.0,
+    "tierColor": "#f97316"
+  },
+  {
+    "name": "MalyThai",
+    "category": "Thai Cuisine",
+    "city": "St. Charles",
+    "state": "IL",
+    "website": "http://www.malythai.com/",
+    "coords": [
+      -88.265862,
+      41.920355
+    ],
+    "app": 9.45,
+    "casualMain": 17.95,
+    "premiumMain": 20.45,
+    "drink": 6.5,
+    "dessert": 5.5,
+    "tierColor": "#22c55e",
+    "reviewNotes": [
+      "Most of the premium mains are the same dishes as the casual mains, so the menu may have no separate premium tier (premium main $20.45, casual main $17.95)"
+    ]
+  },
+  {
+    "name": "fire + wine St. Charles",
+    "category": "Modern Italian",
+    "city": "St. Charles",
+    "state": "IL",
+    "website": "https://fireandwine.net/",
+    "coords": [
+      -88.273545,
+      41.922321
+    ],
+    "app": 17.0,
+    "casualMain": 24.0,
+    "premiumMain": 37.0,
+    "drink": 12.0,
+    "dessert": 8.0,
+    "tierColor": "#eab308",
+    "reviewNotes": [
+      "No menu price was found for the dessert, so a typical stand-in was saved"
+    ]
+  }
+]
