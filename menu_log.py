@@ -34,12 +34,13 @@ Steps and results are short fixed words so they can be counted. A result of "ok"
                   limited_view = Google served the signed-out listing, which has no Menu tab. The step runs only when MAPS_MENU=1)
     fetch         http_<code> | guess_404 | bot_challenge | tls_failed | connection_failed | fetch_error | skipped_tls_host | not_a_page
     browser       unavailable | limit | failed | bot_challenge | ok
-    pdf           download_or_parse_error | no_prices | no_casual_main | too_few_prices | partial_pages_merged | ok  (PDF or image menus.
+    pdf           download_or_parse_error | no_prices | no_casual_main | too_few_prices | ok  (PDF or image menus.
                   no_casual_main = a page with prices but no main course, such as a starters page; its prices are kept and merged into
-                  the page with the mains, logged as partial_pages_merged with n = pages merged)
+                  the page with the mains, see page: partial_pages_merged)
     menu_link     google_search_url                                          (a google.com/search or /searchviewer link, which holds no readable menu)
     site_pages    no_menu_page_found | bot_challenge | implausibly_low | ok  (the restaurant's own site; n = pages tried; implausibly_low = prices so low the page is probably template filler, other sources tried first)
-    page          load_more | no_prices_links_followed | duplicate_page      (observations about a page, not failures; duplicate_page = a URL
+    page          load_more | no_prices_links_followed | partial_pages_merged | duplicate_page      (observations about a page, not failures; partial_pages_merged = pages of the site that had prices but no main course
+                  (menu images, PDFs, text pages, tabs) were added to the page that had the mains, n = pages merged; duplicate_page = a URL
                   skipped because it is the same page as one already read: another spelling of the address, a redirect to a page
                   already tried, or a made-up path whose text matches a page that had no prices)
     site_gemini   too_few_prices | lunch_prices_suspected | implausibly_low | error | ok
