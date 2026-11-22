@@ -1375,14 +1375,20 @@ def read_page_pricing(url):
     return pricing_from_menu_text(rendered, require_main=False, where="page_browser", url=url) if rendered else None
 
 def merge_sibling_pages(pricing, candidates, base_url, tried_keys, labels=None):
-    """When the page that supplied the mains left the appetizers or desserts empty, read up to SIBLING_LIMIT other pages the
-    site links to (Maurie's Table splits its menu over /pizza, /sandwiches and /appetizers-salads-more; El Coco Loco has a
-    desserts tab) and merge what they hold. Only pages on the same host that a page linked to (not made-up paths), that
-    are not drink, breakfast or lunch pages (menu_link_score below 0) and not combo or family deals; pages named for a
-    missing category go first, by the words in its address or its link text (labels: url -> link text; a tab called
-    "Appetizers" has no such word in its address). A page that mostly repeats prices already read is skipped. Costs one Gemini call per page,
-    and only for a menu that would otherwise use a stand-in. Returns (pricing, pages merged)."""
-    if not pricing or not _sibling_missing(pricing) or gemini_cap_hit:
+    """Read up to SIBLING_LIMIT other pages the site links to and merge what they hold (Maurie's Table splits its menu over
+    /pizza, /sandwiches and /appetizers-salads-more; El Coco Loco has tabs for appetizers, desserts and several for main
+    courses). Two kinds of page are read:
+    - pages for a missing category: when the page with the mains left the appetizers or desserts empty, pages named for
+      that category go first. They are named by the words in the address or the link text (labels: url -> link text; a tab
+      called "Appetizers" has no such word in its address);
+    - other main-course pages (entree, platter, seafood, steak, chicken, specialt, pasta in the address or link text), read
+      whether or not anything is missing, so the mains come from the menu's main-course tabs and not from whichever one
+      was read first. El Coco Loco's House Specialties tab alone (grill platters for 4 up to $97) gave a $27 casual main;
+      with Seafood / Steak / Chicken and Favorite Mexican Platters it is about $22.
+    Only pages on the same host that a page linked to (not made-up paths), that are not drink, breakfast or lunch pages
+    (menu_link_score below 0) and not combo or family deals. A page that mostly repeats prices already read is skipped.
+    Costs one Gemini call per page, at most SIBLING_LIMIT in all. Returns (pricing, pages merged)."""
+    if not pricing or gemini_cap_hit:
         return pricing, 0
     host = _host(base_url)
     eligible = []
@@ -1392,13 +1398,19 @@ def merge_sibling_pages(pricing, candidates, base_url, tried_keys, labels=None):
             continue
         eligible.append(u)
     eligible = list(dict.fromkeys(eligible))
-    wanted_words = [w for k in _sibling_missing(pricing) for w in SIBLING_HINT_WORDS[k]]
     labels = labels or {}
-    eligible.sort(key=lambda u: not any(w in (u + " " + labels.get(u, "")).lower() for w in wanted_words))  # stable: the rest keep their order
+    text_of = lambda u: (u + " " + labels.get(u, "")).lower()
+    wanted_words = [w for k in _sibling_missing(pricing) for w in SIBLING_HINT_WORDS[k]]
+    is_hinted = lambda u: any(w in text_of(u) for w in wanted_words)
+    is_main = lambda u: any(w in text_of(u) for w in MAIN_COURSE_WORDS)
+    # Pages for a missing category, then the main-course pages, then the rest (read only while something is missing)
+    eligible.sort(key=lambda u: 0 if is_hinted(u) else (1 if is_main(u) else 2))
     merged = read = 0
     for u in eligible:
-        if read >= SIBLING_LIMIT or not _sibling_missing(pricing) or gemini_cap_hit:
+        if read >= SIBLING_LIMIT or gemini_cap_hit:
             break
+        if not (is_main(u) or _sibling_missing(pricing)):
+            continue  # nothing is missing and this is not a main-course page
         read += 1
         tried_keys.add(page_key(u))
         found = read_page_pricing(u)
