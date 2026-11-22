@@ -12,6 +12,7 @@ from html import unescape
 import places_usage
 import menu_log
 import pricing_rules
+import venue_match
 from google import genai
 from google.genai import types
 
@@ -453,6 +454,21 @@ def yelp_menu_url(urls):
             return f"https://www.yelp.com/menu/{m.group(1)}"
     return None
 
+# A Yelp menu page's text opens "<Yelp's name for the place> - Menu - <Town> Yelp ..."
+YELP_TITLE_RE = re.compile(r"^\s*(.{2,120}?) - Menu - (.{2,60}?) Yelp\b")
+
+def yelp_page_is_venue(venue_name, text):
+    """True when a Yelp menu page is for this venue. The venue's name must open the page text exactly (letters and digits
+    only), or match the name in the page's title ("Aurelio's Pizza - Menu - Winfield") the way an Edit Venue name matches a
+    saved one (venue_match.name_score): a town or "of Wheaton" tacked onto our name, "Sushi Yume" for "Yume Sushi" and
+    "catrin" for "catrín" all match, while a different restaurant does not. The log showed six right pages rejected by
+    the exact check alone (Aurelio's, Atlas Chicken, Firewater BBQ, Jameson's Pub, Yume Sushi, Mariscos El Catrin)."""
+    squash = lambda t: re.sub(r"[^a-z0-9]", "", t.lower())
+    if squash(venue_name) in squash(text[:300]):
+        return True
+    m = YELP_TITLE_RE.match(text)
+    return bool(m) and venue_match.name_score(m.group(1), venue_name, m.group(2)) >= venue_match.NAME_THRESHOLD
+
 def pricing_from_yelp_menu(venue_name, urls):
     """Prices read from the venue's Yelp menu page when one of urls (the pages a web search found) points at its Yelp
     listing, else None. The page must name the venue, so a same-named place elsewhere is not used. Yelp can turn a
@@ -465,8 +481,7 @@ def pricing_from_yelp_menu(venue_name, urls):
         menu_log.step("yelp_menu", "not_fetched", url=url)
         return None
     text = html_to_text(got[0].decode("utf-8", "ignore"))
-    squash = lambda t: re.sub(r"[^a-z0-9]", "", t.lower())
-    if squash(venue_name) not in squash(text[:300]):
+    if not yelp_page_is_venue(venue_name, text):
         menu_log.step("yelp_menu", "not_this_venue", url=url)
         return None
     return pricing_from_menu_text(text, where="yelp_menu", url=url)
