@@ -4369,5 +4369,23 @@
     "drink": 9.06,
     "dessert": 7.99,
     "tierColor": "#eab308"
+  },
+  {
+    "id": 248,
+    "name": "El Coco Loco",
+    "category": "Mexican",
+    "city": "West Chicago",
+    "state": "IL",
+    "website": "http://www.cocolocomexicangrill.com/",
+    "coords": [
+      -88.203772,
+      41.883668
+    ],
+    "app": 7.98,
+    "casualMain": 14.5,
+    "premiumMain": 16.5,
+    "drink": 8.0,
+    "dessert": 8.0,
+    "tierColor": "#22c55e"
   }
 ]
