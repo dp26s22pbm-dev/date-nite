@@ -4387,5 +4387,23 @@
     "drink": 8.0,
     "dessert": 8.0,
     "tierColor": "#22c55e"
+  },
+  {
+    "id": 249,
+    "name": "Aurelio's Pizza of Wheaton / Winfield",
+    "category": "Pizza",
+    "city": "Winfield",
+    "state": "IL",
+    "website": "https://www.aureliospizza.com/location/wheaton-winfield-il/",
+    "coords": [
+      -88.148587,
+      41.887513
+    ],
+    "app": 10.75,
+    "casualMain": 18.0,
+    "premiumMain": 27.5,
+    "drink": 9.0,
+    "dessert": 8.0,
+    "tierColor": "#eab308"
   }
 ]
