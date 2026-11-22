@@ -1070,7 +1070,13 @@ MENU_PATHS = ("/menu", "/menus", "/our-menu", "/food-menu", "/food", "/dinner", 
 SKIP_MENU_WORDS = ("get.popmenu.com", "levelaccess.com", "/items/", "/item/", "catering", "kids", "kid-", "party", "banquet", "private", "gift", "event")
 # A file name often says "lunch" for the restaurant's one menu (NWB's only menu link is nwb_..._lunch_menu_....pdf), so
 # these links go to the back of the queue instead of being dropped. The prompt tells Gemini to ignore lunch-only prices.
-SOFT_MENU_WORDS = ("brunch", "lunch", "happy")
+SOFT_MENU_WORDS = ("brunch", "lunch", "happy", "breakfast")
+# Menu tabs and pages that hold the main courses, and ones that hold deals instead. El Coco Loco's menu is a row of tabs
+# (Appetizers, Combo Dinners, Seafood / Steak / Chicken, Desserts ...). "Combo Dinners" scored best because of the word
+# dinner, and its prices ($4 to $17.50, side items among them) gave a $14.50 casual main, while the Seafood / Steak /
+# Chicken tab runs $19.95 to $27.95. Deals rank below the tabs that sell dishes one at a time.
+MAIN_COURSE_WORDS = ("entree", "entrée", "platter", "seafood", "steak", "chicken", "specialt", "pasta")
+DEAL_WORDS = ("combo", "family", "bundle", "value meal", "meal deal")
 
 def link_words_text(url):
     """The part of a link to look for menu words in: its path and query. A link on the restaurant's own domain leaves the
@@ -1082,11 +1088,14 @@ def link_words_text(url):
     return (p.path + " " + p.query).lower()
 
 def menu_link_score(url, label=""):
-    """Rank a candidate menu link: dinner menus first, drink-only and lunch-named menus last. An ordering page ranks with
+    """Rank a candidate menu link: dinner menus and main-course tabs first, combo and family deals lower, drink-only,
+    breakfast and lunch-named menus last. An ordering page ranks with
     a menu page, since a site whose menu page lists dishes without prices shows them on its order page."""
     text = (link_words_text(url) + " " + label).lower()
     return ((3 if "dinner" in text else 0) + (1 if "menu" in text or "order" in text else 0)
-            - (2 if any(w in text for w in ("bar", "drink", "wine", "beer", "cocktail")) else 0)
+            + (2 if any(w in text for w in MAIN_COURSE_WORDS) else 0)
+            - (4 if any(w in text for w in DEAL_WORDS) else 0)
+            - (2 if any(w in text for w in ("bar", "drink", "beverage", "wine", "beer", "cocktail")) else 0)
             - (3 if any(w in text for w in SOFT_MENU_WORDS) else 0))
 
 # Chain sites open on a city picker whose menu sits a level down (/chicago/menu). Links to these are not location pages.
