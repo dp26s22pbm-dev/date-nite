@@ -49,6 +49,8 @@ Steps and results are short fixed words so they can be counted. A result of "ok"
                   casual mains, so they were dropped as misfiled entrees and the stand-in was used; n = how many)
                   premium_overlaps_casual                                    (most premium mains are the same dishes as the casual mains and the
                   medians are within 25%, so the menu has no real premium tier; the venue is flagged for a second look; n = premium items)
+    gemini        cap_reached                                                (Gemini answered 429 RESOURCE_EXHAUSTED "monthly spending cap"; logged once, and every later
+                  Gemini call in the run is skipped, so the steps after it show gemini_error with the detail "spending cap was reached earlier")
     search_claude no_key | error | refused | no_prices | ok         (pages = search results seen; read = pages fetched or cited; searches / fetches = tool uses
                   the API reported, so read=0 with fetches=1 means the fetch ran but returned nothing; tokens_in / tokens_out = API tokens used)
     claude_fetch  failed                                             (a page Claude tried to fetch came back as an error; detail = the API's error code, e.g.
