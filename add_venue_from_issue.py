@@ -536,8 +536,10 @@ def fetch_pdf_pricing(url, mime="application/pdf"):
         clean = response.text.strip().replace("```json", "").replace("```", "")
         data = json.loads(clean)
         found = clean_pricing(data)
-        menu_log.step("pdf", "ok" if found else "no_prices", url=url, mime=mime,
-                      n=sum(len(v) for v in found.values()) if found else 0)
+        # A page of starters or desserts has prices but no main course: logged apart from a page with no prices at all
+        partial = None if found else clean_pricing(data, require_main=False)
+        menu_log.step("pdf", "ok" if found else ("no_casual_main" if partial else "no_prices"), url=url, mime=mime,
+                      n=sum(len(v) for v in (found or partial or {}).values()))
         return data
     except Exception as e:
         print(f"PDF or image fetch/parse error: {e}")
@@ -1235,6 +1237,20 @@ def menu_page_candidates(site, where=""):
         found.append(f"{parsed.scheme}://{parsed.netloc}{path}")
     return list(dict.fromkeys(found))[:14]
 
+PARTIAL_PAGE_MIN_PRICES = 3
+
+def merge_partial_pricing(pricing, partials):
+    """Add the prices from earlier menu pages that had no main course (a starters page, a desserts page of a menu
+    pictured one page per image) to the pricing read from the page that did. Each category's lists are joined, then
+    cleaned again so the usual rules (a lone drink, appetizers above the mains) apply to the whole menu."""
+    if not pricing or not partials:
+        return pricing
+    merged = {k: list(v) for k, v in pricing.items()}
+    for partial in partials:
+        for key, values in partial.items():
+            merged.setdefault(key, []).extend(values)
+    return clean_pricing(merged) or pricing
+
 def page_key(url):
     """A URL with scheme, "www." and a trailing slash removed, so http://x.com/menu and https://www.x.com/menu/ count as
     one page. The query string stays: some sites show a different menu per ?menu_id=."""
@@ -1288,6 +1304,8 @@ def pricing_from_website_menu(site, where=""):
     tried_keys, dead_texts = set(), set()
     # (url, text) of pages that had 1 to 5 prices, so a menu split over several pages can be read together
     thin_pages = []
+    # Prices from menu images that had no main course (starters, desserts); merged into the page that does have mains
+    image_partials = []
     while queue and len(tried) < 16:
         url = queue.pop(0)
         if url in tried:
@@ -1306,7 +1324,12 @@ def pricing_from_website_menu(site, where=""):
         mime = menu_file_mime(url, got[1]) if got else None
         if got and mime:
             # A PDF or an image of the menu (a flyer with no prices simply returns nothing)
-            pricing = clean_pricing(fetch_pdf_pricing(url, mime))
+            data = fetch_pdf_pricing(url, mime)
+            pricing = clean_pricing(data)
+            if not pricing:
+                partial = clean_pricing(data, require_main=False)
+                if partial and sum(len(v) for v in partial.values()) >= PARTIAL_PAGE_MIN_PRICES:
+                    image_partials.append(partial)
             if pricing and sum(len(v) for v in pricing.values()) < 6:
                 menu_log.step("pdf", "too_few_prices", url=url, n=sum(len(v) for v in pricing.values()))
                 pricing = None
@@ -1347,6 +1370,9 @@ def pricing_from_website_menu(site, where=""):
             if not pricing:
                 note_page_text(url, "", rendered, thin_pages, dead_texts)
         if pricing:
+            if image_partials:
+                pricing = merge_partial_pricing(pricing, image_partials)
+                menu_log.step("pdf", "partial_pages_merged", url=url, n=len(image_partials))
             menu_log.step("site_pages", "ok", url=url, n=len(tried))
             return pricing, url
         page, final = RENDERED_HTML.get(url) or ((html, url) if html else (None, None))

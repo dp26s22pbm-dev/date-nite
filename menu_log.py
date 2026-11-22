@@ -34,7 +34,9 @@ Steps and results are short fixed words so they can be counted. A result of "ok"
                   limited_view = Google served the signed-out listing, which has no Menu tab. The step runs only when MAPS_MENU=1)
     fetch         http_<code> | guess_404 | bot_challenge | tls_failed | connection_failed | fetch_error | skipped_tls_host | not_a_page
     browser       unavailable | limit | failed | bot_challenge | ok
-    pdf           download_or_parse_error | no_prices | too_few_prices | ok  (PDF or image menus)
+    pdf           download_or_parse_error | no_prices | no_casual_main | too_few_prices | partial_pages_merged | ok  (PDF or image menus.
+                  no_casual_main = a page with prices but no main course, such as a starters page; its prices are kept and merged into
+                  the page with the mains, logged as partial_pages_merged with n = pages merged)
     menu_link     google_search_url                                          (a google.com/search or /searchviewer link, which holds no readable menu)
     site_pages    no_menu_page_found | bot_challenge | implausibly_low | ok  (the restaurant's own site; n = pages tried; implausibly_low = prices so low the page is probably template filler, other sources tried first)
     page          load_more | no_prices_links_followed | duplicate_page      (observations about a page, not failures; duplicate_page = a URL
