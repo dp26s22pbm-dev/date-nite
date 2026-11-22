@@ -4261,5 +4261,41 @@
     "drink": 22.5,
     "dessert": 13.0,
     "tierColor": "#ef4444"
+  },
+  {
+    "id": 242,
+    "name": "Pietanza's",
+    "category": "Italian / Pizza",
+    "city": "Bartlett",
+    "state": "IL",
+    "website": "http://www.pietanzas.com/",
+    "coords": [
+      -88.206652,
+      41.945676
+    ],
+    "app": 6.0,
+    "casualMain": 13.99,
+    "premiumMain": 18.98,
+    "drink": 8.0,
+    "dessert": 8.0,
+    "tierColor": "#22c55e"
+  },
+  {
+    "id": 243,
+    "name": "Squares Pizza Pub",
+    "category": "American / Pizza",
+    "city": "Bartlett",
+    "state": "IL",
+    "website": "https://www.squarespizzapub.com/",
+    "coords": [
+      -88.205979,
+      41.946695
+    ],
+    "app": 13.0,
+    "casualMain": 17.0,
+    "premiumMain": 19.25,
+    "drink": 13.0,
+    "dessert": 8.0,
+    "tierColor": "#eab308"
   }
 ]
