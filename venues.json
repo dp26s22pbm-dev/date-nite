@@ -4345,11 +4345,11 @@
       -88.140219,
       41.52912
     ],
-    "app": 12.0,
-    "casualMain": 19.0,
-    "premiumMain": 34.0,
-    "drink": 8.5,
-    "dessert": 8.0,
+    "app": 9.29,
+    "casualMain": 21.49,
+    "premiumMain": 31.24,
+    "drink": 10.74,
+    "dessert": 6.99,
     "tierColor": "#eab308"
   },
   {
@@ -4381,12 +4381,12 @@
       -88.203772,
       41.883668
     ],
-    "app": 7.98,
-    "casualMain": 14.5,
-    "premiumMain": 16.5,
-    "drink": 8.0,
+    "app": 13.45,
+    "casualMain": 22.0,
+    "premiumMain": 25.95,
+    "drink": 11.0,
     "dessert": 8.0,
-    "tierColor": "#22c55e"
+    "tierColor": "#eab308"
   },
   {
     "id": 249,
