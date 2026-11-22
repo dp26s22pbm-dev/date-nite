@@ -607,9 +607,11 @@ def clean_pricing(data, require_main=True):
         return out if out["casualMains"] else None
     return out if any(out.values()) else None
 
-def pricing_from_menu_text(text, require_main=True, where="pasted_text", url=None):
+def pricing_from_menu_text(text, require_main=True, where="pasted_text", url=None, partials=None):
     """Parse menu prices out of plain text (a pasted menu or a restaurant's menu page) with Gemini. With
-    require_main=False a partial menu (desserts only, say) is returned with the other categories empty."""
+    require_main=False a partial menu (desserts only, say) is returned with the other categories empty. When partials is a
+    dict and the text has prices but no main course (a starters tab), those prices are saved in it under the page's url,
+    so the caller can merge them into the page that does have mains. Gemini is called once either way."""
     text = (text or "").strip()
     # where: "pasted_text", "page_html" (plain request) or "page_browser" (rendered), for the menu log
     seen = {"url": url, "chars": len(text), "platform": menu_log.platform_of(url or "", text) if url else None}
@@ -629,7 +631,12 @@ def pricing_from_menu_text(text, require_main=True, where="pasted_text", url=Non
             contents=[PDF_PROMPT, "Menu text:\n" + text[:MENU_TEXT_LIMIT]],
         )
         clean = response.text.strip().replace("```json", "").replace("```", "")
-        pricing = clean_pricing(json.loads(clean), require_main)
+        data = json.loads(clean)
+        pricing = clean_pricing(data, require_main)
+        if not pricing and partials is not None and url:
+            partial = clean_pricing(data, require_main=False)
+            if partial and sum(len(v) for v in partial.values()) >= PARTIAL_PAGE_MIN_PRICES:
+                partials[url] = partial  # the browser's text of the same page replaces the plain request's
         menu_log.step(where, "ok" if pricing else "no_casual_main", n=prices, **seen)
         return pricing
     except Exception as e:
@@ -1334,8 +1341,9 @@ def pricing_from_website_menu(site, where=""):
     tried_keys, dead_texts = set(), set()
     # (url, text) of pages that had 1 to 5 prices, so a menu split over several pages can be read together
     thin_pages = []
-    # Prices from menu images that had no main course (starters, desserts); merged into the page that does have mains
-    image_partials = []
+    # Prices from pages (menu images, PDFs, text pages and tabs) that had no main course (starters, desserts), by url;
+    # merged into the page that does have mains
+    page_partials = {}
     while queue and len(tried) < 16:
         url = queue.pop(0)
         if url in tried:
@@ -1359,7 +1367,7 @@ def pricing_from_website_menu(site, where=""):
             if not pricing:
                 partial = clean_pricing(data, require_main=False)
                 if partial and sum(len(v) for v in partial.values()) >= PARTIAL_PAGE_MIN_PRICES:
-                    image_partials.append(partial)
+                    page_partials[url] = partial
             if pricing and sum(len(v) for v in pricing.values()) < 6:
                 menu_log.step("pdf", "too_few_prices", url=url, n=sum(len(v) for v in pricing.values()))
                 pricing = None
@@ -1383,26 +1391,27 @@ def pricing_from_website_menu(site, where=""):
                 print(f"{url} has the same text as a page with no prices; skipping it.")
                 menu_log.step("page", "duplicate_page", url=url)
                 continue
-            pricing = pricing_from_menu_text(text, where="page_html", url=url)
+            pricing = pricing_from_menu_text(text, where="page_html", url=url, partials=page_partials)
             if MORE_RE.search(text):
                 menu_log.step("page", "load_more", url=url)
             if not pricing or MORE_RE.search(text):
                 # Too few prices in the HTML usually means JavaScript draws the menu; a "Load more" control means the
                 # page lists only some of the dishes until it is clicked
                 rendered = render_page_text(url)
-                pricing = (pricing_from_menu_text(rendered, where="page_browser", url=url) if rendered else None) or pricing
+                pricing = (pricing_from_menu_text(rendered, where="page_browser", url=url, partials=page_partials) if rendered else None) or pricing
                 if not pricing:
                     note_page_text(url, text, rendered, thin_pages, dead_texts)
         elif _host(url) in BLOCKED_HOSTS:
             # The site turns away plain requests; a browser may not be
             rendered = render_page_text(url)
-            pricing = pricing_from_menu_text(rendered, where="page_browser", url=url) if rendered else None
+            pricing = pricing_from_menu_text(rendered, where="page_browser", url=url, partials=page_partials) if rendered else None
             if not pricing:
                 note_page_text(url, "", rendered, thin_pages, dead_texts)
         if pricing:
-            if image_partials:
-                pricing = merge_partial_pricing(pricing, image_partials)
-                menu_log.step("pdf", "partial_pages_merged", url=url, n=len(image_partials))
+            page_partials.pop(url, None)  # this page's own earlier read (plain request) is not a separate page
+            if page_partials:
+                pricing = merge_partial_pricing(pricing, list(page_partials.values()))
+                menu_log.step("page", "partial_pages_merged", url=url, n=len(page_partials))
             menu_log.step("site_pages", "ok", url=url, n=len(tried))
             return pricing, url
         page, final = RENDERED_HTML.get(url) or ((html, url) if html else (None, None))
