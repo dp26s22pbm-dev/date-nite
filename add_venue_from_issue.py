@@ -1374,12 +1374,13 @@ def read_page_pricing(url):
     rendered = render_page_text(url)
     return pricing_from_menu_text(rendered, require_main=False, where="page_browser", url=url) if rendered else None
 
-def merge_sibling_pages(pricing, candidates, base_url, tried_keys):
+def merge_sibling_pages(pricing, candidates, base_url, tried_keys, labels=None):
     """When the page that supplied the mains left the appetizers or desserts empty, read up to SIBLING_LIMIT other pages the
     site links to (Maurie's Table splits its menu over /pizza, /sandwiches and /appetizers-salads-more; El Coco Loco has a
     desserts tab) and merge what they hold. Only pages on the same host that a page linked to (not made-up paths), that
     are not drink, breakfast or lunch pages (menu_link_score below 0) and not combo or family deals; pages named for a
-    missing category go first. A page that mostly repeats prices already read is skipped. Costs one Gemini call per page,
+    missing category go first, by the words in its address or its link text (labels: url -> link text; a tab called
+    "Appetizers" has no such word in its address). A page that mostly repeats prices already read is skipped. Costs one Gemini call per page,
     and only for a menu that would otherwise use a stand-in. Returns (pricing, pages merged)."""
     if not pricing or not _sibling_missing(pricing) or gemini_cap_hit:
         return pricing, 0
@@ -1392,7 +1393,8 @@ def merge_sibling_pages(pricing, candidates, base_url, tried_keys):
         eligible.append(u)
     eligible = list(dict.fromkeys(eligible))
     wanted_words = [w for k in _sibling_missing(pricing) for w in SIBLING_HINT_WORDS[k]]
-    eligible.sort(key=lambda u: not any(w in u.lower() for w in wanted_words))  # stable: the rest keep their order
+    labels = labels or {}
+    eligible.sort(key=lambda u: not any(w in (u + " " + labels.get(u, "")).lower() for w in wanted_words))  # stable: the rest keep their order
     merged = read = 0
     for u in eligible:
         if read >= SIBLING_LIMIT or not _sibling_missing(pricing) or gemini_cap_hit:
@@ -1480,6 +1482,10 @@ def pricing_from_website_menu(site, where=""):
     # Prices from pages (menu images, PDFs, text pages and tabs) that had no main course (starters, desserts), by url;
     # merged into the page that does have mains
     page_partials = {}
+    # Every menu link found on pages that had no prices, not only the 6 followed next. The sibling step looks here too: El Coco
+    # Loco's desserts tab was the 10th link on its menu page, past the cut, so a missing dessert price could not be filled.
+    hub_links = []
+    link_labels = {}  # url -> the text of the link that led to it
     while queue and len(tried) < 16:
         url = queue.pop(0)
         if url in tried:
@@ -1552,15 +1558,19 @@ def pricing_from_website_menu(site, where=""):
             if page_partials:
                 pricing = merge_partial_pricing(pricing, list(page_partials.values()))
                 menu_log.step("page", "partial_pages_merged", url=url, n=len(page_partials))
-            pricing, _ = merge_sibling_pages(pricing, [u for u in queue if u not in tried], url, tried_keys)
+            pricing, _ = merge_sibling_pages(pricing, [u for u in dict.fromkeys(queue + hub_links) if u not in tried], url, tried_keys, link_labels)
             menu_log.step("site_pages", "ok", url=url, n=len(tried))
             return pricing, url
         page, final = RENDERED_HTML.get(url) or ((html, url) if html else (None, None))
         if page:
             hosts = {_host(site), _host(url), _host(final)}
-            links = [u for u, _ in sorted(dict.fromkeys(prefer_local_ordering(menu_links_from_page(page, final, hosts), where)), key=lambda c: -menu_link_score(*c))]
+            pairs = sorted(dict.fromkeys(prefer_local_ordering(menu_links_from_page(page, final, hosts), where)), key=lambda c: -menu_link_score(*c))
+            for u, label in pairs:
+                link_labels.setdefault(u, label.strip())
+            links = [u for u, _ in pairs]
             # A page that shows its menu as a picture has no prices to read as text; the picture goes first
             links = menu_images_from_page(page, final) + links
+            hub_links.extend(u for u in links if u not in hub_links)
             new = [u for u in links if u not in tried and u not in queue][:6]
             if new:
                 print(f"{url} has no prices; trying the menu links on it: {new}")
