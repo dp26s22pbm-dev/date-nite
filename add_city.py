@@ -360,7 +360,10 @@ def price_and_keep(ranked, work_dir, venues_file, count=COUNT, max_priced=MAX_PR
         venue = venues[-1]
         # A venue with no menu or web-search prices only has the importer's typical defaults, which look like real
         # prices on the map. It is listed under Skipped instead; the Add Venue form can add it once someone has the menu.
-        if outputs.get("prices_found") == "false":
+        if outputs.get("prices_found") == "false" and outputs.get("gemini_cap") == "true":
+            reason = ("**Gemini's monthly spending cap was reached**, so the menu could not be read. Nothing is wrong with the venue. "
+                      "Raise the cap (or wait for it to reset), then add it with the Add Venue form")
+        elif outputs.get("prices_found") == "false":
             reason = "no prices could be found, so only typical defaults were possible. Add it with the Add Venue form and the menu text"
             backup = outputs.get("claude_backup", "")
             if backup.startswith("ran:"):

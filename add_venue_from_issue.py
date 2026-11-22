@@ -21,7 +21,47 @@ try:
 except ImportError:
     sync_playwright = None
 
-client = genai.Client(api_key=os.environ.get("GEMINI_API_KEY", ""))
+class GeminiCapReached(Exception):
+    """Gemini refused a call because the project's spending cap is used up. Raised for every later call in the run
+    without contacting Gemini, so the other sources are tried without each one waiting on a call that cannot work."""
+
+# True once Gemini has answered "monthly spending cap" (HTTP 429 RESOURCE_EXHAUSTED). A per-minute rate limit uses the same
+# status but a different message, and does not set it.
+gemini_cap_hit = False
+
+def is_gemini_cap_error(error):
+    text = str(error).lower()
+    return "resource_exhausted" in text and ("spending cap" in text or "spend cap" in text)
+
+class _CapGuardedModels:
+    """client.models, with generate_content stopped after the spending cap is seen. Nov 15: 16 of 99 imports each made
+    dozens of calls that all failed with the cap, and ended with estimates or nothing without saying why."""
+    def __init__(self, models):
+        self._models = models
+
+    def generate_content(self, *args, **kwargs):
+        global gemini_cap_hit
+        if gemini_cap_hit:
+            raise GeminiCapReached("Gemini's monthly spending cap was reached earlier in this run")
+        try:
+            return self._models.generate_content(*args, **kwargs)
+        except Exception as e:
+            if is_gemini_cap_error(e):
+                gemini_cap_hit = True
+                print("Gemini's monthly spending cap is used up; no more Gemini calls will be made in this run.")
+                menu_log.step("gemini", "cap_reached", detail=e)
+            raise
+
+class _CapGuardedClient:
+    def __init__(self, client):
+        self._client = client
+        # menu_prices.py stubs the client with None, since it never calls Gemini
+        self.models = _CapGuardedModels(getattr(client, "models", None))
+
+    def __getattr__(self, name):
+        return getattr(self._client, name)
+
+client = _CapGuardedClient(genai.Client(api_key=os.environ.get("GEMINI_API_KEY", "")))
 
 # Scope rules shared by every pricing prompt. Each one closes a way the wrong menu has been read before:
 # catering trays, lunch-only prices, fixed-price packages and invented numbers.
@@ -2203,6 +2243,10 @@ def main():
         return text[:1].upper() + text[1:]
 
     lines = [f"### ✅ {name} was added to the map", ""]
+    if gemini_cap_hit:
+        lines += ["> **Gemini's monthly spending cap was reached during this run.** Menu pages and files could not be read, so "
+                  "the prices below are not from the restaurant's menu. Raise the cap in AI Studio (or wait for it to reset), "
+                  "then close and reopen this issue to read the menu again.", ""]
     lines.append(f"- **Cuisine:** {category}" + (" (best guess; edit venues.json if it is off)" if category_guessed else ""))
     lines.append("- **Location:** " + ("exact" if coords_exact else
                  "approximate, from the address. Send a share link of the place's page or exact coordinates to fix it"))
@@ -2248,6 +2292,8 @@ def main():
     if claude_backup_result:
         set_output("claude_backup", f"{claude_backup_result}:{claude_found_nothing_pages}")  # read by add_city.py for its Skipped lines
     set_output("prices_found", "true" if pricing and pricing.get("casualMains") else "false")  # false: only the typical defaults were saved
+    if gemini_cap_hit:
+        set_output("gemini_cap", "true")  # read by add_city.py so a skipped venue says why
     # The menu log: what was read, from where, and what the importer had to invent. See menu_log.py.
     found_prices = bool(pricing and pricing.get("casualMains"))
     from_search = str(pricing_source).startswith("a web search")
