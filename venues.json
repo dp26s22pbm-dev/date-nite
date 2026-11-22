@@ -4315,5 +4315,23 @@
     "drink": 7.5,
     "dessert": 5.62,
     "tierColor": "#22c55e"
+  },
+  {
+    "id": 245,
+    "name": "Hamburgerseria",
+    "category": "Burgers",
+    "city": "Joliet",
+    "state": "IL",
+    "website": "http://hamburgerseria.com/",
+    "coords": [
+      -88.161578,
+      41.540511
+    ],
+    "app": 6.6,
+    "casualMain": 12.0,
+    "premiumMain": 18.0,
+    "drink": 8.0,
+    "dessert": 8.0,
+    "tierColor": "#22c55e"
   }
 ]
