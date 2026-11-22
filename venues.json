@@ -4333,5 +4333,23 @@
     "drink": 8.0,
     "dessert": 8.0,
     "tierColor": "#22c55e"
+  },
+  {
+    "id": 246,
+    "name": "Maurie's Table",
+    "category": "Pizza / Pub",
+    "city": "Joliet",
+    "state": "IL",
+    "website": "https://www.mauriestable.com/",
+    "coords": [
+      -88.140219,
+      41.52912
+    ],
+    "app": 12.0,
+    "casualMain": 19.0,
+    "premiumMain": 34.0,
+    "drink": 8.5,
+    "dessert": 8.0,
+    "tierColor": "#eab308"
   }
 ]
