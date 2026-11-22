@@ -1235,16 +1235,68 @@ def menu_page_candidates(site, where=""):
         found.append(f"{parsed.scheme}://{parsed.netloc}{path}")
     return list(dict.fromkeys(found))[:14]
 
+def page_key(url):
+    """A URL with scheme, "www." and a trailing slash removed, so http://x.com/menu and https://www.x.com/menu/ count as
+    one page. The query string stays: some sites show a different menu per ?menu_id=."""
+    p = urllib.parse.urlparse(url)
+    return p.netloc.lower().removeprefix("www.") + (p.path.rstrip("/") or "") + ("?" + p.query if p.query else "")
+
+def combine_thin_pages(pages):
+    """Join the text of pages that each had a few prices (a menu split across Food, Drinks and Dessert pages, each below
+    the 6-price floor) into one text. Pages with the same text are kept once, and so is any long line (a dish
+    description, a heading) that two pages share, so a header or footer repeated on every page is not read twice.
+    pages is a list of (url, text)."""
+    out, seen_pages, seen_lines = [], set(), set()
+    for url, text in pages:
+        key = re.sub(r"\s+", " ", text).strip()
+        if not key or key in seen_pages:
+            continue
+        seen_pages.add(key)
+        lines = []
+        for line in text.splitlines() or [text]:
+            norm = re.sub(r"\s+", " ", line).strip().lower()
+            if len(norm) > 25:
+                if norm in seen_lines:
+                    continue
+                seen_lines.add(norm)
+            lines.append(line)
+        out.append("\n".join(lines))
+    return "\n\n".join(out)
+
+THIN_PAGE_LIMIT = 6
+
+def note_page_text(url, html_text, rendered, thin_pages, dead_texts):
+    """Remember what a page that gave no pricing looked like. One with 1 to 5 prices joins thin_pages (up to
+    THIN_PAGE_LIMIT) for reading together later; one with none even after rendering is recorded in dead_texts, so a
+    made-up path that returns the same text is not rendered again (short script shells excluded). Uses the text with the most prices."""
+    best = max([t for t in (html_text, rendered) if t] or [""], key=price_count)
+    n = price_count(best) if best else 0
+    if n == 0:
+        # A short page is probably a script shell whose text is the same on every route and whose menu only shows once
+        # rendered, so only a page with real text counts as dead
+        if len(html_text) >= 1000:
+            dead_texts.add(html_text)
+    elif n < 6 and len(thin_pages) < THIN_PAGE_LIMIT:
+        thin_pages.append((url, best))
+
 def pricing_from_website_menu(site, where=""):
     """Try the restaurant's own menu pages (HTML or PDF). A page with no prices (a menu hub that links to Food and
     Drinks pages) is mined for menu links, which are tried next. Returns (pricing, url) or (None, None)."""
     queue = menu_page_candidates(site, where)
     tried = set()
+    # page_key of every page already read (or redirected to), and the plain text of pages that had no prices once rendered
+    tried_keys, dead_texts = set(), set()
+    # (url, text) of pages that had 1 to 5 prices, so a menu split over several pages can be read together
+    thin_pages = []
     while queue and len(tried) < 16:
         url = queue.pop(0)
         if url in tried:
             continue
+        if page_key(url) in tried_keys:
+            menu_log.step("page", "duplicate_page", url=url)
+            continue
         tried.add(url)
+        tried_keys.add(page_key(url))
         if _host(url) in CHALLENGED_HOSTS:
             continue  # the site shows a bot check on every page; ordering platforms it links to are still tried
         if browser_launches >= BROWSER_LIMIT and _host(url) in BLOCKED_HOSTS:
@@ -1265,6 +1317,19 @@ def pricing_from_website_menu(site, where=""):
         elif got:
             html = got[0].decode("utf-8", "ignore")
             text = html_to_text(html)
+            final_key = page_key(got[2])
+            if final_key != page_key(url):
+                # A made-up path the site redirects elsewhere (often to its home page). That page was already read, or
+                # has the same text as a page that had no prices, so another browser launch would learn nothing.
+                if final_key in tried_keys or (is_guessed_menu_path(url) and text in dead_texts):
+                    print(f"{url} redirects to {got[2]}, which was already read; skipping it.")
+                    menu_log.step("page", "duplicate_page", url=url)
+                    continue
+                tried_keys.add(final_key)
+            elif is_guessed_menu_path(url) and text in dead_texts:
+                print(f"{url} has the same text as a page with no prices; skipping it.")
+                menu_log.step("page", "duplicate_page", url=url)
+                continue
             pricing = pricing_from_menu_text(text, where="page_html", url=url)
             if MORE_RE.search(text):
                 menu_log.step("page", "load_more", url=url)
@@ -1273,10 +1338,14 @@ def pricing_from_website_menu(site, where=""):
                 # page lists only some of the dishes until it is clicked
                 rendered = render_page_text(url)
                 pricing = (pricing_from_menu_text(rendered, where="page_browser", url=url) if rendered else None) or pricing
+                if not pricing:
+                    note_page_text(url, text, rendered, thin_pages, dead_texts)
         elif _host(url) in BLOCKED_HOSTS:
             # The site turns away plain requests; a browser may not be
             rendered = render_page_text(url)
             pricing = pricing_from_menu_text(rendered, where="page_browser", url=url) if rendered else None
+            if not pricing:
+                note_page_text(url, "", rendered, thin_pages, dead_texts)
         if pricing:
             menu_log.step("site_pages", "ok", url=url, n=len(tried))
             return pricing, url
@@ -1291,6 +1360,15 @@ def pricing_from_website_menu(site, where=""):
                 print(f"{url} has no prices; trying the menu links on it: {new}")
                 menu_log.step("page", "no_prices_links_followed", url=url, links=len(new), platform=menu_log.platform_of(final, page))
                 queue = new + queue
+    # No single page had enough prices. A menu split over Food, Drinks and Dessert pages may have enough between them.
+    if len(thin_pages) >= 2:
+        combined = combine_thin_pages(thin_pages)
+        if price_count(combined) >= 6:
+            print(f"No page had 6 prices alone; reading {len(thin_pages)} short pages together.")
+            pricing = pricing_from_menu_text(combined, where="page_combined", url=site)
+            if pricing:
+                menu_log.step("site_pages", "ok", url=site, n=len(tried), pages=len(thin_pages))
+                return pricing, thin_pages[0][0]
     menu_log.step("site_pages", "bot_challenge" if _host(site) in CHALLENGED_HOSTS else "no_menu_page_found", url=site, n=len(tried))
     return None, None
 
