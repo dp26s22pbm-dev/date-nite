@@ -1,0 +1,43 @@
+[
+  {
+    "name": "Pietanza's",
+    "category": "Italian / Pizza",
+    "city": "Bartlett",
+    "state": "IL",
+    "website": "http://www.pietanzas.com/",
+    "coords": [
+      -88.206652,
+      41.945676
+    ],
+    "app": 6.0,
+    "casualMain": 13.99,
+    "premiumMain": 18.98,
+    "drink": 8.0,
+    "dessert": 8.0,
+    "tierColor": "#22c55e",
+    "reviewNotes": [
+      "No menu price was found for the dessert, so a typical stand-in was saved"
+    ]
+  },
+  {
+    "name": "Squares Pizza Pub",
+    "category": "American / Pizza",
+    "city": "Bartlett",
+    "state": "IL",
+    "website": "https://www.squarespizzapub.com/",
+    "coords": [
+      -88.205979,
+      41.946695
+    ],
+    "app": 13.0,
+    "casualMain": 17.0,
+    "premiumMain": 19.25,
+    "drink": 13.0,
+    "dessert": 8.0,
+    "tierColor": "#eab308",
+    "reviewNotes": [
+      "No menu price was found for the dessert, so a typical stand-in was saved",
+      "Most of the premium mains are the same dishes as the casual mains, so the menu may have no separate premium tier (premium main $19.25, casual main $17.0)"
+    ]
+  }
+]
