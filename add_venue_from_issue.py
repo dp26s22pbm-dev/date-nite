@@ -1181,7 +1181,7 @@ def menu_links_from_page(page, base_url, hosts):
                                               or any(w in text for w in DISH_LINK_WORDS))
         if not (is_menu_link or is_dish_link):
             continue
-        if any(w in (url + " " + text).lower() for w in SKIP_MENU_WORDS):
+        if any(w in (url + " " + text).lower() for w in SKIP_MENU_WORDS) or is_error_redirect_url(url):
             continue
         p = urllib.parse.urlparse(url)
         netloc = p.netloc.lower().removeprefix("www.")
@@ -1407,6 +1407,15 @@ def merge_sibling_pages(pricing, candidates, base_url, tried_keys):
         menu_log.step("page", "sibling_pages_merged", url=base_url, n=merged, pages=read)
     return pricing, merged
 
+# Query parameters a server adds when it sends a missing page to its home page (ASP.NET: /?aspxerrorpath=/menu). The page is
+# the home page again, whatever follows.
+ERROR_REDIRECT_QUERY_WORDS = ("error", "404", "notfound", "not_found")
+
+def is_error_redirect_url(url):
+    """True for a URL whose query says the site redirected a missing page here (?aspxerrorpath=/menu)."""
+    names = [n.lower() for n, _ in urllib.parse.parse_qsl(urllib.parse.urlparse(url).query, keep_blank_values=True)]
+    return any(w in n for n in names for w in ERROR_REDIRECT_QUERY_WORDS)
+
 def page_key(url):
     """A URL with scheme, "www." and a trailing slash removed, so http://x.com/menu and https://www.x.com/menu/ count as
     one page. The query string stays: some sites show a different menu per ?menu_id=."""
@@ -1458,6 +1467,14 @@ def pricing_from_website_menu(site, where=""):
     tried = set()
     # page_key of every page already read (or redirected to), and the plain text of pages that had no prices once rendered
     tried_keys, dead_texts = set(), set()
+    # page_key of pages already logged as a duplicate or error redirect, so a URL that keeps being re-queued is logged once
+    noted = set()
+
+    def note_skip(url, result):
+        key = (result, page_key(url))
+        if key not in noted:
+            noted.add(key)
+            menu_log.step("page", result, url=url)
     # (url, text) of pages that had 1 to 5 prices, so a menu split over several pages can be read together
     thin_pages = []
     # Prices from pages (menu images, PDFs, text pages and tabs) that had no main course (starters, desserts), by url;
@@ -1467,8 +1484,11 @@ def pricing_from_website_menu(site, where=""):
         url = queue.pop(0)
         if url in tried:
             continue
+        if is_error_redirect_url(url):
+            note_skip(url, "error_redirect")
+            continue
         if page_key(url) in tried_keys:
-            menu_log.step("page", "duplicate_page", url=url)
+            note_skip(url, "duplicate_page")
             continue
         tried.add(url)
         tried_keys.add(page_key(url))
@@ -1501,14 +1521,15 @@ def pricing_from_website_menu(site, where=""):
             if final_key != page_key(url):
                 # A made-up path the site redirects elsewhere (often to its home page). That page was already read, or
                 # has the same text as a page that had no prices, so another browser launch would learn nothing.
-                if final_key in tried_keys or (is_guessed_menu_path(url) and text in dead_texts):
+                already_read = final_key in tried_keys
+                tried_keys.add(final_key)  # also when skipping: a later link to that address is the same page
+                if already_read or (is_guessed_menu_path(url) and text in dead_texts):
                     print(f"{url} redirects to {got[2]}, which was already read; skipping it.")
-                    menu_log.step("page", "duplicate_page", url=url)
+                    note_skip(url, "duplicate_page")
                     continue
-                tried_keys.add(final_key)
             elif is_guessed_menu_path(url) and text in dead_texts:
                 print(f"{url} has the same text as a page with no prices; skipping it.")
-                menu_log.step("page", "duplicate_page", url=url)
+                note_skip(url, "duplicate_page")
                 continue
             pricing = pricing_from_menu_text(text, where="page_html", url=url, partials=page_partials)
             if MORE_RE.search(text):

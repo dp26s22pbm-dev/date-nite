@@ -39,12 +39,13 @@ Steps and results are short fixed words so they can be counted. A result of "ok"
                   the page with the mains, see page: partial_pages_merged)
     menu_link     google_search_url                                          (a google.com/search or /searchviewer link, which holds no readable menu)
     site_pages    no_menu_page_found | bot_challenge | implausibly_low | ok  (the restaurant's own site; n = pages tried; implausibly_low = prices so low the page is probably template filler, other sources tried first)
-    page          load_more | no_prices_links_followed | partial_pages_merged | sibling_pages_merged | duplicate_page      (observations about a page, not failures; partial_pages_merged = pages of the site that had prices but no main course
+    page          load_more | no_prices_links_followed | partial_pages_merged | sibling_pages_merged | duplicate_page | error_redirect      (observations about a page, not failures; partial_pages_merged = pages of the site that had prices but no main course
                   (menu images, PDFs, text pages, tabs) were added to the page that had the mains, n = pages merged;
                   sibling_pages_merged = the page with the mains had no appetizers or desserts, so up to 3 other linked menu pages were
                   read; n = pages merged, pages = pages read; duplicate_page = a URL
                   skipped because it is the same page as one already read: another spelling of the address, a redirect to a page
-                  already tried, or a made-up path whose text matches a page that had no prices)
+                  already tried, or a made-up path whose text matches a page that had no prices; logged once per page;
+                  error_redirect = a URL whose query says the site sent a missing page here, as in /?aspxerrorpath=/menu, never read)
     site_gemini   too_few_prices | lunch_prices_suspected | implausibly_low | error | ok
     search_gemini error | no_sources | ok
     prices        apps_above_casual                                          (a note on the prices read, from any source: the appetizers cost more than the
