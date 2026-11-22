@@ -4351,5 +4351,23 @@
     "drink": 8.5,
     "dessert": 8.0,
     "tierColor": "#eab308"
+  },
+  {
+    "id": 247,
+    "name": "Hawthorne's Backyard",
+    "category": "American / Bar & Grill",
+    "city": "West Chicago",
+    "state": "IL",
+    "website": "http://hawthornesbackyard.com/",
+    "coords": [
+      -88.225249,
+      41.899352
+    ],
+    "app": 11.62,
+    "casualMain": 18.12,
+    "premiumMain": 24.5,
+    "drink": 9.06,
+    "dessert": 7.99,
+    "tierColor": "#eab308"
   }
 ]
