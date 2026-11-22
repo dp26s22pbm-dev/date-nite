@@ -1049,6 +1049,11 @@ def pricing_from_google_maps_menu(name, where, maps_url="", place_id=""):
     return pricing_from_menu_text(text, where="maps_menu", url=url) if text else None
 
 MENU_LINK_WORDS = ("menu", "food", "dine", "dining", "drink", "order", "eat", "lunch", "dinner", "brunch")
+# Some sites split the menu over pages named for what they sell and never say "menu" (Maurie's Table: /pizza, /sandwiches,
+# /appetizers-salads-more under an "Our Food" dropdown). A link with one of these words counts as a menu link, but only
+# the first DISH_LINK_LIMIT of them are kept, so a site with a page per pizza does not crowd out the guessed menu paths.
+DISH_LINK_WORDS = ("pizza", "sandwich", "appetizer", "starter", "entree", "burger", "pasta", "salad")
+DISH_LINK_LIMIT = 4
 ORDERING_HOSTS = ("toasttab.com", "toast.app","chownow.com", "square.site", "olo.com", "popmenu.com", "order.online", "ordering.", "menus.",
                   "orderexperience.net", "alohaorderonline.com")
 MENU_PATHS = ("/menu", "/menus", "/our-menu", "/food-menu", "/food", "/dinner", "/dinner-menu", "/dining", "/order", "/order-online")
@@ -1109,12 +1114,16 @@ def menu_links_from_page(page, base_url, hosts):
     platform or a PDF."""
     found = [(u, label) for u, label in embedded_nav_links(page)
              if not any(w in (u + " " + label).lower() for w in SKIP_MENU_WORDS)]
+    dish_found = []
     # Links a script builds as text ("/menu/' + tmgmenu + '") sit inside <script> blocks and point nowhere real
     page = re.sub(r"(?is)<script\b.*?</script>", "", page)
     for href, label in ANCHOR_RE.findall(page):
         text = re.sub(r"<[^>]+>", "", label).lower()
         url = urllib.parse.urljoin(base_url, unescape(href).split("#")[0])
-        if not (any(w in link_words_text(url) for w in MENU_LINK_WORDS) or any(w in text for w in MENU_LINK_WORDS)):
+        is_menu_link = any(w in link_words_text(url) for w in MENU_LINK_WORDS) or any(w in text for w in MENU_LINK_WORDS)
+        is_dish_link = not is_menu_link and (any(w in link_words_text(url) for w in DISH_LINK_WORDS)
+                                              or any(w in text for w in DISH_LINK_WORDS))
+        if not (is_menu_link or is_dish_link):
             continue
         if any(w in (url + " " + text).lower() for w in SKIP_MENU_WORDS):
             continue
@@ -1123,7 +1132,13 @@ def menu_links_from_page(page, base_url, hosts):
         # Menu PDFs are often served from a CDN rather than the restaurant's own domain
         is_pdf = p.path.lower().endswith(".pdf")
         if p.scheme in ("http", "https") and (netloc in hosts or any(h in netloc for h in ORDERING_HOSTS) or is_pdf):
-            found.append((url, text))
+            (dish_found if is_dish_link else found).append((url, text))
+    # Dish-named pages go after the real menu links, and only a few of them
+    seen_dish = set()
+    for link in dish_found:
+        if link[0] not in seen_dish and len(seen_dish) < DISH_LINK_LIMIT:
+            seen_dish.add(link[0])
+            found.append(link)
     return found
 
 def prefer_local_ordering(links, where):
