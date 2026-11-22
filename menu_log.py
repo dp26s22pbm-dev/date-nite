@@ -23,6 +23,7 @@ One record per venue per importer run:
     steps                               every attempt in order: {step, result, url, host, detail, n, platform, chars}
 
 Steps and results are short fixed words so they can be counted. A result of "ok" is a success; anything else is a reason:
+    page_combined too_few_prices | gemini_error | no_casual_main | ok        (the short pages of a site read together, each had under 6 prices)
     pasted_text   binary | too_few_prices | gemini_error | no_casual_main | ok
     page_html     too_few_prices | gemini_error | no_casual_main | ok        (a page read with a plain request)
     page_browser  too_few_prices | gemini_error | no_casual_main | ok        (a page read with a headless browser)
@@ -36,7 +37,9 @@ Steps and results are short fixed words so they can be counted. A result of "ok"
     pdf           download_or_parse_error | no_prices | too_few_prices | ok  (PDF or image menus)
     menu_link     google_search_url                                          (a google.com/search or /searchviewer link, which holds no readable menu)
     site_pages    no_menu_page_found | bot_challenge | implausibly_low | ok  (the restaurant's own site; n = pages tried; implausibly_low = prices so low the page is probably template filler, other sources tried first)
-    page          load_more | no_prices_links_followed                       (observations about a page, not failures)
+    page          load_more | no_prices_links_followed | duplicate_page      (observations about a page, not failures; duplicate_page = a URL
+                  skipped because it is the same page as one already read: another spelling of the address, a redirect to a page
+                  already tried, or a made-up path whose text matches a page that had no prices)
     site_gemini   too_few_prices | lunch_prices_suspected | implausibly_low | error | ok
     search_gemini error | no_sources | ok
     prices        apps_above_casual                                          (a note on the prices read, from any source: the appetizers cost more than the
