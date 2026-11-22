@@ -1337,6 +1337,76 @@ def merge_partial_pricing(pricing, partials):
             merged.setdefault(key, []).extend(values)
     return clean_pricing(merged) or pricing
 
+SIBLING_LIMIT = 3
+# Words in a menu page's address that name the category a menu is missing; pages with them are read first
+SIBLING_HINT_WORDS = {"apps": ("appetizer", "starter", "small-plate", "tapas"), "desserts": ("dessert", "sweet")}
+
+def _sibling_missing(pricing):
+    return [k for k in ("apps", "desserts") if not pricing.get(k)]
+
+def _mostly_seen(pricing, other):
+    """True when most of other's prices are ones pricing already has: the same dishes listed again (a page that repeats
+    the whole menu, a tab showing everything), which would be counted twice."""
+    have = sorted(v for vals in pricing.values() for v in vals)
+    theirs = [v for vals in other.values() for v in vals]
+    if not theirs:
+        return True
+    hits = 0
+    for v in theirs:
+        if v in have:
+            have.remove(v)
+            hits += 1
+    return hits / len(theirs) >= 0.8
+
+def read_page_pricing(url):
+    """Prices on one menu page of any kind (HTML, rendered, PDF or image), with or without a main course, or None.
+    Plain request first, then a browser, the same order the main loop uses."""
+    got = fetch_url(url, with_url=True)
+    if got:
+        mime = menu_file_mime(url, got[1])
+        if mime:
+            return clean_pricing(fetch_pdf_pricing(url, mime), require_main=False)
+        if got[1] and not re.search(r"text|html|xml|json", got[1], re.I):
+            return None
+        found = pricing_from_menu_text(html_to_text(got[0].decode("utf-8", "ignore")), require_main=False, where="page_html", url=url)
+        if found:
+            return found
+    rendered = render_page_text(url)
+    return pricing_from_menu_text(rendered, require_main=False, where="page_browser", url=url) if rendered else None
+
+def merge_sibling_pages(pricing, candidates, base_url, tried_keys):
+    """When the page that supplied the mains left the appetizers or desserts empty, read up to SIBLING_LIMIT other pages the
+    site links to (Maurie's Table splits its menu over /pizza, /sandwiches and /appetizers-salads-more; El Coco Loco has a
+    desserts tab) and merge what they hold. Only pages on the same host that a page linked to (not made-up paths), that
+    are not drink, breakfast or lunch pages (menu_link_score below 0) and not combo or family deals; pages named for a
+    missing category go first. A page that mostly repeats prices already read is skipped. Costs one Gemini call per page,
+    and only for a menu that would otherwise use a stand-in. Returns (pricing, pages merged)."""
+    if not pricing or not _sibling_missing(pricing) or gemini_cap_hit:
+        return pricing, 0
+    host = _host(base_url)
+    eligible = []
+    for u in candidates:
+        if (_host(u) != host or is_guessed_menu_path(u) or page_key(u) in tried_keys or page_key(u) == page_key(base_url)
+                or menu_link_score(u) < 0 or any(w in u.lower() for w in DEAL_WORDS)):
+            continue
+        eligible.append(u)
+    eligible = list(dict.fromkeys(eligible))
+    wanted_words = [w for k in _sibling_missing(pricing) for w in SIBLING_HINT_WORDS[k]]
+    eligible.sort(key=lambda u: not any(w in u.lower() for w in wanted_words))  # stable: the rest keep their order
+    merged = read = 0
+    for u in eligible:
+        if read >= SIBLING_LIMIT or not _sibling_missing(pricing) or gemini_cap_hit:
+            break
+        read += 1
+        tried_keys.add(page_key(u))
+        found = read_page_pricing(u)
+        if found and not _mostly_seen(pricing, found):
+            pricing = merge_partial_pricing(pricing, [found])
+            merged += 1
+    if read:
+        menu_log.step("page", "sibling_pages_merged", url=base_url, n=merged, pages=read)
+    return pricing, merged
+
 def page_key(url):
     """A URL with scheme, "www." and a trailing slash removed, so http://x.com/menu and https://www.x.com/menu/ count as
     one page. The query string stays: some sites show a different menu per ?menu_id=."""
@@ -1461,6 +1531,7 @@ def pricing_from_website_menu(site, where=""):
             if page_partials:
                 pricing = merge_partial_pricing(pricing, list(page_partials.values()))
                 menu_log.step("page", "partial_pages_merged", url=url, n=len(page_partials))
+            pricing, _ = merge_sibling_pages(pricing, [u for u in queue if u not in tried], url, tried_keys)
             menu_log.step("site_pages", "ok", url=url, n=len(tried))
             return pricing, url
         page, final = RENDERED_HTML.get(url) or ((html, url) if html else (None, None))
