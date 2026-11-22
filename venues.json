@@ -4405,5 +4405,23 @@
     "drink": 9.0,
     "dessert": 8.0,
     "tierColor": "#eab308"
+  },
+  {
+    "id": 250,
+    "name": "North Avenue Pub & Grill",
+    "category": "American / Bar & Grill",
+    "city": "Wayne Township",
+    "state": "IL",
+    "website": "https://northavenuepubandgrill.com/",
+    "coords": [
+      -88.155099,
+      41.907893
+    ],
+    "app": 8.75,
+    "casualMain": 17.5,
+    "premiumMain": 23.75,
+    "drink": 8.75,
+    "dessert": 8.0,
+    "tierColor": "#22c55e"
   }
 ]
