@@ -385,9 +385,11 @@
     panel.appendChild(status);
     const BUTTON = "padding:7px 10px;border-radius:6px;font:inherit;cursor:pointer;margin:0 6px 6px 0;";
     const go = el("button", BUTTON + "border:0;background:#1a73e8;color:#fff;font-weight:600", "Open the form");
+    const copyOnly = el("button", BUTTON + "border:1px solid #1a73e8;background:#fff;color:#1a73e8;font-weight:600", "Copy menu only");
     const keep = el("button", BUTTON + "border:1px solid #999;background:#fff;color:#222", "Keep ticked, add another page");
     const cancel = el("button", BUTTON + "border:1px solid #999;background:#fff;color:#222", "Cancel");
     panel.appendChild(go);
+    panel.appendChild(copyOnly);
     panel.appendChild(keep);
     panel.appendChild(cancel);
     if (kept.length) {
@@ -415,6 +417,8 @@
       go.style.opacity = ok ? "1" : ".5";
       keep.disabled = !n;
       keep.style.opacity = n ? "1" : ".5";
+      copyOnly.disabled = !n;
+      copyOnly.style.opacity = n ? "1" : ".5";
     };
     panel.addEventListener("input", refresh);
     panel.addEventListener("change", refresh);
@@ -430,6 +434,26 @@
         alert("Date Nite: this site does not let the bookmark keep anything between pages. Send each page as its own form.");
         return;
       }
+      panel.remove();
+    });
+    // Only puts the ticked sections on the clipboard, for pasting later. Opens nothing and needs no restaurant name.
+    copyOnly.addEventListener("click", async () => {
+      const full = chosen().map((s) => "=== " + s.name + " ===\n" + s.lines.join("\n")).join("\n\n");
+      try {
+        await navigator.clipboard.writeText(full);
+      } catch (e) {
+        const box = el("textarea", "width:100%;height:160px;margin-top:8px;font:12px monospace;color:#222;background:#fff");
+        box.value = full;
+        box.readOnly = true;
+        panel.appendChild(el("div", "margin-top:8px;color:#b3261e;font-weight:600",
+          "Your browser would not copy the menu. Copy it from this box."));
+        panel.appendChild(box);
+        box.focus();
+        box.select();
+        return;
+      }
+      try { localStorage.removeItem(BASKET); } catch (e) { /* nothing kept */ }
+      alert("Date Nite: the menu is on your clipboard.");
       panel.remove();
     });
     go.addEventListener("click", async () => {
