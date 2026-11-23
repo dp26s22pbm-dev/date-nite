@@ -51,7 +51,9 @@ Steps and results are short fixed words so they can be counted. A result of "ok"
     site_gemini   too_few_prices | lunch_prices_suspected | implausibly_low | error | ok
     search_gemini error | no_sources | ok
     prices        apps_above_casual                                          (a note on the prices read, from any source: the appetizers cost more than the
-                  casual mains, so they were dropped as misfiled entrees and the stand-in was used; n = how many)
+                  casual mains, so they were dropped as misfiled entrees and the stand-in was used; n = how many; apps and casual = the
+                  prices in the two lists at that moment, sorted, numbers only, so a later look can tell whether the dropped list was
+                  misfiled entrees or real appetizers)
                   premium_overlaps_casual                                    (most premium mains are the same dishes as the casual mains and the
                   medians are within 25%, so the menu has no real premium tier; the venue is flagged for a second look; n = premium items)
     gemini        cap_reached                                                (Gemini answered 429 RESOURCE_EXHAUSTED "monthly spending cap"; logged once, and every later

@@ -641,7 +641,9 @@ def clean_pricing(data, require_main=True):
     if pricing_rules.apps_look_misfiled(out):
         print(f"The appetizers read ({out['apps']}) cost more than the casual mains, so they look like misfiled entrees; "
               "using the stand-in appetizer price instead.")
-        menu_log.step("prices", "apps_above_casual", n=len(out["apps"]))
+        # The prices themselves (numbers only) go in the log, so a later look can tell a rule that caught misfiled entrees
+        # from one that threw away real appetizers
+        menu_log.step("prices", "apps_above_casual", n=len(out["apps"]), apps=sorted(out["apps"]), casual=sorted(out["casualMains"]))
         out["apps"] = []
     if require_main:
         return out if out["casualMains"] else None
