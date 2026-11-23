@@ -35,6 +35,7 @@ import os
 import subprocess
 import sys
 import tempfile
+import urllib.parse
 from collections import Counter
 
 import grid_cells
@@ -210,6 +211,24 @@ def failure_cause(entry):
     return "Other"
 
 
+REPO = "dp26s22pbm-dev/date-nite"
+# Only Add Venue on Issue labels its issue needs-menu / double-check, so only there does a pasted reply reach add-menu.yml.
+# Add City and Search Grid Cells log their own request issue, which is closed and takes no menu reply.
+REPLY_WORKFLOWS = ("Add Venue on Issue", "Add Menu Prices from Issue Reply")
+
+
+def no_menu_row(e, on_map):
+    """One row of the "needs a real menu" list. `issue` is set only when replying to it can fix the venue; otherwise
+    `fix_url` opens the Edit a Venue form with the venue's name, town and state filled in."""
+    venue = (on_map or {}).get(menu_log.name_key(e["venue"])) or {}
+    replyable = e.get("workflow") in REPLY_WORKFLOWS and e.get("issue")
+    fields = {"template": "edit-venue.yml", "title": "[Edit Venue]: " + e["venue"], "venue_name": e["venue"],
+              "town": venue.get("city") or "", "state": venue.get("state") or ""}
+    return {"venue": e["venue"], "site": e.get("host"), "outcome": e["outcome"], "date": e["t"][:10],
+            "issue": e.get("issue") if replyable else None, "logged_issue": e.get("issue"), "workflow": e.get("workflow"),
+            "fix_url": f"https://github.com/{REPO}/issues/new?" + urllib.parse.urlencode(fields)}
+
+
 def menu_section(now):
     entries = menu_log.load_entries()
     if not entries:
@@ -225,7 +244,8 @@ def menu_section(now):
     problems = [e for e in cur if e.get("outcome") in menu_log.PROBLEM_OUTCOMES]
     causes = Counter(failure_cause(e) for e in problems)
     steps = Counter(r for e in cur for r in menu_log._failures(e))
-    unresolved, fixed_by_hand, off_map = menu_log.classify_unresolved(entries, menu_log.load_map_venues())
+    on_map = menu_log.load_map_venues()
+    unresolved, fixed_by_hand, off_map = menu_log.classify_unresolved(entries, on_map)
     tokens_in = tokens_out = 0
     for e in cur:
         for s in e.get("steps", []):
@@ -239,8 +259,7 @@ def menu_section(now):
         "all_causes": [{"cause": c, "venues": n} for c, n in causes.most_common()],
         "top_step_reasons": [{"step": s, "result": r, "count": n} for (s, r), n in steps.most_common(5)],
         "step_reasons_note": "Raw attempt counts. fetch/http_404 includes real dead links, so judge by venues, not attempts.",
-        "no_real_menu": [{"venue": e["venue"], "site": e.get("host"), "outcome": e["outcome"], "date": e["t"][:10],
-                           "issue": e.get("issue"), "workflow": e.get("workflow")} for e in unresolved],
+        "no_real_menu": [no_menu_row(e, on_map) for e in unresolved],
         "no_real_menu_count": len(unresolved),
         "fixed_by_hand_count": len(fixed_by_hand), "fixed_by_hand": [e["venue"] for e in fixed_by_hand],
         "candidates_not_on_map_count": len(off_map), "candidates_not_on_map": [e["venue"] for e in off_map],
