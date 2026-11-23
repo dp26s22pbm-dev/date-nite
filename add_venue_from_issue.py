@@ -1337,6 +1337,48 @@ def merge_partial_pricing(pricing, partials):
             merged.setdefault(key, []).extend(values)
     return clean_pricing(merged) or pricing
 
+# MenuStar (themenustar2.com) runs the ordering page of some restaurants' own sites (La Cocina de Maria). Its menu is a list of
+# category headings, each an empty section that a click fills with a POST to functions/restaurant.php (function=get_items);
+# the page opens only the first one ("Popular Items"), so a page read sees a handful of prices.
+MENUSTAR_CATEGORY_RE = re.compile(r'<div class="category_item" data-id="(-?\d+)"\s*><a[^>]*>([^<]+)</a>')
+MENUSTAR_SKIP_WORDS = ("popular", "catering", "party", "banquet", "tray", "buffet", "gift", "kids", "kid's")
+MENUSTAR_CATEGORY_LIMIT = 30
+
+def menustar_menu_text(html, page_url):
+    """The full menu text of a MenuStar ordering page: every category's items, fetched the way the page's own script does.
+    Popular Items (the same dishes again), catering and party trays, gift cards and kids menus are left out. Returns None
+    when the page is not a MenuStar menu or nothing could be read, so the ordinary page read goes on."""
+    if "category_item" not in html or "function=get_items" not in html:
+        return None
+    rid = re.search(r"restaurant_id=[\"']?\s*\+\s*(\d+)|restaurant_id=(\d+)", html)
+    code = re.search(r"get_items[^;]{0,200}?code=([A-Za-z0-9_.\-]+)", html)
+    restaurant_id = (rid.group(1) or rid.group(2)) if rid else None
+    if not restaurant_id or not code:
+        return None
+    cats = MENUSTAR_CATEGORY_RE.findall(html)[:MENUSTAR_CATEGORY_LIMIT]
+    wanted = [(cid, name.strip()) for cid, name in cats if not any(w in name.lower() for w in MENUSTAR_SKIP_WORDS)]
+    if not wanted:
+        return None
+    endpoint = urllib.parse.urljoin(page_url, "functions/restaurant.php")
+    parts = []
+    for cid, name in wanted:
+        body = urllib.parse.urlencode({"function": "get_items", "id": cid, "restaurant_id": restaurant_id, "code": code.group(1)}).encode()
+        try:
+            req = urllib.request.Request(endpoint, data=body, headers={"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64)",
+                                         "X-Requested-With": "XMLHttpRequest", "Referer": page_url})
+            with _opener.open(req, timeout=15) as resp:
+                text = html_to_text(resp.read(500000).decode("utf-8", "ignore"))
+        except Exception as e:
+            print(f"MenuStar category {name!r} could not be read: {e}")
+            continue
+        if text:
+            parts.append(f"=== {name} ===\n{text}")
+    if not parts:
+        return None
+    print(f"Read {len(parts)} of the {len(cats)} MenuStar categories from {page_url}.")
+    menu_log.step("page", "menustar_read", url=page_url, n=len(parts), pages=len(cats))
+    return "\n\n".join(parts)
+
 SIBLING_LIMIT = 3
 # Words in a menu page's address that name the category a menu is missing; pages with them are read first
 SIBLING_HINT_WORDS = {"apps": ("appetizer", "starter", "small-plate", "tapas"), "desserts": ("dessert", "sweet")}
@@ -1535,6 +1577,8 @@ def pricing_from_website_menu(site, where=""):
         elif got:
             html = got[0].decode("utf-8", "ignore")
             text = html_to_text(html)
+            # A MenuStar ordering page keeps its dishes behind category clicks; read them all
+            text = menustar_menu_text(html, got[2]) or text
             final_key = page_key(got[2])
             if final_key != page_key(url):
                 # A made-up path the site redirects elsewhere (often to its home page). That page was already read, or
