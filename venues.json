@@ -4423,5 +4423,24 @@
     "drink": 8.75,
     "dessert": 8.0,
     "tierColor": "#22c55e"
+  },
+  {
+    "id": 251,
+    "name": "La Cocina de Maria",
+    "category": "Mexican",
+    "city": "West Chicago",
+    "state": "IL",
+    "website": "http://orderlacocinademaria.com/",
+    "coords": [
+      -88.206385,
+      41.883955
+    ],
+    "app": 2.49,
+    "casualMain": 2.95,
+    "premiumMain": 14.99,
+    "drink": 3.5,
+    "dessert": 4.5,
+    "tierColor": "#38bdf8",
+    "isTaco": true
   }
 ]
