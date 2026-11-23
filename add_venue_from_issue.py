@@ -72,6 +72,7 @@ SCOPE_RULES = """Scope rules (they apply to every category below):
 - drinks: priced cocktails or craft beverages. Never include soft drinks, coffee, tea, juice or other non-alcoholic drinks. Use beer and wine only if no cocktail is priced. Many menus list no alcohol prices; then return an empty list.
 - Ignore add-ons and extras: items priced to add to a dish or an order, such as "add bacon", "additional protein", extra cheese, toppings, sauces, "additional sides" and other modifier lists. Only full-size dishes a guest orders on their own count. A full-size side dish (fries, a salad) is still allowed.
 - Ignore carry-out, grab-and-go and deli sections (deli sandwiches, packaged or counter items), even when they sit on the same page as the dine-in menu. Price only what a guest orders at the table.
+- When one dish lists a price per protein or size ("Chicken, pork or tofu $15.95, Beef or Shrimp $17.95, Seafood $19.95"), it is one dish: list only its first (base) price, once. The higher prices are upcharges for the same dish, not separate dishes, and must not go in the casual or premium lists.
 - If a category has no prices printed on the menu, return an empty list for it. Never estimate or fill in a typical price.
 - This map lists sit-down restaurants only. If any page you find shows the place is a food truck, trailer, cart, stand, pop-up or other mobile or counter-only vendor (photos of a truck, "food truck" in a listing or description, no dining room), return empty lists for every category, even when a menu with prices exists.
 """
@@ -2473,7 +2474,8 @@ def main():
     premium_overlaps = (found_prices and "premiumMain" not in overrides
                         and pricing_rules.premium_overlaps_casual(pricing))
     if premium_overlaps:
-        menu_log.step("prices", "premium_overlaps_casual", n=len(pricing.get("premiumMains") or []))
+        menu_log.step("prices", "premium_overlaps_casual", n=len(pricing.get("premiumMains") or []),
+                      premium=sorted(pricing.get("premiumMains") or []), casual=sorted(pricing.get("casualMains") or []))
     warnings = price_sanity_warnings(app, casual_main, premium_main, drink, dessert, defaulted, estimated=guessed,
                                      casual_count=casual_count, premium_overlaps=premium_overlaps)
     if str(pricing_source).startswith("a web search") and not reused_pricing and search_ungrounded:
