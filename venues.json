@@ -4445,5 +4445,23 @@
     "dessert": 4.99,
     "tierColor": "#22c55e",
     "isTaco": true
+  },
+  {
+    "id": 252,
+    "name": "MalyThai",
+    "category": "Thai Cuisine",
+    "city": "St. Charles",
+    "state": "IL",
+    "website": "http://www.malythai.com/",
+    "coords": [
+      -88.265862,
+      41.920355
+    ],
+    "app": 9.45,
+    "casualMain": 16.95,
+    "premiumMain": 20.45,
+    "drink": 6.5,
+    "dessert": 5.5,
+    "tierColor": "#22c55e"
   }
 ]
