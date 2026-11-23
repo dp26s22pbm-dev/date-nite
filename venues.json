@@ -4401,12 +4401,13 @@
       -88.148587,
       41.887513
     ],
-    "app": 10.75,
-    "casualMain": 18.0,
-    "premiumMain": 27.5,
-    "drink": 9.0,
-    "dessert": 8.0,
-    "tierColor": "#eab308"
+    "app": 10.38,
+    "casualMain": 17.12,
+    "premiumMain": 27.0,
+    "drink": 8.56,
+    "dessert": 4.5,
+    "tierColor": "#22c55e",
+    "priceSource": "hand"
   },
   {
     "id": 250,
