@@ -3968,12 +3968,14 @@
       -88.342303,
       41.847539
     ],
-    "app": 7.95,
-    "casualMain": 17.95,
-    "premiumMain": 33.95,
+    "app": 6.95,
+    "casualMain": 15.62,
+    "premiumMain": 29.95,
     "drink": 8.97,
-    "dessert": 8.0,
-    "tierColor": "#eab308"
+    "dessert": 4.0,
+    "tierColor": "#22c55e",
+    "lastUpdated": "2026-11-23",
+    "priceSource": "menu"
   },
   {
     "id": 226,
@@ -4435,12 +4437,12 @@
       -88.206385,
       41.883955
     ],
-    "app": 2.49,
-    "casualMain": 2.95,
-    "premiumMain": 14.99,
-    "drink": 3.5,
-    "dessert": 4.5,
-    "tierColor": "#38bdf8",
+    "app": 7.14,
+    "casualMain": 12.99,
+    "premiumMain": 17.99,
+    "drink": 11.99,
+    "dessert": 4.99,
+    "tierColor": "#22c55e",
     "isTaco": true
   }
 ]
