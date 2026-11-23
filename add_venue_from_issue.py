@@ -1118,14 +1118,21 @@ SOFT_MENU_WORDS = ("brunch", "lunch", "happy", "breakfast")
 MAIN_COURSE_WORDS = ("entree", "entrée", "platter", "seafood", "steak", "chicken", "specialt", "pasta")
 DEAL_WORDS = ("combo", "family", "bundle", "value meal", "meal deal")
 
+# A host name inside a query string (?code=orderlacocinademaria.com on every link of La Cocina de Maria's site): it names the
+# site, not the page
+DOMAIN_IN_QUERY_RE = re.compile(r"[a-z0-9-]+(?:\.[a-z0-9-]+)*\.(?:com|net|org|us|co|io|biz|info|edu)\b")
+
 def link_words_text(url):
     """The part of a link to look for menu words in: its path and query. A link on the restaurant's own domain leaves the
     domain out, because a name like tastegreekfood.com (food), barnsgrill.com (bar) or eatalianpizza.com (eat) would
-    otherwise match every link on the site. Ordering platforms keep their host (order.toasttab.com says order)."""
+    otherwise match every link on the site; the same goes for a host name carried in the query string
+    (?code=orderlacocinademaria.com made every link match "order", so the importer rendered the terms-of-service and privacy
+    pages in a browser). Ordering platforms keep their host (order.toasttab.com says order)."""
     p = urllib.parse.urlparse(url)
     if any(h in p.netloc.lower() for h in ORDERING_HOSTS):
         return url.lower()
-    return (p.path + " " + p.query).lower()
+    query = DOMAIN_IN_QUERY_RE.sub(" ", p.query.lower())
+    return (p.path + " " + query).lower()
 
 def menu_link_score(url, label=""):
     """Rank a candidate menu link: dinner menus and main-course tabs first, combo and family deals lower, drink-only,
