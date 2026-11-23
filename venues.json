@@ -3968,12 +3968,14 @@
       -88.342303,
       41.847539
     ],
-    "app": 7.95,
-    "casualMain": 17.95,
-    "premiumMain": 33.95,
+    "app": 6.95,
+    "casualMain": 15.62,
+    "premiumMain": 29.95,
     "drink": 8.97,
-    "dessert": 8.0,
-    "tierColor": "#eab308"
+    "dessert": 4.0,
+    "tierColor": "#22c55e",
+    "lastUpdated": "2026-11-23",
+    "priceSource": "menu"
   },
   {
     "id": 226,
