@@ -65,7 +65,8 @@ Steps and results are short fixed words so they can be counted. A result of "ok"
     search_claude no_key | error | refused | no_prices | ok         (pages = search results seen; read = pages fetched or cited; searches / fetches = tool uses
                   the API reported, so read=0 with fetches=1 means the fetch ran but returned nothing; tokens_in / tokens_out = API tokens used)
     claude_fetch  failed                                             (a page Claude tried to fetch came back as an error; detail = the API's error code, e.g.
-                  url_not_accessible; logged just before the search_claude step)
+                  url_not_accessible; logged just before the search_claude step; with no url, detail also holds the tool input Claude sent,
+                  as in invalid_tool_input)
 guess_404 is a made-up menu path (/menu, /food-menu) the site does not have; the report leaves it out of the failure counts.
 bot_challenge means the site answered with a bot check ("Just a moment...", a captcha) instead of the page. The importer
 stops guessing pages on that host and goes on to Gemini and web search; the venue needs a pasted menu.

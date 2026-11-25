@@ -17,6 +17,7 @@ import urllib.error
 
 import places_usage
 import gemini_usage
+import chains
 import pricing_rules
 
 PLACES_URL = "https://places.googleapis.com/v1/places:searchText"
@@ -203,6 +204,8 @@ def eligible(place, city_name, saved_names, excluded=()):
     if EXCLUDED_TYPES & set(place.get("types") or []) or place.get("primaryType") in EXCLUDED_TYPES:
         return False
     if BLOCKED_CHAINS.search(re.sub(r"['\u2019]", "", name).replace("-", " ")):
+        return False
+    if chains.is_chain(name):  # national and large regional sit-down chains, see excluded-chains.json
         return False
     # Places lists a golf course or hotel with a restaurant among its types; keep it only if eating is its main business
     primary = place.get("primaryType")
@@ -461,7 +464,7 @@ def main():
     set_output("count", len(added))  # the workflow opens a pull request only when something was added
 
     intro = (f"Top {len(added)} restaurants for {city}, ranked by Google rating weighted by review count "
-             f"(at least {MIN_REVIEWS} reviews, at most {MAX_PER_CUISINE} of one cuisine, no national fast-food chains, nothing under ${MIN_TOTAL_FOR_TWO} for two, no venue without any prices found, no counter-service places). "
+             f"(at least {MIN_REVIEWS} reviews, at most {MAX_PER_CUISINE} of one cuisine, no national or large regional chains, nothing under ${MIN_TOTAL_FOR_TWO} for two, no venue without any prices found, no counter-service places). "
              "Ratings were used only for the ranking and are not saved.\n\n"
              f"Review the prices and pins below before merging. The venues are in `{pending_file}`; delete an entry there to drop it. "
              "They get their ids and join `venues.json` automatically after the merge.\n\n" + CORRECTING_PRICES_CITY)

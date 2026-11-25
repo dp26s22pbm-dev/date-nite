@@ -169,7 +169,7 @@ def main():
     else:
         intro = (f"Searched {', '.join(searched) or 'no cells'} for restaurants, up to {full_at} venues per cell, ranked by "
                  f"Google rating weighted by review count (at least {ac.MIN_REVIEWS} reviews, at most {ac.MAX_PER_CUISINE} "
-                 f"of one cuisine, no national fast-food chains, nothing under ${ac.MIN_TOTAL_FOR_TWO} for two, no venue "
+                 f"of one cuisine, no national or large regional chains, nothing under ${ac.MIN_TOTAL_FOR_TWO} for two, no venue "
                  "without any prices found, no counter-service places). Ratings were used only for the ranking and are not saved.\n\n"
                  f"Review the prices and pins below, then tick Approve or Deny for each venue under Decisions at the bottom. "
                  f"The candidates are in `{pending_file or 'no file (none added)'}`. When you merge, approved venues join "

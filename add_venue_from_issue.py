@@ -336,6 +336,28 @@ def grounding_sources(response, limit=5):
                 found.append((web.title or web.uri, web.uri))
     return found[:limit]
 
+def response_shape(response):
+    """One short line on what a generate_content response held: how it ended, the kinds of parts, and how much text. Added
+    to the log when a search came back with no grounding metadata, to tell a model that did not search from one whose
+    search results sit somewhere else in the response (the SDK has tool_call / tool_response parts)."""
+    try:
+        cands = getattr(response, "candidates", None) or []
+        if not cands:
+            return "no candidates"
+        kinds = {}
+        for part in getattr(getattr(cands[0], "content", None), "parts", None) or []:
+            for kind in ("text", "thought", "tool_call", "tool_response", "function_call", "executable_code"):
+                if getattr(part, kind, None):
+                    kinds[kind] = kinds.get(kind, 0) + 1
+        finish = getattr(cands[0], "finish_reason", None)
+        text = getattr(response, "text", None) or ""
+        meta = getattr(response, "usage_metadata", None)
+        think = getattr(meta, "thoughts_token_count", None)
+        return (f"finish={getattr(finish, 'name', finish)} candidates={len(cands)} parts={kinds or 'none'} "
+                f"text_chars={len(text)} thinking_tokens={think}")
+    except Exception as e:
+        return f"shape unreadable: {e}"
+
 def grounding_summary(response):
     """What Google's search grounding reported, for the job log: the queries Gemini ran and how many source pages came
     back. No queries means Gemini did not search at all."""
@@ -343,7 +365,7 @@ def grounding_summary(response):
     for cand in getattr(response, "candidates", None) or []:
         meta = getattr(cand, "grounding_metadata", None)
         if meta is None:
-            return "no grounding metadata in the response"
+            return f"no grounding metadata in the response ({response_shape(response)})"
         queries += list(getattr(meta, "web_search_queries", None) or [])
         chunks += len(getattr(meta, "grounding_chunks", None) or [])
     return f"search queries={queries} source pages={chunks}"
@@ -424,6 +446,9 @@ def claude_search_pricing(venue_name, city, website=""):
                        "ordering platform's menu.\n")
         elif website:
             prompt += f"The restaurant's website is {website}. Fetch its menu pages if they show prices.\n"
+        # Nov 25, Hillgrove Tap and Colonial Room: the one fetch failed (invalid_tool_input) and Claude ended its turn with
+        # no search at all (searches=0), so the venue got no prices from a search it was never asked to give up on
+        prompt += "If a fetch fails or shows no prices, do not stop: run your web search and read the results.\n"
         tools = [{"type": "web_search_20260209", "name": "web_search", "max_uses": CLAUDE_MAX_SEARCHES},
                  {"type": "web_fetch_20260209", "name": "web_fetch", "max_uses": CLAUDE_MAX_FETCHES}]
         messages = [{"role": "user", "content": prompt}]
@@ -432,7 +457,8 @@ def claude_search_pricing(venue_name, city, website=""):
         tokens_in = tokens_out = 0
         n_searches = n_fetches = 0  # tool uses the API reports, so a log with read=0 says whether Claude fetched at all
         fetch_targets = {}  # tool_use_id -> url Claude asked to fetch
-        fetch_failures = []  # (url, error_code) for fetches that came back as an error
+        fetch_inputs = {}  # tool_use_id -> the tool input as sent, shown when a fetch fails with no url in it (invalid_tool_input)
+        fetch_failures = []  # (url, error_code, input as sent) for fetches that came back as an error
         for _ in range(CLAUDE_MAX_PASSES):  # a server-side tool loop that runs long comes back paused; send it back to continue
             response = claude.messages.create(model=CLAUDE_SEARCH_MODEL, max_tokens=8000, tools=tools, messages=messages)
             usage = getattr(response, "usage", None)
@@ -446,9 +472,11 @@ def claude_search_pricing(venue_name, city, website=""):
                 found = []
                 if block.type == "server_tool_use" and getattr(block, "name", "") == "web_fetch":
                     fetch_targets[getattr(block, "id", None)] = (getattr(block, "input", None) or {}).get("url")
+                    fetch_inputs[getattr(block, "id", None)] = json.dumps(getattr(block, "input", None) or {}, default=str)[:120]
                 if block.type == "web_fetch_tool_result" and "error" in str(getattr(block.content, "type", "")):
                     fetch_failures.append((fetch_targets.get(getattr(block, "tool_use_id", None)),
-                                           getattr(block.content, "error_code", None) or "error"))
+                                           getattr(block.content, "error_code", None) or "error",
+                                           fetch_inputs.get(getattr(block, "tool_use_id", None))))
                 if block.type == "web_search_tool_result" and isinstance(block.content, list):
                     found = [(getattr(r, "title", None), getattr(r, "url", None)) for r in block.content]
                 elif block.type == "web_fetch_tool_result":
@@ -477,8 +505,8 @@ def claude_search_pricing(venue_name, city, website=""):
         if not pricing:
             # Without this the log cannot say whether Claude found no prices or answered in a form the parser rejected
             print(f"Claude's reply for {venue_name} had no usable prices. Its reply was: {text[:1500]!r}")
-        for failed_url, error_code in fetch_failures:
-            menu_log.step("claude_fetch", "failed", url=failed_url, detail=error_code)
+        for failed_url, error_code, sent in fetch_failures:
+            menu_log.step("claude_fetch", "failed", url=failed_url, detail=error_code if failed_url else f"{error_code}; input sent: {sent}")
         menu_log.step("search_claude", "ok" if pricing else "no_prices", pages=len(sources), read=len(read),
                       searches=n_searches, fetches=n_fetches,
                       tokens_in=tokens_in, tokens_out=tokens_out,
