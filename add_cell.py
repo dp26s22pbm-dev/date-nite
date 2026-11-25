@@ -16,6 +16,7 @@ import tempfile
 
 import add_city as ac
 import places_usage  # noqa: F401  (add_city records every Places request through it)
+import gemini_usage
 from grid_cells import load_grid, save_grid, parse_cell, cell_bounds, cell_of, cell_id, sort_key
 from split_cells import parse_field, set_output
 
@@ -101,6 +102,9 @@ def main():
         with open(venues_file, "w") as f:
             json.dump(saved, f)
         for cid, base, child in cells:
+            if gemini_usage.run_budget_spent():
+                sections.append(f"## {cid}\n\nNot searched: this run used its AI budget. It is searched on a later run.")
+                continue
             have = sum(1 for v in saved if cell_of(grid, v["coords"], splits) == cid)
             have += sum(1 for v in added_total if cell_of(grid, v["coords"], splits) == cid)
             if have >= full_at:
@@ -127,12 +131,19 @@ def main():
                 ranked, work_dir, venues_file, count=full_at - have, number_start=priced_total)
             priced_total += priced
             new = json.load(open(venues_file))[before:]
+            if gemini_usage.run_budget_spent() and len(new) < full_at - have:
+                # Candidates went unpriced, so a later run must look at this cell again
+                searched.remove(cid)
+                sections_note = "Stopped before the cell was filled because this run used its AI budget; it is searched again on a later run."
+            else:
+                sections_note = ""
             for v in new:
                 saved_names.add(ac.name_key(v["name"]))
             added_total += new
             tail = ("\n\n### Skipped\n\n" + "\n".join(skipped)) if skipped else ""
             body = "\n\n".join(cell_sections) if cell_sections else "No candidate could be added."
-            sections.append(f"## {cid}: {kept} added ({have + kept} of {full_at})\n\n{body}{tail}")
+            sections.append(f"## {cid}: {kept} added ({have + kept} of {full_at})\n\n{body}{tail}"
+                            + (f"\n\n{sections_note}" if sections_note else ""))
         added = json.load(open(venues_file))[len(saved):]
     for venue in added:
         venue.pop("id", None)  # ids are handed out when the pull request merges (fold_pending_venues.py)

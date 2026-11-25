@@ -16,6 +16,7 @@ import urllib.request
 import urllib.error
 
 import places_usage
+import gemini_usage
 import pricing_rules
 
 PLACES_URL = "https://places.googleapis.com/v1/places:searchText"
@@ -339,6 +340,10 @@ def price_and_keep(ranked, work_dir, venues_file, count=COUNT, max_priced=MAX_PR
         if cap_reached(place, used):
             continue
         name = place["displayName"]["text"]
+        if gemini_usage.run_budget_spent():
+            print("The run's Gemini budget is spent; no more venues will be priced.")
+            skipped.append("- Not priced: this run used its AI budget. The remaining candidates are found again on the next search")
+            break
         # Shown in the log so a place that slips through can be traced to what Google reported (None means Google left it out)
         print(f"\nPlaces data for {name}: primaryType={place.get('primaryType')} priceLevel={place.get('priceLevel')} "
               f"dineIn={place.get('dineIn')} reservable={place.get('reservable')} servesBeer={place.get('servesBeer')} "
