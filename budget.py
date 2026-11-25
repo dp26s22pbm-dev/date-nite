@@ -11,7 +11,7 @@ Settings (environment variables):
     WEEKLY_BUDGET_USD       required for the gate. Unset or 0 means nothing is allowed.
     BUDGET_ALREADY_SPENT_USD  spend this week that predates the Gemini log, so the first week is not undercounted
     BUDGET_RATES_JSON       JSON that replaces entries of RATES (the same shape)
-    PER_VENUE_USD_DEFAULT   cost of one imported venue when there is too little history to measure it (default 0.10)
+    PER_VENUE_USD_DEFAULT   cost of one imported venue until enough venues have Gemini spend logged to measure it (default 0.10)
     BUDGET_SAFETY           fraction of the day's remaining allowance the gate hands out (default 0.8)
     MAX_CELLS               ceiling on cells per run (default 5, the same variable add_cell.py reads)
 
@@ -120,13 +120,28 @@ def days_left(now):
 
 
 def per_venue_cost(events, menu_entries, now):
-    """Average dollars per imported venue over the last HISTORY_DAYS, or the default when there are too few imports."""
+    """Average dollars per imported venue, and how it was worked out.
+
+    Gemini spend was not logged before gemini_usage.py, so history older than the first Gemini log line leaves Gemini out
+    and would price a venue too low. The measured average therefore covers only the time since that first line. Until at
+    least MIN_HISTORY_VENUES venues have been imported in that window, the figure is the larger of the whole-history
+    average and PER_VENUE_USD_DEFAULT."""
+    default = _float_env("PER_VENUE_USD_DEFAULT", 0.10)
     since = now - datetime.timedelta(days=HISTORY_DAYS)
-    venues = sum(1 for rec in menu_entries if rec.get("t") and _parse(rec["t"]) >= since)
-    spent = sum(c for t, c, _ in events if t >= since)
-    if venues < MIN_HISTORY_VENUES or spent <= 0:
-        return _float_env("PER_VENUE_USD_DEFAULT", 0.10), "default"
-    return spent / venues, f"measured over {venues} venues in {HISTORY_DAYS} days"
+
+    def average(start):
+        n = sum(1 for rec in menu_entries if rec.get("t") and _parse(rec["t"]) >= start)
+        return n, sum(c for t, c, _ in events if t >= start)
+
+    first_gemini = min((t for t, _, src in events if src == "gemini"), default=None)
+    if first_gemini is not None:
+        n, spent = average(max(since, first_gemini))
+        if n >= MIN_HISTORY_VENUES and spent > 0:
+            return spent / n, f"measured over {n} venues since Gemini logging began"
+    n, spent = average(since)
+    if n >= MIN_HISTORY_VENUES and spent > 0 and spent / n > default:
+        return spent / n, f"measured over {n} venues in {HISTORY_DAYS} days, without Gemini spend that was not yet logged"
+    return default, "default, until enough venues have Gemini spend logged"
 
 
 def plan(events, menu_entries, places_left, now=None, weekly_budget=None):
