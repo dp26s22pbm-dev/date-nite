@@ -1,0 +1,94 @@
+[
+  {
+    "name": "Traverso\u2019s Restaurant | Italian",
+    "category": "Italian",
+    "city": "Naperville",
+    "state": "IL",
+    "website": "http://www.traversosrestaurant.com/",
+    "coords": [
+      -88.167797,
+      41.718935
+    ],
+    "app": 13.0,
+    "casualMain": 23.0,
+    "premiumMain": 29.0,
+    "drink": 11.5,
+    "dessert": 7.75,
+    "tierColor": "#eab308"
+  },
+  {
+    "name": "Home Run Inn Pizza - Bolingbrook, IL",
+    "category": "Italian / Pizza",
+    "city": "Bolingbrook",
+    "state": "IL",
+    "website": "https://www.homeruninnpizza.com/location/bolingbrook/",
+    "coords": [
+      -88.125192,
+      41.70338
+    ],
+    "app": 12.0,
+    "casualMain": 15.0,
+    "premiumMain": 21.0,
+    "drink": 8.0,
+    "dessert": 5.0,
+    "tierColor": "#22c55e"
+  },
+  {
+    "name": "Chili's Grill & Bar",
+    "category": "Tex-Mex",
+    "city": "Bolingbrook",
+    "state": "IL",
+    "website": "https://www.chilis.com/locations/us/illinois/bolingbrook/bolingbrook?utm_source=google&utm_medium=local&utm_campaign=Chilis",
+    "coords": [
+      -88.1245,
+      41.7025
+    ],
+    "app": 15.79,
+    "casualMain": 20.29,
+    "premiumMain": 25.09,
+    "drink": 10.14,
+    "dessert": 13.99,
+    "tierColor": "#eab308"
+  },
+  {
+    "name": "Guac N Tacos",
+    "category": "Mexican Fast Casual",
+    "city": "Western Springs",
+    "state": "IL",
+    "website": "http://www.guacntacos.com/",
+    "coords": [
+      -87.898944,
+      41.81
+    ],
+    "app": 6.0,
+    "casualMain": 4.5,
+    "premiumMain": 27.99,
+    "drink": 14.0,
+    "dessert": 6.5,
+    "tierColor": "#eab308",
+    "isTaco": true,
+    "reviewNotes": [
+      "The drink ($14.0) costs more than the casual main ($9)"
+    ]
+  },
+  {
+    "name": "Entourage Downers Grove",
+    "category": "New American",
+    "city": "Downers Grove",
+    "state": "IL",
+    "website": "https://entouragerestaurant.com/downers-grove/",
+    "coords": [
+      -88.010098,
+      41.795033
+    ],
+    "app": 17.0,
+    "casualMain": 29.0,
+    "premiumMain": 49.0,
+    "drink": 14.5,
+    "dessert": 8.0,
+    "tierColor": "#f97316",
+    "reviewNotes": [
+      "No menu price was found for the dessert, so a typical stand-in was saved"
+    ]
+  }
+]
