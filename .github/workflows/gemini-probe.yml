@@ -2,7 +2,8 @@ name: Gemini Probe
 
 # Runs the importer's Gemini web-search prompt for one venue five ways (see gemini_probe.py) and prints what came back:
 # whether Google Search grounding returned anything, what the response held, and what each thinking setting cost. It makes
-# five Gemini calls (a few cents) and counts them in the weekly budget. Use it to find out why `search_gemini no_sources`
+# five Gemini calls (a few cents) and counts them in the weekly budget. The search-and-thinking probe (gemini_probe2.py)
+# makes about a dozen calls, also counted and capped. Use it to find out why `search_gemini no_sources`
 # shows up for every venue.
 on:
   workflow_dispatch:
@@ -13,6 +14,11 @@ on:
       city:
         description: 'Town and state'
         default: 'Wheaton, IL'
+      probe:
+        description: 'basic: five thinking and temperature settings (gemini_probe.py). search-and-thinking: does search run at all, and does lower thinking change a menu read (gemini_probe2.py)'
+        type: choice
+        options: [basic, search-and-thinking]
+        default: basic
 
 jobs:
   probe:
@@ -21,7 +27,7 @@ jobs:
       contents: write
     env:
       GH_TOKEN: ${{ github.token }}
-      RUN_BUDGET_USD: "0.25"
+      RUN_BUDGET_USD: "0.40"
 
     steps:
       - name: Checkout Repository
@@ -40,7 +46,9 @@ jobs:
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
           PROBE_VENUE: ${{ inputs.venue }}
           PROBE_CITY: ${{ inputs.city }}
-        run: python gemini_probe.py
+          PROBE: ${{ inputs.probe }}
+        run: |
+          if [ "$PROBE" = "search-and-thinking" ]; then python gemini_probe2.py; else python gemini_probe.py; fi
 
       - name: Save the Gemini usage log
         if: always()

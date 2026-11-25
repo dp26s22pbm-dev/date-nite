@@ -128,6 +128,10 @@ class _TrackedModels:
     def __init__(self, models):
         self._models = models
 
+    def __getattr__(self, name):
+        # list(), get() and the rest are not generate_content calls; they go straight to the client
+        return getattr(self._models, name)
+
     def generate_content(self, *args, **kwargs):
         check_run_budget()
         try:
