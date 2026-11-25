@@ -6,10 +6,11 @@ from datetime import date
 from google import genai
 from google.genai import types
 
+import gemini_usage
 import menu_log
 import pricing_rules
 
-client = genai.Client(api_key=os.environ.get("GEMINI_API_KEY", ""))
+client = gemini_usage.TrackedClient(genai.Client(api_key=os.environ.get("GEMINI_API_KEY", "")))
 
 try:
     from urls import TARGET_URLS as VENUE_URLS

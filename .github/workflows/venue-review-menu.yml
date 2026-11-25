@@ -18,7 +18,7 @@ jobs:
       github.event.comment.user.type != 'Bot'
     runs-on: ubuntu-latest
     permissions:
-      contents: read
+      contents: write
       issues: write
     steps:
       - uses: actions/checkout@v4
@@ -51,3 +51,10 @@ jobs:
           REASON: ${{ steps.menu.outputs.error }}
         run: |
           gh issue comment ${{ github.event.issue.number }} --repo ${{ github.repository }} --body "Could not update the prices. ${REASON:-See the workflow run for details.} Run: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+
+      # What each Gemini call cost in tokens, kept on the gemini-usage branch (see gemini_usage.py and budget.py)
+      - name: Save the Gemini usage log
+        if: always()
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: python gemini_usage.py publish || true
