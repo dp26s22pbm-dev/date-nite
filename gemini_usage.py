@@ -17,7 +17,7 @@ Calls that raised an error are logged with ok=false and no tokens (Google does n
 Dollar figures are estimates from the rates in budget.RATES. They exist to pace spending; the spend cap in Google AI
 Studio is still the record of what was billed.
 
-RUN_BUDGET_USD (optional): once this process's estimated Gemini spend passes it, check_run_budget() raises
+RUN_BUDGET_USD (optional): once the run's estimated Gemini spend (every process that shares the log file) passes it, check_run_budget() raises
 GeminiRunBudgetReached and the importer's client stops calling Gemini, the same way it does for the monthly spending cap."""
 import os
 import sys
@@ -89,7 +89,20 @@ def record(model, response=None, ok=True):
 
 
 def run_cost():
-    return _run_cost
+    """Estimated Gemini dollars spent by this run. add_city.py starts the importer as a separate process for every venue,
+    so the run's total is read from the log file they all append to; this process's own count covers a log that cannot
+    be read."""
+    total = 0.0
+    try:
+        with open(log_path()) as f:
+            for line in f:
+                try:
+                    total += entry_cost(json.loads(line))
+                except ValueError:
+                    continue
+    except OSError:
+        pass
+    return max(total, _run_cost)
 
 
 def run_limit():
@@ -99,11 +112,16 @@ def run_limit():
         return None
 
 
+def run_budget_spent():
+    """True when RUN_BUDGET_USD is set and this run has spent it."""
+    limit = run_limit()
+    return limit is not None and run_cost() >= limit
+
+
 def check_run_budget():
     """Raise GeminiRunBudgetReached when RUN_BUDGET_USD is set and this run has spent it."""
-    limit = run_limit()
-    if limit is not None and _run_cost >= limit:
-        raise GeminiRunBudgetReached(f"this run has used its Gemini allowance (about ${_run_cost:.2f} of ${limit:.2f})")
+    if run_budget_spent():
+        raise GeminiRunBudgetReached(f"this run has used its Gemini allowance (about ${run_cost():.2f} of ${run_limit():.2f})")
 
 
 class _TrackedModels:
