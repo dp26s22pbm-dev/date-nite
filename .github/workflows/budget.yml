@@ -1,0 +1,38 @@
+name: AI Budget
+
+# Run this from the Actions tab to see this week's estimated Gemini and Claude spend against the weekly budget, and
+# what today's pace allows (see budget.py). Set the budget in Settings > Secrets and variables > Actions > Variables
+# as WEEKLY_BUDGET_USD. The usage logs live on the gemini-usage, menu-log and places-usage branches.
+on:
+  workflow_dispatch:
+    inputs:
+      recent:
+        description: Recent Gemini calls to list
+        default: "15"
+
+jobs:
+  report:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install Dependencies
+        run: pip install -r requirements.txt
+
+      - name: Show the Budget
+        env:
+          WEEKLY_BUDGET_USD: ${{ vars.WEEKLY_BUDGET_USD }}
+          BUDGET_ALREADY_SPENT_USD: ${{ vars.BUDGET_ALREADY_SPENT_USD }}
+          RECENT: ${{ inputs.recent }}
+        run: |
+          { python budget.py report; echo; python gemini_usage.py report --recent "${RECENT:-15}"; } | tee budget.txt
+          { echo '```'; cat budget.txt; echo '```'; } >> "$GITHUB_STEP_SUMMARY"

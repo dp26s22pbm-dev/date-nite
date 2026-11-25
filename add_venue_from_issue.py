@@ -10,6 +10,7 @@ import urllib.request
 import urllib.parse
 from html import unescape
 import places_usage
+import gemini_usage
 import menu_log
 import pricing_rules
 import venue_match
@@ -28,6 +29,8 @@ class GeminiCapReached(Exception):
 # True once Gemini has answered "monthly spending cap" (HTTP 429 RESOURCE_EXHAUSTED). A per-minute rate limit uses the same
 # status but a different message, and does not set it.
 gemini_cap_hit = False
+# True once this run has used the Gemini allowance it was given (RUN_BUDGET_USD, see gemini_usage.py and budget.py)
+gemini_run_budget_hit = False
 
 def is_gemini_cap_error(error):
     text = str(error).lower()
@@ -40,12 +43,23 @@ class _CapGuardedModels:
         self._models = models
 
     def generate_content(self, *args, **kwargs):
-        global gemini_cap_hit
+        global gemini_cap_hit, gemini_run_budget_hit
         if gemini_cap_hit:
             raise GeminiCapReached("Gemini's monthly spending cap was reached earlier in this run")
         try:
-            return self._models.generate_content(*args, **kwargs)
+            gemini_usage.check_run_budget()
+        except gemini_usage.GeminiRunBudgetReached as e:
+            if not gemini_run_budget_hit:
+                gemini_run_budget_hit = True
+                print(f"Gemini calls stopped: {e}.")
+                menu_log.step("gemini", "run_budget_reached", detail=e)
+            raise
+        try:
+            response = self._models.generate_content(*args, **kwargs)
+            gemini_usage.record(kwargs.get("model"), response)
+            return response
         except Exception as e:
+            gemini_usage.record(kwargs.get("model"), ok=False)
             if is_gemini_cap_error(e):
                 gemini_cap_hit = True
                 print("Gemini's monthly spending cap is used up; no more Gemini calls will be made in this run.")
@@ -1440,7 +1454,7 @@ def merge_sibling_pages(pricing, candidates, base_url, tried_keys, labels=None):
     Only pages on the same host that a page linked to (not made-up paths), that are not drink, breakfast or lunch pages
     (menu_link_score below 0) and not combo or family deals. A page that mostly repeats prices already read is skipped.
     Costs one Gemini call per page, at most SIBLING_LIMIT in all. Returns (pricing, pages merged)."""
-    if not pricing or gemini_cap_hit:
+    if not pricing or gemini_cap_hit or gemini_run_budget_hit:
         return pricing, 0
     host = _host(base_url)
     eligible = []
@@ -1459,7 +1473,7 @@ def merge_sibling_pages(pricing, candidates, base_url, tried_keys, labels=None):
     eligible.sort(key=lambda u: 0 if is_hinted(u) else (1 if is_main(u) else 2))
     merged = read = 0
     for u in eligible:
-        if read >= SIBLING_LIMIT or gemini_cap_hit:
+        if read >= SIBLING_LIMIT or gemini_cap_hit or gemini_run_budget_hit:
             break
         if not (is_main(u) or _sibling_missing(pricing)):
             continue  # nothing is missing and this is not a main-course page
@@ -2415,6 +2429,9 @@ def main():
         lines += ["> **Gemini's monthly spending cap was reached during this run.** Menu pages and files could not be read, so "
                   "the prices below are not from the restaurant's menu. Raise the cap in AI Studio (or wait for it to reset), "
                   "then close and reopen this issue to read the menu again.", ""]
+    if gemini_run_budget_hit:
+        lines += ["> **This run used up its Gemini allowance for the day.** The prices below may not be from the restaurant's menu. "
+                  "Close and reopen this issue to read the menu again once the budget allows.", ""]
     lines.append(f"- **Cuisine:** {category}" + (" (best guess; edit venues.json if it is off)" if category_guessed else ""))
     lines.append("- **Location:** " + ("exact" if coords_exact else
                  "approximate, from the address. Send a share link of the place's page or exact coordinates to fix it"))
@@ -2460,6 +2477,8 @@ def main():
     if claude_backup_result:
         set_output("claude_backup", f"{claude_backup_result}:{claude_found_nothing_pages}")  # read by add_city.py for its Skipped lines
     set_output("prices_found", "true" if pricing and pricing.get("casualMains") else "false")  # false: only the typical defaults were saved
+    if gemini_run_budget_hit:
+        set_output("gemini_run_budget", "true")
     if gemini_cap_hit:
         set_output("gemini_cap", "true")  # read by add_city.py so a skipped venue says why
     # The menu log: what was read, from where, and what the importer had to invent. See menu_log.py.

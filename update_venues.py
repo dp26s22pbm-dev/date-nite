@@ -9,7 +9,9 @@ import statistics
 from google import genai
 from google.genai import types
 
-client = genai.Client(api_key=os.environ.get("GEMINI_API_KEY", ""))
+import gemini_usage
+
+client = gemini_usage.TrackedClient(genai.Client(api_key=os.environ.get("GEMINI_API_KEY", "")))
 
 try:
     from urls import TARGET_URLS

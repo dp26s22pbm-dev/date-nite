@@ -116,3 +116,10 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: python menu_log.py publish || true
+
+      # What each Gemini call cost in tokens, kept on the gemini-usage branch (see gemini_usage.py and budget.py)
+      - name: Save the Gemini usage log
+        if: always()
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: python gemini_usage.py publish || true

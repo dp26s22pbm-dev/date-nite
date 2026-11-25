@@ -10,6 +10,11 @@ A static site (`index.html`, `venues.json`) mapping restaurants with an estimate
 - Workflows that run the importer: `add-venue.yml`, `add-city.yml`, `search-cells.yml`, `add-menu.yml` (someone replies to a `needs-menu` or `double-check` issue with pasted menu text), or with only `key: price` lines to override some prices; `price_overrides_from_reply` is strict, so one non-matching line makes the reply menu text). Each ends with `python menu_log.py publish`.
 - Dependencies: `requirements.txt` (google-genai, playwright, anthropic). Keys (Gemini, Anthropic) exist only in Actions secrets, so full end-to-end runs are not possible in a local or cloud session. Test pieces in isolation.
 
+## Spend tracking and the budget gate
+
+- `gemini_usage.py` logs every Gemini call (tokens, grounding queries) through the importer's client and publishes it to `usage.jsonl` on the `gemini-usage` branch; each workflow that holds the Gemini key ends with `python gemini_usage.py publish`. `RUN_BUDGET_USD` makes a run stop calling Gemini once its estimated spend passes that figure (logged as `gemini run_budget_reached`).
+- `budget.py` prices the week (Gemini log plus the `search_claude` steps in the menu log) against the repository variable `WEEKLY_BUDGET_USD`, paces it over the days left in the Pacific Monday-Sunday week, and `python budget.py gate` prints `proceed`, `run_budget_usd`, `allowed_venues` and `max_cells` for a scheduled workflow. Dollar rates are in `budget.RATES` (override with `BUDGET_RATES_JSON`). The `AI Budget` workflow prints the report. Places requests keep their own daily limit in `places_usage.py`.
+
 ## The failure log (start here when improving the importer)
 
 - `menu_log.py` writes one JSON line per venue per importer run. Lines are appended to `menu-log.jsonl` on the `menu-log` branch, which is kept off `main` so logging never triggers a site rebuild. The record format and the list of step/result words are in the module docstring. Read it before analyzing.
