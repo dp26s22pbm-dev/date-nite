@@ -4,7 +4,8 @@ name: Daily Grid Search
 # It makes the same pull request a Search Grid Cells issue makes, with Approve / Deny boxes per venue, and nothing reaches
 # the map until that pull request is merged. The run does nothing when the budget gate says stop, when cell pull requests
 # are still waiting for review, or when no cells are left. Set the budget in Settings > Secrets and variables > Actions >
-# Variables as WEEKLY_BUDGET_USD.
+# Variables as WEEKLY_BUDGET_USD. The variable AUTO_TRIAGE (off, suggest or apply; unset means suggest) decides what happens
+# to the venues it finds: see triage.py. Only apply changes the map without a person merging.
 # The run opens an issue for its pull request to close, because venue_review.py finds the candidate file by that issue's
 # number. An issue opened with the workflow token does not start search-cells.yml.
 on:
@@ -35,6 +36,8 @@ jobs:
       WEEKLY_BUDGET_USD: ${{ vars.WEEKLY_BUDGET_USD }}
       BUDGET_ALREADY_SPENT_USD: ${{ vars.BUDGET_ALREADY_SPENT_USD }}
       MAX_OPEN_CELL_PRS: ${{ vars.MAX_OPEN_CELL_PRS }}
+      AUTO_TRIAGE: ${{ vars.AUTO_TRIAGE }}
+      AUTO_APPROVE_MAX: ${{ vars.AUTO_APPROVE_MAX }}
 
     steps:
       - name: Checkout Repository
@@ -121,11 +124,19 @@ jobs:
           RUN_BUDGET_USD: ${{ steps.gate.outputs.run_budget_usd }}
         run: python add_cell.py
 
-      - name: Open the Pull Request
-        id: pr
-        if: steps.cells.outputs.changed == 'true'
+      # Approve / Deny / Hold for each venue (see triage.py). AUTO_TRIAGE: off, suggest (default) or apply
+      - name: Triage the venues
+        id: triage
+        if: steps.cells.outcome == 'success'
         env:
           REPORT: ${{ steps.cells.outputs.report }}
+          ISSUE_NUMBER: ${{ steps.issue.outputs.number }}
+        run: python triage.py decide
+
+      - name: Open the Pull Request
+        id: pr
+        if: steps.cells.outputs.changed == 'true' && steps.triage.outputs.apply != 'true'
+        env:
           TITLE: ${{ steps.cells.outputs.title }}
           ISSUE_NUMBER: ${{ steps.issue.outputs.number }}
         run: |
@@ -138,12 +149,56 @@ jobs:
           git commit -m "Daily grid search (Issue #${ISSUE_NUMBER})"
           .github/scripts/merge-main-into-branch.sh || true
           git push origin "$BRANCH"
-          { printf '%s\n\n' "$REPORT"; printf '_Budget: %s_\n\n' "$(grep -m1 '^Today' gate.txt)"; printf 'Closes #%s\n' "$ISSUE_NUMBER"; } > "$RUNNER_TEMP/pr-body.md"
+          { cat "$RUNNER_TEMP/triage-report.md"; printf '\n\n'; printf '_Budget: %s_\n\n' "$(grep -m1 '^Today' gate.txt)"; printf 'Closes #%s\n' "$ISSUE_NUMBER"; } > "$RUNNER_TEMP/pr-body.md"
           URL=$(gh pr create --base main --head "$BRANCH" --title "$TITLE (#${ISSUE_NUMBER})" --body-file "$RUNNER_TEMP/pr-body.md")
           echo "url=$URL" >> "$GITHUB_OUTPUT"
 
+      # apply mode: the decisions go straight to main, with no pull request to merge. The workflow token's push does not
+      # start other workflows, so the fold happens here (the same way venue-review.yml does it).
+      - name: Apply the decisions
+        id: applied
+        if: steps.triage.outputs.apply == 'true' && steps.cells.outputs.changed == 'true'
+        env:
+          ISSUE_NUMBER: ${{ steps.issue.outputs.number }}
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          gh label create venue-review --color FBCA04 --description "Venue held for review" 2>/dev/null || true
+          gh label create approve-venue --color 0E8A16 --description "Add this held venue to the map" 2>/dev/null || true
+          gh label create deny-venue --color B60205 --description "Blacklist this held venue" 2>/dev/null || true
+          done=0
+          for attempt in 1 2 3 4 5 6; do
+            # Another run may push first; start over from the new main and apply the saved decisions again
+            git fetch origin main
+            git reset --hard origin/main
+            git clean -fdq venue-review pending-venues
+            python triage.py apply
+            git add -A venues.json excluded-venues.json grid/grid.json pending-venues 2>/dev/null || true
+            if git diff --cached --quiet; then done=1; break; fi
+            git commit -m "Add approved venues (daily search #${ISSUE_NUMBER})"
+            push_out=$(git push origin HEAD:main 2>&1) && { done=1; break; }
+            echo "$push_out"
+            if echo "$push_out" | grep -qE "error: 403|Permission to .* denied"; then
+              echo "::error::Push to main was denied (403). Check Settings > Actions > General > Workflow permissions and any rules on main." >&2
+              exit 1
+            fi
+            echo "Push rejected (attempt $attempt); starting over from origin/main"
+            sleep $((attempt * 3))
+          done
+          [ "$done" = 1 ] || { echo "Could not push after 6 attempts" >&2; exit 1; }
+          # Held venues get their review issues only after the push has gone through
+          PR_URL="${{ github.server_url }}/${{ github.repository }}/issues/${ISSUE_NUMBER}" python venue_review.py issues
+
+      - name: Report the applied decisions
+        if: always() && steps.applied.outcome == 'success'
+        env:
+          ISSUE_NUMBER: ${{ steps.issue.outputs.number }}
+        run: |
+          gh issue comment "$ISSUE_NUMBER" --repo ${{ github.repository }} --body-file "$RUNNER_TEMP/triage-summary.md"
+          gh issue close "$ISSUE_NUMBER" --repo ${{ github.repository }} || true
+
       - name: Report on the Issue
-        if: always() && steps.cells.outcome == 'success'
+        if: always() && steps.cells.outcome == 'success' && !(steps.triage.outputs.apply == 'true' && steps.cells.outputs.changed == 'true')
         env:
           REPORT: ${{ steps.cells.outputs.report }}
           PR_URL: ${{ steps.pr.outputs.url }}
