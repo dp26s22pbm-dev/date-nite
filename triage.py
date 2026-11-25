@@ -176,7 +176,8 @@ def table(venues, decisions, applied):
     label = {"approve": "Approved" if applied else "Approve", "deny": "Denied" if applied else "Deny", "hold": "Held" if applied else "Hold"}
     rows = ["| Venue | Decision | Why |", "| --- | --- | --- |"]
     for v, (decision, reasons) in zip(venues, decisions):
-        rows.append(f"| {v['name']} | {label[decision]} | {'; '.join(reasons).replace('|', '/')} |")
+        name = v['name'].replace('|', '/')  # a pipe in a venue name ("Traverso's Restaurant | Italian") would split the row
+        rows.append(f"| {name} | {label[decision]} | {'; '.join(reasons).replace('|', '/')} |")
     return "\n".join(rows)
 
 
