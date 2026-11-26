@@ -30,7 +30,7 @@ FIELDS = ",".join([
 
 COUNT = int(os.environ.get("VENUE_COUNT", "5"))
 MAX_PER_CUISINE = int(os.environ.get("MAX_PER_CUISINE", "2"))
-# National fast-food and fast-casual chains that never qualify. Higher-end fast casual (Shake Shack, Velvet Taco, local
+# National fast-food and fast-casual chains that never qualify (more chains, sit-down and fast-casual, are in excluded-chains.json). Higher-end fast casual (Shake Shack, Velvet Taco, local
 # taquerias) is allowed; a priced venue is dropped only when two people spend less than MIN_TOTAL_FOR_TWO on the
 # importer's standard order (appetizer, two mains, two drinks, dessert, plus tax and tip). A dropped venue is replaced by
 # the next-best candidate, up to MAX_PRICED venues priced per city.
@@ -375,11 +375,11 @@ def price_and_keep(ranked, work_dir, venues_file, count=COUNT, max_priced=MAX_PR
             reason = "no prices could be found, so only typical defaults were possible. Add it with the Add Venue form and the menu text"
             backup = outputs.get("claude_backup", "")
             if backup.startswith("ran:"):
-                reason = (f"**Claude-backup deployed**, but it found no usable prices ({backup.split(':', 1)[1]} pages checked) and "
-                          "Gemini's search had no sources. Add it with the Add Venue form and the menu text")
+                reason = (f"**Claude's web search ran**, but it found no usable prices ({backup.split(':', 1)[1]} pages checked). "
+                          "Add it with the Add Venue form and the menu text")
             elif backup.startswith("not run"):
-                reason = ("**Claude-backup did not run** (no API key, or the request failed; see the job log) and Gemini's search "
-                          "had no sources. Add it with the Add Venue form and the menu text")
+                reason = ("**Claude's web search did not run** (no API key, or the request failed; see the job log). "
+                          "Add it with the Add Venue form and the menu text")
         elif pricing_rules.looks_like_counter_menu(venue):
             reason = (f"looks like counter service: its most expensive entrees are about ${venue['premiumMain']}. "
                       "Add it with the Add Venue form if it is a sit-down place")

@@ -372,68 +372,14 @@ def grounding_summary(response):
         chunks += len(getattr(meta, "grounding_chunks", None) or [])
     return f"search queries={queries} source pages={chunks}"
 
-# True when the last web search returned no source pages and showed no search queries even after a retry, so its prices
-# may come from Gemini's memory
-search_ungrounded = False
-# Google Search queries the last Gemini search ran (from grounding metadata or, with include_server_side_tool_invocations,
-# from its tool_call parts). Nov 25 probe: a JSON-only answer had no grounding metadata yet the call had run 8 searches.
-search_queries_run = 0
-# True when Claude's web search supplied the prices because Gemini's search had no sources or no prices
+# True when Claude's web search supplied the prices (the importer's only web search since Nov 26; Gemini's was removed, see
+# fetch_pricing_via_web_search)
 search_by_claude = False
-# Set when Gemini had no sources and Claude gave no usable sourced prices, so the report can say what happened:
+# Set when Claude's web search gave no usable sourced prices, so the report can say what happened:
 # "ran" (Claude searched and found nothing; claude_found_nothing_pages is how many pages it consulted) or "not run"
-# (no API key, or the request failed before it searched). None means Claude was not needed.
+# (no API key, or the request failed before it searched). None means it found prices.
 claude_backup_result = None
 claude_found_nothing_pages = 0
-
-def fetch_pricing_via_gemini_search(venue_name, city="Naperville, IL"):
-    """Query Gemini with Google Search Grounding to find live menu pricing. A response with no source pages means
-    Gemini may not have searched, so it is asked once more; if that is empty too, search_ungrounded is set."""
-    global search_ungrounded, search_queries_run
-    search_ungrounded = False
-    search_queries_run = 0
-    search_sources.clear()
-    try:
-        prompt = SEARCH_PRICING_PROMPT.format(venue_name=venue_name, city=city, scope_rules=SCOPE_RULES)
-        retry_note = ("\nYou must run a Google Search for this restaurant's menu and base the prices on the pages you find. "
-                      "Do not answer from memory.\n")
-        for attempt in (1, 2):
-            response = client.models.generate_content(
-                model="gemini-3.6-flash",
-                contents=prompt + (retry_note if attempt == 2 else ""),
-                config=types.GenerateContentConfig(
-                    tools=[types.Tool(google_search=types.GoogleSearch())],
-                    # Without this a search the model ran stays invisible when its answer is JSON only (no citations)
-                    tool_config=types.ToolConfig(include_server_side_tool_invocations=True),
-                    temperature=0.1
-                ),
-            )
-            search_sources[:] = grounding_sources(response)
-            search_queries_run = gemini_usage.search_queries_in(response)
-            print(f"Web search for {venue_name} (attempt {attempt}): {grounding_summary(response)}; search queries run={search_queries_run}")
-            if search_sources or search_queries_run:
-                break
-        search_ungrounded = not (search_sources or search_queries_run)
-        if search_ungrounded:
-            menu_log.step("search_gemini", "no_sources", detail=grounding_summary(response))
-        elif not search_sources:
-            # Searched, but the answer cites no pages, so the prices cannot be traced to one; they are flagged for review
-            menu_log.step("search_gemini", "searched_no_sources", n=search_queries_run, detail=grounding_summary(response))
-        raw_text = response.text.strip()
-        if raw_text.startswith("```"):
-            raw_text = raw_text.strip("`").removeprefix("json").strip()
-        try:
-            return json.loads(raw_text)
-        except ValueError:
-            # A model that searched may write a sentence around the JSON; take the object
-            start, end = raw_text.find("{"), raw_text.rfind("}")
-            if start == -1 or end <= start:
-                raise
-            return json.loads(raw_text[start:end + 1])
-    except Exception as e:
-        print(f"Gemini Search Grounding error for {venue_name}: {e}")
-        menu_log.step("search_gemini", "error", detail=e)
-        return None
 
 CLAUDE_SEARCH_MODEL = os.environ.get("CLAUDE_SEARCH_MODEL", "claude-sonnet-5-5")
 # Caps on the Claude fallback. The log showed it consulting 9 to 23 pages per venue, mostly aggregator listings, and
@@ -590,42 +536,36 @@ def pricing_from_yelp_menu(venue_name, urls):
     return pricing_from_menu_text(text, where="yelp_menu", url=url)
 
 def fetch_pricing_via_web_search(venue_name, city, website=""):
-    """Gemini's web search first. When it returns no source pages (so its prices may be from memory) or no prices, Claude
-    searches instead, and its prices are used only when it found source pages. If Gemini had no sources and Claude gives no
-    sourced prices either, nothing is returned: Gemini's unsourced prices are not kept, so the venue counts as having no
-    prices found (the cell and city imports skip it, and the Add Venue form asks for the menu)."""
-    global search_ungrounded, search_by_claude, claude_backup_result, claude_found_nothing_pages, web_search_menu_source
+    """Claude's web search, the only web search the importer makes. Its prices are used only when it found source pages; if
+    it gives none, nothing is returned and the venue counts as having no prices found (the cell and city imports skip it, and
+    the Add Venue form asks for the menu). Gemini's web search was removed on Nov 26: on the first scheduled grid run it ran 16
+    search queries for each of two venues (an estimated $0.56 each) and bought one set of untraceable estimates and one empty
+    answer, while Claude's search costs about $0.13 a venue. The venue's Yelp menu page is tried after Claude's search, since
+    the search often turns up the Yelp listing."""
+    global search_by_claude, claude_backup_result, claude_found_nothing_pages, web_search_menu_source
     web_search_menu_source = ""
     claude_result_urls.clear()
+    search_sources.clear()
     search_by_claude = False
     claude_backup_result = None
     claude_found_nothing_pages = 0
     claude_pages[0] = None
     claude_read[0] = False
-    pricing = fetch_pricing_via_gemini_search(venue_name, city)
-    if search_ungrounded or not pricing:
-        print("Gemini's web search had no usable sourced prices; asking Claude to search.")
-        claude_pricing, sources = claude_search_pricing(venue_name, city, website)
-        # Claude's search often turns up the venue's Yelp listing, whose menu page has the real prices
-        yelp_pricing = pricing_from_yelp_menu(venue_name, claude_result_urls)
-        if yelp_pricing:
-            print("Read the venue's Yelp menu page instead of using search estimates.")
-            web_search_menu_source = "the venue's Yelp menu page"
-            search_ungrounded = False
-            search_sources.clear()
-            return yelp_pricing
-        if claude_pricing and sources:
-            pricing = claude_pricing
-            search_sources[:] = sources
-            search_ungrounded = False
-            search_by_claude = True
-        elif search_ungrounded:
-            print("Claude found no sourced prices either, so Gemini's unsourced prices are being dropped.")
-            pricing = None
-            search_sources.clear()
-            claude_backup_result = "not run" if claude_pages[0] is None else "ran"
-            claude_found_nothing_pages = claude_pages[0] or 0
-    return pricing
+    claude_pricing, sources = claude_search_pricing(venue_name, city, website)
+    yelp_pricing = pricing_from_yelp_menu(venue_name, claude_result_urls)
+    if yelp_pricing:
+        print("Read the venue's Yelp menu page instead of using search estimates.")
+        web_search_menu_source = "the venue's Yelp menu page"
+        search_sources.clear()
+        return yelp_pricing
+    if claude_pricing and sources:
+        search_sources[:] = sources
+        search_by_claude = True
+        return claude_pricing
+    print("Claude found no sourced prices.")
+    claude_backup_result = "not run" if claude_pages[0] is None else "ran"
+    claude_found_nothing_pages = claude_pages[0] or 0
+    return None
 
 def extraction_config():
     """Generation config for the calls that read prices out of menu text or a menu file. Reading prices needs no long chain
@@ -2510,28 +2450,19 @@ def main():
         lines.append(f"**Prices used** (from {pricing_source}): appetizer ${app}, casual main ${casual_main}, "
                      f"premium main ${premium_main}, drink ${drink}, dessert ${dessert}")
         if str(pricing_source).startswith("a web search") and not reused_pricing:
-            if search_by_claude:
-                lines.append("")
-                lines.append("**Claude-backup deployed**")
+            lines.append("")
+            lines.append("**Claude web search**")
             if search_sources:
                 lines.append("")
                 label = ("Search results Claude saw (it opened or cited none of them, so the prices may rest on snippets)"
-                         if search_by_claude and not claude_read[0] else "Pages the web search consulted")
+                         if not claude_read[0] else "Pages the web search consulted")
                 lines.append(f"**{label}:** " + "; ".join(f"[{t}]({u})" for t, u in search_sources))
-            elif search_queries_run:
-                lines.append("")
-                lines.append(f"**Pages the web search consulted:** Gemini ran {search_queries_run} search queries but did not list the pages behind these prices")
-            else:
-                lines.append("")
-                lines.append("**Pages the web search consulted:** none were returned, even on a second try")
     else:
         if claude_backup_result == "ran":
-            lines.append(f"**Claude-backup deployed**, but it found no usable prices ({claude_found_nothing_pages} pages checked). "
-                         "Gemini's search returned no sources, so its unsourced prices were not kept.")
+            lines.append(f"**Claude's web search found no usable prices** ({claude_found_nothing_pages} pages checked).")
             lines.append("")
         elif claude_backup_result == "not run":
-            lines.append("**Claude-backup did not run** (no API key, or the request failed; see the job log). "
-                         "Gemini's search returned no sources, so its unsourced prices were not kept.")
+            lines.append("**Claude's web search did not run** (no API key, or the request failed; see the job log).")
             lines.append("")
         lines.append("**Prices used:** none could be found, so typical defaults were saved")
 
@@ -2562,11 +2493,6 @@ def main():
                       premium=sorted(pricing.get("premiumMains") or []), casual=sorted(pricing.get("casualMains") or []))
     warnings = price_sanity_warnings(app, casual_main, premium_main, drink, dessert, defaulted, estimated=guessed,
                                      casual_count=casual_count, premium_overlaps=premium_overlaps)
-    if str(pricing_source).startswith("a web search") and not reused_pricing and search_ungrounded:
-        warnings.append("the web search returned no source pages, so these prices may come from Gemini's memory rather than from a menu")
-    elif (str(pricing_source).startswith("a web search") and not reused_pricing and not search_by_claude
-          and search_queries_run and not search_sources):
-        warnings.append("Gemini searched the web but did not list the pages behind these prices, so they could not be traced to a menu")
     set_output("needs_check", "true" if warnings else "false")
     # Why the venue was flagged, one reason per line. add_city.price_and_keep saves these on the venue so a held
     # venue's review issue (venue_review.py) can say why it needed a second look.
