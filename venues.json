@@ -4554,5 +4554,24 @@
     "dessert": 10.0,
     "tierColor": "#eab308",
     "isTaco": true
+  },
+  {
+    "id": 258,
+    "name": "Guac N Tacos",
+    "category": "Mexican Fast Casual",
+    "city": "Western Springs",
+    "state": "IL",
+    "website": "http://www.guacntacos.com/",
+    "coords": [
+      -87.898944,
+      41.81
+    ],
+    "app": 6.0,
+    "casualMain": 4.5,
+    "premiumMain": 27.99,
+    "drink": 14.0,
+    "dessert": 6.5,
+    "tierColor": "#eab308",
+    "isTaco": true
   }
 ]
