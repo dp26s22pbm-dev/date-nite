@@ -49,8 +49,8 @@ Steps and results are short fixed words so they can be counted. A result of "ok"
                   already tried, or a made-up path whose text matches a page that had no prices; logged once per page;
                   error_redirect = a URL whose query says the site sent a missing page here, as in /?aspxerrorpath=/menu, never read)
     site_gemini   too_few_prices | lunch_prices_suspected | implausibly_low | error | ok
-    search_gemini error | no_sources | searched_no_sources | ok     (no_sources: no search queries and no pages, so the answer was dropped; searched_no_sources: the call ran n search queries
-                  but the answer cites no pages, so the prices are kept and flagged for review)
+    search_gemini error | no_sources | searched_no_sources | ok     (the importer's Gemini web search was removed on Nov 26, so nothing logs this any more; older records
+                  keep it. no_sources: no search queries and no pages; searched_no_sources: the call ran n search queries but cited no pages)
     prices        apps_above_casual                                          (a note on the prices read, from any source: the appetizers cost more than the
                   casual mains, so they were dropped as misfiled entrees and the stand-in was used; n = how many; apps and casual = the
                   prices in the two lists at that moment, sorted, numbers only, so a later look can tell whether the dropped list was
