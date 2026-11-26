@@ -1,0 +1,42 @@
+[
+  {
+    "name": "A Toda Madre",
+    "category": "Mexican Cuisine",
+    "city": "Glen Ellyn",
+    "state": "IL",
+    "website": "http://www.atmrestaurant.com/",
+    "coords": [
+      -88.066484,
+      41.877371
+    ],
+    "app": 12.5,
+    "casualMain": 10.0,
+    "premiumMain": 35.5,
+    "drink": 15.0,
+    "dessert": 10.0,
+    "tierColor": "#eab308",
+    "isTaco": true
+  },
+  {
+    "name": "CAVA",
+    "category": "Greek",
+    "city": "Bolingbrook",
+    "state": "IL",
+    "website": "http://cava.com/",
+    "coords": [
+      -88.037883,
+      41.721011
+    ],
+    "app": 3.94,
+    "casualMain": 21.34,
+    "premiumMain": 20.91,
+    "drink": 10.67,
+    "dessert": 4.0,
+    "tierColor": "#22c55e",
+    "reviewNotes": [
+      "The premium main ($20.91) is lower than the casual main ($21.34), so the dishes may have been sorted into the wrong tiers",
+      "Gemini searched the web but did not list the pages behind these prices, so they could not be traced to a menu",
+      "No menu prices were read, so these prices are estimates"
+    ]
+  }
+]
