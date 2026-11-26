@@ -627,6 +627,18 @@ def fetch_pricing_via_web_search(venue_name, city, website=""):
             claude_found_nothing_pages = claude_pages[0] or 0
     return pricing
 
+def extraction_config():
+    """Generation config for the calls that read prices out of menu text or a menu file. Reading prices needs no long chain
+    of thought: on Nov 26 a made-up menu with known answers was read the same at thinking LOW, MINIMAL and budget 0 as at the
+    default (all 29 real prices found, nothing left out let in), while the default spent about 1,200 thinking tokens on a
+    204-token answer (six times as many, about 70,000 of 75,000 output tokens on the Nov 25 grid run). Not used for the search
+    and page-opening calls: with LOW the model seems to stop searching. GEMINI_EXTRACTION_THINKING sets the level (LOW,
+    MINIMAL, MEDIUM, HIGH); "default" turns this off and restores the model's own thinking. None means no config."""
+    level = (os.environ.get("GEMINI_EXTRACTION_THINKING") or "LOW").strip().upper()
+    if level in ("DEFAULT", "OFF", "NONE") or level not in {m.name for m in types.ThinkingLevel} - {"THINKING_LEVEL_UNSPECIFIED"}:
+        return None
+    return types.GenerateContentConfig(thinking_config=types.ThinkingConfig(thinking_level=level))
+
 IMAGE_TYPES = {".png": "image/png", ".jpg": "image/jpeg", ".jpeg": "image/jpeg", ".webp": "image/webp"}
 
 def menu_file_mime(url, content_type=""):
@@ -649,7 +661,8 @@ def fetch_pdf_pricing(url, mime="application/pdf"):
             contents=[
                 PDF_PROMPT,
                 types.Part.from_bytes(data=pdf_bytes, mime_type=mime)
-            ]
+            ],
+            config=extraction_config(),
         )
         clean = response.text.strip().replace("```json", "").replace("```", "")
         data = json.loads(clean)
@@ -734,6 +747,7 @@ def pricing_from_menu_text(text, require_main=True, where="pasted_text", url=Non
         response = client.models.generate_content(
             model="gemini-3.6-flash",
             contents=[PDF_PROMPT, "Menu text:\n" + text[:MENU_TEXT_LIMIT]],
+            config=extraction_config(),
         )
         clean = response.text.strip().replace("```json", "").replace("```", "")
         data = json.loads(clean)
