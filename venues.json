@@ -4573,5 +4573,23 @@
     "dessert": 6.5,
     "tierColor": "#eab308",
     "isTaco": true
+  },
+  {
+    "id": 259,
+    "name": "Entourage Downers Grove",
+    "category": "New American",
+    "city": "Downers Grove",
+    "state": "IL",
+    "website": "https://entouragerestaurant.com/downers-grove/",
+    "coords": [
+      -88.010098,
+      41.795033
+    ],
+    "app": 17.0,
+    "casualMain": 29.0,
+    "premiumMain": 49.0,
+    "drink": 14.5,
+    "dessert": 8.0,
+    "tierColor": "#f97316"
   }
 ]
