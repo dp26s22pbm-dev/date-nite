@@ -30,8 +30,8 @@ FIELDS = ",".join([
 
 COUNT = int(os.environ.get("VENUE_COUNT", "5"))
 MAX_PER_CUISINE = int(os.environ.get("MAX_PER_CUISINE", "2"))
-# National fast-food and fast-casual chains that never qualify (more chains, sit-down and fast-casual, are in excluded-chains.json). Higher-end fast casual (Shake Shack, Velvet Taco, local
-# taquerias) is allowed; a priced venue is dropped only when two people spend less than MIN_TOTAL_FOR_TWO on the
+# National fast-food and fast-casual chains that never qualify (more chains, sit-down and fast-casual, are in excluded-chains.json). Shake Shack and Velvet Taco are banned too (excluded-chains.json, Nov 26).
+# Local taquerias and other independents are allowed; a priced venue is dropped only when two people spend less than MIN_TOTAL_FOR_TWO on the
 # importer's standard order (appetizer, two mains, two drinks, dessert, plus tax and tip). A dropped venue is replaced by
 # the next-best candidate, up to MAX_PRICED venues priced per city.
 MIN_TOTAL_FOR_TWO = int(os.environ.get("MIN_TOTAL_FOR_TWO", "35"))
