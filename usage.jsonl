@@ -38,3 +38,8 @@
 {"v": 1, "t": "2026-11-26T00:03:37+00:00", "run": "45725920434", "workflow": "Gemini Probe", "model": "gemini-3.6-flash", "in": 0, "out": 0, "think": 0, "searches": 0, "ok": false}
 {"v": 1, "t": "2026-11-26T00:03:37+00:00", "run": "45725920434", "workflow": "Gemini Probe", "model": "gemini-3.6-flash", "in": 0, "out": 0, "think": 0, "searches": 0, "ok": false}
 {"v": 1, "t": "2026-11-26T00:03:37+00:00", "run": "45725920434", "workflow": "Gemini Probe", "model": "gemini-3.6-flash", "in": 0, "out": 0, "think": 0, "searches": 0, "ok": false}
+{"v": 1, "t": "2026-11-26T00:24:07+00:00", "run": "45728409012", "workflow": "Gemini Probe", "model": "gemini-3.6-flash", "in": 1159, "out": 204, "think": 1235, "searches": 0, "ok": true}
+{"v": 1, "t": "2026-11-26T00:24:16+00:00", "run": "45728409012", "workflow": "Gemini Probe", "model": "gemini-3.6-flash", "in": 1159, "out": 204, "think": 1201, "searches": 0, "ok": true}
+{"v": 1, "t": "2026-11-26T00:24:18+00:00", "run": "45728409012", "workflow": "Gemini Probe", "model": "gemini-3.6-flash", "in": 1159, "out": 204, "think": 0, "searches": 0, "ok": true}
+{"v": 1, "t": "2026-11-26T00:24:20+00:00", "run": "45728409012", "workflow": "Gemini Probe", "model": "gemini-3.6-flash", "in": 1159, "out": 204, "think": 0, "searches": 0, "ok": true}
+{"v": 1, "t": "2026-11-26T00:24:22+00:00", "run": "45728409012", "workflow": "Gemini Probe", "model": "gemini-3.6-flash", "in": 1159, "out": 204, "think": 0, "searches": 0, "ok": true}
