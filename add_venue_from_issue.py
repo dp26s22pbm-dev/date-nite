@@ -26,7 +26,7 @@ class GeminiCapReached(Exception):
     """Gemini refused a call because the project's spending cap is used up. Raised for every later call in the run
     without contacting Gemini, so the other sources are tried without each one waiting on a call that cannot work."""
 
-# True once Gemini has answered "monthly spending cap" (HTTP 429 RESOURCE_EXHAUSTED). A per-minute rate limit uses the same
+# True once Gemini has answered "monthly spending cap" (HTTP 429 RESOURCE_EXHAUSTED) or "prepayment credits are depleted" (402). A per-minute rate limit uses the same
 # status but a different message, and does not set it.
 gemini_cap_hit = False
 # True once this run has used the Gemini allowance it was given (RUN_BUDGET_USD, see gemini_usage.py and budget.py)
@@ -34,7 +34,9 @@ gemini_run_budget_hit = False
 
 def is_gemini_cap_error(error):
     text = str(error).lower()
-    return "resource_exhausted" in text and ("spending cap" in text or "spend cap" in text)
+    # Nov 25: the prepaid balance ran out ("402 RESOURCE_EXHAUSTED ... Your prepayment credits are depleted"). Same effect as the cap.
+    return "resource_exhausted" in text and ("spending cap" in text or "spend cap" in text
+                                             or "prepayment credits" in text or "credits are depleted" in text)
 
 class _CapGuardedModels:
     """client.models, with generate_content stopped after the spending cap is seen. Nov 15: 16 of 99 imports each made
@@ -45,7 +47,7 @@ class _CapGuardedModels:
     def generate_content(self, *args, **kwargs):
         global gemini_cap_hit, gemini_run_budget_hit
         if gemini_cap_hit:
-            raise GeminiCapReached("Gemini's monthly spending cap was reached earlier in this run")
+            raise GeminiCapReached("Gemini's spending cap or prepaid credit ran out earlier in this run")
         try:
             gemini_usage.check_run_budget()
         except gemini_usage.GeminiRunBudgetReached as e:
@@ -62,7 +64,7 @@ class _CapGuardedModels:
             gemini_usage.record(kwargs.get("model"), ok=False)
             if is_gemini_cap_error(e):
                 gemini_cap_hit = True
-                print("Gemini's monthly spending cap is used up; no more Gemini calls will be made in this run.")
+                print(f"Gemini refused the request because its spending cap or prepaid credit is used up ({str(e)[:160]}); no more Gemini calls will be made in this run.")
                 menu_log.step("gemini", "cap_reached", detail=e)
             raise
 
@@ -370,8 +372,12 @@ def grounding_summary(response):
         chunks += len(getattr(meta, "grounding_chunks", None) or [])
     return f"search queries={queries} source pages={chunks}"
 
-# True when the last web search returned no source pages even after a retry, so its prices may come from Gemini's memory
+# True when the last web search returned no source pages and showed no search queries even after a retry, so its prices
+# may come from Gemini's memory
 search_ungrounded = False
+# Google Search queries the last Gemini search ran (from grounding metadata or, with include_server_side_tool_invocations,
+# from its tool_call parts). Nov 25 probe: a JSON-only answer had no grounding metadata yet the call had run 8 searches.
+search_queries_run = 0
 # True when Claude's web search supplied the prices because Gemini's search had no sources or no prices
 search_by_claude = False
 # Set when Gemini had no sources and Claude gave no usable sourced prices, so the report can say what happened:
@@ -383,8 +389,9 @@ claude_found_nothing_pages = 0
 def fetch_pricing_via_gemini_search(venue_name, city="Naperville, IL"):
     """Query Gemini with Google Search Grounding to find live menu pricing. A response with no source pages means
     Gemini may not have searched, so it is asked once more; if that is empty too, search_ungrounded is set."""
-    global search_ungrounded
+    global search_ungrounded, search_queries_run
     search_ungrounded = False
+    search_queries_run = 0
     search_sources.clear()
     try:
         prompt = SEARCH_PRICING_PROMPT.format(venue_name=venue_name, city=city, scope_rules=SCOPE_RULES)
@@ -396,20 +403,33 @@ def fetch_pricing_via_gemini_search(venue_name, city="Naperville, IL"):
                 contents=prompt + (retry_note if attempt == 2 else ""),
                 config=types.GenerateContentConfig(
                     tools=[types.Tool(google_search=types.GoogleSearch())],
+                    # Without this a search the model ran stays invisible when its answer is JSON only (no citations)
+                    tool_config=types.ToolConfig(include_server_side_tool_invocations=True),
                     temperature=0.1
                 ),
             )
             search_sources[:] = grounding_sources(response)
-            print(f"Web search for {venue_name} (attempt {attempt}): {grounding_summary(response)}")
-            if search_sources:
+            search_queries_run = gemini_usage.search_queries_in(response)
+            print(f"Web search for {venue_name} (attempt {attempt}): {grounding_summary(response)}; search queries run={search_queries_run}")
+            if search_sources or search_queries_run:
                 break
-        search_ungrounded = not search_sources
+        search_ungrounded = not (search_sources or search_queries_run)
         if search_ungrounded:
             menu_log.step("search_gemini", "no_sources", detail=grounding_summary(response))
+        elif not search_sources:
+            # Searched, but the answer cites no pages, so the prices cannot be traced to one; they are flagged for review
+            menu_log.step("search_gemini", "searched_no_sources", n=search_queries_run, detail=grounding_summary(response))
         raw_text = response.text.strip()
         if raw_text.startswith("```"):
             raw_text = raw_text.strip("`").removeprefix("json").strip()
-        return json.loads(raw_text)
+        try:
+            return json.loads(raw_text)
+        except ValueError:
+            # A model that searched may write a sentence around the JSON; take the object
+            start, end = raw_text.find("{"), raw_text.rfind("}")
+            if start == -1 or end <= start:
+                raise
+            return json.loads(raw_text[start:end + 1])
     except Exception as e:
         print(f"Gemini Search Grounding error for {venue_name}: {e}")
         menu_log.step("search_gemini", "error", detail=e)
@@ -607,6 +627,18 @@ def fetch_pricing_via_web_search(venue_name, city, website=""):
             claude_found_nothing_pages = claude_pages[0] or 0
     return pricing
 
+def extraction_config():
+    """Generation config for the calls that read prices out of menu text or a menu file. Reading prices needs no long chain
+    of thought: on Nov 26 a made-up menu with known answers was read the same at thinking LOW, MINIMAL and budget 0 as at the
+    default (all 29 real prices found, nothing left out let in), while the default spent about 1,200 thinking tokens on a
+    204-token answer (six times as many, about 70,000 of 75,000 output tokens on the Nov 25 grid run). Not used for the search
+    and page-opening calls: with LOW the model seems to stop searching. GEMINI_EXTRACTION_THINKING sets the level (LOW,
+    MINIMAL, MEDIUM, HIGH); "default" turns this off and restores the model's own thinking. None means no config."""
+    level = (os.environ.get("GEMINI_EXTRACTION_THINKING") or "LOW").strip().upper()
+    if level in ("DEFAULT", "OFF", "NONE") or level not in {m.name for m in types.ThinkingLevel} - {"THINKING_LEVEL_UNSPECIFIED"}:
+        return None
+    return types.GenerateContentConfig(thinking_config=types.ThinkingConfig(thinking_level=level))
+
 IMAGE_TYPES = {".png": "image/png", ".jpg": "image/jpeg", ".jpeg": "image/jpeg", ".webp": "image/webp"}
 
 def menu_file_mime(url, content_type=""):
@@ -629,7 +661,8 @@ def fetch_pdf_pricing(url, mime="application/pdf"):
             contents=[
                 PDF_PROMPT,
                 types.Part.from_bytes(data=pdf_bytes, mime_type=mime)
-            ]
+            ],
+            config=extraction_config(),
         )
         clean = response.text.strip().replace("```json", "").replace("```", "")
         data = json.loads(clean)
@@ -714,6 +747,7 @@ def pricing_from_menu_text(text, require_main=True, where="pasted_text", url=Non
         response = client.models.generate_content(
             model="gemini-3.6-flash",
             contents=[PDF_PROMPT, "Menu text:\n" + text[:MENU_TEXT_LIMIT]],
+            config=extraction_config(),
         )
         clean = response.text.strip().replace("```json", "").replace("```", "")
         data = json.loads(clean)
@@ -2454,8 +2488,8 @@ def main():
 
     lines = [f"### ✅ {name} was added to the map", ""]
     if gemini_cap_hit:
-        lines += ["> **Gemini's monthly spending cap was reached during this run.** Menu pages and files could not be read, so "
-                  "the prices below are not from the restaurant's menu. Raise the cap in AI Studio (or wait for it to reset), "
+        lines += ["> **Gemini's spending cap or prepaid credit ran out during this run.** Menu pages and files could not be read, so "
+                  "the prices below are not from the restaurant's menu. Raise the cap or add credit in AI Studio (or wait for the cap to reset), "
                   "then close and reopen this issue to read the menu again.", ""]
     if gemini_run_budget_hit:
         lines += ["> **This run used up its Gemini allowance for the day.** The prices below may not be from the restaurant's menu. "
@@ -2484,6 +2518,9 @@ def main():
                 label = ("Search results Claude saw (it opened or cited none of them, so the prices may rest on snippets)"
                          if search_by_claude and not claude_read[0] else "Pages the web search consulted")
                 lines.append(f"**{label}:** " + "; ".join(f"[{t}]({u})" for t, u in search_sources))
+            elif search_queries_run:
+                lines.append("")
+                lines.append(f"**Pages the web search consulted:** Gemini ran {search_queries_run} search queries but did not list the pages behind these prices")
             else:
                 lines.append("")
                 lines.append("**Pages the web search consulted:** none were returned, even on a second try")
@@ -2527,6 +2564,9 @@ def main():
                                      casual_count=casual_count, premium_overlaps=premium_overlaps)
     if str(pricing_source).startswith("a web search") and not reused_pricing and search_ungrounded:
         warnings.append("the web search returned no source pages, so these prices may come from Gemini's memory rather than from a menu")
+    elif (str(pricing_source).startswith("a web search") and not reused_pricing and not search_by_claude
+          and search_queries_run and not search_sources):
+        warnings.append("Gemini searched the web but did not list the pages behind these prices, so they could not be traced to a menu")
     set_output("needs_check", "true" if warnings else "false")
     # Why the venue was flagged, one reason per line. add_city.price_and_keep saves these on the venue so a held
     # venue's review issue (venue_review.py) can say why it needed a second look.

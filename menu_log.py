@@ -49,7 +49,8 @@ Steps and results are short fixed words so they can be counted. A result of "ok"
                   already tried, or a made-up path whose text matches a page that had no prices; logged once per page;
                   error_redirect = a URL whose query says the site sent a missing page here, as in /?aspxerrorpath=/menu, never read)
     site_gemini   too_few_prices | lunch_prices_suspected | implausibly_low | error | ok
-    search_gemini error | no_sources | ok
+    search_gemini error | no_sources | searched_no_sources | ok     (no_sources: no search queries and no pages, so the answer was dropped; searched_no_sources: the call ran n search queries
+                  but the answer cites no pages, so the prices are kept and flagged for review)
     prices        apps_above_casual                                          (a note on the prices read, from any source: the appetizers cost more than the
                   casual mains, so they were dropped as misfiled entrees and the stand-in was used; n = how many; apps and casual = the
                   prices in the two lists at that moment, sorted, numbers only, so a later look can tell whether the dropped list was
@@ -60,7 +61,7 @@ Steps and results are short fixed words so they can be counted. A result of "ok"
                   whether the casual list held protein-variant upcharges (Chicken $15.95, Seafood $19.95) of the same dishes)
     gemini        run_budget_reached                                         (the run's Gemini allowance, RUN_BUDGET_USD, was spent; logged once, and every later
                   Gemini call in the run is skipped; see gemini_usage.py and budget.py)
-    gemini        cap_reached                                                (Gemini answered 429 RESOURCE_EXHAUSTED "monthly spending cap"; logged once, and every later
+    gemini        cap_reached                                                (Gemini answered 429 RESOURCE_EXHAUSTED "monthly spending cap", or 402 RESOURCE_EXHAUSTED "prepayment credits are depleted"; logged once, and every later
                   Gemini call in the run is skipped, so the steps after it show gemini_error with the detail "spending cap was reached earlier")
     search_claude no_key | error | refused | no_prices | ok         (pages = search results seen; read = pages fetched or cited; searches / fetches = tool uses
                   the API reported, so read=0 with fetches=1 means the fetch ran but returned nothing; tokens_in / tokens_out = API tokens used)
