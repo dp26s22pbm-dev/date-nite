@@ -8,6 +8,8 @@ name: Venue Review
 #  - When you add the `approve-venue` label to one of those issues: that venue is folded into venues.json.
 #    The check is on who applied the label (only the repo owner), not on who opened the issue, because the
 #    issues are opened by github-actions[bot], whose author_association is never OWNER/MEMBER/COLLABORATOR.
+#    A review issue is recognised by its "[Venue Review]" title, not its `venue-review` label, because the GitHub
+#    mobile label picker can swap labels (dropping `venue-review` while adding `approve-venue`).
 # Pushes made with the workflow token do not start fold-venues.yml, so the fold runs here directly.
 on:
   pull_request:
@@ -70,7 +72,7 @@ jobs:
   approved-issue:
     if: >-
       github.event_name == 'issues' && github.event.label.name == 'approve-venue' &&
-      contains(github.event.issue.labels.*.name, 'venue-review') &&
+      startsWith(github.event.issue.title, '[Venue Review]') &&
       github.event.sender.login == github.repository_owner
     runs-on: ubuntu-latest
     permissions:
@@ -128,7 +130,7 @@ jobs:
   denied-issue:
     if: >-
       github.event_name == 'issues' && github.event.label.name == 'deny-venue' &&
-      contains(github.event.issue.labels.*.name, 'venue-review') &&
+      startsWith(github.event.issue.title, '[Venue Review]') &&
       github.event.sender.login == github.repository_owner
     runs-on: ubuntu-latest
     permissions:
