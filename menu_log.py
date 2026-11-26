@@ -61,7 +61,7 @@ Steps and results are short fixed words so they can be counted. A result of "ok"
                   whether the casual list held protein-variant upcharges (Chicken $15.95, Seafood $19.95) of the same dishes)
     gemini        run_budget_reached                                         (the run's Gemini allowance, RUN_BUDGET_USD, was spent; logged once, and every later
                   Gemini call in the run is skipped; see gemini_usage.py and budget.py)
-    gemini        cap_reached                                                (Gemini answered 429 RESOURCE_EXHAUSTED "monthly spending cap"; logged once, and every later
+    gemini        cap_reached                                                (Gemini answered 429 RESOURCE_EXHAUSTED "monthly spending cap", or 402 RESOURCE_EXHAUSTED "prepayment credits are depleted"; logged once, and every later
                   Gemini call in the run is skipped, so the steps after it show gemini_error with the detail "spending cap was reached earlier")
     search_claude no_key | error | refused | no_prices | ok         (pages = search results seen; read = pages fetched or cited; searches / fetches = tool uses
                   the API reported, so read=0 with fetches=1 means the fetch ran but returned nothing; tokens_in / tokens_out = API tokens used)

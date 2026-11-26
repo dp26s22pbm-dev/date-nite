@@ -26,7 +26,7 @@ class GeminiCapReached(Exception):
     """Gemini refused a call because the project's spending cap is used up. Raised for every later call in the run
     without contacting Gemini, so the other sources are tried without each one waiting on a call that cannot work."""
 
-# True once Gemini has answered "monthly spending cap" (HTTP 429 RESOURCE_EXHAUSTED). A per-minute rate limit uses the same
+# True once Gemini has answered "monthly spending cap" (HTTP 429 RESOURCE_EXHAUSTED) or "prepayment credits are depleted" (402). A per-minute rate limit uses the same
 # status but a different message, and does not set it.
 gemini_cap_hit = False
 # True once this run has used the Gemini allowance it was given (RUN_BUDGET_USD, see gemini_usage.py and budget.py)
@@ -34,7 +34,9 @@ gemini_run_budget_hit = False
 
 def is_gemini_cap_error(error):
     text = str(error).lower()
-    return "resource_exhausted" in text and ("spending cap" in text or "spend cap" in text)
+    # Nov 25: the prepaid balance ran out ("402 RESOURCE_EXHAUSTED ... Your prepayment credits are depleted"). Same effect as the cap.
+    return "resource_exhausted" in text and ("spending cap" in text or "spend cap" in text
+                                             or "prepayment credits" in text or "credits are depleted" in text)
 
 class _CapGuardedModels:
     """client.models, with generate_content stopped after the spending cap is seen. Nov 15: 16 of 99 imports each made
@@ -45,7 +47,7 @@ class _CapGuardedModels:
     def generate_content(self, *args, **kwargs):
         global gemini_cap_hit, gemini_run_budget_hit
         if gemini_cap_hit:
-            raise GeminiCapReached("Gemini's monthly spending cap was reached earlier in this run")
+            raise GeminiCapReached("Gemini's spending cap or prepaid credit ran out earlier in this run")
         try:
             gemini_usage.check_run_budget()
         except gemini_usage.GeminiRunBudgetReached as e:
@@ -62,7 +64,7 @@ class _CapGuardedModels:
             gemini_usage.record(kwargs.get("model"), ok=False)
             if is_gemini_cap_error(e):
                 gemini_cap_hit = True
-                print("Gemini's monthly spending cap is used up; no more Gemini calls will be made in this run.")
+                print(f"Gemini refused the request because its spending cap or prepaid credit is used up ({str(e)[:160]}); no more Gemini calls will be made in this run.")
                 menu_log.step("gemini", "cap_reached", detail=e)
             raise
 
@@ -2472,8 +2474,8 @@ def main():
 
     lines = [f"### ✅ {name} was added to the map", ""]
     if gemini_cap_hit:
-        lines += ["> **Gemini's monthly spending cap was reached during this run.** Menu pages and files could not be read, so "
-                  "the prices below are not from the restaurant's menu. Raise the cap in AI Studio (or wait for it to reset), "
+        lines += ["> **Gemini's spending cap or prepaid credit ran out during this run.** Menu pages and files could not be read, so "
+                  "the prices below are not from the restaurant's menu. Raise the cap or add credit in AI Studio (or wait for the cap to reset), "
                   "then close and reopen this issue to read the menu again.", ""]
     if gemini_run_budget_hit:
         lines += ["> **This run used up its Gemini allowance for the day.** The prices below may not be from the restaurant's menu. "
