@@ -49,6 +49,28 @@ def _num(value):
         return 0
 
 
+def search_queries_in(response):
+    """How many Google Search queries a response shows. Grounding metadata lists them when the answer cites pages. A call
+    made with tool_config include_server_side_tool_invocations also carries them as GOOGLE_SEARCH tool_call parts, and
+    those appear even when the answer has no grounding metadata (a JSON-only reply), so the larger of the two counts is used
+    (they describe the same queries when both are present). Never raises."""
+    try:
+        grounded = called = 0
+        for candidate in getattr(response, "candidates", None) or []:
+            queries = getattr(getattr(candidate, "grounding_metadata", None), "web_search_queries", None)
+            grounded += len(queries) if isinstance(queries, (list, tuple)) else 0
+            for part in getattr(getattr(candidate, "content", None), "parts", None) or []:
+                call = getattr(part, "tool_call", None)
+                kind = getattr(getattr(call, "tool_type", None), "name", "") if call else ""
+                if "GOOGLE_SEARCH" in str(kind):
+                    args = getattr(call, "args", None)
+                    queries = args.get("queries") if isinstance(args, dict) else None
+                    called += len(queries) if isinstance(queries, (list, tuple)) and queries else 1
+        return max(grounded, called)
+    except Exception:
+        return 0
+
+
 def usage_from_response(response):
     """(prompt tokens, output tokens, thinking tokens, grounding queries) from a generate_content response. Missing
     fields count as 0, so an unexpected response shape never raises."""
@@ -56,10 +78,7 @@ def usage_from_response(response):
     tokens_in = _num(getattr(meta, "prompt_token_count", 0)) + _num(getattr(meta, "tool_use_prompt_token_count", 0))
     tokens_out = _num(getattr(meta, "candidates_token_count", 0))
     think = _num(getattr(meta, "thoughts_token_count", 0))
-    searches = 0
-    for candidate in getattr(response, "candidates", None) or []:
-        queries = getattr(getattr(candidate, "grounding_metadata", None), "web_search_queries", None)
-        searches += len(queries) if isinstance(queries, (list, tuple)) else 0
+    searches = search_queries_in(response)
     return tokens_in, tokens_out, think, searches
 
 

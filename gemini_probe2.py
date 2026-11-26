@@ -16,8 +16,10 @@ Part 2, does a lower thinking level change what is read from a menu:
   how many of the real prices it found, and whether it let in the items the prompt says to leave out (a tomahawk for two, a
   seafood tower, soft drinks).
 
-Calls go through gemini_usage (counted in the weekly budget); RUN_BUDGET_USD caps the probe. Environment: GEMINI_API_KEY,
-PROBE_VENUE, PROBE_CITY."""
+Calls go through gemini_usage (counted in the weekly budget); RUN_BUDGET_USD caps the probe. A grounded search is billed per
+query and the model chooses how many (the prose prompt ran 8, an estimated $0.28), so part 1 can cost most of a dollar; part 2
+makes five cheap calls. PROBE_PART picks "thinking" (part 2 only), "search" (part 1 only) or "both" (part 2 first).
+Environment: GEMINI_API_KEY, PROBE_VENUE, PROBE_CITY, PROBE_PART."""
 import os
 import re
 import json
@@ -93,12 +95,12 @@ def safe(fn, *args):
 
 
 def grounded(response):
-    """(searched, queries, source pages) from the response's grounding metadata."""
-    queries = chunks = 0
+    """(searched, queries, source pages). Queries come from gemini_usage.search_queries_in (grounding metadata or, with
+    include_server_side_tool_invocations, GOOGLE_SEARCH tool_call parts); pages from the grounding metadata."""
+    chunks = 0
     for cand in getattr(response, "candidates", None) or []:
-        meta = getattr(cand, "grounding_metadata", None)
-        queries += len(getattr(meta, "web_search_queries", None) or [])
-        chunks += len(getattr(meta, "grounding_chunks", None) or [])
+        chunks += len(getattr(getattr(cand, "grounding_metadata", None), "grounding_chunks", None) or [])
+    queries = gemini_usage.search_queries_in(response)
     return queries > 0 or chunks > 0, queries, chunks
 
 
@@ -200,8 +202,10 @@ def extraction_calls(client):
 
 
 def summary(names, search_rows, extract_rows, venue, city):
-    lines = [f"### Gemini probe 2: {venue}, {city}", "", f"Models the key lists ({len(names)}): " + ", ".join(names[:40]), "",
-             "#### Does search run?", "", "| Test | Searched | Queries | Pages | Tool parts | Tokens in / out / thinking | Result |", "| --- | --- | --- | --- | --- | --- | --- |"]
+    lines = [f"### Gemini probe 2: {venue}, {city}", ""]
+    if search_rows:
+        lines += [f"Models the key lists ({len(names)}): " + ", ".join(names[:40]), "",
+                  "#### Does search run?", "", "| Test | Searched | Queries | Pages | Tool parts | Tokens in / out / thinking | Result |", "| --- | --- | --- | --- | --- | --- | --- |"]
     for r in search_rows:
         if "error" in r:
             lines.append(f"| {r['test']} | error | | | | | {r['error'].replace('|', '/')} |")
@@ -209,9 +213,10 @@ def summary(names, search_rows, extract_rows, venue, city):
         u = r["usage"]
         lines.append(f"| {r['test']} | {'yes' if r['searched'] else 'no'} | {r['queries']} | {r['pages']} | {len(r['tool_parts'])} | "
                      f"{u['in']} / {u['out']} / {u['think']} | {r['reply'].replace('|', '/')[:90]} |")
-    lines += ["", "#### Does lower thinking change what is read from a menu?", "",
-              "Prices found of the real ones (apps, casual, premium, drinks, desserts), other prices let in, and left-out items that slipped in.", "",
-              "| Setting | Tokens in / out / thinking | Apps | Casual | Premium | Drinks | Desserts | Slipped in |", "| --- | --- | --- | --- | --- | --- | --- | --- |"]
+    if extract_rows:
+        lines += ["", "#### Does lower thinking change what is read from a menu?", "",
+                  "Prices found of the real ones (apps, casual, premium, drinks, desserts), other prices let in, and left-out items that slipped in.", "",
+                  "| Setting | Tokens in / out / thinking | Apps | Casual | Premium | Drinks | Desserts | Slipped in |", "| --- | --- | --- | --- | --- | --- | --- | --- |"]
     for r in extract_rows:
         if "error" in r:
             lines.append(f"| {r['test']} | error | | | | | | {r['error'].replace('|', '/')} |")
@@ -227,10 +232,15 @@ def summary(names, search_rows, extract_rows, venue, city):
 def main():
     venue, city = os.environ.get("PROBE_VENUE") or "Traverso's Restaurant", os.environ.get("PROBE_CITY") or "Wheaton, IL"
     client = gemini_usage.TrackedClient(imp.client._client)
-    names, others = flash_models(client)
-    print("models:", names, "| other flash models tried:", others)
-    search_rows = search_calls(client, others, venue, city)
-    extract_rows = extraction_calls(client)
+    part = (os.environ.get("PROBE_PART") or "both").strip().lower()
+    # The thinking test makes cheap calls with no searches, so it goes first: a grounded search costs per query (the prose
+    # prompt ran 8) and used up the whole budget on Nov 25 before the thinking test started
+    extract_rows = extraction_calls(client) if part in ("both", "thinking") else []
+    names, search_rows = [], []
+    if part in ("both", "search"):
+        names, others = flash_models(client)
+        print("models:", names, "| other flash models tried:", others)
+        search_rows = search_calls(client, others, venue, city)
     text = summary(names, search_rows, extract_rows, venue, city)
     print(text)
     path = os.environ.get("GITHUB_STEP_SUMMARY")

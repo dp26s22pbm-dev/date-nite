@@ -370,8 +370,12 @@ def grounding_summary(response):
         chunks += len(getattr(meta, "grounding_chunks", None) or [])
     return f"search queries={queries} source pages={chunks}"
 
-# True when the last web search returned no source pages even after a retry, so its prices may come from Gemini's memory
+# True when the last web search returned no source pages and showed no search queries even after a retry, so its prices
+# may come from Gemini's memory
 search_ungrounded = False
+# Google Search queries the last Gemini search ran (from grounding metadata or, with include_server_side_tool_invocations,
+# from its tool_call parts). Nov 25 probe: a JSON-only answer had no grounding metadata yet the call had run 8 searches.
+search_queries_run = 0
 # True when Claude's web search supplied the prices because Gemini's search had no sources or no prices
 search_by_claude = False
 # Set when Gemini had no sources and Claude gave no usable sourced prices, so the report can say what happened:
@@ -383,8 +387,9 @@ claude_found_nothing_pages = 0
 def fetch_pricing_via_gemini_search(venue_name, city="Naperville, IL"):
     """Query Gemini with Google Search Grounding to find live menu pricing. A response with no source pages means
     Gemini may not have searched, so it is asked once more; if that is empty too, search_ungrounded is set."""
-    global search_ungrounded
+    global search_ungrounded, search_queries_run
     search_ungrounded = False
+    search_queries_run = 0
     search_sources.clear()
     try:
         prompt = SEARCH_PRICING_PROMPT.format(venue_name=venue_name, city=city, scope_rules=SCOPE_RULES)
@@ -396,20 +401,33 @@ def fetch_pricing_via_gemini_search(venue_name, city="Naperville, IL"):
                 contents=prompt + (retry_note if attempt == 2 else ""),
                 config=types.GenerateContentConfig(
                     tools=[types.Tool(google_search=types.GoogleSearch())],
+                    # Without this a search the model ran stays invisible when its answer is JSON only (no citations)
+                    tool_config=types.ToolConfig(include_server_side_tool_invocations=True),
                     temperature=0.1
                 ),
             )
             search_sources[:] = grounding_sources(response)
-            print(f"Web search for {venue_name} (attempt {attempt}): {grounding_summary(response)}")
-            if search_sources:
+            search_queries_run = gemini_usage.search_queries_in(response)
+            print(f"Web search for {venue_name} (attempt {attempt}): {grounding_summary(response)}; search queries run={search_queries_run}")
+            if search_sources or search_queries_run:
                 break
-        search_ungrounded = not search_sources
+        search_ungrounded = not (search_sources or search_queries_run)
         if search_ungrounded:
             menu_log.step("search_gemini", "no_sources", detail=grounding_summary(response))
+        elif not search_sources:
+            # Searched, but the answer cites no pages, so the prices cannot be traced to one; they are flagged for review
+            menu_log.step("search_gemini", "searched_no_sources", n=search_queries_run, detail=grounding_summary(response))
         raw_text = response.text.strip()
         if raw_text.startswith("```"):
             raw_text = raw_text.strip("`").removeprefix("json").strip()
-        return json.loads(raw_text)
+        try:
+            return json.loads(raw_text)
+        except ValueError:
+            # A model that searched may write a sentence around the JSON; take the object
+            start, end = raw_text.find("{"), raw_text.rfind("}")
+            if start == -1 or end <= start:
+                raise
+            return json.loads(raw_text[start:end + 1])
     except Exception as e:
         print(f"Gemini Search Grounding error for {venue_name}: {e}")
         menu_log.step("search_gemini", "error", detail=e)
@@ -2484,6 +2502,9 @@ def main():
                 label = ("Search results Claude saw (it opened or cited none of them, so the prices may rest on snippets)"
                          if search_by_claude and not claude_read[0] else "Pages the web search consulted")
                 lines.append(f"**{label}:** " + "; ".join(f"[{t}]({u})" for t, u in search_sources))
+            elif search_queries_run:
+                lines.append("")
+                lines.append(f"**Pages the web search consulted:** Gemini ran {search_queries_run} search queries but did not list the pages behind these prices")
             else:
                 lines.append("")
                 lines.append("**Pages the web search consulted:** none were returned, even on a second try")
@@ -2527,6 +2548,9 @@ def main():
                                      casual_count=casual_count, premium_overlaps=premium_overlaps)
     if str(pricing_source).startswith("a web search") and not reused_pricing and search_ungrounded:
         warnings.append("the web search returned no source pages, so these prices may come from Gemini's memory rather than from a menu")
+    elif (str(pricing_source).startswith("a web search") and not reused_pricing and not search_by_claude
+          and search_queries_run and not search_sources):
+        warnings.append("Gemini searched the web but did not list the pages behind these prices, so they could not be traced to a menu")
     set_output("needs_check", "true" if warnings else "false")
     # Why the venue was flagged, one reason per line. add_city.price_and_keep saves these on the venue so a held
     # venue's review issue (venue_review.py) can say why it needed a second look.

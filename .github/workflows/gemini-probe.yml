@@ -3,7 +3,7 @@ name: Gemini Probe
 # Runs the importer's Gemini web-search prompt for one venue five ways (see gemini_probe.py) and prints what came back:
 # whether Google Search grounding returned anything, what the response held, and what each thinking setting cost. It makes
 # five Gemini calls (a few cents) and counts them in the weekly budget. The search-and-thinking probe (gemini_probe2.py)
-# makes about a dozen calls, also counted and capped. Use it to find out why `search_gemini no_sources`
+# makes about a dozen calls, also counted and capped; its search part costs per query, so it defaults to the cheap thinking part only. Use it to find out why `search_gemini no_sources`
 # shows up for every venue.
 on:
   workflow_dispatch:
@@ -19,6 +19,11 @@ on:
         type: choice
         options: [basic, search-and-thinking]
         default: basic
+      part:
+        description: 'search-and-thinking only. thinking: five cheap extraction calls, no searches. search: grounded searches, which cost per query (most of a dollar). both: thinking first, then search'
+        type: choice
+        options: [thinking, search, both]
+        default: thinking
 
 jobs:
   probe:
@@ -47,6 +52,7 @@ jobs:
           PROBE_VENUE: ${{ inputs.venue }}
           PROBE_CITY: ${{ inputs.city }}
           PROBE: ${{ inputs.probe }}
+          PROBE_PART: ${{ inputs.part }}
         run: |
           if [ "$PROBE" = "search-and-thinking" ]; then python gemini_probe2.py; else python gemini_probe.py; fi
 
