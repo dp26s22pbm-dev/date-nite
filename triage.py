@@ -205,17 +205,18 @@ def summary(venues, decisions, mode_name, searched):
     return "\n".join(body)
 
 
-def newly_searched(grid):
-    """Cells this run added to grid.json's "searched" list: the working copy against the committed one. [] when git cannot say."""
+def newly_searched(grid, key="searched"):
+    """Cells this run added to a grid.json list ("searched", or "split" for cells add_cell.py split on its own): the working
+    copy against the committed one. [] when git cannot say."""
     import subprocess
     try:
         out = subprocess.run(["git", "show", "HEAD:grid/grid.json"], capture_output=True, text=True, timeout=30)
-        before = set(json.loads(out.stdout).get("searched", [])) if out.returncode == 0 else None
+        before = set(json.loads(out.stdout).get(key, [])) if out.returncode == 0 else None
     except (OSError, ValueError, subprocess.SubprocessError):
         before = None
     if before is None:
         return []
-    return sorted(set(grid.get("searched", [])) - before, key=sort_key)
+    return sorted(set(grid.get(key, [])) - before, key=sort_key)
 
 
 def current_candidates(issue):
@@ -246,12 +247,14 @@ def decide():
         if venues:
             report += "\n\n## Triage\n\n" + table(venues, decisions, False) + "\n\nThe boxes above are ticked to match. Change any of them before you merge."
     state = {"issue": issue, "mode": mode_name, "venues": venues, "decisions": [d for d, _ in decisions],
-             "reasons": [r for _, r in decisions], "searched": searched}
+             "reasons": [r for _, r in decisions], "searched": searched, "split": newly_searched(grid, "split")}
     with open(STATE_FILE, "w") as f:
         json.dump(state, f)
     with open(REPORT_FILE, "w") as f:
         f.write(report)
     text = summary(venues, decisions, mode_name, searched)
+    if state["split"]:
+        text += f"\n\nSplit automatically because they held more prospects than a cell takes: {', '.join(state['split'])}."
     with open(SUMMARY_FILE, "w") as f:
         f.write(text)
     print(text)
@@ -289,6 +292,10 @@ def apply():
     marked = sorted(set(grid.get("searched", [])) | set(state.get("searched", [])), key=sort_key)
     if marked != grid.get("searched", []):
         grid["searched"] = marked
+        save_grid(grid)
+    new_split = [c for c in state.get("split", []) if c not in grid.get("split", [])]
+    if new_split:
+        grid["split"] = sorted(set(grid.get("split", [])) | set(new_split), key=sort_key)
         save_grid(grid)
     with open(venue_review.HELD_FILE, "w") as f:
         json.dump(held, f)
