@@ -37,6 +37,7 @@ jobs:
       BUDGET_ALREADY_SPENT_USD: ${{ vars.BUDGET_ALREADY_SPENT_USD }}
       MAX_OPEN_CELL_PRS: ${{ vars.MAX_OPEN_CELL_PRS }}
       AUTO_TRIAGE: ${{ vars.AUTO_TRIAGE }}
+      AUTO_SPLIT: ${{ vars.AUTO_SPLIT }}
       AUTO_APPROVE_MAX: ${{ vars.AUTO_APPROVE_MAX }}
 
     steps:
