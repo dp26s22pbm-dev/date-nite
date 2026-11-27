@@ -907,13 +907,24 @@
       #menu-panel .roll-title { display: none; } /* always open: the row is short enough to leave up */
       #menu-panel .roll-body { grid-template-rows: 1fr; }
       #menu-panel .roll-body-inner { visibility: visible; }
-      #menu-panel .roll-pad { padding: 8px 4px; }
+      /* Tap cells: each column is one button, 49px tall inside the 1px outline, so the row is as tall as the 51px search bar.
+         A tap adds one (see tapQty); past QTY_MAX it wraps to zero, and a zero cell dims. The minus and plus buttons stay for wider screens. */
+      #menu-panel .roll-pad { padding: 0; }
       #menu-panel .meal-builder-row { flex-direction: row; }
-      #menu-panel .counter-pill { flex: 1 1 0; min-width: 0; padding: 0 2px; }
-      #menu-panel .counter-pill + .counter-pill { border-top: none; border-left: 1px solid rgba(255, 255, 255, 0.12); }
+      #menu-panel .counter-pill { position: relative; flex: 1 1 0; min-width: 0; height: 49px; padding: 0 2px; gap: 1px; cursor: pointer; -webkit-tap-highlight-color: transparent; }
+      #menu-panel .counter-pill + .counter-pill { border-top: none; }
+      /* the dividers stop short of the top and bottom edges */
+      #menu-panel .counter-pill + .counter-pill::before { content: ""; position: absolute; left: 0; top: 10px; bottom: 10px; width: 1px; background: rgba(255, 255, 255, 0.22); }
+      html[data-theme="light"] #menu-panel .counter-pill + .counter-pill::before { background: rgba(31, 36, 48, 0.2); }
       #menu-panel .counter-pill:first-child { margin-top: 0; }
-      #menu-panel .counter-actions { gap: 3px; }
-      #menu-panel .counter-value { min-width: 12px; }
+      #menu-panel .counter-pill:active { background: rgba(255, 255, 255, 0.08); }
+      html[data-theme="light"] #menu-panel .counter-pill:active { background: rgba(31, 36, 48, 0.07); }
+      #menu-panel .counter-pill:first-child { border-radius: 9px 0 0 9px; }
+      #menu-panel .counter-pill:last-child { border-radius: 0 9px 9px 0; }
+      #menu-panel .counter-pill.zero .counter-value { opacity: 0.4; }
+      #menu-panel .counter-btn { display: none; }
+      #menu-panel .counter-label { margin-bottom: 0; }
+      #menu-panel .counter-value { font-size: 20px; line-height: 22px; min-width: 12px; }
 
       .theme-btn { right: 145px !important; }
       .zoom-btn { right: 188px !important; }
@@ -1228,7 +1239,7 @@
     <button class="roll-title" onclick="toggleRoll('menu-panel', this)" aria-expanded="true" aria-controls="menu-body">Menu</button>
     <div class="roll-body" id="menu-body"><div class="roll-body-inner"><div class="roll-pad">
     <div class="meal-builder-row">
-      <div class="counter-pill">
+      <div class="counter-pill" onclick="tapQty('apps')">
         <span class="counter-label">Apps</span>
         <div class="counter-actions">
           <button class="counter-btn" onclick="updateQty('apps', -1)">-</button>
@@ -1236,7 +1247,7 @@
           <button class="counter-btn" onclick="updateQty('apps', 1)">+</button>
         </div>
       </div>
-      <div class="counter-pill">
+      <div class="counter-pill" onclick="tapQty('casual')">
         <span class="counter-label">Casual</span>
         <div class="counter-actions">
           <button class="counter-btn" onclick="updateQty('casual', -1)">-</button>
@@ -1244,7 +1255,7 @@
           <button class="counter-btn" onclick="updateQty('casual', 1)">+</button>
         </div>
       </div>
-      <div class="counter-pill">
+      <div class="counter-pill" onclick="tapQty('prime')">
         <span class="counter-label">Prime</span>
         <div class="counter-actions">
           <button class="counter-btn" onclick="updateQty('prime', -1)">-</button>
@@ -1252,7 +1263,7 @@
           <button class="counter-btn" onclick="updateQty('prime', 1)">+</button>
         </div>
       </div>
-      <div class="counter-pill">
+      <div class="counter-pill" onclick="tapQty('drinks')">
         <span class="counter-label">Drinks</span>
         <div class="counter-actions">
           <button class="counter-btn" onclick="updateQty('drinks', -1)">-</button>
@@ -1260,7 +1271,7 @@
           <button class="counter-btn" onclick="updateQty('drinks', 1)">+</button>
         </div>
       </div>
-      <div class="counter-pill">
+      <div class="counter-pill" onclick="tapQty('dessert')">
         <span class="counter-label">Dessert</span>
         <div class="counter-actions">
           <button class="counter-btn" onclick="updateQty('dessert', -1)">-</button>
@@ -3537,9 +3548,27 @@
       }
     }
 
+    // Each course runs from 0 to QTY_MAX
+    const QTY_MAX = 5;
+
+    function showQty(key) {
+      const out = document.getElementById(`qty-${key}`);
+      out.innerText = state[key];
+      out.closest('.counter-pill').classList.toggle('zero', state[key] === 0);
+    }
+
     function updateQty(key, delta) {
-      state[key] = Math.max(0, state[key] + delta);
-      document.getElementById(`qty-${key}`).innerText = state[key];
+      state[key] = Math.min(QTY_MAX, Math.max(0, state[key] + delta));
+      showQty(key);
+      refreshMap();
+    }
+
+    // Phones: the whole column is the button. A tap adds one, and past QTY_MAX it wraps to zero.
+    // Wider screens keep the minus and plus buttons, so a press on the column does nothing there.
+    function tapQty(key) {
+      if (!window.matchMedia('(max-width: 480px)').matches) return;
+      state[key] = (state[key] + 1) % (QTY_MAX + 1);
+      showQty(key);
       refreshMap();
     }
 
