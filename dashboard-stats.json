@@ -1,0 +1,580 @@
+{
+ "generated_at": "2026-11-27T19:05:28+00:00",
+ "window_days": 7,
+ "repo": "dp26s22pbm-dev/date-nite",
+ "venues": {
+  "total": 244,
+  "added_7d": 18,
+  "changed_7d": 155,
+  "stale_days": 30,
+  "stale_count": 0,
+  "stale_oldest": [],
+  "age_unknown": 0,
+  "with_lastUpdated_field": 244,
+  "median_age_days": 1,
+  "history_commits_read": 308,
+  "protected_count": 75,
+  "protected_stale_count": 0,
+  "protected_soon_count": 0,
+  "protected_oldest": [
+   {
+    "name": "Gray's Mill Estate",
+    "city": "Montgomery",
+    "last_changed": "2026-11-07",
+    "age_days": 20,
+    "reason": "saved prices differ from the importer's, so someone changed them"
+   },
+   {
+    "name": "Fortunato Fish and Oyster",
+    "city": "North Aurora",
+    "last_changed": "2026-11-08",
+    "age_days": 19,
+    "reason": "saved prices differ from the importer's, so someone changed them"
+   },
+   {
+    "name": "Parceros Bar Grill",
+    "city": "Hoffman Estates",
+    "last_changed": "2026-11-14",
+    "age_days": 13,
+    "reason": "prices were typed in by hand"
+   },
+   {
+    "name": "Paradise Bay Bar and Grill",
+    "city": "Lockport",
+    "last_changed": "2026-11-16",
+    "age_days": 11,
+    "reason": "prices were read from a menu someone pasted"
+   },
+   {
+    "name": "Tequila Azteca Restaurant",
+    "city": "Willowbrook",
+    "last_changed": "2026-11-16",
+    "age_days": 11,
+    "reason": "prices were read from a menu someone pasted"
+   },
+   {
+    "name": "SUSHI YUME",
+    "city": "Batavia",
+    "last_changed": "2026-11-23",
+    "age_days": 4,
+    "reason": "prices were read from a menu someone pasted"
+   },
+   {
+    "name": "Mamma Onesta's Italian Restaurant",
+    "city": "Lockport",
+    "last_changed": "2026-11-26",
+    "age_days": 1,
+    "reason": "prices were read from the restaurant's own menu"
+   },
+   {
+    "name": "Tallgrass Restaurant",
+    "city": "Lockport",
+    "last_changed": "2026-11-26",
+    "age_days": 1,
+    "reason": "prices were read from the restaurant's own menu"
+   },
+   {
+    "name": "Zazzo's Pizza & Bar - Darien",
+    "city": "Darien",
+    "last_changed": "2026-11-26",
+    "age_days": 1,
+    "reason": "saved prices differ from the importer's, so someone changed them"
+   },
+   {
+    "name": "Chuck's Southern Comforts Cafe & Banquets",
+    "city": "Darien",
+    "last_changed": "2026-11-26",
+    "age_days": 1,
+    "reason": "saved prices differ from the importer's, so someone changed them"
+   }
+  ],
+  "stale_refreshable_count": 0
+ },
+ "grid": {
+  "cells_total": 378,
+  "skipped": 37,
+  "split": 4,
+  "searchable": 401,
+  "searched": 78,
+  "remaining": 323,
+  "coverage_pct": 19.5,
+  "full_at": 3,
+  "full_cells_due_to_split": [
+   "A10",
+   "A11",
+   "A13",
+   "A14",
+   "A16",
+   "B10",
+   "B14",
+   "B15",
+   "B16",
+   "D10",
+   "D13",
+   "D14",
+   "D15",
+   "D17",
+   "D18",
+   "D20",
+   "E10",
+   "E11",
+   "E13",
+   "E14",
+   "E19",
+   "E20",
+   "F11",
+   "F12",
+   "F13",
+   "G10",
+   "G11",
+   "G13",
+   "G15",
+   "G16",
+   "G17",
+   "G19",
+   "H12",
+   "H13",
+   "H14",
+   "H16",
+   "H17",
+   "H18",
+   "I10",
+   "I11",
+   "I12",
+   "I13",
+   "I14",
+   "J10",
+   "J11",
+   "J13",
+   "K11",
+   "K12"
+  ],
+  "venues_outside_grid": 0
+ },
+ "menu": {
+  "this_week": {
+   "imports": 39,
+   "outcomes": {
+    "web_search_only": 2,
+    "menu_read": 21,
+    "menu_read_partial": 12,
+    "none": 4
+   },
+   "menu_read_pct": 54
+  },
+  "last_week": {
+   "imports": 45,
+   "outcomes": {
+    "menu_read": 13,
+    "web_search_only": 11,
+    "menu_read_partial": 12,
+    "none": 9
+   },
+   "menu_read_pct": 29
+  },
+  "problem_venues_this_week": 18,
+  "top_causes": [
+   {
+    "cause": "A menu page was found but no usable prices could be read",
+    "venues": 15
+   },
+   {
+    "cause": "The restaurant's site blocks automated reading (bot check)",
+    "venues": 3
+   }
+  ],
+  "all_causes": [
+   {
+    "cause": "A menu page was found but no usable prices could be read",
+    "venues": 15
+   },
+   {
+    "cause": "The restaurant's site blocks automated reading (bot check)",
+    "venues": 3
+   }
+  ],
+  "top_step_reasons": [
+   {
+    "step": "page",
+    "result": "duplicate_page",
+    "count": 81
+   },
+   {
+    "step": "page_html",
+    "result": "too_few_prices",
+    "count": 58
+   },
+   {
+    "step": "page_browser",
+    "result": "too_few_prices",
+    "count": 48
+   },
+   {
+    "step": "page",
+    "result": "no_prices_links_followed",
+    "count": 34
+   },
+   {
+    "step": "site_gemini",
+    "result": "too_few_prices",
+    "count": 11
+   }
+  ],
+  "step_reasons_note": "Raw attempt counts. fetch/http_404 includes real dead links, so judge by venues, not attempts.",
+  "no_real_menu": [],
+  "no_real_menu_count": 0,
+  "fixed_by_hand_count": 16,
+  "fixed_by_hand": [
+   "Taqueria Los Comales West Chicago",
+   "Mariscos El Vallartazo",
+   "The Bunker Bar & Grill",
+   "Jameson's Pub Joliet",
+   "The Irish Corner Cantina",
+   "Tonto Burrito",
+   "Gray's Mill Estate",
+   "Oh-Mar Fresh Seafood",
+   "More Brewing Company",
+   "BNK Thai & Sushi",
+   "JG's Jerk Grill",
+   "Taste Greek Street Food - Westmont",
+   "Ton-Ichi ramen",
+   "Zazzo's Pizza & Bar - Darien",
+   "Chuck's Southern Comforts Cafe & Banquets",
+   "Saffron Restaurant"
+  ],
+  "candidates_not_on_map_count": 13,
+  "candidates_not_on_map": [
+   "CAVA",
+   "Mancini's Tavola",
+   "Colonial Room",
+   "Hillgrove Tap-Western Springs",
+   "Longshots",
+   "Firewater BBQ & Brew- Crest Hill",
+   "Mariscos el catr\u00edn del mar",
+   "Taverna on Division",
+   "Rapido Taco",
+   "Victory Meat and Seafood",
+   "Francesca's Amici",
+   "Roadhouse 71 \"America's Saloon\"",
+   "Shu's Sushi Bar & Grill"
+  ],
+  "partial_reads_this_week": 12,
+  "pasted_menus_this_week": 3,
+  "defaulted_this_week": {
+   "imports": 39,
+   "by_category": {
+    "dessert": 12,
+    "appetizer": 3
+   },
+   "dessert_missing": 12,
+   "dessert_missing_venues": [
+    {
+     "venue": "Entourage Downers Grove",
+     "site": "entouragerestaurant.com",
+     "platform": "toast",
+     "outcome": "menu_read_partial",
+     "date": "2026-11-25"
+    },
+    {
+     "venue": "St. Charles Place STEAKHOUSE",
+     "site": "st-charlesplace.com",
+     "platform": "wordpress",
+     "outcome": "menu_read_partial",
+     "date": "2026-11-23"
+    },
+    {
+     "venue": "La Cocina de Maria",
+     "site": "orderlacocinademaria.com",
+     "platform": null,
+     "outcome": "menu_read_partial",
+     "date": "2026-11-23"
+    },
+    {
+     "venue": "El Coco Loco",
+     "site": "cocolocomexicangrill.com",
+     "platform": "wix",
+     "outcome": "menu_read_partial",
+     "date": "2026-11-22"
+    },
+    {
+     "venue": "North Avenue Pub & Grill",
+     "site": "northavenuepubandgrill.com",
+     "platform": null,
+     "outcome": "menu_read_partial",
+     "date": "2026-11-22"
+    },
+    {
+     "venue": "Aurelio's Pizza of Wheaton / Winfield",
+     "site": "aureliospizza.com",
+     "platform": "wordpress",
+     "outcome": "menu_read_partial",
+     "date": "2026-11-22"
+    },
+    {
+     "venue": "Hamburgerseria",
+     "site": "hamburgerseria.com",
+     "platform": null,
+     "outcome": "menu_read_partial",
+     "date": "2026-11-22"
+    },
+    {
+     "venue": "Squares Pizza Pub",
+     "site": "squarespizzapub.com",
+     "platform": "wix",
+     "outcome": "menu_read_partial",
+     "date": "2026-11-21"
+    },
+    {
+     "venue": "Pietanza's",
+     "site": "pietanzas.com",
+     "platform": "wix",
+     "outcome": "menu_read_partial",
+     "date": "2026-11-21"
+    },
+    {
+     "venue": "fire + wine St. Charles",
+     "site": "fireandwine.net",
+     "platform": "squarespace",
+     "outcome": "menu_read_partial",
+     "date": "2026-11-21"
+    },
+    {
+     "venue": "Thai Village Restaurant",
+     "site": "thaivillage-batavia.com",
+     "platform": null,
+     "outcome": "web_search_only",
+     "date": "2026-11-21"
+    }
+   ]
+  },
+  "defaulted_last_week": {
+   "imports": 45,
+   "by_category": {
+    "dessert": 20,
+    "appetizer": 4,
+    "premium main": 2
+   },
+   "dessert_missing": 20
+  },
+  "claude_search_tokens_in": 553934,
+  "claude_search_tokens_out": 7419,
+  "log_records_total": 130,
+  "latest_record": "2026-11-26T19:54:15+00:00"
+ },
+ "review": {
+  "open_issues_total": 0,
+  "waiting_issues": [],
+  "waiting_by_kind": {},
+  "grid_prs": [],
+  "other_prs": [],
+  "waiting_count": 0
+ },
+ "workflows": {
+  "runs_7d": 425,
+  "failed_7d": 0,
+  "failed_by_workflow": []
+ },
+ "places": {
+  "daily_limit": 500,
+  "used_today": 0,
+  "last_7_days": [
+   {
+    "date": "2026-11-21",
+    "requests": 5
+   },
+   {
+    "date": "2026-11-22",
+    "requests": 22
+   },
+   {
+    "date": "2026-11-23",
+    "requests": 0
+   },
+   {
+    "date": "2026-11-24",
+    "requests": 0
+   },
+   {
+    "date": "2026-11-25",
+    "requests": 8
+   },
+   {
+    "date": "2026-11-26",
+    "requests": 8
+   },
+   {
+    "date": "2026-11-27",
+    "requests": 0
+   }
+  ],
+  "total_7d": 43,
+  "timezone": "America/Los_Angeles"
+ },
+ "history": [
+  {
+   "date": "2026-11-13",
+   "venues": 204,
+   "grid_remaining": 322,
+   "coverage_pct": 13.2,
+   "waiting": 0,
+   "no_real_menu": 3,
+   "menu_read_pct": 67,
+   "failed_runs_7d": 1,
+   "places_used_today": 0
+  },
+  {
+   "date": "2026-11-14",
+   "venues": 204,
+   "grid_remaining": 322,
+   "coverage_pct": 13.2,
+   "waiting": 1,
+   "no_real_menu": 2,
+   "menu_read_pct": 50,
+   "failed_runs_7d": 1,
+   "places_used_today": 2
+  },
+  {
+   "date": "2026-11-15",
+   "venues": 208,
+   "grid_remaining": 317,
+   "coverage_pct": 14.6,
+   "waiting": 4,
+   "no_real_menu": 1,
+   "menu_read_pct": 36,
+   "failed_runs_7d": 2,
+   "places_used_today": 10
+  },
+  {
+   "date": "2026-11-16",
+   "venues": 226,
+   "grid_remaining": 323,
+   "coverage_pct": 16.3,
+   "waiting": 0,
+   "no_real_menu": 2,
+   "menu_read_pct": 29,
+   "failed_runs_7d": 2,
+   "places_used_today": 3
+  },
+  {
+   "date": "2026-11-17",
+   "venues": 226,
+   "grid_remaining": 323,
+   "coverage_pct": 16.3,
+   "waiting": 0,
+   "no_real_menu": 2,
+   "menu_read_pct": 29,
+   "failed_runs_7d": 2,
+   "places_used_today": 0
+  },
+  {
+   "date": "2026-11-18",
+   "venues": 226,
+   "grid_remaining": 323,
+   "coverage_pct": 16.3,
+   "waiting": 0,
+   "no_real_menu": 2,
+   "menu_read_pct": 29,
+   "failed_runs_7d": 2,
+   "places_used_today": 0
+  },
+  {
+   "date": "2026-11-19",
+   "venues": 226,
+   "grid_remaining": 323,
+   "coverage_pct": 16.3,
+   "waiting": 0,
+   "no_real_menu": 2,
+   "menu_read_pct": 29,
+   "failed_runs_7d": 2,
+   "places_used_today": 0
+  },
+  {
+   "date": "2026-11-20",
+   "venues": 226,
+   "grid_remaining": 323,
+   "coverage_pct": 16.3,
+   "waiting": 0,
+   "no_real_menu": 2,
+   "menu_read_pct": 29,
+   "failed_runs_7d": 2,
+   "places_used_today": 0
+  },
+  {
+   "date": "2026-11-21",
+   "venues": 226,
+   "grid_remaining": 323,
+   "coverage_pct": 16.3,
+   "waiting": 0,
+   "no_real_menu": 2,
+   "menu_read_pct": 29,
+   "failed_runs_7d": 2,
+   "places_used_today": 0
+  },
+  {
+   "date": "2026-11-22",
+   "venues": 228,
+   "grid_remaining": 337,
+   "coverage_pct": 16.0,
+   "waiting": 0,
+   "no_real_menu": 1,
+   "menu_read_pct": 31,
+   "failed_runs_7d": 0,
+   "places_used_today": 0
+  },
+  {
+   "date": "2026-11-23",
+   "venues": 240,
+   "grid_remaining": 333,
+   "coverage_pct": 17.0,
+   "waiting": 0,
+   "no_real_menu": 0,
+   "menu_read_pct": 55,
+   "failed_runs_7d": 0,
+   "places_used_today": 0
+  },
+  {
+   "date": "2026-11-24",
+   "venues": 240,
+   "grid_remaining": 333,
+   "coverage_pct": 17.0,
+   "waiting": 0,
+   "no_real_menu": 0,
+   "menu_read_pct": 55,
+   "failed_runs_7d": 0,
+   "places_used_today": 0
+  },
+  {
+   "date": "2026-11-25",
+   "venues": 240,
+   "grid_remaining": 333,
+   "coverage_pct": 17.0,
+   "waiting": 0,
+   "no_real_menu": 0,
+   "menu_read_pct": 55,
+   "failed_runs_7d": 0,
+   "places_used_today": 0
+  },
+  {
+   "date": "2026-11-26",
+   "venues": 241,
+   "grid_remaining": 328,
+   "coverage_pct": 18.2,
+   "waiting": 2,
+   "no_real_menu": 0,
+   "menu_read_pct": 56,
+   "failed_runs_7d": 0,
+   "places_used_today": 0
+  },
+  {
+   "date": "2026-11-27",
+   "venues": 244,
+   "grid_remaining": 323,
+   "coverage_pct": 19.5,
+   "waiting": 0,
+   "no_real_menu": 0,
+   "menu_read_pct": 54,
+   "failed_runs_7d": 0,
+   "places_used_today": 0
+  }
+ ]
+}
