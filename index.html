@@ -555,8 +555,7 @@
     .pop-row { display: flex; align-items: baseline; gap: 6px; padding: 2px 0; font-variant-numeric: tabular-nums; }
     .pop-row-dots { flex: 1; border-bottom: 1px dotted #c3cbd3; opacity: 0.6; transform: translateY(-3px); }
     .pop-incl { text-align: right; font-size: 11.5px; color: #c3cbd3; margin-top: 4px; }
-    .pop-rule { border-top: 1px dashed #c3cbd3; opacity: 0.8; margin: 8px 0; }
-    .pop-total { display: flex; justify-content: flex-end; align-items: baseline; }
+    .pop-total { display: flex; justify-content: flex-end; align-items: baseline; margin-top: 10px; }
     .pop-badge-val { font-size: 48px; line-height: 1; font-weight: 700; letter-spacing: -0.02em; font-variant-numeric: tabular-nums; }
 
     /* Light mode: a white popup card with dark text (dark mode keeps #373f4a). */
@@ -575,8 +574,7 @@
     html[data-theme="light"] .pop-loc a,
     html[data-theme="light"] .pop-paper { background: #f3f4f7; border-color: #dfe2e8; color: #1f2430; }
     html[data-theme="light"] .pop-incl { color: #5b6472; }
-    html[data-theme="light"] .pop-row-dots,
-    html[data-theme="light"] .pop-rule { border-color: #5b6472; }
+    html[data-theme="light"] .pop-row-dots { border-color: #5b6472; }
     /* The total's tier colors are set inline for the dark card; on white they step darker so they stay readable */
     html[data-theme="light"] .pop-badge-val[style*="#38bdf8"] { color: #0369a1 !important; }
     html[data-theme="light"] .pop-badge-val[style*="#22c55e"] { color: #15803d !important; }
@@ -3485,7 +3483,6 @@
           <div class="pop-row"><span>Prime</span><span class="pop-row-dots"></span><span>$${prmCost}</span></div>
           <div class="pop-row"><span>Drinks</span><span class="pop-row-dots"></span><span>$${drkCost}</span></div>
           <div class="pop-row"><span>Dessert</span><span class="pop-row-dots"></span><span>$${dstCost}</span></div>
-          <div class="pop-rule"></div>
           <div class="pop-total" title="Estimated total including tip and tax"><span class="pop-badge-val" data-total="${total}" style="color: ${getTierColor(total)}">$${total}</span></div>
           <div class="pop-incl">incl. tip and tax</div>
         </div>
