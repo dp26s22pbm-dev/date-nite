@@ -1,0 +1,38 @@
+[
+  {
+    "name": "Greek Islands Lombard",
+    "category": "Greek",
+    "city": "Lombard",
+    "state": "IL",
+    "website": "http://greekislands.net/home?utm_source=Google%20My%20Business",
+    "coords": [
+      -88.007944,
+      41.846433
+    ],
+    "app": 9.95,
+    "casualMain": 20.95,
+    "premiumMain": 41.95,
+    "drink": 10.47,
+    "dessert": 6.95,
+    "tierColor": "#eab308",
+    "lastUpdated": "2026-11-27"
+  },
+  {
+    "name": "Avanzare Italian Restaurant - Lombard",
+    "category": "Italian",
+    "city": "Lombard",
+    "state": "IL",
+    "website": "https://avanzarerestaurant.com/",
+    "coords": [
+      -88.034107,
+      41.859162
+    ],
+    "app": 12.95,
+    "casualMain": 23.95,
+    "premiumMain": 32.95,
+    "drink": 11.97,
+    "dessert": 7.95,
+    "tierColor": "#eab308",
+    "lastUpdated": "2026-11-27"
+  }
+]
