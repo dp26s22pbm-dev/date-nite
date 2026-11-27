@@ -61,6 +61,17 @@ def excluded_here(place, exclusions):
 # A cell with this many eligible restaurants holds more than a pull request can take (fullAt venues), so splitting it finds the rest
 SPLIT_ADVICE_AT = 5
 
+def auto_split(grid, crowded):
+    """Add each crowded whole cell to grid["split"] (so the next daily run searches its smaller cells) and return the ids
+    split. A child cell cannot split further, and AUTO_SPLIT=off turns this off, leaving only the advice in the report."""
+    if os.environ.get("AUTO_SPLIT", "").strip().lower() in ("off", "false", "0", "no"):
+        return []
+    done = set(grid.get("split", []))
+    new = [cid for cid, _, whole in crowded if whole and cid not in done]
+    if new:
+        grid["split"] = sorted(done | set(new), key=sort_key)
+    return new
+
 def main():
     api_key = os.environ.get("GOOGLE_PLACES_API_KEY", "").strip()
     if not api_key:
@@ -156,11 +167,13 @@ def main():
             json.dump(added, f, indent=2)
             f.write("\n")
     marked = sorted(set(grid.get("searched", [])) | set(searched), key=sort_key)
-    if marked != grid.get("searched", []):
+    split_now = auto_split(grid, crowded)
+    if marked != grid.get("searched", []) or split_now:
         grid["searched"] = marked
         save_grid(grid)
     set_output("pending_file", pending_file)
     set_output("count", len(added))
+    set_output("split", ",".join(split_now))
     set_output("title", PR_TITLE_PREFIX + ", ".join(searched))  # only searched cells, so a full cell never blocks a later run
     set_output("changed", "true" if added or searched else "false")  # the workflow opens a pull request only then
 
@@ -178,14 +191,20 @@ def main():
                  "so the grid page shows it as searched.\n\n" + ac.CORRECTING_PRICES_CELL)
     warning = ""
     if crowded:
-        lines = [f"- {cid}: {n} eligible restaurants, and only {full_at} can be added" +
-                 ("" if whole else " (already the smallest cell, so it cannot be split further)")
-                 for cid, n, whole in crowded]
-        warning = ("**Consider closing this pull request and splitting " +
-                   ("these cells" if len(crowded) > 1 else "this cell") +
-                   f": {', '.join(c[0] for c in crowded)} had {SPLIT_ADVICE_AT} or more prospects. "
-                   "Split the grid and search the smaller cells so the remaining restaurants are found.**\n\n" +
-                   "\n".join(lines) + "\n\n")
+        n = grid["splitInto"]
+        lines = []
+        for cid, count, whole in crowded:
+            if cid in split_now:
+                tail = (f"split into {n * n} cells ({cid}-a to {cid}-{chr(96 + n * n)}) automatically; "
+                        "they are searched on later runs")
+            elif whole:
+                tail = "not split automatically (AUTO_SPLIT is off), so split it from the grid page"
+            else:
+                tail = "already the smallest cell, so it cannot be split further"
+            lines.append(f"- {cid}: {count} eligible restaurants, and only {full_at} can be added; {tail}")
+        warning = (f"**{', '.join(c[0] for c in crowded)} had {SPLIT_ADVICE_AT} or more prospects.** "
+                   + ("The split is part of this pull request's grid.json change, so it takes effect when the pull request merges."
+                      if split_now else "") + "\n\n" + "\n".join(lines) + "\n\n")
     notes_text = ("\n\n## Not searched\n\n" + "\n".join(notes)) if notes else ""
     decisions = ""
     if added:
