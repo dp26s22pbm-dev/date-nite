@@ -557,7 +557,6 @@
     /* The total sits on the right; a small note column on the left lines up with the bottom of the number */
     .pop-total { display: flex; justify-content: space-between; align-items: flex-end; gap: 10px; margin-top: 10px; }
     .pop-notes { font-size: 11.5px; line-height: 1.35; color: #c3cbd3; max-width: 9em; padding-bottom: 3px; }
-    .pop-notes div + div { margin-top: 4px; }
     .pop-badge-val { font-size: 48px; line-height: 1; font-weight: 700; letter-spacing: -0.02em; font-variant-numeric: tabular-nums; }
 
     /* Light mode: a white popup card with dark text (dark mode keeps #373f4a). */
@@ -3473,14 +3472,6 @@
         ? `<div class="pop-loc"><a href="${escapeHtml(mapsHref)}" target="_blank" rel="noopener noreferrer" title="Open ${escapeHtml(venue.name)} in Google Maps in a new tab">${escapeHtml(place)}</a></div>`
         : '';
 
-      // "Updated Nov 1" from the venue's saved lastUpdated (YYYY-MM-DD); the year is added when it is not this year.
-      // Venues with no saved date show nothing rather than a guess.
-      const dateParts = /^(\d{4})-(\d{2})-(\d{2})/.exec(venue.lastUpdated || '');
-      const monthName = dateParts ? ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'][Number(dateParts[2]) - 1] : '';
-      const updatedHtml = monthName
-        ? `<div>Updated ${monthName} ${Number(dateParts[3])}${Number(dateParts[1]) === new Date().getFullYear() ? '' : ', ' + dateParts[1]}</div>`
-        : '';
-
       const html = `
         <div class="pop-header">
           <div class="pop-name">${nameHtml}</div>
@@ -3494,7 +3485,7 @@
           <div class="pop-row"><span>Drinks</span><span class="pop-row-dots"></span><span>$${drkCost}</span></div>
           <div class="pop-row"><span>Dessert</span><span class="pop-row-dots"></span><span>$${dstCost}</span></div>
           <div class="pop-total" title="Estimated total including tip and tax">
-            <div class="pop-notes"><div>incl. tip<br>and tax</div>${updatedHtml}</div>
+            <div class="pop-notes">incl. tip<br>and tax</div>
             <span class="pop-badge-val" data-total="${total}" style="color: ${getTierColor(total)}">$${total}</span>
           </div>
         </div>

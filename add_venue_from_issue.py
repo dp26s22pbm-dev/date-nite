@@ -2,6 +2,7 @@ import os
 import re
 import sys
 import time
+import datetime
 import json
 import math
 import ssl
@@ -2386,6 +2387,8 @@ def main():
         "drink": drink,
         "dessert": dessert,
         "tierColor": tier_color,
+        # The popup shows this as "Updated <date>": the day these prices were written (Edit Venue and the refresh set it the same way)
+        "lastUpdated": datetime.date.today().isoformat(),
         **({"isTaco": True} if is_taco else {}),
         # Prices typed into a reply are protected from the weekly search refresh, as Edit Venue's overrides are
         **({"priceSource": "hand"} if reply_overrides else {})

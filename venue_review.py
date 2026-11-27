@@ -22,6 +22,7 @@ import os
 import re
 import sys
 import json
+import datetime
 import subprocess
 
 import fold_pending_venues as fold
@@ -244,7 +245,8 @@ def menu():
         and pricing_rules.per_taco_prices(app, casual)
     total = round((app + (2 if is_taco else 1) * casual + premium + 2 * drink + dessert) * 1.30)
     venue.update({"app": app, "casualMain": casual, "premiumMain": premium, "drink": drink, "dessert": dessert,
-                  "tierColor": add.calculate_tier_color(total)})
+                  "tierColor": add.calculate_tier_color(total),
+                  "lastUpdated": datetime.date.today().isoformat()})
     if is_taco:
         venue["isTaco"] = True
     else:
