@@ -364,8 +364,7 @@
       border-color: rgba(255, 255, 255, 0.35) !important;
     }
     .maplibregl-popup.popup-over .pop-header,
-    .maplibregl-popup.popup-over .pop-badge,
-    .maplibregl-popup.popup-over .pop-grid {
+    .maplibregl-popup.popup-over .pop-paper {
       opacity: 0.6;
       filter: grayscale(0.6);
     }
@@ -532,45 +531,33 @@
     .search-results .sr-cat { color: rgba(240, 246, 252, 0.55); font-size: 10px; white-space: nowrap; align-self: center; }
     .search-results .sr-none { color: rgba(240, 246, 252, 0.55); cursor: default; }
 
-    .pop-header { margin-bottom: 8px; padding-right: 18px; display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; }
-    .pop-name { font-size: 16px; font-weight: 700; margin: 0; flex-basis: 100%; }
+    .pop-header { margin-bottom: 12px; padding-right: 18px; display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; }
+    .pop-name { font-size: 18px; line-height: 1.2; font-weight: 700; margin: 0; flex-basis: 100%; }
     .pop-name a { color: inherit; text-decoration: none; border-bottom: 1px dotted rgba(255, 255, 255, 0.45); }
     .pop-name a:hover { color: #c4b5fd; border-bottom-color: #c4b5fd; } /* same purple as the car's roof */
-    .pop-cat { font-size: 11px; color: #c3cbd3; margin-top: 1px; }
+    .pop-cat { font-size: 13px; color: #c3cbd3; margin-top: 3px; }
     /* Town, state sits on the cuisine line, right-justified; the negative margin cancels the header's close-button padding (the X is on the name line) */
-    .pop-loc { font-size: 11px; margin: 1px -18px 0 auto; padding-left: 12px; }
+    .pop-loc { font-size: 13px; margin: 3px -18px 0 auto; padding-left: 12px; }
     .pop-loc a { color: #c3cbd3; text-decoration: none; }
     .pop-loc a:hover { color: #c4b5fd; }
 
-    .pop-badge {
-      display: flex;
-      justify-content: space-between;
-      align-items: baseline;
-      background: #333b45;
-      border: 1px solid #545c67;
-      border-radius: 10px;
-      padding: 6px 10px;
-      margin-bottom: 10px;
-    }
-    .pop-badge-label { 
-      font-size: 10px; 
-      color: #c3cbd3; 
-      font-weight: 600; 
-    }
-    .pop-badge-val { font-size: 20px; font-weight: 800; font-variant-numeric: tabular-nums; }
-
-    .pop-grid {
-      display: grid;
-      grid-template-columns: repeat(5, 1fr);
-      gap: 4px;
+    /* Receipt: each course on a dotted leader, subtotal, tip and tax, then the total, large, in the tier color */
+    .pop-paper {
       background: #333b45;
       border: 1px solid #545c67;
       border-radius: 8px;
-      padding: 6px 2px;
-      text-align: center;
+      padding: 12px 14px;
+      font-family: ui-monospace, "SF Mono", SFMono-Regular, Menlo, Consolas, monospace;
+      font-size: 13.5px;
+      font-weight: 500;
+      color: #e6edf3;
     }
-    .pop-grid-lbl { font-size: 8px; text-transform: uppercase; color: #c3cbd3; margin-bottom: 2px; }
-    .pop-grid-val { font-size: 11px; font-weight: 700; color: #e6edf3; }
+    .pop-row { display: flex; align-items: baseline; gap: 6px; padding: 2px 0; font-variant-numeric: tabular-nums; }
+    .pop-row-dots { flex: 1; border-bottom: 1px dotted #c3cbd3; opacity: 0.6; transform: translateY(-3px); }
+    .pop-row.dim { color: #c3cbd3; }
+    .pop-rule { border-top: 1px dashed #c3cbd3; opacity: 0.8; margin: 8px 0; }
+    .pop-total { display: flex; justify-content: flex-end; align-items: baseline; }
+    .pop-badge-val { font-size: 48px; line-height: 1; font-weight: 700; letter-spacing: -0.02em; font-variant-numeric: tabular-nums; }
 
     /* Light mode: a white popup card with dark text (dark mode keeps #373f4a). */
     html[data-theme="light"] .maplibregl-popup-content,
@@ -586,11 +573,10 @@
     html[data-theme="light"] .pop-loc a:hover { color: #7c3aed; }
     html[data-theme="light"] .pop-cat,
     html[data-theme="light"] .pop-loc a,
-    html[data-theme="light"] .pop-badge-label,
-    html[data-theme="light"] .pop-grid-lbl { color: #5b6472; }
-    html[data-theme="light"] .pop-grid-val { color: #1f2430; }
-    html[data-theme="light"] .pop-badge,
-    html[data-theme="light"] .pop-grid { background: #f3f4f7; border-color: #dfe2e8; }
+    html[data-theme="light"] .pop-paper { background: #f3f4f7; border-color: #dfe2e8; color: #1f2430; }
+    html[data-theme="light"] .pop-row.dim { color: #5b6472; }
+    html[data-theme="light"] .pop-row-dots,
+    html[data-theme="light"] .pop-rule { border-color: #5b6472; }
     /* The total's tier colors are set inline for the dark card; on white they step darker so they stay readable */
     html[data-theme="light"] .pop-badge-val[style*="#38bdf8"] { color: #0369a1 !important; }
     html[data-theme="light"] .pop-badge-val[style*="#22c55e"] { color: #15803d !important; }
@@ -3450,6 +3436,8 @@
       const prmCost = Math.round(pMult * (venue.premiumMain || 0));
       const drkCost = Math.round(state.drinks * (venue.drink || 0));
       const dstCost = Math.round(state.dessert * (venue.dessert || 0));
+      const subtotal = appCost + casCost + prmCost + drkCost + dstCost;
+      const tipTax = total - subtotal;
 
       // The name links to the venue's website; when none is saved it links to the Google Maps link instead
       const websiteUrl = safeWebsiteUrl(venue.website);
@@ -3482,16 +3470,17 @@
           <div class="pop-cat">${escapeHtml(venue.category || '')}</div>
           ${locHtml}
         </div>
-        <div class="pop-badge">
-          <span class="pop-badge-label">Est. TOTAL (incl. tip and tax)</span>
-          <span class="pop-badge-val" data-total="${total}" style="color: ${getTierColor(total)}">$${total}</span>
-        </div>
-        <div class="pop-grid">
-          <div><div class="pop-grid-lbl">Apps</div><div class="pop-grid-val">$${appCost}</div></div>
-          <div><div class="pop-grid-lbl">Cas</div><div class="pop-grid-val">$${casCost}</div></div>
-          <div><div class="pop-grid-lbl">Prm</div><div class="pop-grid-val">$${prmCost}</div></div>
-          <div><div class="pop-grid-lbl">Drk</div><div class="pop-grid-val">$${drkCost}</div></div>
-          <div><div class="pop-grid-lbl">Dst</div><div class="pop-grid-val">$${dstCost}</div></div>
+        <div class="pop-paper">
+          <div class="pop-row"><span>Apps</span><span class="pop-row-dots"></span><span>$${appCost}</span></div>
+          <div class="pop-row"><span>Casual</span><span class="pop-row-dots"></span><span>$${casCost}</span></div>
+          <div class="pop-row"><span>Prime</span><span class="pop-row-dots"></span><span>$${prmCost}</span></div>
+          <div class="pop-row"><span>Drinks</span><span class="pop-row-dots"></span><span>$${drkCost}</span></div>
+          <div class="pop-row"><span>Dessert</span><span class="pop-row-dots"></span><span>$${dstCost}</span></div>
+          <div class="pop-rule"></div>
+          <div class="pop-row dim"><span>Subtotal</span><span class="pop-row-dots"></span><span>$${subtotal}</span></div>
+          <div class="pop-row dim"><span>Tip &amp; tax</span><span class="pop-row-dots"></span><span>$${tipTax}</span></div>
+          <div class="pop-rule"></div>
+          <div class="pop-total" title="Estimated total including tip and tax"><span class="pop-badge-val" data-total="${total}" style="color: ${getTierColor(total)}">$${total}</span></div>
         </div>
       `;
 
