@@ -1130,7 +1130,7 @@ MENU_PATHS = ("/menu", "/menus", "/our-menu", "/food-menu", "/food", "/dinner", 
 SKIP_MENU_WORDS = ("get.popmenu.com", "levelaccess.com", "/items/", "/item/", "catering", "kids", "kid-", "party", "banquet", "private", "gift", "event")
 # A file name often says "lunch" for the restaurant's one menu (NWB's only menu link is nwb_..._lunch_menu_....pdf), so
 # these links go to the back of the queue instead of being dropped. The prompt tells Gemini to ignore lunch-only prices.
-SOFT_MENU_WORDS = ("brunch", "lunch", "happy", "breakfast")
+SOFT_MENU_WORDS = ("brunch", "lunch", "happy", "breakfast", "social")
 # Menu tabs and pages that hold the main courses, and ones that hold deals instead. El Coco Loco's menu is a row of tabs
 # (Appetizers, Combo Dinners, Seafood / Steak / Chicken, Desserts ...). "Combo Dinners" scored best because of the word
 # dinner, and its prices ($4 to $17.50, side items among them) gave a $14.50 casual main, while the Seafood / Steak /
