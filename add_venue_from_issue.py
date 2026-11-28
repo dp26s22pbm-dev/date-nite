@@ -1119,7 +1119,7 @@ MENU_LINK_WORDS = ("menu", "food", "dine", "dining", "drink", "order", "eat", "l
 # Some sites split the menu over pages named for what they sell and never say "menu" (Maurie's Table: /pizza, /sandwiches,
 # /appetizers-salads-more under an "Our Food" dropdown). A link with one of these words counts as a menu link, but only
 # the first DISH_LINK_LIMIT of them are kept, so a site with a page per pizza does not crowd out the guessed menu paths.
-DISH_LINK_WORDS = ("pizza", "sandwich", "appetizer", "starter", "entree", "burger", "pasta", "salad")
+DISH_LINK_WORDS = ("pizza", "sandwich", "appetizer", "starter", "entree", "burger", "pasta", "salad", "dessert")
 DISH_LINK_LIMIT = 4
 ORDERING_HOSTS = ("toasttab.com", "toast.app","chownow.com", "square.site", "olo.com", "popmenu.com", "order.online", "ordering.", "menus.",
                   "orderexperience.net", "alohaorderonline.com")
