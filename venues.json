@@ -173,25 +173,6 @@
     "lastUpdated": "2026-11-01"
   },
   {
-    "id": 11,
-    "name": "Traverso\u2019s",
-    "category": "Italian",
-    "city": "Naperville",
-    "state": "IL",
-    "website": "https://traversosrestaurant.com",
-    "coords": [
-      -88.167041,
-      41.713476
-    ],
-    "app": 14.0,
-    "casualMain": 23.0,
-    "premiumMain": 28.5,
-    "drink": 7.95,
-    "dessert": 9.0,
-    "tierColor": "#eab308",
-    "lastUpdated": "2026-11-01"
-  },
-  {
     "id": 12,
     "name": "Ancho & Agave",
     "category": "Mexican Upscale",
