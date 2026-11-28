@@ -219,6 +219,33 @@ jobs:
         run: |
           gh issue comment "$ISSUE_NUMBER" --repo ${{ github.repository }} --body "Could not search these cells. Run: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
 
+      # Emails a short summary of the run (see notify_email.py; needs the EMAIL_TO and SMTP_* secrets, else it only prints)
+      - name: Email the summary
+        if: always()
+        env:
+          EMAIL_TO: ${{ secrets.EMAIL_TO }}
+          EMAIL_FROM: ${{ secrets.EMAIL_FROM }}
+          SMTP_HOST: ${{ secrets.SMTP_HOST }}
+          SMTP_PORT: ${{ secrets.SMTP_PORT }}
+          SMTP_USER: ${{ secrets.SMTP_USER }}
+          SMTP_PASSWORD: ${{ secrets.SMTP_PASSWORD }}
+          JOB_STATUS: ${{ job.status }}
+          DRY_RUN: ${{ inputs.dry_run }}
+          GATE_REASON: ${{ steps.gate.outputs.reason }}
+          PICK_REASON: ${{ steps.pick.outputs.reason }}
+          CELLS: ${{ steps.pick.outputs.cells }}
+          ADDED: ${{ steps.cells.outputs.count }}
+          APPROVED: ${{ steps.triage.outputs.approved }}
+          DENIED: ${{ steps.triage.outputs.denied }}
+          HELD: ${{ steps.triage.outputs.held }}
+          TRIAGE_MODE: ${{ steps.triage.outputs.mode }}
+          PR_URL: ${{ steps.pr.outputs.url }}
+          ISSUE_NUMBER: ${{ steps.issue.outputs.number }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: |
+          export BUDGET_LINE="$(grep -m1 '^Today' gate.txt 2>/dev/null || true)"
+          python notify_email.py || true
+
       # Runners are wiped after each run, so each usage log is saved to its branch
       - name: Save the Places request log
         if: always()
