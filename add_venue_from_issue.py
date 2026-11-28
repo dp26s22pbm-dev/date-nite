@@ -1490,6 +1490,82 @@ def merge_sibling_pages(pricing, candidates, base_url, tried_keys, labels=None):
         menu_log.step("page", "sibling_pages_merged", url=base_url, n=merged, pages=read)
     return pricing, merged
 
+# Words (whole words of a link's path or text) that name a drinks page. Ranked: cocktail pages first, then drink, bar and
+# beverage pages, then wine and beer lists.
+DRINK_PAGE_RANK = {"cocktail": 0, "cocktails": 0, "drink": 1, "drinks": 1, "bar": 1, "beverage": 1, "beverages": 1,
+                   "spirits": 2, "wine": 2, "wines": 2, "beer": 2, "beers": 2}
+# Words that make a link something other than a drinks menu: events and clubs, shops, deals, ordering, and the bar and
+# drink words inside other names (a wine dinner, a bar mat photo, "Order" buttons that carry a Toast address)
+DRINK_PAGE_SKIP_WORDS = ("event", "dinner", "club", "market", "shop", "store", "reward", "gift", "career", "job", "catering",
+                         "private", "party", "happy", "social", "special", "reserv", "order", "tasting", "pairing", "dessert", "kids")
+DRINK_PAGE_LIMIT = 1
+
+def drink_page_links(page, base_url, hosts):
+    """Links on a page to a drinks, cocktail, bar or wine-and-beer page, best first. Same site or a PDF only: ordering
+    platforms and delivery apps list soft drinks, and a wine-dinner event or a shop is not a menu. Menu links as the
+    menu_links_from_page filter sees them (menu, drink, dining ...) are not required: Sawa's has /cocktails and Entourage
+    has BAR-DOWNERS.pdf, neither with a menu word."""
+    page = re.sub(r"(?is)<script\b.*?</script>", "", page)
+    found = {}
+    for href, label in ANCHOR_RE.findall(page):
+        text = re.sub(r"<[^>]+>", " ", label).lower()
+        text = " ".join(unescape(text).split())
+        url = urllib.parse.urljoin(base_url, unescape(href).split("#")[0])
+        p = urllib.parse.urlparse(url)
+        netloc = p.netloc.lower().removeprefix("www.")
+        is_pdf = p.path.lower().endswith(".pdf")
+        if p.scheme not in ("http", "https") or not (netloc in hosts or is_pdf):
+            continue
+        if netloc not in hosts and (any(h in netloc for h in ORDERING_HOSTS) or any(h in netloc for h in NON_MENU_HOSTS)):
+            continue
+        words = set(re.sub(r"[^a-z]+", " ", (urllib.parse.unquote(p.path) + " " + text).lower()).split())
+        ranks = [DRINK_PAGE_RANK[w] for w in words if w in DRINK_PAGE_RANK]
+        flat = (p.path + " " + text).lower()
+        if not ranks or any(w in flat for w in DRINK_PAGE_SKIP_WORDS) or is_error_redirect_url(url):
+            continue
+        found.setdefault(url, min(ranks))
+    return [u for u, _ in sorted(found.items(), key=lambda c: c[1])]
+
+def merge_drinks_page(pricing, site, base_url, page_html, tried_keys):
+    """When the menu that gave the mains priced no drinks, read one drinks page the site links to and add its drink prices.
+    About two menus in three list no drinks and get a stand-in price (the larger of $8 and half the casual main), and a
+    drink counts twice in the total. Entourage's BAR pdf and Sawa's /cocktails page are examples the old steps never read.
+
+    A web page is read only when it has at least 3 price-like numbers (no Gemini call is spent on a drinks page without
+    prices); a PDF or picture has no text to count, so it is read as it is. Only the drinks come from the page, and only
+    prices up to the drink ceiling (a wine list's bottles run to $200). Needs two drink prices, as clean_pricing does.
+    Returns the pricing, with the drinks added when the page gave them."""
+    if not pricing or pricing.get("drinks") or gemini_cap_hit or gemini_run_budget_hit:
+        return pricing
+    hosts = {_host(site), _host(base_url)}
+    links = []
+    home = get_page(site)
+    for page, final in ((page_html, base_url), (home[0], home[1]) if home else (None, None)):
+        if page:
+            links += [u for u in drink_page_links(page, final, hosts | {_host(final)}) if u not in links]
+    links = [u for u in links if page_key(u) not in tried_keys][:DRINK_PAGE_LIMIT]
+    for u in links:
+        tried_keys.add(page_key(u))
+        got = fetch_url(u, with_url=True)
+        mime = menu_file_mime(u, got[1]) if got else None
+        if got and mime:
+            found = clean_pricing(fetch_pdf_pricing(u, mime), require_main=False)
+        elif got and (not got[1] or re.search(r"text|html|xml|json", got[1], re.I)):
+            text = html_to_text(got[0].decode("utf-8", "ignore"))
+            if price_count(text) < 3:
+                menu_log.step("page", "drinks_page_no_prices", url=u, n=price_count(text))
+                continue
+            found = pricing_from_menu_text(text, require_main=False, where="page_html", url=u)
+        else:
+            continue
+        drinks = [d for d in ((found or {}).get("drinks") or []) if d <= PRICE_CEILINGS["drink"]]
+        if len(drinks) >= 2:
+            print(f"Drink prices from {u}: {sorted(drinks)}")
+            menu_log.step("page", "drinks_page_merged", url=u, n=len(drinks))
+            return {**pricing, "drinks": drinks}
+        menu_log.step("page", "drinks_page_no_drinks", url=u, n=len(drinks))
+    return pricing
+
 # Query parameters a server adds when it sends a missing page to its home page (ASP.NET: /?aspxerrorpath=/menu). The page is
 # the home page again, whatever follows.
 ERROR_REDIRECT_QUERY_WORDS = ("error", "404", "notfound", "not_found")
@@ -1642,6 +1718,7 @@ def pricing_from_website_menu(site, where=""):
                 pricing = merge_partial_pricing(pricing, list(page_partials.values()))
                 menu_log.step("page", "partial_pages_merged", url=url, n=len(page_partials))
             pricing, _ = merge_sibling_pages(pricing, [u for u in dict.fromkeys(queue + hub_links) if u not in tried], url, tried_keys, link_labels)
+            pricing = merge_drinks_page(pricing, site, url, (RENDERED_HTML.get(url) or (html, url))[0], tried_keys)
             menu_log.step("site_pages", "ok", url=url, n=len(tried))
             return pricing, url
         page, final = RENDERED_HTML.get(url) or ((html, url) if html else (None, None))

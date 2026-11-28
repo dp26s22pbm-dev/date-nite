@@ -44,7 +44,12 @@ Steps and results are short fixed words so they can be counted. A result of "ok"
                   menustar_read = a MenuStar ordering page (themenustar2.com) whose categories were each read through its own
                   functions/restaurant.php call, n = categories read, pages = categories on the page;
                   sibling_pages_merged = the page with the mains had no appetizers or desserts, so up to 3 other linked menu pages were
-                  read; n = pages merged, pages = pages read; duplicate_page = a URL
+                  read; n = pages merged, pages = pages read;
+                  drinks_page_merged | drinks_page_no_prices | drinks_page_no_drinks = the menu that gave the mains priced no
+                  drinks, so one drinks, cocktail, bar or wine-and-beer page the site links to was tried: merged = its drink prices
+                  were added (n = prices kept, at most the drink ceiling), no_prices = a web page with fewer than 3 price-like
+                  numbers, not sent to Gemini (n = numbers found), no_drinks = read but fewer than 2 usable drink prices;
+                  duplicate_page = a URL
                   skipped because it is the same page as one already read: another spelling of the address, a redirect to a page
                   already tried, or a made-up path whose text matches a page that had no prices; logged once per page;
                   error_redirect = a URL whose query says the site sent a missing page here, as in /?aspxerrorpath=/menu, never read)
