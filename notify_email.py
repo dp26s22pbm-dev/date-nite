@@ -6,7 +6,8 @@ It reads the run's facts from environment variables the workflow sets (JOB_STATU
 CELLS, ADDED, APPROVED, DENIED, HELD, TRIAGE_MODE, PR_URL, ISSUE_NUMBER, RUN_URL, BUDGET_LINE) and the triage summary file
 (`triage-summary.md` in RUNNER_TEMP) when there is one.
 
-Mail goes out over SMTP with the standard library. Settings (repository secrets, Settings > Secrets and variables > Actions):
+The summary is posted as a comment that @mentions the repository owner on a standing issue, which GitHub emails (needs no
+secrets). Optionally it is also sent over SMTP with the standard library. Settings (repository secrets, Settings > Secrets and variables > Actions):
   EMAIL_TO         where the summary goes (required; without it nothing is sent)
   SMTP_HOST        for example smtp.gmail.com (required)
   SMTP_PORT        587 (STARTTLS, the default) or 465 (SSL)
@@ -15,6 +16,7 @@ Mail goes out over SMTP with the standard library. Settings (repository secrets,
   EMAIL_FROM       optional sender address
 Never raises and never fails the run: a missing setting or a send error is printed and the script exits 0."""
 import os
+import subprocess
 import smtplib
 import ssl
 from email.message import EmailMessage
@@ -78,10 +80,35 @@ def build():
     return f"Date Nite daily grid search: {headline}", body
 
 
+ISSUE_TITLE = "Daily grid search summaries"
+
+
+def post_comment(subject, body):
+    """Comment on a standing issue (opened if missing) and @mention the repository owner, so GitHub emails them. No
+    secrets needed: the workflow token is enough. Never raises."""
+    try:
+        owner = env("GITHUB_REPOSITORY_OWNER")
+        text = (f"@{owner} " if owner else "") + f"**{subject}**\n\n{body}"
+        found = subprocess.run(["gh", "issue", "list", "--state", "open", "--search", f'"{ISSUE_TITLE}" in:title',
+                                "--json", "number,title", "--limit", "10"], capture_output=True, text=True)
+        import json
+        number = next((i["number"] for i in json.loads(found.stdout or "[]") if i["title"] == ISSUE_TITLE), None)
+        if number is None:
+            made = subprocess.run(["gh", "issue", "create", "--title", ISSUE_TITLE, "--body",
+                                   "Each comment here summarizes one Daily Grid Search run and mentions the owner, "
+                                   "so GitHub emails it. Do not close this issue."],
+                                  capture_output=True, text=True, check=True)
+            number = made.stdout.strip().rsplit("/", 1)[-1]
+        subprocess.run(["gh", "issue", "comment", str(number), "--body", text], capture_output=True, text=True, check=True)
+        print(f"Posted the summary on issue {number}; GitHub emails the mention.")
+    except Exception as e:
+        print(f"Could not post the summary comment: {e}")
+
+
 def send(subject, body):
     to, host = env("EMAIL_TO"), env("SMTP_HOST")
     if not to or not host:
-        print("Email not sent: set the EMAIL_TO and SMTP_HOST secrets (and SMTP_USER, SMTP_PASSWORD) to turn it on.")
+        print("No SMTP email sent (EMAIL_TO and SMTP_HOST are not set); the issue comment covers it.")
         return
     user, password, port = env("SMTP_USER"), env("SMTP_PASSWORD"), int(env("SMTP_PORT", "587"))
     msg = EmailMessage()
@@ -105,6 +132,7 @@ def main():
     try:
         subject, body = build()
         print(subject + "\n" + body)
+        post_comment(subject, body)
         send(subject, body)
     except Exception as e:  # never fail the run over an email
         print(f"Could not send the summary email: {e}")

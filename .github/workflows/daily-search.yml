@@ -219,10 +219,11 @@ jobs:
         run: |
           gh issue comment "$ISSUE_NUMBER" --repo ${{ github.repository }} --body "Could not search these cells. Run: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
 
-      # Emails a short summary of the run (see notify_email.py; needs the EMAIL_TO and SMTP_* secrets, else it only prints)
+      # Emails a short summary of the run (see notify_email.py: a comment that @mentions the owner, which GitHub emails; SMTP_* secrets add a direct email)
       - name: Email the summary
         if: always()
         env:
+          GH_TOKEN: ${{ github.token }}
           EMAIL_TO: ${{ secrets.EMAIL_TO }}
           EMAIL_FROM: ${{ secrets.EMAIL_FROM }}
           SMTP_HOST: ${{ secrets.SMTP_HOST }}
