@@ -326,6 +326,8 @@
       width: 300px;
       max-width: calc(100vw - 32px);
     }
+    /* Added by venueTargetPoint when a two-line name would push the card under the panels above it */
+    .maplibregl-popup-content.tight .pop-name { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
     .maplibregl-popup-tip {
       display: block !important;
       width: 14px !important;
@@ -1871,7 +1873,7 @@
     // that it slides under the venue list.
     const POPUP_PANEL_GAP_PX = 30;
     const VENUE_REST_Y = 0.61;
-    const DOT_SCRIM_GAP_PX = 16;
+    const DOT_SCRIM_GAP_PX = 6;
     // The lowest the selected dot may sit: clear of the venue list, and above the top of the bottom scrim so the
     // dimming never covers it
     function dotMaxY() {
@@ -1901,6 +1903,12 @@
       const popupTop = cy - dotToCardBottom - content.offsetHeight;
       const shift = Math.max(0, panelBottom + POPUP_PANEL_GAP_PX - popupTop);
       const maxY = Math.max(cy, dotMaxY());
+      // The dot can't go any lower, so a card that wraps its name to a second line would still run under the panel.
+      // Show the name on one line (ellipsis) and measure again.
+      if (cy + shift > maxY && !content.classList.contains('tight') && content.querySelector('.pop-name').offsetHeight > 30) {
+        content.classList.add('tight');
+        return venueTargetPoint();
+      }
       return { x: cx, y: Math.min(cy + shift, maxY) };
     }
 
