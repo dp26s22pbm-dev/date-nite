@@ -1857,6 +1857,9 @@ CUISINE_FILLER_WORDS = {
     "cafe", "kitchen", "bar", "and",
 }
 
+# The popup shows the cuisine beside the town on one line; about this many characters fit
+MAX_CUISINE_CHARS = 20
+
 def is_vague_cuisine(label):
     """True when every meaningful word in the label is an umbrella term, e.g. 'Mediterranean Bistro' or 'Asian Fusion'."""
     words = [w for w in re.findall(r"[a-z]+", (label or "").lower()) if w not in CUISINE_FILLER_WORDS]
@@ -1871,8 +1874,8 @@ def ask_gemini_for_cuisine(name, where, examples, avoid=None):
         'cuisine it serves, such as the country or regional cuisine (for example Portuguese, Szechuan, Levantine), '
         'not a broad umbrella term like Mediterranean, Asian, International or Fusion. '
         f'Existing labels on the map: {examples}. Reuse one of them only if it is an accurate fit; '
-        'otherwise give a new label of one to four words. '
-        + (f'"{avoid}" was too vague, so do not answer with it. ' if avoid else '')
+        f'otherwise give a new label of one to three words and at most {MAX_CUISINE_CHARS} characters, because it is shown on a small card. '
+        + (f'"{avoid}" was too vague or too long, so do not answer with it. ' if avoid else '')
         + 'Return only the label, with no explanation, quotes or punctuation.'
     )
     response = client.models.generate_content(
@@ -1894,9 +1897,15 @@ def guess_cuisine_via_gemini(name, where, known_categories):
         if label and is_vague_cuisine(label):
             print(f"Cuisine guess '{label}' for {name} is too vague; asking for something more specific.")
             retry = ask_gemini_for_cuisine(name, where, examples, avoid=label)
-            if retry and not is_vague_cuisine(retry):
+            if retry and not is_vague_cuisine(retry) and len(retry) <= MAX_CUISINE_CHARS:
                 return retry
             return None
+        if label and len(label) > MAX_CUISINE_CHARS:
+            print(f"Cuisine guess '{label}' for {name} is too long for the card; asking for a shorter one.")
+            retry = ask_gemini_for_cuisine(name, where, examples, avoid=label)
+            if retry and not is_vague_cuisine(retry) and len(retry) <= MAX_CUISINE_CHARS:
+                return retry
+            # Still long: keep the specific label rather than fall back to nothing; the card cuts it with an ellipsis
         return label
     except Exception as e:
         print(f"Gemini cuisine guess error for {name}: {e}")
