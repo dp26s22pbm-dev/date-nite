@@ -9,7 +9,6 @@ TARGET_URLS = {
     8: "https://www.entouragenaperville.com/menu",
     9: "https://order.online/store/hugo%27s-frog-bar-&-fish-house-naperville-69736",
     10: "https://order.tacopros.com",
-    11: "https://traversosrestaurant.com/menu",
     12: "https://www.anchoandagave.com/menus/",
     13: "https://barlouie.com/menu/",
     14: "https://www.whitechocolategrill.com/menu",

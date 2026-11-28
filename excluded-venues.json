@@ -106,5 +106,9 @@
   {
     "name": "CAVA",
     "reason": "denied in venue review"
+  },
+  {
+    "name": "Traverso’s",
+    "reason": "Duplicate listing with a wrong pin. The correct location is \"Traverso’s Restaurant | Italian\" (venue 256)."
   }
 ]
