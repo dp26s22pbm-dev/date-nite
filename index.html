@@ -999,6 +999,14 @@
       .cost-pop .legend-item { flex: 1 1 0; min-width: 0; flex-direction: column; gap: 5px; }
       .cost-pop .legend-item + .legend-item { border-left: 1px solid rgba(255, 255, 255, 0.12); }
       .cost-pop .legend-label { text-align: center; white-space: nowrap; }
+
+      /* While searching, the Cost button fades out with the Menu row and the buttons to its left slide right one slot (43px) to close the gap;
+         they slide back when the bar loses focus. The buttons already animate `right` (transition: all 0.2s). */
+      body.searching .cost-btn { opacity: 0; pointer-events: none; }
+      body.searching .theme-btn { right: 102px !important; }
+      body.searching .zoom-btn { right: 145px !important; }
+      body.searching .car-btn { right: 188px !important; }
+      body.searching .car-toast { right: 188px; }
     }
     @media (max-width: 480px) and (prefers-reduced-motion: reduce) {
       .cost-btn, .cost-pop, .cost-pop.open { transition: none; }
@@ -3216,6 +3224,7 @@
     searchInput.addEventListener('focus', () => {
       if (!phoneQuery.matches) return;
       document.body.classList.add('searching');
+      toggleCostPop(false); // the Cost explanation goes with its button
     });
     searchInput.addEventListener('blur', () => {
       if (!phoneQuery.matches) return;
