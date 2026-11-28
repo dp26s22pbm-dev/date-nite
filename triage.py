@@ -13,9 +13,10 @@ Approve needs every one of:
   - no price sanity warning (the venue has no reviewNotes), no `prices` note in the log (appetizers above the mains, a premium
     tier that repeats the casual mains), no implausibly low site read, and no Gemini spending-cap or run-budget stop
   - a town and state
-  - no venue within NEAR_M metres with a similar name or the same website, on the map or among this run's other candidates
+  - no venue within NEAR_M metres with a similar name or the same website, or within WIDE_M with the same website, on the map or among this run's other candidates
   - fewer than AUTO_APPROVE_MAX approvals already given in the run (the rest are held)
-Deny: a venue within NEAR_M metres of one on the map that has the same website host, which is the same business under another name.
+Deny: a venue with the same website host as one on the map and within NEAR_M metres, or within WIDE_M metres when the names are
+also similar (a second listing for one restaurant). The same host alone between NEAR_M and WIDE_M is held (maybe a second location).
 
 AUTO_TRIAGE (repository variable, read by daily-search.yml):
   off      the pull request is made as before, every box empty
@@ -42,6 +43,7 @@ from grid_cells import load_grid, save_grid, sort_key
 from split_cells import set_output
 
 NEAR_M = 150
+WIDE_M = 2000
 OWN_MENU_SOURCES = ("the menu on the restaurant's website", "Gemini reading the restaurant's own menu pages",
                     "the menu PDF", "the menu link")
 MODES = ("off", "suggest", "apply")
@@ -123,25 +125,33 @@ def record_problems(record):
 
 
 def duplicate_of(venue, others):
-    """(other venue, same_business) for the first nearby venue that looks like the same place, else (None, False).
-    same_business is True when the website host matches too, which is how a rename shows up."""
+    """(other venue, same_business, metres) for the first venue that looks like the same place, else (None, False, None).
+    Within NEAR_M a similar name or the same website host counts. Out to WIDE_M only the same website host counts, since a
+    second Google listing for one restaurant can sit a few blocks off; it is the same business (a deny) when the names are
+    similar too, and otherwise a possible second location, which is held."""
     for other in others:
-        if not (venue.get("coords") and other.get("coords")) or distance_m(venue["coords"], other["coords"]) > NEAR_M:
+        if not (venue.get("coords") and other.get("coords")):
+            continue
+        d = distance_m(venue["coords"], other["coords"])
+        if d > WIDE_M:
             continue
         host, other_host = host_of(venue.get("website")), host_of(other.get("website"))
         same_site = bool(host) and host == other_host
-        if same_site or similar_names(venue.get("name"), other.get("name")):
-            return other, same_site
-    return None, False
+        similar = similar_names(venue.get("name"), other.get("name"))
+        if d <= NEAR_M and (same_site or similar):
+            return other, same_site, d
+        if same_site:
+            return other, similar, d
+    return None, False, None
 
 
 def classify(venues, records, on_map, max_approve=10):
     """[(decision, [reasons])] for each venue, in order. `on_map` is every venue already saved or pending."""
     results, approved_so_far = [], []
     for v in venues:
-        dup, same_site = duplicate_of(v, on_map)
+        dup, same_site, dist = duplicate_of(v, on_map)
         if dup is not None and same_site:
-            results.append(("deny", [f"same website and within {NEAR_M} m of {dup['name']}, which is already on the map"]))
+            results.append(("deny", [f"same website and {round(dist)} m from {dup['name']}, which is already on the map"]))
             continue
         reasons = record_problems(records.get(name_key(v.get("name"))))
         if v.get("reviewNotes"):
@@ -149,8 +159,9 @@ def classify(venues, records, on_map, max_approve=10):
         if not (v.get("city") and v.get("state")):
             reasons.append("no town or state")
         if dup is not None:
-            reasons.append(f"possible duplicate of {dup['name']}, {NEAR_M} m or less away")
-        twin, _ = duplicate_of(v, approved_so_far)
+            reasons.append(f"possible duplicate of {dup['name']}, {round(dist)} m away"
+                           + (" (same website, so maybe a second location)" if dist > NEAR_M else ""))
+        twin = duplicate_of(v, approved_so_far)[0]
         if twin is not None:
             reasons.append(f"looks like {twin['name']}, approved in this same run")
         if not reasons and len(approved_so_far) >= max_approve:
