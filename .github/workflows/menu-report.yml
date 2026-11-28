@@ -43,4 +43,6 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: |
           gh label create menu-report --color 0e8a16 --description "Weekly menu import report" 2>/dev/null || true
-          gh issue create --title "Menu import report, week of $(date -u +%F)" --label menu-report --body-file weekly-report.md
+          # The @mention makes GitHub email the owner, the same way the Daily Grid Search summary does
+          { printf '@%s the weekly menu import report is ready.\n\n' "${{ github.repository_owner }}"; cat weekly-report.md; } > issue-body.md
+          gh issue create --title "Menu import report, week of $(date -u +%F)" --label menu-report --body-file issue-body.md
